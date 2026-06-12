@@ -8,9 +8,32 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- **Facade list helpers** — `count()`, `list_groups()`, `latest()` / `latest_created()` / `latest_updated()`, `parent()` on listable facades; catalog in [facade-helpers.md](guides/facade-helpers.md).
+- **Facade sugar** — `Project.resolve()`, `Finding.list_for_scan()`, `ScanResult.list_for_project()`, `CallGraphData.decode()` / `fetch()`, `ScanResult.get_logs()`, `ScanResult.latest_created(parent=…)`.
+
 ### Changed
 
+- Architecture doc: consumer vs generated model planes ([architecture.md](contributing/architecture.md)); removed per-resource schema drift validators; `PolicySpec.finding` / `.notification` use typed config models.
+- Estate grouped counts and collect preflight use `facade.count()` / `DependencyMetadata.list_groups()` instead of workflow-local pagination helpers.
+- Troubleshooting scan workflows and dependency metadata fetch use `Client` facades instead of raw `APIClient.get` / `get_all` loops.
+- CallGraphData wire/decode moved from `operations/call_graph.py` to `resources/call_graph_data.py`; protobuf decoder to `resources/call_graph_data_proto.py`.
+
 ### Breaking
+
+- Removed **`list_scan_results_for_project`** and **`list_projects`** from `workflows.troubleshooting_scans` — use `client.ScanResult.list_for_project` and `client.Project.list`.
+- Removed **`workflows.callgraph.decoded.decode_payload`** — use `client.CallGraphData.decode`.
+- Removed **`operations.call_graph`** — use **`resources.call_graph_data`** and `client.CallGraphData.decode` / `fetch`.
+- Removed **`workflows.callgraph.proto_decode`** — use **`resources.call_graph_data_proto`**.
+- **`retrieve_dep_metadata_full`** now takes **`endorlabs.Client`** (first argument), not `APIClient`.
+- **`process_project`** (agent context hydration) no longer accepts `api_client`.
+- **`run_callgraph_sweep`** no longer accepts `_api_client`.
+- Removed **`endorlabs.utils.api_pagination`** (`paginate_raw`, `extract_objects`) — use `facade.list()` / `api_client.get_all` or `operations.list_response.extract_list_objects`.
+- Removed **`list_resource_count`** from `workflows.estate.collect.bounds` — use `facade.count()` or `count_for_progress`.
+- Removed **`retrieve_call_graph_full`** / **`retrieve_call_graph_for_client`** from `workflows.callgraph.fetch` — use `client.CallGraphData.decode` / `fetch`.
+- Removed **`client.ScanLogs`** — use `client.ScanResult.get_logs`.
+- Removed **`endorlabs.tools.dependency_explorer`** — use `workflows.agent_context.hydration`, `workflows.dependencies.*`, `workflows.callgraph.*`, and `client.CallGraphData`.
+- Removed **`endorlabs.models`** — use **`endorlabs.resources.base`** (and `resources.finding_config`, `resources.notification_config`, `resources.exception_config`, `resources.field_aliases`).
+- Removed **`SchemaDriftDetector`** from **`endorlabs.utils`** — opt-in wire probes: `endorlabs.utils.schema_drift.log_unknown_wire_keys` (not in `__all__`).
 
 ## 0.2.0
 

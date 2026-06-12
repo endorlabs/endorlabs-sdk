@@ -17,7 +17,8 @@ import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
 from endorlabs.core.exceptions import AmbiguousError, NotFoundError, ValidationError
-from endorlabs.facade import ScanLogsFacade
+from endorlabs.core.filter import F
+from endorlabs.facade import CallGraphDataFacade
 from tests.conftest import (
     TEST_MAX_PAGES,
     TEST_NAMESPACE_DEFAULT,
@@ -514,25 +515,31 @@ def test_client_namespace_list_uses_session_logging_only(
     assert "logging_level" not in kwargs
 
 
-def test_client_scan_logs_facade_present_and_delegates(
+def test_client_scan_result_get_logs_delegates(
     client_with_mock_transport: Client,
 ) -> None:
-    """client.ScanLogs present; get_logs delegates to get_scan_result_logs."""
+    """ScanResult.get_logs delegates to get_scan_result_logs."""
     client = client_with_mock_transport
-    assert hasattr(client, "ScanLogs")
-    assert isinstance(client.ScanLogs, ScanLogsFacade)
     with patch(
         "endorlabs.resources.scan_log_request.get_scan_result_logs",
         return_value=[],
     ) as mock_get_logs:
-        result = client.ScanLogs.get_logs("scan-result-uuid-123")
+        result = client.ScanResult.get_logs("scan-result-uuid-123")
         assert result == []
         mock_get_logs.assert_called_once()
-        args, kwargs = mock_get_logs.call_args
+        args, _kwargs = mock_get_logs.call_args
         assert args[0] is client._client
         assert args[1] == TEST_NAMESPACE_DEFAULT
         assert args[2] == "scan-result-uuid-123"
-        assert kwargs.get("max_entries") == 100
+
+
+def test_client_call_graph_data_facade_present(
+    client_with_mock_transport: Client,
+) -> None:
+    """client.CallGraphData is a custom facade for decode/fetch."""
+    client = client_with_mock_transport
+    assert hasattr(client, "CallGraphData")
+    assert isinstance(client.CallGraphData, CallGraphDataFacade)
 
 
 def test_get_with_uuid_string_uses_default_namespace(
@@ -643,7 +650,7 @@ def test_update_with_kwargs_derives_mask_and_calls_update(
     client_with_mock_transport: Client,
 ) -> None:
     """update(resource, meta_description=...) derives update_mask and builds payload."""
-    from endorlabs.models.base import TenantMeta as BaseTenantMeta
+    from endorlabs.resources.base import TenantMeta as BaseTenantMeta
     from endorlabs.resources.project import (
         Project,
         ProjectMeta,
@@ -719,7 +726,7 @@ def test_update_with_explicit_meta_params_merges_into_kwargs(
     client_with_mock_transport: Client,
 ) -> None:
     """update(resource, meta_description=..., meta_tags=...) merges into kwargs."""
-    from endorlabs.models.base import TenantMeta as BaseTenantMeta
+    from endorlabs.resources.base import TenantMeta as BaseTenantMeta
     from endorlabs.resources.project import (
         Project,
         ProjectMeta,
@@ -1187,7 +1194,7 @@ class TestBuildListKwargs:
 
 def test_resource_namespace_property_returns_tenant_meta_namespace() -> None:
     """Resource .namespace returns tenant_meta.namespace when set, None otherwise."""
-    from endorlabs.models.base import BaseMeta, BaseResource, TenantMeta
+    from endorlabs.resources.base import BaseMeta, BaseResource, TenantMeta
 
     class _ConcreteResource(BaseResource):
         pass
@@ -1224,3 +1231,80 @@ def test_finding_empty_list_no_warn_with_child_namespace(
         warnings.simplefilter("always")
         client.Finding.list(namespace="tenant.child", max_pages=TEST_MAX_PAGES)
     assert not [w for w in caught if issubclass(w.category, UserWarning)]
+
+
+def test_facade_count_delegates_to_ops(client_with_mock_transport: Client) -> None:
+    client = client_with_mock_transport
+    client.Finding._ops.count = Mock(return_value=7)
+    assert client.Finding.count(namespace=TEST_NAMESPACE_DEFAULT) == 7
+    client.Finding._ops.count.assert_called_once()
+
+
+def test_facade_list_count_true_emits_deprecation_and_uses_count(
+    client_with_mock_transport: Client,
+) -> None:
+
+    client = client_with_mock_transport
+    client.Finding.count = Mock(return_value=3)
+    with pytest.warns(DeprecationWarning, match="use .count\\(\\)"):
+        result = client.Finding.list(count=True, namespace=TEST_NAMESPACE_DEFAULT)
+    assert result == 3
+    client.Finding.count.assert_called_once()
+
+
+def test_project_resolve_delegates(client_with_mock_transport: Client) -> None:
+    client = client_with_mock_transport
+    project = Mock()
+    client.Project.lookup = Mock(return_value=project)
+    out = client.Project.resolve(
+        "https://github.com/org/repo", namespace="tenant.child"
+    )
+    assert out is project
+    client.Project.lookup.assert_called_once()
+
+
+def test_call_graph_data_decode(
+    client_with_mock_transport: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from endorlabs.resources.call_graph_data import CallGraphDecoded
+
+    client = client_with_mock_transport
+    decoded = CallGraphDecoded(
+        summary={"uuid": "cg1"},
+        callables=[],
+        edges=[],
+        envelope={"uuid": "cg1"},
+    )
+    monkeypatch.setattr(
+        "endorlabs.resources.call_graph_data.get_call_graph_for_package_version",
+        Mock(return_value=decoded),
+    )
+    pv = Mock(uuid="pv1")
+    out = client.CallGraphData.decode(pv)
+    assert out.summary["uuid"] == "cg1"
+
+
+def test_scan_result_list_for_project(client_with_mock_transport: Client) -> None:
+    """ScanResult.list_for_project filters by parent and optional status."""
+    client = client_with_mock_transport
+    sr1 = Mock()
+    sr1.spec = Mock(status="STATUS_SUCCESS")
+    sr2 = Mock()
+    sr2.spec = Mock(status="STATUS_FAILED")
+    client.ScanResult.list = Mock(return_value=[sr1, sr2])
+
+    out = client.ScanResult.list_for_project(
+        "p1",
+        namespace="tenant.child",
+        limit=10,
+        status_filter="STATUS_SUCCESS",
+    )
+    client.ScanResult.list.assert_called_once()
+    kwargs = client.ScanResult.list.call_args.kwargs
+    assert kwargs["namespace"] == "tenant.child"
+    assert str(kwargs["filter"]) == str(F("meta.parent_uuid") == "p1")
+    assert kwargs["sort_by"] == "meta.create_time"
+    assert kwargs["desc"] is True
+    assert kwargs["max_pages"] == 1
+    assert kwargs["page_size"] == 10
+    assert out == [sr1]

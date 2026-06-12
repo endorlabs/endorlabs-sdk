@@ -12,5 +12,6 @@ tags:
 - **`Client` facade attributes:** **PascalCase** matching `endorctl api … --resource <Kind>`
   (e.g. `client.Project`, `client.Finding`).
 - Resource Python modules stay `snake_case` (`endorlabs.resources.project`).
-- **Custom facades:** SDK-only helpers registered in `registry.py` (e.g. `ScanLogs` for log lines;
-  `ScanLogRequest` is the endorctl-aligned resource kind).
+- **Custom facades:** SDK-only helpers registered in `registry.py` (e.g. `CallGraphData`
+  for decode/fetch). Log lines use `ScanResult.get_logs`; `ScanLogRequest` is the
+  endorctl-aligned resource kind.

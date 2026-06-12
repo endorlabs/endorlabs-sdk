@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import textwrap
 
-from endorlabs.workflows.callgraph.proto_decode import CallGraphInfo, CallSiteInfo
+from endorlabs.resources.call_graph_data_proto import CallGraphInfo, CallSiteInfo
 
 
 def _short_type_key(key: str) -> str:

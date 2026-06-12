@@ -25,14 +25,16 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast, override
 from pydantic import BaseModel, Field, field_validator
 
 from ..core.types import ListParameters
-from ..models.base import (
+from ..operations import BaseResourceOperations
+from ..utils.logging_config import get_resource_logger
+from .base import (
     BaseMeta,
     BaseResource,
     BaseSpec,
     FlexibleEnum,
 )
-from ..operations import BaseResourceOperations
-from ..utils.logging_config import get_resource_logger
+from .finding_config import FindingConfig  # noqa: TC001
+from .notification_config import NotificationConfig  # noqa: TC001
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -89,9 +91,7 @@ class PolicySpec(BaseSpec):
     )
     resource_kinds: list[str] | None = Field(None, description="Resource kinds")
     disable: bool | None = Field(False, description="Whether policy is disabled")
-    finding: dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None, description="Finding configuration"
-    )
+    finding: FindingConfig | None = Field(None, description="Finding configuration")
     finding_level: str | None = Field(None, description="Finding level")
     query_statements: list[str] | None = Field(None, description="Query statements")
     template_uuid: str | None = Field(None, description="Template UUID")
@@ -104,7 +104,7 @@ class PolicySpec(BaseSpec):
         None, description="Admission configuration"
     )
     group_by_fields: list[str] | None = Field(None, description="Group by fields")
-    notification: dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
+    notification: NotificationConfig | None = Field(
         None, description="Notification configuration"
     )
     # exception is now defined in BaseSpec as ExceptionConfig
@@ -248,44 +248,6 @@ class Policy(BaseResource):
     spec: PolicySpec | None = Field(None, description="Policy specification")  # type: ignore
 
     model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift in policy responses."""
-        if info.field_name == "spec" and isinstance(v, dict):
-            # Log unknown fields for schema drift detection in spec
-            known_fields = {
-                "policy_type",
-                "rule",
-                "project_selector",
-                "project_exceptions",
-                "resource_kinds",
-                "disable",
-                "finding",
-                "finding_level",
-                "query_statements",
-                "template_uuid",
-                "template_version",
-                "template_parameters",
-                "template_values",
-                "admission",
-                "group_by_fields",
-                "notification",
-                "exception",
-                "finding_categories",
-            }
-
-            unknown_fields = set(v.keys()) - known_fields
-            if unknown_fields:
-                logger.warning(
-                    "Schema drift detected in %s: unknown fields %s",
-                    info.field_name,
-                    unknown_fields,
-                )
-
-        return v
 
     @override
     @classmethod

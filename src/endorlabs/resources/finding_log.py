@@ -19,18 +19,18 @@ API USAGE NOTES:
 
 from __future__ import annotations
 
-from typing import Any, override
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..models.base import (
+from ..utils.logging_config import get_resource_logger
+from .base import (
     BaseMeta,
     BaseResource,
     BaseSpec,
     Context,
     FlexibleEnum,
 )
-from ..utils.logging_config import get_resource_logger
 from .finding import (
     AnalysisMethod,
     Ecosystem,
@@ -291,25 +291,6 @@ class FindingLogSpec(BaseSpec):
             return DismissParams(**v)
         return v
 
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Override BaseSpec drift detection to skip typed nested model fields."""
-        # Skip drift detection for typed nested models
-        # (they handle their own validation)
-        typed_model_fields = {
-            "snooze",  # DismissParams
-        }
-        if (
-            info.field_name
-            and isinstance(v, dict)
-            and info.field_name not in typed_model_fields
-        ):
-            # Call parent validator for non-typed-model fields
-            return super().detect_schema_drift(v, info)
-        return v
-
 
 class FindingLog(BaseResource):
     """An Endor Labs FindingLog entity extending BaseResource.
@@ -349,41 +330,6 @@ class FindingLog(BaseResource):
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = FindingLogSpec(**data["spec"])
         super().__init__(**data)
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift for unknown fields."""
-        if info.field_name == "spec" and isinstance(v, dict):
-            # Log unknown fields for schema drift detection in spec
-            known_fields = {
-                "finding_uuid",
-                "finding_parent_kind",
-                "finding_parent_uuid",
-                "operation",
-                "introduced_at",
-                "resolved_at",
-                "days_unresolved",
-                "ecosystem",
-                "target_uuid",
-                "target_dependency_package_name",
-                "method",
-                "level",
-                "finding_tags",
-                "finding_categories",
-                "approximation",
-                "finding_parent_name",
-                "snooze",
-            }
-            unknown_fields = set(v.keys()) - known_fields
-            if unknown_fields:
-                logger.warning(
-                    "Schema drift detected in %s: unknown fields %s",
-                    info.field_name,
-                    unknown_fields,
-                )
-        return v
 
 
 class FindingLogMetaCreate(BaseModel):

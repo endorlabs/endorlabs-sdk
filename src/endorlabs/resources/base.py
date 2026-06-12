@@ -28,7 +28,6 @@ from pydantic import (
 
 from ..core.types import SupportsResourceUpdate
 from ..utils.logging_config import get_resource_logger
-from ..utils.schema_drift import SchemaDriftDetector
 
 # Import nested config models for better type safety
 from .exception_config import ExceptionConfig
@@ -235,40 +234,6 @@ class BaseMeta(JsonDefaultModel):
         description="Search and indexing metadata",  # IMMUTABLE: System-managed
     )
 
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift for unknown fields."""
-        if info.field_name and isinstance(v, dict):
-            # Skip drift detection for flexible dict fields
-            flexible_dict_fields = {"annotations", "references", "index_data"}
-            if info.field_name in flexible_dict_fields:
-                return v  # These are flexible dicts that can contain any keys
-
-            model_fields = {
-                "name",
-                "kind",
-                "version",
-                "create_time",
-                "update_time",
-                "created_by",
-                "updated_by",
-                "upsert_time",
-                "description",
-                "tags",
-                "annotations",
-                "parent_uuid",
-                "parent_kind",
-                "references",
-                "index_data",
-            }
-
-            if info.field_name in model_fields:
-                _ = SchemaDriftDetector.extract_unknown_fields(
-                    v, model_fields, f"BaseMeta.{info.field_name}"
-                )
-        return v
-
 
 class BaseSpec(JsonDefaultModel):
     """Base specification for all resources."""
@@ -285,32 +250,6 @@ class BaseSpec(JsonDefaultModel):
     exception: ExceptionConfig | None = Field(
         None, description="Exception configuration"
     )
-
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift for unknown fields."""
-        # Only check BaseSpec fields - subclasses handle their own drift detection
-        # BaseSpec only has these optional fields:
-        base_spec_fields = {
-            "notification",  # NotificationConfig
-            "finding",  # FindingConfig
-            "exception",  # ExceptionConfig
-            "git",  # GitInfo (in ProjectSpec)
-        }
-
-        # Only do drift detection if this is a BaseSpec field
-        # Subclasses will handle their own fields in their validators
-        if (
-            info.field_name
-            and isinstance(v, dict)
-            and info.field_name in base_spec_fields
-        ):
-            # This is a BaseSpec field, check for unknown nested fields
-            # But these are typed models, so let Pydantic handle validation
-            # Skip drift detection here - typed models validate themselves
-            pass
-        return v
 
 
 class BaseResource(JsonDefaultModel):
@@ -390,51 +329,6 @@ class BaseResource(JsonDefaultModel):
         None,
         description="Inheritance flag for hierarchical resources",  # MUTABLE
     )
-
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift for unknown fields."""
-        # Skip drift detection for typed nested models
-        # (they handle their own validation)
-        # Also skip "spec" - it's validated by subclass Spec models
-        # (ScanProfileSpec, etc.)
-        typed_model_fields = {
-            "meta",  # BaseMeta - validated by BaseMeta
-            "tenant_meta",  # TenantMeta - validated by TenantMeta
-            "context",  # Context - validated by Context
-            "processing_status",  # ProcessingStatus - validated by ProcessingStatus
-            "ingested_object",  # IngestedObject - validated by IngestedObject
-            "spec",  # BaseSpec or subclass - validated by Spec subclass validators
-        }
-        if (
-            info.field_name
-            and isinstance(v, dict)
-            and info.field_name not in typed_model_fields
-        ):
-            model_fields = {
-                "uuid",
-                "meta",
-                "spec",
-                "tenant_meta",
-                "context",
-                "processing_status",
-                "ingested_object",
-                "related_object",
-                "scan_object",
-                "propagate",
-            }
-
-            if info.field_name in model_fields:
-                # Extract resource name from class name (e.g., Finding -> Finding)
-                resource_name = cls.__name__
-                _ = SchemaDriftDetector.extract_unknown_fields(
-                    v,
-                    model_fields,
-                    f"{resource_name}.{info.field_name}",
-                    resource_name=resource_name,
-                )
-        return v
 
     @property
     def namespace(self) -> str | None:

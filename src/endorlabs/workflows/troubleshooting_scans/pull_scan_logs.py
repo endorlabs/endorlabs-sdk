@@ -1,6 +1,6 @@
 """Pull the full available log set for one scan result.
 
-Uses the ScanLogs facade with pagination (moving start_time cursor). Optionally
+Uses ``ScanResult.get_logs`` with pagination (moving start_time cursor). Optionally
 writes machine-readable JSON to ``--output-dir`` using the troubleshooting
 filename contract.
 
@@ -177,8 +177,8 @@ def _iter_logs(
 
     while rounds < max_rounds:
         rounds += 1
-        batch = client.ScanLogs.get_logs(
-            scan_result_uuid=scan_result_uuid,
+        batch = client.ScanResult.get_logs(
+            scan_result_uuid,
             namespace=namespace,
             max_entries=batch_size,
             start_time=cursor,

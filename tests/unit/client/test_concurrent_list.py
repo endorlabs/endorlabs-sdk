@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from endorlabs.client_surface import Client
-from endorlabs.models.base import TenantMeta
+from endorlabs.resources.base import TenantMeta
 from endorlabs.resources.namespace import Namespace, NamespaceMeta, NamespaceSpec
 from endorlabs.utils.parallel import execute_across_namespaces
 from tests.conftest import TEST_MAX_PAGES, TEST_NAMESPACE_DEFAULT

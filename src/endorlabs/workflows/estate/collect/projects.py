@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any
 
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.collect.bounds import (
+    count_for_progress,
     is_list_truncated,
-    list_resource_count,
     truncation_message,
 )
 from endorlabs.workflows.estate.contracts import RESOURCE_PROJECT
@@ -58,7 +58,7 @@ def collect_project_resource(
     max_workers: int = 10,
 ) -> tuple[list[dict[str, Any]], int | None]:
     """List projects with traverse and write ``data/project.jsonl``."""
-    in_scope = list_resource_count(
+    in_scope = count_for_progress(
         client.Project,
         namespace,
         resource_label="Project",

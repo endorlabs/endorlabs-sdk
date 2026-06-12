@@ -6,10 +6,10 @@ import argparse
 from pathlib import Path
 from typing import Any
 
+from endorlabs.client_surface import Client
+
 from .common import (
-    build_api_client,
     default_troubleshooting_output_dir,
-    list_projects,
     match_projects,
     root_tenant,
     write_json,
@@ -33,8 +33,12 @@ def build_parser() -> argparse.ArgumentParser:
 def run(args: argparse.Namespace) -> dict[str, Any]:
     """Execute workflow from parsed CLI args."""
     ns = args.namespace or args.tenant
-    api = build_api_client()
-    projects = list_projects(api, ns)
+    client = Client(tenant=ns)
+    traverse = "." not in ns
+    projects = [
+        p.model_dump(mode="json")
+        for p in client.Project.list(namespace=ns, traverse=traverse)
+    ]
     selected = match_projects(
         projects,
         project_uuid=args.project_uuid,

@@ -11,9 +11,9 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from endorlabs.core.exceptions import ValidationError as EndorValidationError
-from endorlabs.models.base import BaseResource
 from endorlabs.operations import BaseResourceOperations
 from endorlabs.resources.authorization_policy import AuthorizationPolicy
+from endorlabs.resources.base import BaseResource
 from endorlabs.resources.finding import Finding
 from endorlabs.resources.installation import Installation
 from endorlabs.resources.metric import Metric

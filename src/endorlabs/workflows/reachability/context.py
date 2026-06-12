@@ -10,12 +10,8 @@ from typing import Any
 
 import endorlabs
 from endorlabs.context.paths import workflow_projects_root
+from endorlabs.core.exceptions import NotFoundError
 from endorlabs.utils.path_safety import safe_write_text
-from endorlabs.workflows.callgraph.decoded import decode_payload
-from endorlabs.workflows.estate.collect.bounds import (
-    is_list_truncated,
-    resolve_max_pages,
-)
 from endorlabs.workflows.reachability.resolve import (
     ReachabilitySubject,
     resolve_from_finding,
@@ -52,32 +48,19 @@ def _write_json(base: Path, path: Path, payload: Any) -> None:
     )
 
 
-def _list_callgraph_for_parent(
-    api_client: Any,
+def _fetch_decoded_callgraph(
+    client: endorlabs.Client,
     *,
+    package_version_uuid: str,
     namespace: str,
-    parent_uuid: str | None,
-    page_size: int,
-    max_pages: int,
-) -> tuple[list[dict[str, Any]], bool]:
-    if not parent_uuid:
-        return [], False
-    list_max_pages = resolve_max_pages(max_pages)
-    params = {
-        "list_parameters.filter": f'meta.parent_uuid=="{parent_uuid}"',
-        "list_parameters.page_size": str(page_size),
-    }
-    objs = list(
-        api_client.get_all(
-            f"v1/namespaces/{namespace}/call-graph-data",
-            params=params,
-            max_pages=list_max_pages,
+) -> Any | None:
+    try:
+        return client.CallGraphData.decode(
+            package_version_uuid,
+            namespace=namespace,
         )
-    )
-    truncated = is_list_truncated(
-        len(objs), max_pages=list_max_pages, page_size=page_size
-    )
-    return objs, truncated
+    except NotFoundError:
+        return None
 
 
 def _extract_vulnerable_uris(finding: dict[str, Any]) -> list[str]:
@@ -181,22 +164,18 @@ def build_reachability_context(request: ReachabilityContextRequest) -> Path:
     client = endorlabs.Client(tenant=request.tenant)
     warnings: list[str] = []
     try:
-        api_client = getattr(client, "_client", None)
-        if api_client is None:
-            raise RuntimeError("Client API handle is unavailable.")
-
         subject: ReachabilitySubject
         finding_obj: dict[str, Any] | None = None
         dep_meta: dict[str, Any] | None = None
         if request.finding_uuid:
             subject, finding_obj, dep_meta = resolve_from_finding(
-                api_client,
+                client,
                 namespace=request.namespace,
                 finding_uuid=request.finding_uuid,
             )
         else:
             subject, _pv = resolve_from_package_version(
-                api_client,
+                client,
                 namespace=request.namespace,
                 package_version_uuid=request.pv_uuid or "",
             )
@@ -208,39 +187,24 @@ def build_reachability_context(request: ReachabilityContextRequest) -> Path:
         customer_cg_truncated = False
         oss_cg_truncated = False
         if request.include_customer_callgraph and subject.importer_pv_uuid:
-            objs, customer_cg_truncated = _list_callgraph_for_parent(
-                api_client,
+            decoded = _fetch_decoded_callgraph(
+                client,
+                package_version_uuid=subject.importer_pv_uuid,
                 namespace=request.namespace,
-                parent_uuid=subject.importer_pv_uuid,
-                page_size=request.page_size,
-                max_pages=request.max_pages,
             )
-            if customer_cg_truncated:
-                warnings.append(
-                    "Customer call-graph-data list may be truncated; "
-                    "use --max-pages 0 for unlimited."
-                )
-            if not objs:
+            if decoded is None:
                 warnings.append(
                     "No customer call-graph-data objects found for importer PV."
                 )
-            for o in objs:
-                cg_uuid = o.get("uuid")
-                if not cg_uuid:
-                    continue
-                full = api_client.get(
-                    f"v1/namespaces/{request.namespace}/call-graph-data/{cg_uuid}"
-                ).json()
-                summary, callables, edges = decode_payload(full)
+            else:
+                customer_callables = list(decoded.callables)
+                customer_edges = list(decoded.edges)
                 customer_exports.append(
                     {
-                        "call_graph_uuid": cg_uuid,
-                        "summary": summary,
+                        "call_graph_uuid": decoded.summary.get("uuid"),
+                        "summary": decoded.summary,
                     }
                 )
-                customer_callables.extend(callables)
-                customer_edges.extend(edges)
-            if customer_exports:
                 customer_cg_payload = {
                     "exports": customer_exports,
                     "callables_total": len(
@@ -268,42 +232,28 @@ def build_reachability_context(request: ReachabilityContextRequest) -> Path:
             and subject.oss_namespace
             and subject.oss_package_version_uuid
         ):
-            objs, oss_cg_truncated = _list_callgraph_for_parent(
-                api_client,
+            decoded = _fetch_decoded_callgraph(
+                client,
+                package_version_uuid=subject.oss_package_version_uuid,
                 namespace=subject.oss_namespace,
-                parent_uuid=subject.oss_package_version_uuid,
-                page_size=request.page_size,
-                max_pages=request.max_pages,
             )
-            if oss_cg_truncated:
-                warnings.append(
-                    "OSS call-graph-data list may be truncated; "
-                    "use --max-pages 0 for unlimited."
-                )
-            if not objs:
+            if decoded is None:
                 warnings.append(
                     "No oss call-graph-data objects found for dependency PV."
                 )
-            for o in objs:
-                cg_uuid = o.get("uuid")
-                if not cg_uuid:
-                    continue
-                full = api_client.get(
-                    f"v1/namespaces/{subject.oss_namespace}/call-graph-data/{cg_uuid}"
-                ).json()
-                summary, callables, edges = decode_payload(full)
-                oss_callables.extend(callables)
-                oss_edges.extend(edges)
-                if not oss_cg_payload:
-                    oss_cg_payload = {"exports": []}
-                oss_cg_payload["exports"].append(
-                    {"call_graph_uuid": cg_uuid, "summary": summary}
-                )
-            if oss_cg_payload is not None:
-                oss_cg_payload["callables_total"] = len(
-                    {r["method_id"] for r in oss_callables}
-                )
-                oss_cg_payload["edges_total"] = len(oss_edges)
+            else:
+                oss_callables = list(decoded.callables)
+                oss_edges = list(decoded.edges)
+                oss_cg_payload = {
+                    "exports": [
+                        {
+                            "call_graph_uuid": decoded.summary.get("uuid"),
+                            "summary": decoded.summary,
+                        }
+                    ],
+                    "callables_total": len({r["method_id"] for r in oss_callables}),
+                    "edges_total": len(oss_edges),
+                }
 
         stitching_payload: dict[str, Any] | None = None
         vulnerable_uris: list[str] = []

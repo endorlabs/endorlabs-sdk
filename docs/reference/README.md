@@ -13,9 +13,9 @@ Stable surface: `endorlabs.__all__` — APIClient, Client, exported exception cl
 ## Other surfaces
 
 - **operations:** `from endorlabs.operations import BaseResourceOperations` — generic CRUD engine used internally by the `Client` facade. Not intended for direct consumer use; prefer `Client`.
-- **utils:** `endorlabs.utils` — SchemaDriftDetector, model consistency helpers (see [namespace-traversal.md](../contributing/namespace-traversal.md)).
+- **utils:** `endorlabs.utils` — model validation helpers (see [namespace-traversal.md](../contributing/namespace-traversal.md)). API shape drift: [docs-drift-workflow.md](../contributing/docs-drift-workflow.md). Opt-in wire-key probes: `endorlabs.utils.schema_drift` (internal, not in `__all__`).
 
-**Model consistency and aliasing:** Model consistency compares SDK Pydantic field paths (Python names) to the OpenAPI spec. **Greenfield:** Use Python name = spec key for shared fields (`context`, `processing_status`, `index_data`); no prefixed names. If you add a Tier 3 alias (prefixed name + alias) for a shared concept, add an entry to [`endorlabs.models.field_aliases.SDK_FIELD_ALIAS_TO_SHARED`](../../src/endorlabs/models/field_aliases.py). See [contracts.md](../contracts.md) (Models and API parity -> Field aliasing).
+**Model consistency and aliasing:** Model consistency compares SDK Pydantic field paths (Python names) to the OpenAPI spec. **Greenfield:** Use Python name = spec key for shared fields (`context`, `processing_status`, `index_data`); no prefixed names. If you add a Tier 3 alias (prefixed name + alias) for a shared concept, add an entry to [`endorlabs.resources.field_aliases.SDK_FIELD_ALIAS_TO_SHARED`](../../src/endorlabs/resources/field_aliases.py). See [contracts.md](../contracts.md) (Models and API parity -> Field aliasing).
 
 - [resources.md](resources.md) — Thin landing page to canonical generated resources matrix.
 - [namespace.md](namespace.md) — Namespace in the SDK (list/get/create/update/delete, parameters, pitfalls).

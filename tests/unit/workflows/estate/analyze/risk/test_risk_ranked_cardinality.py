@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from endorlabs.workflows.estate.analyze.cardinality.columns import (
     RISK_WEIGHTED_CARDINALITY_SCHEMA,
@@ -238,33 +238,36 @@ def test_export_risk_ranked_version_cardinality_mocked() -> None:
         }
     ]
 
-    def _buckets(
-        _client: MagicMock,
-        _ns: str,
-        _params: object,
-        *,
-        max_pages: int | None = None,
-    ):
-        _ = max_pages
-        yield group_key, {"aggregation_count": {"count": 2}}
+    from endorlabs.operations.list_response import (
+        GroupBucket,
+        count_from_wire,
+        parse_group_key,
+    )
+
+    def _list_groups(**kwargs: object) -> object:
+        _ = kwargs
+        yield GroupBucket(
+            key=group_key,
+            parsed=parse_group_key(group_key),
+            data={"aggregation_count": {"count": 2}},
+            count=count_from_wire({"aggregation_count": {"count": 2}}),
+        )
+
+    client.DependencyMetadata.list_groups = Mock(side_effect=_list_groups)
 
     with patch(
-        "endorlabs.workflows.estate.analyze.risk.cardinality.iter_group_buckets",
-        side_effect=_buckets,
+        "endorlabs.workflows.estate.collect.findings.list_estate_namespace_names",
+        return_value=["tenant"],
     ):
         with patch(
-            "endorlabs.workflows.estate.collect.findings.list_estate_namespace_names",
+            "endorlabs.workflows.estate.analyze.risk.cardinality.list_estate_namespace_names",
             return_value=["tenant"],
         ):
-            with patch(
-                "endorlabs.workflows.estate.analyze.risk.cardinality.list_estate_namespace_names",
-                return_value=["tenant"],
-            ):
-                result = export_risk_ranked_version_cardinality(
-                    client,
-                    "tenant",
-                    top_n=1,
-                )
+            result = export_risk_ranked_version_cardinality(
+                client,
+                "tenant",
+                top_n=1,
+            )
 
     assert result.status in {"success", "partial"}
     assert result.document["schema"] == RISK_WEIGHTED_CARDINALITY_SCHEMA
@@ -289,24 +292,27 @@ def test_export_version_cardinality_for_package_match_mocked() -> None:
     )
     client = MagicMock()
 
-    def _buckets(
-        _client: MagicMock,
-        _ns: str,
-        _params: object,
-        *,
-        max_pages: int | None = None,
-    ):
-        _ = max_pages
-        yield group_key, {"aggregation_count": {"count": 1}}
+    from endorlabs.operations.list_response import (
+        GroupBucket,
+        count_from_wire,
+        parse_group_key,
+    )
+
+    def _list_groups(**kwargs: object) -> object:
+        _ = kwargs
+        yield GroupBucket(
+            key=group_key,
+            parsed=parse_group_key(group_key),
+            data={"aggregation_count": {"count": 1}},
+            count=count_from_wire({"aggregation_count": {"count": 1}}),
+        )
+
+    client.DependencyMetadata.list_groups = Mock(side_effect=_list_groups)
 
     with (
         patch(
             "endorlabs.workflows.estate.analyze.cardinality.export.discover_estate_namespace_names",
             return_value=["tenant"],
-        ),
-        patch(
-            "endorlabs.workflows.estate.analyze.cardinality.export.iter_group_buckets",
-            side_effect=_buckets,
         ),
     ):
         result = export_version_cardinality_for_package_match(
@@ -393,15 +399,10 @@ def test_export_version_cardinality_for_package_match_all_namespaces_fail() -> N
     )
 
     client = MagicMock()
-    with (
-        patch(
-            "endorlabs.workflows.estate.analyze.cardinality.export.discover_estate_namespace_names",
-            return_value=["tenant"],
-        ),
-        patch(
-            "endorlabs.workflows.estate.analyze.cardinality.export.iter_group_buckets",
-            side_effect=RuntimeError("boom"),
-        ),
+    client.DependencyMetadata.list_groups = Mock(side_effect=RuntimeError("boom"))
+    with patch(
+        "endorlabs.workflows.estate.analyze.cardinality.export.discover_estate_namespace_names",
+        return_value=["tenant"],
     ):
         result = export_version_cardinality_for_package_match(
             client, "tenant", "django"

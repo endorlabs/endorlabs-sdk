@@ -31,13 +31,13 @@ from pydantic import (
     model_validator,
 )
 
-from ..models.base import (
+from ..utils.logging_config import get_resource_logger
+from .base import (
     BaseMeta,
     BaseResource,
     BaseSpec,
     FlexibleEnum,
 )
-from ..utils.logging_config import get_resource_logger
 
 logger = get_resource_logger(__name__)
 
@@ -388,14 +388,6 @@ class SemgrepRule(BaseResource):
     disabled: bool | None = Field(None, description="Whether rule is disabled")
 
     model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift in semgrep rule responses."""
-        _ = info  # Reserved for future drift logging; matches BaseResource signature.
-        return v
 
     @override
     @classmethod

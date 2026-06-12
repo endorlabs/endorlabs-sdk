@@ -18,18 +18,18 @@ API USAGE NOTES:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
-from ..models.base import (
+from ..operations import BaseResourceOperations
+from ..utils.logging_config import get_resource_logger
+from .base import (
     BaseMeta,
     BaseResource,
     BaseSpec,
     FlexibleEnum,
 )
-from ..operations import BaseResourceOperations
-from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -181,38 +181,6 @@ class ScanLogRequest(BaseResource):
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = ScanLogRequestSpec(**data["spec"])
         super().__init__(**data)
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift for unknown fields."""
-        if info.field_name == "spec" and isinstance(v, dict):
-            # Log unknown fields for schema drift detection in spec
-            known_fields = {
-                "max_entries",
-                "start_time",
-                "end_time",
-                "newest_first",
-                "log_levels",
-                "scan_result_uuid",
-                "execution_id",
-                "project_uuid",
-                "installation_uuid",
-                "scan_request_uuid",
-                "onprem_scheduler_uuid",
-                "admin_filter",
-                "applied_filter",
-                "log_messages",
-            }
-            unknown_fields = set(v.keys()) - known_fields
-            if unknown_fields:
-                logger.warning(
-                    "Schema drift detected in %s: unknown fields %s",
-                    info.field_name,
-                    unknown_fields,
-                )
-        return v
 
 
 class ScanLogRequestSpecCreate(BaseModel):

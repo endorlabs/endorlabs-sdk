@@ -51,22 +51,3 @@ def mock_api_response():
         return response
 
     return _mock_response
-
-
-@pytest.fixture
-def schema_drift_data():
-    """Sample data with schema drift for testing."""
-    return {
-        "uuid": "test-uuid",
-        "meta": {
-            "name": "test-resource",
-            "description": "Test resource",
-            "unknown_field": "unknown_value",
-            "another_unknown": {"nested": "data"},
-        },
-        "spec": {
-            "known_field": "known_value",
-            "unknown_spec_field": "unknown_spec_value",
-        },
-        "tenant_meta": {"namespace": "test.namespace"},
-    }
