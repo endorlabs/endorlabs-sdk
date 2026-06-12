@@ -396,7 +396,7 @@ def _generate_payloads_md() -> str:
     lines.extend(
         [
             "",
-            "## Identity kwargs (`list()` / `lookup()` helpers)",
+            "## Identity kwargs (`list()` helpers)",
             "",
             "| Resource | Identity kwargs -> filter paths |",
             "|----------|---------------------------------|",
@@ -450,9 +450,6 @@ def _generate_api_surfaces_md() -> str:
             "| `list` | List resources with paging/filtering; non-empty `mask` → "
             "`dict` rows | `traverse`, "
             "`namespace`, `list_params`, `filter`, `mask`, `max_pages` |",
-            "| `lookup` | Return exactly one matching **model** (no list `mask`) | "
-            "`filter`, "
-            "identity kwargs via `filter_kwarg_map`, `max_pages` |",
             "| `list_iter` | Stream list results; non-empty `mask` → dict items | same "
             "as `list`, iterator output |",
             "| `get` | Fetch one resource by id or resource object | "
@@ -475,7 +472,7 @@ def _generate_api_surfaces_md() -> str:
     lines.extend(
         [
             _format_signature_line(method_name, getattr(_ListableFacade, method_name))
-            for method_name in ("list", "lookup", "list_iter")
+            for method_name in ("list", "list_iter")
         ]
     )
 

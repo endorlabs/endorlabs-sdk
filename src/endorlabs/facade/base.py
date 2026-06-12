@@ -1,10 +1,10 @@
 # pyright: reportImportCycles=false
-"""Listable facade base: list, lookup, list_iter."""
+"""Listable facade base: list, list_iter."""
 
 from __future__ import annotations
 
 import warnings
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator, Sequence
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -13,9 +13,9 @@ from typing import (
 
 from pydantic import BaseModel
 
-from ..core.exceptions import AmbiguousError, NotFoundError, ValidationError
+from ..core.exceptions import ValidationError
 from ..core.filter import F, FilterExpression
-from ..core.types import ListParameters, list_parameters_has_nonempty_field_mask
+from ..core.types import ListParameters
 from ..operations import BaseResourceOperations
 from ..utils.namespace import resolve_namespace_for_resource
 
@@ -25,9 +25,9 @@ if TYPE_CHECKING:
 
 
 class ListableFacade[T: BaseModel]:
-    """Base facade: list, list_iter, lookup only. No get/create/update/delete.
+    """Base facade: list and list_iter. No get/create/update/delete.
 
-    Shared parameter vocabulary (list, lookup, list_iter):
+    Shared parameter vocabulary (list, list_iter):
     traverse, concurrent, max_workers, namespace, list_params, max_pages, parent,
     filter, mask, page_size, page_token, page_id, sort_by, desc, count,
     from_date, to_date, archive, pr_uuid, ci_run_uuid, **kwargs (identity → filter).
@@ -479,145 +479,6 @@ class ListableFacade[T: BaseModel]:
         )
         return cast("list[T] | list[dict[str, Any]]", merged)
 
-    def lookup(
-        self,
-        traverse: bool = False,
-        concurrent: bool = True,
-        max_workers: int = 10,
-        namespace: str | None = None,
-        list_params: ListParameters | None = None,
-        max_pages: int = 2,
-        parent: Any = None,
-        filter: str | FilterExpression | None = None,
-        mask: str | None = None,
-        page_size: int | None = None,
-        page_token: str | None = None,
-        page_id: str | None = None,
-        sort_by: str | None = None,
-        desc: bool | None = None,
-        count: bool | None = None,
-        from_date: str | None = None,
-        to_date: str | None = None,
-        archive: bool | None = None,
-        pr_uuid: str | None = None,
-        ci_run_uuid: str | None = None,
-        **kwargs: Any,
-    ) -> T:
-        """Return the single resource matching criteria.
-
-        Calls ``list()`` under the hood.
-
-        Convenience wrapper that fetches up to ``max_pages`` (default 2) pages
-        and expects exactly one result.
-
-        Args:
-            traverse: Search child namespaces recursively (tenant-wide query).
-            concurrent: Query each namespace in parallel when ``traverse=True``
-                (default ``True``; pass ``False`` to opt out).
-            max_workers: Thread pool size for concurrent mode (default 10).
-            namespace: Canonical namespace path (e.g. ``"tenant.child"``);
-                defaults to the client tenant.
-            list_params: ``ListParameters`` object; flat kwargs override its
-                values when both are provided.
-            max_pages: Maximum pages to search (default 2).
-            parent: Scope results to a parent resource's namespace and
-                ``meta.parent_uuid``.
-            filter: API filter expression (``str`` or ``FilterExpression``
-                via ``F()``).
-            mask: Comma-separated field mask limiting returned fields.
-            page_size: Results per page; ``None`` uses the API default.
-            page_token: Pagination cursor from a previous response.
-            page_id: Pagination cursor (alternative to ``page_token``).
-            sort_by: Field path to sort results by.
-            desc: Reverse sort order when ``True``.
-            count: Return count only (no resource bodies).
-            from_date: ISO 8601 lower-bound date filter.
-            to_date: ISO 8601 upper-bound date filter.
-            archive: Query archived resources when ``True``.
-            pr_uuid: Deprecated; use ``ci_run_uuid``.
-            ci_run_uuid: PR scan context id for list scoping.
-            **kwargs: Identity kwargs mapped to filter clauses via
-                ``filter_kwarg_map`` (e.g. ``name="foo"`` becomes
-                ``meta.name=="foo"``).
-
-        Returns:
-            The single matching resource.
-
-        Raises:
-            NotFoundError: No resource matches.
-            AmbiguousError: Multiple match; narrow criteria.
-            ValueError: Missing namespace or a non-empty list field mask
-                (``mask=`` / ``ListParameters.mask``); ``lookup`` always returns
-                a full typed resource—use ``list()`` or ``list_iter()`` for
-                masked wire-shaped rows.
-
-        Example:
-            project = client.Project.lookup(namespace='tenant.team', name='my-project')
-
-        """
-        if "list" not in self._supported_ops:
-            raise NotImplementedError(
-                "This resource does not support lookup."
-            ) from None
-        lp = self._effective_list_parameters(
-            traverse=traverse,
-            list_params=list_params,
-            parent=parent,
-            filter=filter,
-            mask=mask,
-            page_size=page_size,
-            page_token=page_token,
-            page_id=page_id,
-            sort_by=sort_by,
-            desc=desc,
-            count=count,
-            from_date=from_date,
-            to_date=to_date,
-            archive=archive,
-            pr_uuid=pr_uuid,
-            ci_run_uuid=ci_run_uuid,
-            **kwargs,
-        )
-        if list_parameters_has_nonempty_field_mask(lp):
-            raise ValidationError(
-                "lookup returns a typed resource; omit mask= (or ListParameters.mask) "
-                "or use list() / list_iter() for masked wire-shaped rows."
-            )
-        items = self.list(
-            traverse=traverse,
-            concurrent=concurrent,
-            max_workers=max_workers,
-            namespace=namespace,
-            list_params=list_params,
-            max_pages=max_pages,
-            parent=parent,
-            filter=filter,
-            mask=mask,
-            page_size=page_size,
-            page_token=page_token,
-            page_id=page_id,
-            sort_by=sort_by,
-            desc=desc,
-            count=count,
-            from_date=from_date,
-            to_date=to_date,
-            archive=archive,
-            pr_uuid=pr_uuid,
-            ci_run_uuid=ci_run_uuid,
-            **kwargs,
-        )
-        if not items:
-            raise NotFoundError(
-                "No resource matched the given criteria.",
-                operation="lookup",
-            )
-        if len(items) > 1:
-            raise AmbiguousError(
-                f"Multiple resources ({len(items)}) match; narrow the query.",
-                operation="lookup",
-            )
-        return cast("T", items[0])
-
     def list_iter(
         self,
         traverse: bool = False,
@@ -896,4 +757,23 @@ class ListableFacade[T: BaseModel]:
             parent=parent,
             namespace=namespace,
             **kwargs,
+        )
+
+    def list_for_shards(
+        self,
+        shards: Sequence[Any],
+        filter_fn: Callable[[Any], str],
+        *,
+        max_workers: int = 10,
+        **list_kwargs: Any,
+    ) -> list[Any]:
+        """Parallel ``list()`` per shard via ``endorlabs.tools.list_sharding``."""
+        from endorlabs.tools.list_sharding import list_for_shards
+
+        return list_for_shards(
+            self,
+            shards,
+            filter_fn,
+            max_workers=max_workers,
+            **list_kwargs,
         )

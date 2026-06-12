@@ -131,7 +131,7 @@ def _select_project(
         uuid = str(getattr(project, "uuid", "")).lower()
         if q and q not in name and q not in uuid:
             continue
-        scans = client.ScanResult.list(parent=project, max_pages=1, page_size=1)
+        scans = client.ScanResult.list_by_project(project, limit=1).values or []
         if scans:
             return project, truncated
     raise ValueError(
@@ -140,13 +140,7 @@ def _select_project(
 
 
 def _resolve_latest_scan_for_project(client: endorlabs.Client, project: Any) -> Any:
-    scans = client.ScanResult.list(
-        parent=project,
-        sort_by="meta.create_time",
-        desc=True,
-        max_pages=1,
-        page_size=1,
-    )
+    scans = client.ScanResult.list_by_project(project, limit=1).values or []
     if not scans:
         raise ValueError("Resolved project has no scan results.")
     return scans[0]

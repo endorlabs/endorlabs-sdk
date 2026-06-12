@@ -55,14 +55,13 @@ projects = client.Project.list(traverse=True, max_pages=2)
 
 - Resource facades use **PascalCase**: `client.Project`, `client.Finding`, …
 - Match `endorctl api … --resource <Kind>` vocabulary.
-- `.get()` / `.lookup()` return typed models; `.list()` returns models unless `mask=` is set.
+- `.get()` returns typed models; `.list()` / `search_by_*` return models unless `mask=` is set; `list_by_*` returns `RouteResult`.
 
 ## Critical footguns
 
 Read **`rules/`** (Tier 1 bootstrap) before project-scoped RCA.
 
-1. **Ambiguous project URL:** `Project.lookup(name=…)` may raise `AmbiguousError`. Use
-   `Project.list(traverse=True)`, pass explicit namespace, or use project UUID.
+1. **Ambiguous project URL:** `Project.search_by_name(..., traverse=True, max_pages=…)` returns bounded candidates — pick the row for the intended namespace, narrow `namespace=`, or use project UUID with `get()`.
 2. **Project-scoped list namespace (MUST):** With `Client(tenant=<estate_root>)` and default
    `traverse=False`, lists hit only that path segment—not child namespaces where projects live.
    Resolve `Project` first, then pass **`namespace=project.namespace`** on `Finding`, `ScanResult`,
@@ -71,8 +70,7 @@ Read **`rules/`** (Tier 1 bootstrap) before project-scoped RCA.
    `refs/heads/main`. List findings without branch filter first; narrow after inspecting stored refs.
 4. **Tenant-wide scan cost:** `fetch_scan_results --all-projects` is O(projects × scans). Prefer
    project-scoped RCA.
-5. **List masks:** Non-empty `mask=` on `.list()` returns `dict` rows, not Pydantic models.
-   `lookup()` raises if mask is active—use `.list()` for masked rows.
+5. **List masks:** Non-empty `mask=` on `.list()` / `search_by_*` returns `dict` rows, not Pydantic models.
 6. **DependencyMetadata wire path:** List/group uses the **customer tenant namespace**, not the
    literal `oss` plane. Field `spec.dependency_data.namespace == "oss"` is data semantics only.
 7. **Workflow composition:** Extend workflow JSON/manifests before re-listing the API; escalate

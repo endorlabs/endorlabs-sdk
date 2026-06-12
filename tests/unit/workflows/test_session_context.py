@@ -108,7 +108,7 @@ class TestPullFindingsContext:
     def test_returns_empty_on_no_findings(self) -> None:
         """Returns FindingsContext with total=0 when no findings exist."""
         client = Mock()
-        client.Finding.list.return_value = []
+        client.Finding.list_by_project.return_value = Mock(values=[])
         project = _make_mock_project()
 
         ctx = pull_findings_context(client, project)
@@ -128,7 +128,7 @@ class TestPullFindingsContext:
             _make_mock_finding("f3", "FINDING_LEVEL_MEDIUM", ["FINDING_CATEGORY_SAST"]),
         ]
         client = Mock()
-        client.Finding.list.return_value = findings
+        client.Finding.list_by_project.return_value = Mock(values=findings)
         project = _make_mock_project()
 
         ctx = pull_findings_context(client, project)
@@ -145,7 +145,7 @@ class TestPullFindingsContext:
             _make_mock_finding("f2", "FINDING_LEVEL_LOW"),
         ]
         client = Mock()
-        client.Finding.list.return_value = findings
+        client.Finding.list_by_project.return_value = Mock(values=findings)
         project = _make_mock_project()
 
         ctx = pull_findings_context(client, project)
@@ -156,7 +156,7 @@ class TestPullFindingsContext:
     def test_handles_api_error_gracefully(self) -> None:
         """Returns empty context on API failure."""
         client = Mock()
-        client.Finding.list.side_effect = Exception("API error")
+        client.Finding.list_by_project.side_effect = Exception("API error")
         project = _make_mock_project()
 
         ctx = pull_findings_context(client, project)
@@ -390,7 +390,7 @@ class TestCreateSession:
     def test_returns_session_result(self, tmp_path: Path) -> None:
         """create_session returns a SessionResult with status."""
         client = Mock()
-        client.Finding.list.return_value = []
+        client.Finding.list_by_project.return_value = Mock(values=[])
         client.Policy.list.return_value = []
         client.RepositoryVersion.list.return_value = []
 
@@ -404,7 +404,7 @@ class TestCreateSession:
     def test_sets_error_status_when_findings_fetch_fails(self, tmp_path: Path) -> None:
         """Session result surfaces data retrieval errors."""
         client = Mock()
-        client.Finding.list.side_effect = Exception("boom")
+        client.Finding.list_by_project.side_effect = Exception("boom")
         client.Policy.list.return_value = []
         client.RepositoryVersion.list.return_value = []
         project = _make_mock_project()

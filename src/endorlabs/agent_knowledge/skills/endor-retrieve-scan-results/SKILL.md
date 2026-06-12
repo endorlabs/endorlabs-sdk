@@ -9,7 +9,7 @@ description: 'Project-scoped SDK workflow: resolve Project → latest ScanResult
 
 # Retrieving Scan Results and Findings
 
-**Default path:** one **Project** → **`ScanResult.list(parent=project)`** → **`Finding.list(..., namespace=project.namespace)`** — no `traverse=True` on findings after the project is resolved.
+**Default path:** one **Project** → **`ScanResult.list_by_project(project)`** → **`Finding.list_by_project(project)`** / **`Finding.list_by_scan(scan)`** — no `traverse=True` on findings after the project is resolved.
 
 For **scan pipeline** regressions (bounded scan window, heuristic pair scoring, scan logs via `ScanResult.get_logs`, aggregate diffs), use [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) first, then return here with scan UUIDs for finding-level drill-down.
 
@@ -32,66 +32,55 @@ Human-oriented reference: [docs/guides/retrieving-scan-results.md](../../../docs
 Prefer **namespace + filter** when the user names a child namespace; use **`traverse=True` only when the namespace is unknown** (discovery), with **`max_pages`** to bound cost.
 
 ```python
-# Discovery: namespace unknown — bounded traverse on Project only
-projects = client.Project.list(
-    filter='meta.name=="https://github.com/org/repo.git"',
+import endorlabs
+from endorlabs import F
+
+# Discovery — bounded list; caller picks row or disambiguates
+projects = client.Project.search_by_name(
+    "github.com/org/repo",
     traverse=True,
-    max_pages=1,
+    max_pages=2,
 )
-project = projects[0] if projects else None
 
-# When namespace is known — no traverse
-projects = client.Project.list(
-    filter='meta.name=="https://github.com/org/repo.git"',
+# Optional server-side pre-filter before fuzzy match
+projects = client.Project.search_by_name(
+    "repo",
     namespace="<child-or-leaf-namespace>",
-    max_pages=1,
+    filter=F("meta.tags").contains("production"),
+    max_pages=2,
 )
+
+project = projects[0] if projects else None
 ```
 
-```python
-# Single unambiguous row only
-project = client.Project.lookup(name="https://github.com/org/repo.git")
-```
-
-> **Agent note — duplicate projects:** The same repository URL may exist as **several** `Project` rows (different `tenant_meta.namespace`). `lookup` then raises **`AmbiguousError`**. Prefer `Project.list` with `meta.name` filter and `traverse=True` (bounded), then pick the row for the intended namespace, or use **project UUID** (+ optional namespace). See [AGENTS.md](../../../AGENTS.md#agent-notes).
+> **Agent note — duplicate projects:** The same repository URL may exist as **several** `Project` rows (different `tenant_meta.namespace`). `search_by_name` returns **all matches within limits** — pick the row for the intended namespace, narrow `namespace=`, or use **project UUID** with `get()`. See [resource-discovery contract](../../contracts/resource-discovery.md).
 
 ### Step 2: Get the Most Recent ScanResult
 
 ```python
-scan_results = client.ScanResult.list(
-    parent=project,  # namespace + meta.parent_uuid filter
-    sort_by="meta.create_time",
-    desc=True,
-    max_pages=1,
-)
-latest_scan = scan_results[0] if scan_results else None
+scan_result = client.ScanResult.list_by_project(project, limit=1)
+latest_scan = scan_result.values[0] if scan_result.values else None
 ```
+
+Or pass explicit list kwargs (date window, `max_pages`, `list_params`) without the workflow preset defaults.
 
 ### Step 3: Get Findings (no traverse)
 
-After **`project`** is resolved, pass **`namespace=project.namespace`** (or `latest_scan.namespace`). Do **not** add `traverse=True` — it widens scope and cost without fixing empty rows from wrong namespace.
+Use **generated accessor helpers** — they derive namespace from the source resource. Do **not** add `traverse=True`.
 
 ```python
 # All findings for the project (preferred)
-findings = client.Finding.list(
-    filter=f'spec.project_uuid=="{project.uuid}"',
-    namespace=project.namespace,
-)
+findings = client.Finding.list_by_project(project, max_pages=5).values or []
 
 # One scan's findings
-findings = client.Finding.list(
-    filter=f'context.scan_uuid=="{latest_scan.uuid}"',
-    namespace=latest_scan.namespace,
-)
+findings = client.Finding.list_by_scan(latest_scan, max_pages=5).values or []
 
-# Severity filter — still project-scoped
-findings = client.Finding.list(
-    filter=(
-        f'spec.project_uuid=="{project.uuid}" '
-        '& spec.level==FINDING_LEVEL_CRITICAL'
-    ),
-    namespace=project.namespace,
-)
+# Severity filter — merge with accessor list kwargs
+findings = client.Finding.list_by_project(
+    project,
+    filter='spec.level==FINDING_LEVEL_CRITICAL',
+    max_pages=5,
+).values or []
 ```
 
 **Tenant-wide findings** — only when the user **explicitly** asks for all namespaces / estate-wide reports. Add selective **`filter`**, **`max_pages`**, and prefer **`count=True`** for totals before full pagination:
@@ -162,9 +151,9 @@ When counting severity or unique issues, dedupe by explanation/remediation or fi
 
 | Operation | Example |
 |-----------|---------|
-| Latest scan for a project | `ScanResult.list(parent=project, sort_by="meta.create_time", desc=True, max_pages=1)` |
-| Findings for a project | `Finding.list(filter=f'spec.project_uuid=="{project.uuid}"', namespace=project.namespace)` |
-| Findings for one scan | `Finding.list(filter=f'context.scan_uuid=="{scan.uuid}"', namespace=scan.namespace)` |
+| Latest scan for a project | `ScanResult.list_by_project(project, limit=1).values[0]` |
+| Findings for a project | `Finding.list_by_project(project, max_pages=…).values` |
+| Findings for one scan | `Finding.list_by_scan(scan, max_pages=…).values` |
 | Discover project by URL | `Project.list(filter='meta.name=="…"', traverse=True, max_pages=1)` |
 | Tenant-wide critical (explicit ask) | `Finding.list(filter='spec.level==FINDING_LEVEL_CRITICAL', traverse=True, max_pages=5)` |
 

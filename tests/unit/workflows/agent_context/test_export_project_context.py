@@ -215,19 +215,22 @@ def test_list_package_versions_for_index_truncated_and_sorted() -> None:
     class FakeClient:
         class PackageVersion:
             @staticmethod
-            def list(**_kwargs):
-                return [
-                    SimpleNamespace(
-                        uuid="2",
-                        meta=SimpleNamespace(name="npm://z@1"),
-                        spec=None,
-                    ),
-                    SimpleNamespace(
-                        uuid="1",
-                        meta=SimpleNamespace(name="npm://a@1"),
-                        spec=None,
-                    ),
-                ]
+            def list_by_project(_project, **_kwargs):
+                route = SimpleNamespace(
+                    values=[
+                        SimpleNamespace(
+                            uuid="2",
+                            meta=SimpleNamespace(name="npm://z@1"),
+                            spec=None,
+                        ),
+                        SimpleNamespace(
+                            uuid="1",
+                            meta=SimpleNamespace(name="npm://a@1"),
+                            spec=None,
+                        ),
+                    ]
+                )
+                return route
 
     with patch("endorlabs.workflows.agent_context.package_versions.LOGGER.warning"):
         pvs, meta = list_package_versions_for_index(
@@ -413,7 +416,6 @@ def test_main_index_only_success_flow(tmp_path: Path) -> None:
     fake_client = SimpleNamespace(
         _client=object(),
         close=lambda: None,
-        Project=SimpleNamespace(resolve=lambda *_a, **_k: proj),
     )
 
     with (
@@ -421,6 +423,10 @@ def test_main_index_only_success_flow(tmp_path: Path) -> None:
         patch(
             "endorlabs.workflows.agent_context.export.endorlabs.Client",
             return_value=fake_client,
+        ),
+        patch(
+            "endorlabs.workflows.agent_context.export.resolve_project_candidate",
+            return_value=proj,
         ),
         patch("endorlabs.workflows.agent_context.export.slugify", return_value="repo"),
         patch("endorlabs.workflows.agent_context.export.write_json"),
@@ -461,7 +467,6 @@ def test_main_session_summaries_writes_manifest_pointers(tmp_path: Path) -> None
     fake_client = SimpleNamespace(
         _client=object(),
         close=lambda: None,
-        Project=SimpleNamespace(resolve=lambda *_a, **_k: proj),
     )
     session_result = SessionResult(
         session_dir=str(tmp_path),
@@ -480,6 +485,10 @@ def test_main_session_summaries_writes_manifest_pointers(tmp_path: Path) -> None
         patch(
             "endorlabs.workflows.agent_context.export.endorlabs.Client",
             return_value=fake_client,
+        ),
+        patch(
+            "endorlabs.workflows.agent_context.export.resolve_project_candidate",
+            return_value=proj,
         ),
         patch(
             "endorlabs.workflows.agent_context.export.create_session",

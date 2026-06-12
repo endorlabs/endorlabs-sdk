@@ -1,4 +1,4 @@
-"""Live integration tests for contract-driven facade routes (CRUD+)."""
+"""Live integration tests for generated facade accessor helpers."""
 
 from __future__ import annotations
 
@@ -102,3 +102,13 @@ class TestRouteAPI:
             pytest.skip("DependencyMetadata route not applicable for sample finding")
         assert result.edge_used.startswith("finding.dependency_metadata")
         assert result.value is not None or result.values
+
+    def test_package_version_list_by_project_returns_route_result(self) -> None:
+        project = self._first_project()
+        result = self.client.PackageVersion.list_by_project(
+            project,
+            max_pages=TEST_MAX_PAGES,
+        )
+        assert isinstance(result, RouteResult)
+        assert result.edge_used == "project.package_versions"
+        assert result.values is not None

@@ -8,7 +8,7 @@ from unittest.mock import Mock
 import pytest
 
 from endorlabs.core.exceptions import RouteNotApplicableError
-from endorlabs.operations.route_contract import load_golden_contract
+from endorlabs.operations.route_contract import RouteEdge, load_golden_contract
 from endorlabs.operations.routes import RouteExecutor, resolve_attr_path
 
 
@@ -119,10 +119,41 @@ def test_list_by_parent_via_list_fn() -> None:
     assert result.values and len(result.values) == 1
 
 
+def _semgrep_chain_edge() -> RouteEdge:
+    """Executor-only chain edge (not shipped on the public accessor surface)."""
+    return RouteEdge.from_dict(
+        {
+            "id": "finding.semgrep_rule.by_linter",
+            "from_kind": "Finding",
+            "to_kind": "SemgrepRule",
+            "edge": "via_intermediate",
+            "when": {"categories": ["FINDING_CATEGORY_SAST"]},
+            "steps": [
+                {
+                    "kind": "list_by_uuid_field",
+                    "through_kind": "LinterResult",
+                    "filter_field": "spec.project_uuid",
+                    "uuid_from": "source.spec.project_uuid",
+                },
+                {
+                    "kind": "get_by_uuid",
+                    "uuid_from": "through.spec.semgrep.rule_uuid",
+                    "optional": True,
+                },
+                {
+                    "kind": "list_by_attribute",
+                    "source_attr": "through.spec.semgrep.rule_name",
+                    "target_filter_field": "meta.name",
+                    "match": "substring",
+                    "optional": True,
+                },
+            ],
+        }
+    )
+
+
 def test_when_gate_rejects_non_sast() -> None:
-    contract = load_golden_contract()
-    edge = contract.edge_by_id("finding.semgrep_rule.by_linter")
-    assert edge is not None
+    edge = _semgrep_chain_edge()
     finding = _finding()
     finding.spec.finding_categories = ["FINDING_CATEGORY_SCA"]
     executor = _executor(SemgrepRule=Mock(), LinterResult=Mock())
@@ -169,9 +200,7 @@ def test_list_by_attribute_package_name() -> None:
 
 
 def test_semgrep_chain_get_by_rule_uuid() -> None:
-    contract = load_golden_contract()
-    edge = contract.edge_by_id("finding.semgrep_rule.by_linter")
-    assert edge is not None
+    edge = _semgrep_chain_edge()
     linter_ops = Mock()
     linter_ops.list.return_value = [
         SimpleNamespace(

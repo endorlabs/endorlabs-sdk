@@ -13,11 +13,13 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.workflows.projects.resolve import search_projects_by_name_or_uuid
+from endorlabs.workflows.projects.discovery import (
+    duplicate_project_decision,
+    resolve_project_candidate,
+)
 
 from .common import (
     default_troubleshooting_output_dir,
-    duplicate_project_decision,
     parse_app_scan_history_url,
     parse_endor_app_url,
     root_tenant,
@@ -124,17 +126,21 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     try:
         if args.project_uuid:
             ns = args.namespace or args.tenant
-            pr = client.Project.resolve(
-                args.project_uuid, namespace=ns, warnings_out=warnings
+            pr = resolve_project_candidate(
+                client,
+                args.project_uuid,
+                namespace=ns,
+                traverse=True,
+                warnings_out=warnings,
             )
             projects_out.append(_dump(pr))
 
         elif args.project_name:
-            matched = search_projects_by_name_or_uuid(
-                client,
+            matched = client.Project.search_by_name(
+                args.project_name,
                 namespace=args.tenant,
-                query=args.project_name,
-                warnings=warnings,
+                traverse=True,
+                warnings_out=warnings,
             )
 
             if not matched:

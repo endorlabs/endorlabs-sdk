@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: b12b60fa4c474fe39472d4f194775842fff334e9769aad5a7f18c7b4358b213b
+x-endor-source-sha256: 6605c51be4748a8f4e8885b2fb54aa196827b834726c10aa3de3733af94a6e2c
 ---
 
 # Workflow composition
@@ -20,7 +20,8 @@ x-endor-source-sha256: b12b60fa4c474fe39472d4f194775842fff334e9769aad5a7f18c7b43
 | Layer | Location | Responsibility | Must not |
 |-------|----------|----------------|----------|
 | **Primitives** | `Client`, `APIClient` | CRUD/list/get per resource | Orchestration, file I/O, argparse |
-| **Tools** | `endorlabs.tools.*` | Reusable domain utilities (e.g. list sharding) | Tenant-wide workflow opinions, CLI mains |
+| **Tools** | `endorlabs.tools.*` | Reusable list composition (e.g. `list_sharding` over accessors) | Tenant-wide workflow opinions, CLI mains |
+| **Utils** | `endorlabs.utils.*` | Transport/concurrency/namespace helpers | Domain list composition |
 | **Workflow libraries** | `endorlabs.workflows.*` (non-`cli`) | `Client` in → typed `WorkflowResult` out | `print()`, argparse, cwd-relative writes |
 | **Workflow CLIs** | `*.cli`, `troubleshooting_scans/*` | Args, artifacts, filenames | Become copy-paste targets for agents |
 | **Session scripts** | `workspace/sessions/<user>/scripts/` | Thin glue on artifacts + library imports | Live in `src/`, reimplement discovery |
@@ -49,10 +50,10 @@ After a workflow run, treat outputs as source of truth:
 
 Generic entrypoints (no estate literals):
 
-- `client.Project.resolve()` — resolve project by name or UUID
+- `client.Project.search_by_name()` — bounded project discovery by repo URL substring or partial UUID
 - `client.CallGraphData.decode()` / `.fetch()` — call graph fetch + decode
 - `client.ScanResult.get_logs()` — scan log lines (ScanLogRequest wire API)
-- `client.Finding.list_by_project()` / `list_by_scan()` — contract route lists
+- `client.Finding.list_by_project()` / `list_by_scan()` — generated relationship accessors
 - `client.ScanResult.list_by_project()` — scan results for a project
 - `client.<Resource>.count()` / `.list_groups()` / `.latest_created()` — list helpers (see [facade-helpers.md](../../docs/guides/facade-helpers.md))
 - `endorlabs.workflows.common.WorkflowResult`

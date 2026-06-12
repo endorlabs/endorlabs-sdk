@@ -114,7 +114,8 @@ workflow CLI (see [docs/contributing/list-query-performance.md](docs/contributin
 
 ```python
 repo_url = "https://github.com/tgowan-endor/BenchmarkJava.git"
-project = client.Project.lookup(traverse=True, filter=f"meta.name=={repo_url}")
+projects = client.Project.search_by_name(repo_url, traverse=True, max_pages=2)
+project = projects[0] if projects else None
 
 client.Project.update(project, scan_state="SCAN_STATE_REQUEST_FULL_RESCAN")
 

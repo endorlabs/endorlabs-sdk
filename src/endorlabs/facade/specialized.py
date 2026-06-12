@@ -78,7 +78,12 @@ class ScanResultFacade(ResourceRuntimeFacade[Any]):
         status_filter: str | None = None,
         **kwargs: Any,
     ) -> RouteResult[Any]:
-        """List scan results for a project (route ``project.scan_results``)."""
+        """List scan results for a project (accessor ``project.scan_results``).
+
+        Preset for troubleshooting workflows: newest-first, ``max_pages=1`` by
+        default, optional ``limit`` (maps to ``page_size``) and client-side
+        ``status_filter``.
+        """
         if namespace is not None:
             kwargs = {**kwargs, "namespace": namespace}
         if limit > 0 and "page_size" not in kwargs:
@@ -114,47 +119,112 @@ class ScanResultFacade(ResourceRuntimeFacade[Any]):
 
 
 class ProjectFacade(ResourceRuntimeFacade[Any]):
-    """Project facade with resolve sugar."""
+    """Project facade with search-by-name discovery."""
 
-    def resolve(
+    def search_by_name(
         self,
-        name_or_uuid: str,
+        query: str,
         *,
         namespace: str | None = None,
+        traverse: bool = True,
         warnings_out: list[str] | None = None,
-    ) -> Any:
-        """Resolve a project by UUID (with traverse fallback) or by name."""
-        from ..core.exceptions import NotFoundError as EndorNotFoundError
-        from ..core.filter import F
-        from ..resources.project import is_hex_project_id
+        **list_kwargs: Any,
+    ) -> list[Any]:
+        """Search projects by case-insensitive substring on ``meta.name`` or UUID."""
+        from .search import search_substring_on_fields
 
-        ns = self._ns(namespace)
-
-        if is_hex_project_id(name_or_uuid):
-            try:
-                return self.get(name_or_uuid, namespace=ns)
-            except EndorNotFoundError:
-                matches = self.list(
-                    namespace=ns,
-                    filter=F("uuid") == name_or_uuid,
-                    traverse=True,
-                    max_pages=1,
-                    page_size=5,
-                    concurrent=False,
-                )
-                if not matches:
-                    raise
-                if warnings_out is not None:
-                    warnings_out.append(
-                        f"Project {name_or_uuid!r} is not in namespace {ns!r}; "
-                        "resolved the same UUID via list(traverse=True)."
-                    )
-                return matches[0]
-        return self.lookup(name=name_or_uuid, namespace=ns, traverse=True)
+        return search_substring_on_fields(
+            self,
+            query=query,
+            field_paths=("meta.name",),
+            namespace=self._ns(namespace) if namespace is not None else None,
+            traverse=traverse,
+            warnings_out=warnings_out,
+            uuid_also=True,
+            **list_kwargs,
+        )
 
 
-class FindingFacade(ResourceRuntimeFacade[Any]):
-    """Finding facade with contract-driven list and stitch routes."""
+class VectorStoreFacade(ResourceRuntimeFacade[Any]):
+    """VectorStore facade with search-by-name discovery."""
+
+    def search_by_name(
+        self,
+        query: str,
+        *,
+        namespace: str | None = None,
+        traverse: bool = False,
+        warnings_out: list[str] | None = None,
+        **list_kwargs: Any,
+    ) -> list[Any]:
+        """Search vector stores by case-insensitive substring on ``meta.name``."""
+        from .search import search_substring_on_fields
+
+        return search_substring_on_fields(
+            self,
+            query=query,
+            field_paths=("meta.name",),
+            namespace=self._ns(namespace) if namespace is not None else None,
+            traverse=traverse,
+            warnings_out=warnings_out,
+            **list_kwargs,
+        )
+
+
+class AuthorizationPolicyFacade(ResourceRuntimeFacade[Any]):
+    """AuthorizationPolicy facade with claim-aware search."""
+
+    def search_by_claims(
+        self,
+        query: str,
+        *,
+        namespace: str | None = None,
+        traverse: bool = True,
+        warnings_out: list[str] | None = None,
+        **list_kwargs: Any,
+    ) -> list[Any]:
+        """Search policies by name, clause text, and target namespace fields."""
+        from .search import search_policy_by_claims
+
+        return search_policy_by_claims(
+            self,
+            query=query,
+            namespace=self._ns(namespace) if namespace is not None else None,
+            traverse=traverse,
+            warnings_out=warnings_out,
+            **list_kwargs,
+        )
+
+
+class VulnerabilityFacade(ResourceRuntimeFacade[Any]):
+    """Vulnerability (OSS catalog) facade with alias search."""
+
+    def search_by_vuln_alias(
+        self,
+        query: str,
+        *,
+        namespace: str | None = None,
+        traverse: bool = False,
+        warnings_out: list[str] | None = None,
+        **list_kwargs: Any,
+    ) -> list[Any]:
+        """Search OSS vulnerabilities by alias or name substring."""
+        from .search import search_substring_on_fields
+
+        return search_substring_on_fields(
+            self,
+            query=query,
+            field_paths=("meta.name", "spec.aliases"),
+            namespace=self._ns(namespace) if namespace is not None else None,
+            traverse=traverse,
+            warnings_out=warnings_out,
+            uuid_also=True,
+            **list_kwargs,
+        )
+
+
+class PackageVersionFacade(ResourceRuntimeFacade[Any]):
+    """PackageVersion facade with generated relationship accessors."""
 
     def list_by_project(
         self,
@@ -163,7 +233,23 @@ class FindingFacade(ResourceRuntimeFacade[Any]):
         filter: str | FilterExpression | None = None,
         **kwargs: Any,
     ) -> RouteResult[Any]:
-        """List findings for a project via ``spec.project_uuid``."""
+        """List package versions for a project (``project.package_versions``)."""
+        if filter is not None:
+            kwargs = {**kwargs, "filter": filter}
+        return self._execute_route("project.package_versions", source=project, **kwargs)
+
+
+class FindingFacade(ResourceRuntimeFacade[Any]):
+    """Finding facade with generated relationship accessors."""
+
+    def list_by_project(
+        self,
+        project: Any,
+        *,
+        filter: str | FilterExpression | None = None,
+        **kwargs: Any,
+    ) -> RouteResult[Any]:
+        """List findings for a project (generated accessor ``project.findings``)."""
         if filter is not None:
             kwargs = {**kwargs, "filter": filter}
         return self._execute_route("project.findings", source=project, **kwargs)
@@ -176,7 +262,7 @@ class FindingFacade(ResourceRuntimeFacade[Any]):
         filter: str | FilterExpression | None = None,
         **kwargs: Any,
     ) -> RouteResult[Any]:
-        """List findings scoped to a ScanResult via ``context.scan_uuid``."""
+        """List findings for a scan (generated accessor ``scan.findings``)."""
         if filter is not None:
             kwargs = {**kwargs, "filter": filter}
         if namespace is not None:
@@ -188,7 +274,7 @@ class FindingFacade(ResourceRuntimeFacade[Any]):
         finding: Any,
         **kwargs: Any,
     ) -> RouteResult[Any]:
-        """Finding → DependencyMetadata (GET ``target_uuid``, then package fallback)."""
+        """Resolve DependencyMetadata for a finding (accessors with fallback)."""
         spec = getattr(finding, "spec", None)
         target_uuid = getattr(spec, "target_uuid", None) if spec is not None else None
         if target_uuid:
@@ -206,23 +292,15 @@ class FindingFacade(ResourceRuntimeFacade[Any]):
             **kwargs,
         )
 
-    def to_semgrep_rule(
-        self,
-        finding: Any,
-        **kwargs: Any,
-    ) -> RouteResult[Any]:
-        """Follow finding → SemgrepRule via LinterResult chain (SAST findings only)."""
-        return self._execute_route(
-            "finding.semgrep_rule.by_linter",
-            source=finding,
-            **kwargs,
-        )
-
 
 FACADE_CLASS_BY_ATTR: dict[str, type[ResourceRuntimeFacade[Any]]] = {
     "Project": ProjectFacade,
     "ScanResult": ScanResultFacade,
     "Finding": FindingFacade,
+    "PackageVersion": PackageVersionFacade,
+    "VectorStore": VectorStoreFacade,
+    "AuthorizationPolicy": AuthorizationPolicyFacade,
+    "Vulnerability": VulnerabilityFacade,
 }
 
 
