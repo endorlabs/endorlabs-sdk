@@ -1233,6 +1233,19 @@ def test_finding_empty_list_no_warn_with_child_namespace(
     assert not [w for w in caught if issubclass(w.category, UserWarning)]
 
 
+def test_finding_empty_list_warns_with_project_uuid_filter_at_tenant_root(
+    client_with_mock_transport: Client,
+) -> None:
+    """project_uuid filter does not widen namespace; empty list still warns at tenant root."""
+    client = client_with_mock_transport
+    client.Finding._ops.list = Mock(return_value=[])
+    with pytest.warns(UserWarning, match="namespace=project.namespace"):
+        client.Finding.list(
+            filter='spec.project_uuid=="proj-1"',
+            max_pages=TEST_MAX_PAGES,
+        )
+
+
 def test_facade_count_delegates_to_ops(client_with_mock_transport: Client) -> None:
     client = client_with_mock_transport
     client.Finding._ops.count = Mock(return_value=7)

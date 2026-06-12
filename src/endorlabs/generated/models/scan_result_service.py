@@ -242,6 +242,26 @@ class SpecFindingLevel(StrEnum):
     FINDING_LEVEL_LOW = 'FINDING_LEVEL_LOW'
 
 
+class SpecPackageVersionData(BaseModel):
+    """
+    Data about a deleted package version that helps justify the
+    number of dependencies and findings deleted by the scan.
+    """
+
+    dependency_count: int | None = None
+    """
+    Dependency count.
+    """
+    finding_count: int | None = None
+    """
+    Finding count.
+    """
+    name: str | None = None
+    """
+    Package version name.
+    """
+
+
 class SpecScanComponent(StrEnum):
     """
     Identifies an individual scanner component whose execution
@@ -616,6 +636,7 @@ class V1EndorctlRC(StrEnum):
      - ENDORCTL_RC_SECURITY_REVIEW_ERROR: Error while running the PR security review.
      - ENDORCTL_RC_CODE_API_ERROR: Error while running codeAPI.
      - ENDORCTL_RC_BASELINE_NOT_FOUND: Baseline is invalid or has not been scanned yet.
+     - ENDORCTL_RC_SCAN_CANCELLED: Scan was cancelled.
      - ENDORCTL_RC_POLICY_VIOLATION: One or more, enforced, admission policy violations detected.
      - ENDORCTL_RC_POLICY_WARNING: One ore more, unenforced, admission policy violations detected.
      - ENDORCTL_RC_PR_SECURITY_REVIEW_ERROR: Deprecated: Use ENDORCTL_RC_SECURITY_REVIEW_ERROR instead.
@@ -673,6 +694,7 @@ class V1EndorctlRC(StrEnum):
     ENDORCTL_RC_SECURITY_REVIEW_ERROR = 'ENDORCTL_RC_SECURITY_REVIEW_ERROR'
     ENDORCTL_RC_CODE_API_ERROR = 'ENDORCTL_RC_CODE_API_ERROR'
     ENDORCTL_RC_BASELINE_NOT_FOUND = 'ENDORCTL_RC_BASELINE_NOT_FOUND'
+    ENDORCTL_RC_SCAN_CANCELLED = 'ENDORCTL_RC_SCAN_CANCELLED'
     ENDORCTL_RC_POLICY_VIOLATION = 'ENDORCTL_RC_POLICY_VIOLATION'
     ENDORCTL_RC_POLICY_WARNING = 'ENDORCTL_RC_POLICY_WARNING'
     ENDORCTL_RC_PR_SECURITY_REVIEW_ERROR = 'ENDORCTL_RC_PR_SECURITY_REVIEW_ERROR'
@@ -1397,6 +1419,10 @@ class V1ScanResultSpec(BaseModel):
     """
     Map of basic metadata for all findings deleted by the scan, indexed by finding uuid.
     Not available for CI runs.
+    """
+    deleted_package_versions: dict[str, SpecPackageVersionData] | None = None
+    """
+    List of deleted package versions indexed by UUID.
     """
     ecosystem_dep_counts: dict[str, int] | None = None
     """

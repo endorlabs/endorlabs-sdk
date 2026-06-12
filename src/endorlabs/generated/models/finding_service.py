@@ -4435,6 +4435,16 @@ class Endorv1VersionMetadata(BaseModel):
     """
     End of life timestamp the package version if known.
     """
+    last_package_info_attempt: AwareDatetime | None = None
+    """
+    The last time a per-version PackageInfo enrichment call succeeded for this
+    version. Distinct from last_updated (field 8), which only records that the
+    registry's bulk version listing returned this version. A non-nil value means
+    PackageInfo ran and we hold the best enrichment data the registry will give
+    us, even if that data is empty (for example tarball-only releases with no
+    declared license or source code URL). Consumers use this to decide whether a
+    per-version enrichment call is still needed.
+    """
     last_updated: AwareDatetime | None = None
     """
     The last time that this particular version was re-synced with the source.
@@ -5150,6 +5160,16 @@ class Version(BaseModel):
     eol_timestamp: AwareDatetime | None = None
     """
     End of life timestamp the package version if known.
+    """
+    last_package_info_attempt: AwareDatetime | None = None
+    """
+    The last time a per-version PackageInfo enrichment call succeeded for this
+    version. Distinct from last_updated (field 8), which only records that the
+    registry's bulk version listing returned this version. A non-nil value means
+    PackageInfo ran and we hold the best enrichment data the registry will give
+    us, even if that data is empty (for example tarball-only releases with no
+    declared license or source code URL). Consumers use this to decide whether a
+    per-version enrichment call is still needed.
     """
     last_updated: AwareDatetime | None = None
     """

@@ -10,6 +10,35 @@ from __future__ import annotations
 from typing import Any
 
 
+def resource_namespace(resource: Any) -> str | None:
+    """Return canonical namespace from a resource model or wire-shaped dict."""
+    ns = getattr(resource, "namespace", None)
+    if isinstance(ns, str) and ns.strip():
+        return ns
+    tenant_meta = getattr(resource, "tenant_meta", None)
+    if tenant_meta is not None:
+        tm_ns = getattr(tenant_meta, "namespace", None)
+        if isinstance(tm_ns, str) and tm_ns.strip():
+            return tm_ns
+    if isinstance(resource, dict):
+        tenant_meta_dict = resource.get("tenant_meta")
+        if isinstance(tenant_meta_dict, dict):
+            dict_ns = tenant_meta_dict.get("namespace")
+            if isinstance(dict_ns, str) and dict_ns.strip():
+                return dict_ns
+    return None
+
+
+def resource_in_namespace_tree(resource: Any, namespace: str) -> bool:
+    """True when *resource* lives in *namespace* or a descendant path segment."""
+    resource_ns = resource_namespace(resource)
+    if not resource_ns:
+        return True
+    if resource_ns == namespace:
+        return True
+    return resource_ns.startswith(f"{namespace}.")
+
+
 def resolve_namespace_for_resource(resource: Any, fallback: str | None) -> str | None:
     """Resolve namespace from a resource object (duck typing).
 
