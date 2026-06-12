@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-portable-examples.md
-x-endor-source-sha256: 21478ae0762fbe7c2f32021f0467e33e3a0e86b3edee2c80eca782141ae35083
+x-endor-source-sha256: 59cad39408479335d533d10394b249d5e7f4a72dc79628363b6271b04b2adbd3
 ---
 
 # Portable examples
@@ -41,5 +41,5 @@ integration tests with env vars, or user-provided inputs.
 ## Runtime resolution
 
 - Tenant/namespace: `ENDOR_NAMESPACE`, CLI `--tenant` / `--namespace`, or `Client(tenant=…)`.
-- Project: user-provided URL/UUID or `Project.list` / `Project.resolve` at runtime.
+- Project: user-provided URL/UUID or `Project.search_by_name` / `Project.get` at runtime.
 - Never hardcode production UUIDs in skills or contracts.

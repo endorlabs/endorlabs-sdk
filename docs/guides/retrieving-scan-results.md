@@ -10,16 +10,19 @@ Agent skill (on-demand): [endor-retrieve-scan-results](../../agent-knowledge/ski
 
 ## Default workflow (one project)
 
-1. **Resolve Project** — `client.Project.resolve(name_or_uuid)` or `Project.lookup(name=…, namespace=…)`.
-2. **Scan results** — `client.ScanResult.list_by_project(project, max_pages=1)` or `ScanResult.list(parent=project, sort_by="meta.create_time", desc=True, max_pages=1)`.
+1. **Resolve Project** — `client.Project.search_by_name(query, …)` or `Project.get(uuid)` when UUID is known.
+2. **Scan results** — `client.ScanResult.list_by_project(project, max_pages=1, sort_by="meta.create_time", desc=True)` or `ScanResult.list(parent=project, sort_by="meta.create_time", desc=True, max_pages=1)`.
 3. **Findings** — `client.Finding.list_by_project(project, max_pages=…)` or `Finding.list_by_scan(scan, max_pages=…)`. **Do not** use `traverse=True` here — wrong namespace causes empty rows, not errors ([contracts.md](../contracts.md) — project-scoped lists).
 
-Route methods return `RouteResult`; use `.values` for rows. See [facade-helpers.md](facade-helpers.md) and [resource-routes.md](../generated-reference/resource-routes.md).
+Generated accessor helpers return `RouteResult`; use `.values` for rows. See [facade-helpers.md](facade-helpers.md) and [resource-routes.md](../generated-reference/resource-routes.md).
 
 ```python
-project = client.Project.lookup(name=repo_url, namespace=ns)
+projects = client.Project.search_by_name(repo_url, namespace=ns, max_pages=2)
+project = projects[0] if projects else None
 findings = client.Finding.list_by_project(project, max_pages=1)
-scans = client.ScanResult.list_by_project(project, max_pages=1)
+scans = client.ScanResult.list_by_project(
+    project, max_pages=1, sort_by="meta.create_time", desc=True
+)
 if scans.values:
     scan_findings = client.Finding.list_by_scan(scans.values[0], max_pages=1)
 ```

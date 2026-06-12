@@ -50,12 +50,12 @@ def compare_scan_logs(
 
     result = ScanLogComparison(num_scans_requested=num_scans)
 
-    scan_results = client.ScanResult.list_by_project(
+    scan_result = client.ScanResult.list_by_project(
         project_uuid,
         namespace=namespace,
         limit=num_scans,
     )
-    scan_rows = scan_results.values or []
+    scan_rows = scan_result.values or []
 
     result.num_scans_found = len(scan_rows)
     if not scan_rows:

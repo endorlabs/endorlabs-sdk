@@ -14,7 +14,7 @@ Keep **filter** and **mask** as separate concepts and separate parameters:
 
 - **filter** = "which resources" (e.g. `spec.level==FINDING_LEVEL_CRITICAL`).
 - **mask** (on list) = "which fields in the response" (e.g. `meta.name,spec.level`).
-- **List return type:** With a **non-empty** mask (after strip), `list()` returns **`list[dict[str, Any]]`**. With no effective mask, rows are full **Pydantic** models. **`list_iter()`** yields **`T | dict[str, Any]`** per item under the same mask rule. **`lookup()`** always returns a model and **raises `ValueError`** if a non-empty mask would apply—use **`list()`** / **`list_iter()`** for masked dict rows.
+- **List return type:** With a **non-empty** mask (after strip), `list()` returns **`list[dict[str, Any]]`**. With no effective mask, rows are full **Pydantic** models. **`list_iter()`** yields **`T | dict[str, Any]`** per item under the same mask rule. **`search_by_*`** discovery methods forward list kwargs including **`mask=`** under the same rule.
 - `filter` and list `mask` semantics mirror MongoDB-style MQL query/projection conventions.
 - **update_mask** = "which fields to send in the PATCH body"; only for `.update()`, not list.
 
@@ -34,7 +34,7 @@ Definitions: [contracts.md](../contracts.md) (List parameters, Update and update
   - **namespace** — override default namespace.
   - **list_params** — optional; to pass a full `ListParameters` instead of kwargs.
   - **max_pages** — pagination cap.
-  - **Identity kwargs** — for resources that support them (e.g. projects, repositories), pass `name`, `vcs_url`/`git_url`; they are translated into a filter (e.g. `meta.name == 'backend'`) and merged with an explicit `filter` if provided. Use `.lookup(name="...")` to get the single matching resource or raise `NotFoundError`/`AmbiguousError`. **List/lookup by identity** is supported only for resources that have an identity filter map (see [reference/create-update-payloads.md](../reference/create-update-payloads.md)); for other resources use `filter=` explicitly.
+  - **Identity kwargs** — for resources that support them (e.g. projects, repositories), pass `name`, `vcs_url`/`git_url`; they are translated into an exact filter (e.g. `meta.name == 'backend'`) and merged with an explicit `filter` if provided. For **discovery** (repo URLs, partial names), use resource-specific **`search_by_*`** methods — see [facade-helpers.md](facade-helpers.md) and shipped `contracts/resource-discovery.md`. **List by identity kwargs** is for wire-exact MQL only (see [reference/create-update-payloads.md](../reference/create-update-payloads.md)); for other resources use `filter=` explicitly.
 
 Recommended style:
 

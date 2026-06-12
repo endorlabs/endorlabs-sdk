@@ -1,5 +1,5 @@
 # ruff: noqa: D101, D102, TRY004
-"""Route contract types and validation for CRUD+ stitched paths."""
+"""Route contract types and validation for generated accessor edges."""
 
 from __future__ import annotations
 

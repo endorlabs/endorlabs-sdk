@@ -101,7 +101,7 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (41 resource
 | VersionUpgrade | no | meta.description, meta.tags |
 | Vulnerability | no | meta.description, meta.tags |
 
-## Identity kwargs (`list()` / `lookup()` helpers)
+## Identity kwargs (`list()` helpers)
 
 | Resource | Identity kwargs -> filter paths |
 |----------|---------------------------------|

@@ -121,7 +121,12 @@ def _make_finding(
 def _make_mock_client(findings: list[Mock] | None = None) -> Mock:
     """Build a mock Client for tagging tests."""
     client = Mock()
-    client.Finding.list.return_value = findings or []
+    project = Mock()
+    project.uuid = "proj-1"
+    client.Project.get.return_value = project
+    route = Mock()
+    route.values = findings or []
+    client.Finding.list_by_project.return_value = route
     client.Finding.update.return_value = Mock()
     return client
 
@@ -197,9 +202,10 @@ class TestTagFindingsByCriteria:
             ["FINDING_CATEGORY_SECRETS", "FINDING_CATEGORY_SAST"],
             "fp",
         )
-        call_kwargs = client.Finding.list.call_args.kwargs
+        call_kwargs = client.Finding.list_by_project.call_args.kwargs
         assert "FINDING_CATEGORY_SECRETS" in call_kwargs["filter"]
         assert "FINDING_CATEGORY_SAST" in call_kwargs["filter"]
+        assert "spec.project_uuid" not in (call_kwargs.get("filter") or "")
 
     def test_filter_includes_file_path(self) -> None:
         client = _make_mock_client([])
@@ -211,7 +217,7 @@ class TestTagFindingsByCriteria:
             "fp",
             file_path="src/utils/",
         )
-        call_kwargs = client.Finding.list.call_args.kwargs
+        call_kwargs = client.Finding.list_by_project.call_args.kwargs
         assert "src/utils/" in call_kwargs["filter"]
 
 

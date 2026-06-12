@@ -142,24 +142,16 @@ def pull_findings_context(
     """
     project_uuid = project.uuid
     project_name = project.meta.name if project.meta else project_uuid
-    project_ns = (
-        project.tenant_meta.namespace
-        if project.tenant_meta and project.tenant_meta.namespace
-        else None
-    )
 
     ctx = FindingsContext(project_uuid=project_uuid, project_name=project_name)
 
     try:
         list_kwargs: dict[str, Any] = {
-            "filter": f'spec.project_uuid=="{project_uuid}"',
             "max_pages": max_pages,
             "page_size": 100,
         }
-        if project_ns:
-            list_kwargs["namespace"] = project_ns
-
-        findings = client.Finding.list(**list_kwargs)
+        findings_result = client.Finding.list_by_project(project, **list_kwargs)
+        findings = findings_result.values or []
     except Exception as exc:
         logger.warning("Unable to fetch findings: %s", exc)
         ctx.fetch_error = str(exc)

@@ -66,12 +66,39 @@ def test_scan_result_list_by_project_uses_parent_list(
         uuid="proj-1",
         tenant_meta=SimpleNamespace(namespace=TEST_NAMESPACE_DEFAULT),
     )
-    mock_list = Mock(return_value=[])
-    client.ScanResult._ops.list = mock_list
+    route_result = Mock(values=[], edge_used="project.scan_results", warnings=[])
     with patch.object(
-        client.ScanResult, "list", wraps=client.ScanResult.list
-    ) as list_mock:
+        client.ScanResult,
+        "_execute_route",
+        return_value=route_result,
+    ) as execute:
         client.ScanResult.list_by_project(project, limit=5)
-        list_mock.assert_called()
-        _, kwargs = list_mock.call_args
-        assert kwargs.get("parent") is project
+        execute.assert_called_once()
+        call = execute.call_args
+        assert call.args[0] == "project.scan_results"
+        assert call.kwargs["source"] is project
+        assert call.kwargs["page_size"] == 5
+
+
+def test_package_version_list_by_project_delegates_to_execute_route(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mock = Mock(spec=endorlabs.api_client.APIClient)
+    client = endorlabs.Client(api_client=mock, tenant=TEST_NAMESPACE_DEFAULT)
+    project = SimpleNamespace(
+        uuid="proj-1",
+        tenant_meta=SimpleNamespace(namespace=TEST_NAMESPACE_DEFAULT),
+    )
+    route_result = Mock(values=[])
+    with patch.object(
+        client.PackageVersion,
+        "_execute_route",
+        return_value=route_result,
+    ) as execute:
+        result = client.PackageVersion.list_by_project(project, max_pages=1)
+        execute.assert_called_once_with(
+            "project.package_versions",
+            source=project,
+            max_pages=1,
+        )
+        assert result is route_result

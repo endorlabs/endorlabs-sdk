@@ -260,8 +260,8 @@ def tag_findings_by_criteria(
     Returns:
         TaggingResult with counts of tagged / skipped / failed findings.
     """
-    # Build filter expression
-    filter_parts = [f'spec.project_uuid=="{project_uuid}"']
+    # Build filter expression (project scope via list_by_project accessor)
+    filter_parts: list[str] = []
     if categories:
         cat_clauses = " OR ".join(
             f'spec.finding_categories=="{cat}"' for cat in categories
@@ -269,14 +269,17 @@ def tag_findings_by_criteria(
         filter_parts.append(f"({cat_clauses})")
     if file_path:
         filter_parts.append(f'spec.dependency_file_paths contains ["{file_path}"]')
-    filter_expr = " AND ".join(filter_parts)
+    filter_expr = " AND ".join(filter_parts) if filter_parts else None
 
-    findings = client.Finding.list(
+    project = client.Project.get(project_uuid, namespace=namespace)
+    route = client.Finding.list_by_project(
+        project,
         namespace=namespace,
         filter=filter_expr,
         sort_by="spec.level",
         desc=True,
     )
+    findings = route.values or []
 
     result = TaggingResult(total=len(findings))
 

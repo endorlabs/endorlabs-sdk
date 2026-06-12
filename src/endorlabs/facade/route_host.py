@@ -1,6 +1,6 @@
 # pyright: reportUninitializedInstanceVariable=false
 # ruff: noqa: TC001
-"""Private route host mixin for BaseFacade (contract-driven CRUD+)."""
+"""Private route host mixin for BaseFacade (generated accessor helpers)."""
 
 from __future__ import annotations
 
