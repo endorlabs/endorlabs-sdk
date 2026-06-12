@@ -86,19 +86,39 @@ def test_agent_knowledge_bootstrap_paths() -> None:
     )
 
 
+def _resolve_library_entrypoint(target: str) -> str | None:
+    """Return an error message, or None when the entrypoint resolves."""
+    if target.startswith("endorlabs.Client."):
+        parts = target.split(".")
+        if len(parts) != 4:
+            return f"expected endorlabs.Client.<Resource>.<method>, got {target!r}"
+        _, _, resource, method = parts
+        facade_mod = importlib.import_module("endorlabs.facade")
+        facade_cls = getattr(facade_mod, f"{resource}Facade", None)
+        if facade_cls is None:
+            return f"no facade class {resource}Facade"
+        if not hasattr(facade_cls, method):
+            return f"missing method {method!r} on {resource}Facade"
+        return None
+
+    module_name, attr_name = target.rsplit(".", 1)
+    try:
+        module = importlib.import_module(module_name)
+    except ImportError as exc:
+        return f"import failed ({exc})"
+    if not hasattr(module, attr_name):
+        return f"missing attribute {attr_name!r}"
+    return None
+
+
 def test_library_entrypoints_importable() -> None:
     manifest = json.loads((BUNDLE_ROOT / "MANIFEST.json").read_text(encoding="utf-8"))
     errors: list[str] = []
     for row in manifest.get("workflows", []):
         for target in row.get("library_entrypoints") or []:
-            module_name, attr_name = target.rsplit(".", 1)
-            try:
-                module = importlib.import_module(module_name)
-            except ImportError as exc:
-                errors.append(f"{target}: import failed ({exc})")
-                continue
-            if not hasattr(module, attr_name):
-                errors.append(f"{target}: missing attribute {attr_name!r}")
+            err = _resolve_library_entrypoint(target)
+            if err is not None:
+                errors.append(f"{target}: {err}")
     if errors:
         pytest.fail("\n".join(errors))
 

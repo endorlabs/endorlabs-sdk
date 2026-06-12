@@ -29,17 +29,17 @@ is 20 seconds. Use --timeout option to override if needed.
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, override
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field, field_validator
 
-from ..models.base import (
+from ..utils.logging_config import get_resource_logger
+from .base import (
     BaseMeta,
     BaseResource,
     BaseSpec,
     FlexibleEnum,
 )
-from ..utils.logging_config import get_resource_logger
 
 logger = get_resource_logger(__name__)
 
@@ -208,33 +208,6 @@ class AuditLog(BaseResource):
     spec: AuditLogSpec | None = Field(None, description="Audit log specification")  # type: ignore
 
     model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift in audit log responses."""
-        if info.field_name == "spec" and isinstance(v, dict):
-            # Log unknown fields for schema drift detection in spec
-            known_fields = {
-                "message_uuid",
-                "message_kind",
-                "operation",
-                "payload",
-                "error",
-                "claims",
-                "remote_address",
-            }
-
-            unknown_fields = set(v.keys()) - known_fields
-            if unknown_fields:
-                logger.warning(
-                    "Schema drift detected in %s: unknown fields %s",
-                    info.field_name,
-                    unknown_fields,
-                )
-
-        return v
 
 
 class CreateAuditLogPayload(BaseModel):

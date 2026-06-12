@@ -397,7 +397,7 @@ def _build_markdown(
                 f"(max_errors={max_errors})."
             )
     else:
-        lines.append("- No error-level log entries detected in ScanLogs artifact.")
+        lines.append("- No error-level log entries detected in scan log artifact.")
 
     lines.extend(
         [

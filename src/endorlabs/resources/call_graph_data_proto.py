@@ -1,4 +1,4 @@
-"""Protobuf wire-format decoder for call graph payloads (no compiled proto)."""
+"""Protobuf wire-format decoder for CallGraphData payloads (no compiled proto)."""
 
 from __future__ import annotations
 
@@ -8,9 +8,9 @@ from datetime import UTC, datetime
 from typing import Any
 
 try:
-    import zstandard  # type: ignore[import-untyped]
+    import zstandard
 except ImportError:
-    zstandard = None  # type: ignore[assignment]
+    zstandard = None
 
 _HAS_ZSTD = zstandard is not None
 
@@ -325,7 +325,7 @@ def _decode_type(key: str, type_bytes: bytes) -> TypeInfo:
         if not isinstance(method_entry_bytes, bytes):
             continue
         method_id_raw, callable_bytes = _decode_proto_map_entry(method_entry_bytes)
-        if method_id_raw is not None and isinstance(callable_bytes, bytes):
+        if method_id_raw is not None:
             methods.append(_decode_callable(int(method_id_raw), callable_bytes))
     return TypeInfo(
         key=key,
@@ -368,7 +368,7 @@ def _decode_call(call_bytes: bytes) -> CallEdge:
         if not isinstance(entry_bytes, bytes):
             continue
         site_key_raw, site_body = _decode_proto_map_entry(entry_bytes)
-        if site_key_raw is not None and isinstance(site_body, bytes):
+        if site_key_raw is not None:
             sites.append(_decode_callsite(int(site_key_raw), site_body))
     return CallEdge(source_id=source_id or 0, target_id=target_id or 0, callsites=sites)
 
@@ -428,12 +428,12 @@ def decode_callgraph(envelope: dict[str, Any]) -> CallGraphInfo:
         for entry in _get_fields(cha_raw, 1):
             if isinstance(entry, bytes):
                 key_raw, type_body = _decode_proto_map_entry(entry)
-                if key_raw and isinstance(type_body, bytes):
+                if key_raw:
                     internal_types.append(_decode_type(str(key_raw), type_body))
         for entry in _get_fields(cha_raw, 2):
             if isinstance(entry, bytes):
                 key_raw, type_body = _decode_proto_map_entry(entry)
-                if key_raw and isinstance(type_body, bytes):
+                if key_raw:
                     external_types.append(_decode_type(str(key_raw), type_body))
 
     call_edges = [

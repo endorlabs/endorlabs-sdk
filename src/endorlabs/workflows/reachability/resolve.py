@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from endorlabs import Client
 
 
 @dataclass
@@ -25,23 +28,23 @@ class ReachabilitySubject:
 
 
 def resolve_from_finding(
-    api_client: Any,
+    client: Client,
     *,
     namespace: str,
     finding_uuid: str,
 ) -> tuple[ReachabilitySubject, dict[str, Any], dict[str, Any] | None]:
     """Resolve cross-plane IDs starting from a finding UUID."""
-    finding = api_client.get(
-        f"v1/namespaces/{namespace}/findings/{finding_uuid}"
-    ).json()
+    finding = client.Finding.get(finding_uuid, namespace=namespace).model_dump(
+        mode="json"
+    )
     fs = finding.get("spec") or {}
     target_uuid = fs.get("target_uuid")
 
     dep_meta: dict[str, Any] | None = None
     if target_uuid:
-        dep_meta = api_client.get(
-            f"v1/namespaces/{namespace}/dependency-metadata/{target_uuid}"
-        ).json()
+        dep_meta = client.DependencyMetadata.get(
+            target_uuid, namespace=namespace
+        ).model_dump(mode="json")
 
     dd = ((dep_meta or {}).get("spec") or {}).get("dependency_data") or {}
     importer = ((dep_meta or {}).get("spec") or {}).get("importer_data") or {}
@@ -64,15 +67,15 @@ def resolve_from_finding(
 
 
 def resolve_from_package_version(
-    api_client: Any,
+    client: Client,
     *,
     namespace: str,
     package_version_uuid: str,
 ) -> tuple[ReachabilitySubject, dict[str, Any]]:
     """Resolve subject when caller provides importer package-version UUID."""
-    pv = api_client.get(
-        f"v1/namespaces/{namespace}/package-versions/{package_version_uuid}"
-    ).json()
+    pv = client.PackageVersion.get(
+        package_version_uuid, namespace=namespace
+    ).model_dump(mode="json")
     spec = pv.get("spec") or {}
     subject = ReachabilitySubject(
         tenant=namespace,

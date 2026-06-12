@@ -9,12 +9,12 @@ from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
+from endorlabs.core.exceptions import NotFoundError
 from endorlabs.utils.artifact_io import slugify, write_json
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.callgraph.fetch import (
     generate_call_graph_analysis_md,
     render_call_graph_summary_md,
-    retrieve_call_graph_full,
     summarize_call_graph,
 )
 from endorlabs.workflows.dependencies.bom_graph import (
@@ -29,7 +29,6 @@ from endorlabs.workflows.dependencies.metadata_fetch import (
 
 if TYPE_CHECKING:
     from endorlabs import Client
-    from endorlabs.api_client import APIClient
 
 logger = get_resource_logger(__name__)
 
@@ -73,7 +72,6 @@ class ProjectResult:
 
 def process_project(
     client: Client,
-    api_client: APIClient,
     root_namespace: str,
     project: Any,
     out_dir: str,
@@ -89,7 +87,6 @@ def process_project(
 
     Args:
         client: Authenticated Endor Labs Client.
-        api_client: Low-level APIClient for raw calls.
         root_namespace: Tenant namespace.
         project: Project resource object.
         out_dir: Output directory for this project's artifacts.
@@ -200,7 +197,10 @@ def process_project(
 
         # Call Graph
         logger.info("  [CallGraph] %s (available=%s)", pv_name, cg_available)
-        cg_data = retrieve_call_graph_full(api_client, project_ns, pv.uuid)
+        try:
+            cg_data = client.CallGraphData.fetch(pv)
+        except NotFoundError:
+            cg_data = {}
         if cg_data:
             cg_filename = (
                 "call_graph.json" if single_pv else f"call_graph_{pv_slug}.json"
@@ -218,7 +218,7 @@ def process_project(
     # 3. DependencyMetadata
     logger.info("  [DepMetadata] project_uuid=%s", project.uuid)
     dep_rows, dep_ns, dep_truncated = retrieve_dep_metadata_full(
-        api_client,
+        client,
         project_ns,
         project.uuid,
         max_pages=dep_metadata_max_pages,

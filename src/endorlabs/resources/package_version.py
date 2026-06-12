@@ -23,13 +23,13 @@ from typing import Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..models.base import (
+from ..utils.logging_config import get_resource_logger
+from .base import (
     BaseMeta,
     BaseResource,
     BaseSpec,
     FlexibleEnum,
 )
-from ..utils.logging_config import get_resource_logger
 
 logger = get_resource_logger(__name__)
 
@@ -320,30 +320,6 @@ class PackageVersionSpec(BaseSpec):
                 v["sha"] = version_info.get("sha")
         return v
 
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Override BaseSpec drift detection to skip typed model fields."""
-        # Skip drift detection for typed nested models
-        # (they handle their own validation)
-        typed_model_fields = {
-            "source_code_reference",  # PackageVersionSourceCodeReference
-            "resolved_dependencies",  # Bom or dict
-            "resolution_errors",  # PackageVersionResolutionErrors
-            "code_owners",  # CodeOwnerData
-            "container_metadata",  # ContainerMetadata
-            "bazel_metadata",  # BazelMetadata
-        }
-        if (
-            info.field_name
-            and isinstance(v, dict)
-            and info.field_name not in typed_model_fields
-        ):
-            # Call parent validator for non-typed-model fields
-            return super().detect_schema_drift(v, info)
-        return v
-
 
 class PackageVersion(BaseResource):
     """PackageVersion resource model extending BaseResource.
@@ -412,40 +388,6 @@ class PackageVersion(BaseResource):
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = PackageVersionSpec(**data["spec"])
         super().__init__(**data)
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift for unknown fields."""
-        if info.field_name == "spec" and isinstance(v, dict):
-            # Log unknown fields for schema drift detection in spec
-            known_fields = {
-                "project_uuid",
-                "source_code_reference",
-                "release_timestamp",
-                "unresolved_dependencies",
-                "resolved_dependencies",
-                "resolution_errors",
-                "ecosystem",
-                "package_name",
-                "language",
-                "relative_path",
-                "container_metadata",
-                "bazel_metadata",
-                "code_owners",
-                "call_graph_available",
-                "internal_reference_key",
-                "precomputed_call_graph_state",
-            }
-            unknown_fields = set(v.keys()) - known_fields
-            if unknown_fields:
-                logger.warning(
-                    "Schema drift detected in %s: unknown fields %s",
-                    info.field_name,
-                    unknown_fields,
-                )
-        return v
 
     @override
     @classmethod

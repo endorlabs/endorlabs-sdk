@@ -5,7 +5,7 @@
 from typing import Any
 
 from .api_client import APIClient
-from .facade import ListableFacade, ResourceRuntimeFacade, ScanLogsFacade
+from .facade import CallGraphDataFacade, ListableFacade, ResourceRuntimeFacade
 from .generated.models.identity_provider_service import V1IdentityProvider
 from .generated.models.package_firewall_log_service import V1PackageFirewallLog
 from .generated.models.query_service import V1Query
@@ -929,7 +929,7 @@ class Client:
     ScanWorkflow, ScanWorkflowResult, SemgrepRule, V1IdentityProvider, V1Query,
     V1QuerySimilarPackages, V1SavedQuery, VectorStore, VectorStoreQuery,
     VersionUpgrade, Vulnerability
-    Custom: ScanLogs
+    Custom: CallGraphData
     """
 
     APIKey: _APIKeyFacade
@@ -1014,8 +1014,8 @@ class Client:
     """Suggested dependency version upgrade."""
     Vulnerability: _VulnerabilityFacade
     """Open-source vulnerability records."""
-    ScanLogs: ScanLogsFacade
-    """Scan logs facade. Use get_logs() to fetch log messages."""
+    CallGraphData: CallGraphDataFacade
+    """Call graph data facade. Use decode() or fetch() with a PackageVersion."""
 
     _client: APIClient | None
 

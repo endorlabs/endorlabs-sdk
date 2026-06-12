@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.estate.collect.bounds import (
+    count_for_progress,
     count_list_delta_check,
-    list_resource_count,
     resolve_max_pages,
 )
 from endorlabs.workflows.estate.collect.dependency_metadata import (
@@ -107,7 +107,7 @@ def _preflight_shard(
     filter_expr: str,
 ) -> int | None:
     facade = getattr(client, facade_attr)
-    return list_resource_count(
+    return count_for_progress(
         facade,
         shard.namespace,
         resource_label=facade_attr,

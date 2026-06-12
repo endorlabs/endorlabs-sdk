@@ -45,7 +45,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-10T01:33:10.628750+00:00",
+  "generated_at": "2026-06-11T04:54:24.993922+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -120,7 +120,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.1.1.dev93",
+  "sdk_version": "0.2.0.dev1",
   "skills": [
     {
       "description": "Author, validate, and import custom OpenGrep/Semgrep rule YAML into Endor Labs SemgrepRule resources. Use when writing or fixing rule syntax, Endor metadata shape, local opengrep/semgrep checks, or importing rules to a namespace \u2014 not for finding triage (hand off to endor-retrieve-scan-results).",
@@ -231,7 +231,7 @@
       ]
     },
     {
-      "description": "Scan pipeline RCA: resolve a project, fetch a bounded scan window, heuristically rank suspicious scan pairs, pull ScanLogs for selected scans, and diff aggregate metrics/logs. Not for individual Finding rows or policy validation \u2014 hand off to other skills when deeper analysis is needed.",
+      "description": "Scan pipeline RCA: resolve a project, fetch a bounded scan window, heuristically rank suspicious scan pairs, pull scan logs via ScanResult.get_logs for selected metrics/logs. Not for individual Finding rows or policy validation \u2014 hand off to other skills when deeper analysis is needed.",
       "id": "endor-troubleshooting-scans",
       "name": "endor-troubleshooting-scans",
       "path": "skills/endor-troubleshooting-scans/SKILL.md",
@@ -348,7 +348,7 @@
       "default_output": ".endorlabs-context/workspace/sessions/<user>/troubleshooting/",
       "id": "troubleshooting-scans",
       "library_entrypoints": [
-        "endorlabs.workflows.troubleshooting_scans.list_scan_results_for_project",
+        "endorlabs.Client.ScanResult.list_for_project",
         "endorlabs.workflows.troubleshooting_scans.resolve_project"
       ],
       "module": "endorlabs.workflows.troubleshooting_scans",

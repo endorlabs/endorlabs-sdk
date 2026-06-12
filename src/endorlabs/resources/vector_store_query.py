@@ -9,17 +9,17 @@ supports natural-language queries against a vector store identified by UUID
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, override
+from typing import Any, ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..generated.create_convenience import (
     VECTOR_STORE_QUERY_META_FIELDS,
     VECTOR_STORE_QUERY_SPEC_FIELDS,
 )
-from ..models.base import BaseMeta, BaseResource, BaseSpec
 from ..utils.create_payload import promote_create_kwargs
 from ..utils.logging_config import get_resource_logger
+from .base import BaseMeta, BaseResource, BaseSpec
 
 logger = get_resource_logger(__name__)
 
@@ -70,21 +70,6 @@ class VectorStoreQuery(BaseResource):
     )
 
     model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift in vector store query responses."""
-        if info.field_name == "spec" and isinstance(v, dict):
-            known = {"vector_store_uuid", "query", "metadata_filter", "matches"}
-            unknown = set(v.keys()) - known
-            if unknown:
-                logger.warning(
-                    "Schema drift in VectorStoreQuery.spec: unknown fields %s",
-                    unknown,
-                )
-        return v
 
 
 class VectorStoreQueryMetaCreate(BaseModel):

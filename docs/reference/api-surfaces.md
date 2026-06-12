@@ -15,8 +15,9 @@ Agent knowledge naming: authoring `agent-knowledge/` → shipped `src/endorlabs/
 
 ## Custom facades
 
-- **`ScanLogs`** — log lines; not an endorctl `--resource` kind. Use **`ScanLogRequest`** for CRUD on log requests.
-- See [contracts.md](../contracts.md) for normative facade behavior.
+- **`CallGraphData`** — decode/fetch call graph payloads by parent `PackageVersion`; not yet a full registry list/get surface.
+- **`ScanResult.get_logs`** — log lines via ScanLogRequest wire API (not a separate client attr).
+- See [facade-helpers.md](../guides/facade-helpers.md) and [contracts.md](../contracts.md).
 
 ## Generated reference
 

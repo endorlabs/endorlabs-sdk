@@ -205,7 +205,7 @@ def build_parser() -> argparse.ArgumentParser:
     pull.add_argument("--resume", action="store_true")
     pull.add_argument("--overwrite", action="store_true")
     pull.add_argument(
-        "--preflight", action="store_true", help="Run list_resource_count per shard"
+        "--preflight", action="store_true", help="Run count_for_progress per shard"
     )
     pull.add_argument("--validate-counts", action="store_true")
     pull.set_defaults(func=cmd_pull)

@@ -24,6 +24,7 @@ import logging
 import os
 import sys
 from collections import defaultdict
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -46,11 +47,8 @@ from .columns import (
     VERSION_USAGE_COLUMNS,
 )
 from .group_list import (
-    count_from_wire,
     grouped_count_list_parameters,
     grouped_count_list_parameters_for_importer_package_version,
-    iter_group_buckets,
-    parse_group_key,
 )
 from .remediation import RemediationComparisonResult, analyze_intra_minor_remediation
 from .types import VersionCardinalityResult, VersionCardinalityStats
@@ -58,6 +56,7 @@ from .types import VersionCardinalityResult, VersionCardinalityStats
 if TYPE_CHECKING:
     from endorlabs import Client
     from endorlabs.core.types import ListParameters
+    from endorlabs.operations.list_response import GroupBucket
 
 logger = get_resource_logger(__name__)
 
@@ -96,23 +95,21 @@ def _emit_progress(processed: int, total: int | None, *, label: str) -> None:
 
 def _usage_row_from_group(
     estate_root: str,
-    group_key: str,
-    group_data: dict[str, Any],
+    bucket: GroupBucket,
     *,
     project_uuid: str,
 ) -> dict[str, Any] | None:
-    fields = parse_group_key(group_key)
+    fields = bucket.parsed
     package_name = fields.get(PACKAGE_NAME_PATH, "")
     package_version = fields.get(PACKAGE_VERSION_PATH, "")
     if not package_name:
         return None
-    usage_count = count_from_wire(group_data.get("aggregation_count"))
     return {
         "estate_root": estate_root,
         "project_uuid": project_uuid,
         "package_name": package_name,
         "package_version": package_version,
-        "usage_count": usage_count,
+        "usage_count": bucket.count,
     }
 
 
@@ -271,6 +268,24 @@ def _collect_importer_shards(
     return shards, errors
 
 
+def _iter_group_buckets(
+    client: Client,
+    namespace: str,
+    list_params: ListParameters,
+    *,
+    max_pages: int | None,
+) -> Iterator[GroupBucket]:
+    paths = list_params.group_aggregation_paths
+    if not paths:
+        raise ValueError("list_params.group_aggregation_paths is required")
+    return client.DependencyMetadata.list_groups(
+        namespace=namespace,
+        list_params=list_params,
+        paths=list(paths),
+        max_pages=max_pages,
+    )
+
+
 def _fetch_grouped_usage_rows(
     client: Client,
     namespace: str,
@@ -283,7 +298,7 @@ def _fetch_grouped_usage_rows(
 ) -> tuple[list[dict[str, Any]], int]:
     usage_rows: list[dict[str, Any]] = []
     processed_groups = 0
-    for group_key, group_data in iter_group_buckets(
+    for bucket in _iter_group_buckets(
         client,
         namespace,
         list_params,
@@ -291,8 +306,7 @@ def _fetch_grouped_usage_rows(
     ):
         row = _usage_row_from_group(
             estate_root,
-            group_key,
-            group_data,
+            bucket,
             project_uuid=project_uuid,
         )
         if row is not None:
@@ -612,7 +626,7 @@ def export_version_cardinality_for_package_match(
         _emit_progress(index, total_namespaces, label="namespaces")
         try:
             group_count = 0
-            for group_key, group_data in iter_group_buckets(
+            for bucket in _iter_group_buckets(
                 client,
                 ns,
                 list_params,
@@ -620,8 +634,7 @@ def export_version_cardinality_for_package_match(
             ):
                 row = _usage_row_from_group(
                     estate_root,
-                    group_key,
-                    group_data,
+                    bucket,
                     project_uuid="",
                 )
                 if row is None:

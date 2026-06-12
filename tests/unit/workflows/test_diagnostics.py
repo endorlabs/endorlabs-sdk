@@ -81,7 +81,7 @@ class TestCompareScanLogs:
 
     def test_no_scan_results(self) -> None:
         client = Mock()
-        client.ScanResult.list.return_value = []
+        client.ScanResult.list_for_project.return_value = []
 
         result = compare_scan_logs(client, "ns", "proj-1")
         assert isinstance(result, ScanLogComparison)
@@ -92,21 +92,21 @@ class TestCompareScanLogs:
         sr1 = _make_scan_result("sr-1")
         sr2 = _make_scan_result("sr-2", status="FAILED", exit_code=1)
         client = Mock()
-        client.ScanResult.list.return_value = [sr1, sr2]
-        client.ScanLogs.get_logs.return_value = [
+        client.ScanResult.list_for_project.return_value = [sr1, sr2]
+        client.ScanResult.get_logs.return_value = [
             _make_log_message("ERROR", "something failed")
         ]
 
         result = compare_scan_logs(client, "ns", "proj-1", num_scans=2)
         assert result.num_scans_found == 2
         assert len(result.entries) == 2
-        assert client.ScanLogs.get_logs.call_count == 2
+        assert client.ScanResult.get_logs.call_count == 2
 
     def test_handles_log_fetch_failure(self) -> None:
         sr = _make_scan_result("sr-1")
         client = Mock()
-        client.ScanResult.list.return_value = [sr]
-        client.ScanLogs.get_logs.side_effect = RuntimeError("timeout")
+        client.ScanResult.list_for_project.return_value = [sr]
+        client.ScanResult.get_logs.side_effect = RuntimeError("timeout")
 
         result = compare_scan_logs(client, "ns", "proj-1")
         assert len(result.entries) == 1
@@ -114,10 +114,10 @@ class TestCompareScanLogs:
 
     def test_respects_num_scans(self) -> None:
         client = Mock()
-        client.ScanResult.list.return_value = [
+        client.ScanResult.list_for_project.return_value = [
             _make_scan_result(f"sr-{i}") for i in range(5)
         ]
-        client.ScanLogs.get_logs.return_value = []
+        client.ScanResult.get_logs.return_value = []
 
         result = compare_scan_logs(client, "ns", "proj-1", num_scans=3)
         assert len(result.entries) == 3
@@ -125,11 +125,11 @@ class TestCompareScanLogs:
     def test_custom_log_levels(self) -> None:
         sr = _make_scan_result("sr-1")
         client = Mock()
-        client.ScanResult.list.return_value = [sr]
-        client.ScanLogs.get_logs.return_value = []
+        client.ScanResult.list_for_project.return_value = [sr]
+        client.ScanResult.get_logs.return_value = []
 
         compare_scan_logs(client, "ns", "proj-1", log_levels=["ERROR", "INFO"])
-        call_kwargs = client.ScanLogs.get_logs.call_args.kwargs
+        call_kwargs = client.ScanResult.get_logs.call_args.kwargs
         assert len(call_kwargs["log_levels"]) == 2
 
 

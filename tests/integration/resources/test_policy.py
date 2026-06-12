@@ -368,9 +368,12 @@ match_findings[result] {
             assert created_policy.spec.notification is not None, (
                 "Notification config should be present"
             )
-            assert notification_target_uuid in created_policy.spec.notification.get(
-                "notification_target_uuids", []
-            ), "Notification target UUID should be in config"
+            target_uuids = (
+                created_policy.spec.notification.notification_target_uuids or []
+            )
+            assert notification_target_uuid in target_uuids, (
+                "Notification target UUID should be in config"
+            )
 
             # Store for cleanup
             self.created_policy_uuids.append(created_policy.uuid)

@@ -1,39 +1,45 @@
-"""Unit tests for reachability context list bounds."""
+"""Unit tests for reachability context call-graph fetch."""
 
 from __future__ import annotations
 
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
-from endorlabs.workflows.reachability.context import _list_callgraph_for_parent
+from endorlabs.core.exceptions import NotFoundError
+from endorlabs.resources.call_graph_data import CallGraphDecoded
+from endorlabs.workflows.reachability.context import _fetch_decoded_callgraph
 
 
-def test_list_callgraph_unlimited_uses_get_all() -> None:
-    api = Mock()
-    api.get_all.return_value = iter([{"uuid": "cg-1"}])
+def test_fetch_decoded_callgraph_returns_decoded() -> None:
+    client = MagicMock()
+    decoded = CallGraphDecoded(
+        summary={"uuid": "cg-1"},
+        callables=[],
+        edges=[],
+        envelope={},
+    )
+    client.CallGraphData.decode = Mock(return_value=decoded)
 
-    objs, truncated = _list_callgraph_for_parent(
-        api,
+    out = _fetch_decoded_callgraph(
+        client,
+        package_version_uuid="pv-1",
         namespace="tenant.ns",
-        parent_uuid="pv-1",
-        page_size=200,
-        max_pages=0,
     )
 
-    assert objs == [{"uuid": "cg-1"}]
-    assert truncated is False
-    assert api.get_all.call_args.kwargs["max_pages"] is None
-
-
-def test_list_callgraph_truncated_at_capacity() -> None:
-    api = Mock()
-    api.get_all.return_value = iter([{"uuid": f"cg-{i}"} for i in range(10)])
-
-    _, truncated = _list_callgraph_for_parent(
-        api,
+    assert out is decoded
+    client.CallGraphData.decode.assert_called_once_with(
+        "pv-1",
         namespace="tenant.ns",
-        parent_uuid="pv-1",
-        page_size=10,
-        max_pages=1,
     )
 
-    assert truncated is True
+
+def test_fetch_decoded_callgraph_not_found_returns_none() -> None:
+    client = MagicMock()
+    client.CallGraphData.decode = Mock(side_effect=NotFoundError("missing"))
+
+    out = _fetch_decoded_callgraph(
+        client,
+        package_version_uuid="pv-1",
+        namespace="tenant.ns",
+    )
+
+    assert out is None
