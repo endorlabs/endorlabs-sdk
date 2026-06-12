@@ -72,3 +72,21 @@ def test_registry_contains_pr_comment_config_pascal_case() -> None:
     rows = registry_module._load_generated_runtime_contract()
     attrs = {row.get("attr_name") for row in rows}
     assert "PRCommentConfig" in attrs
+
+
+def test_merge_overlay_warns_on_unknown_contract_key() -> None:
+    """Overlay typos should warn instead of failing silently."""
+    import endorlabs.registry_overlay as overlay_module
+    from endorlabs.registry_overlay import merge_generated_contract_with_overlay
+
+    rows = [{"attr_name": "Project", "resource_name": "projects"}]
+    original = overlay_module.RESOURCE_CONTRACT_OVERLAY_BY_ATTR
+    try:
+        overlay_module.RESOURCE_CONTRACT_OVERLAY_BY_ATTR = {
+            **original,
+            "NoSuchKind": {"workflow_flags": ["project-namespace-list"]},
+        }
+        with pytest.warns(UserWarning, match="NoSuchKind"):
+            merge_generated_contract_with_overlay(rows)
+    finally:
+        overlay_module.RESOURCE_CONTRACT_OVERLAY_BY_ATTR = original
