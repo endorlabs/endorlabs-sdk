@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from endorlabs.client_surface import Client
-from endorlabs.workflows.estate.collect.shards import ParentShard
+from endorlabs.tools.list_sharding import ParentShard
 
 from .common import (
     default_troubleshooting_output_dir,

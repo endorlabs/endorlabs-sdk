@@ -7,7 +7,6 @@ stable helpers for session scripts. Experimental API.
 from __future__ import annotations
 
 from endorlabs.workflows.common import WorkflowResult
-from endorlabs.workflows.projects.resolve import resolve_project
 from endorlabs.workflows.troubleshooting_scans.common import (
     load_json,
     match_projects,
@@ -22,6 +21,5 @@ __all__ = [
     "match_projects",
     "object_to_dict",
     "project_namespace",
-    "resolve_project",
     "write_json",
 ]

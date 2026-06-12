@@ -32,6 +32,9 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - Removed **`list_resource_count`** from `workflows.estate.collect.bounds` — use `facade.count()` or `count_for_progress`.
 - Removed **`retrieve_call_graph_full`** / **`retrieve_call_graph_for_client`** from `workflows.callgraph.fetch` — use `client.CallGraphData.decode` / `fetch`.
 - Removed **`client.ScanLogs`** — use `client.ScanResult.get_logs`.
+- Removed **`workflows.estate.collect.shards`** — use **`endorlabs.tools.list_sharding`**.
+- Removed **`endorlabs.utils.tabular`** re-exports — use **`workflows.estate.analyze.cardinality.tabular`**.
+- Removed **`workflows.projects.resolve.resolve_project`** and **`troubleshooting_scans.resolve_project`** re-export — use **`client.Project.resolve`** ([facade-helpers.md](guides/facade-helpers.md)).
 - Removed **`endorlabs.tools.dependency_explorer`** — use `workflows.agent_context.hydration`, `workflows.dependencies.*`, `workflows.callgraph.*`, and `client.CallGraphData`.
 - Removed **`endorlabs.models`** — use **`endorlabs.resources.base`** (and `resources.finding_config`, `resources.notification_config`, `resources.exception_config`, `resources.field_aliases`).
 - Removed **`SchemaDriftDetector`** from **`endorlabs.utils`** — opt-in wire probes: `endorlabs.utils.schema_drift.log_unknown_wire_keys` (not in `__all__`).

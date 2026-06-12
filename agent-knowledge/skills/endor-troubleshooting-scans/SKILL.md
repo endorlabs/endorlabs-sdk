@@ -14,7 +14,7 @@ endorlabs:
     composition: artifact_chain
     library_entrypoints:
       - endorlabs.Client.ScanResult.list_for_project
-      - endorlabs.workflows.troubleshooting_scans.resolve_project
+      - endorlabs.Client.Project.resolve
 ---
 
 # Troubleshooting Scans

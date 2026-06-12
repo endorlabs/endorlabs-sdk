@@ -73,19 +73,6 @@ Requires optional `zstandard` for zstd/protobuf payloads when decoding.
 
 Uses ScanLogRequest POST under the hood. For embedded lines only, GET the scan-result resource (`spec.logs`).
 
-## Removed modules (upgraders)
-
-| Removed | Use instead |
-|---------|-------------|
-| `endorlabs.utils.api_pagination` | `facade.list()` / `api_client.get_all` |
-| `bounds.list_resource_count` | `facade.count()` or `count_for_progress` |
-| `group_list.iter_group_*` | `facade.list_groups()` |
-| `workflows.callgraph.fetch.retrieve_*` | `CallGraphData.decode` / `fetch` |
-| `workflows.callgraph.decoded.decode_payload` | `CallGraphData.decode` |
-| `workflows.troubleshooting_scans.list_scan_results_for_project` | `client.ScanResult.list_for_project` |
-| `workflows.troubleshooting_scans.list_projects` | `client.Project.list` |
-| `retrieve_dep_metadata_full(api_client, …)` | `retrieve_dep_metadata_full(client, …)` via `client.DependencyMetadata.list` |
-| `client.ScanLogs` | `client.ScanResult.get_logs` |
 
 ## See also
 

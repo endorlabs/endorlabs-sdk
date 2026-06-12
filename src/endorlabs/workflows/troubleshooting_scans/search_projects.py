@@ -13,12 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.workflows.projects.resolve import (
-    resolve_project as canonical_resolve_project,
-)
-from endorlabs.workflows.projects.resolve import (
-    search_projects_by_name_or_uuid,
-)
+from endorlabs.workflows.projects.resolve import search_projects_by_name_or_uuid
 
 from .common import (
     default_troubleshooting_output_dir,
@@ -129,7 +124,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     try:
         if args.project_uuid:
             ns = args.namespace or args.tenant
-            pr = canonical_resolve_project(client, ns, args.project_uuid, warnings)
+            pr = client.Project.resolve(
+                args.project_uuid, namespace=ns, warnings_out=warnings
+            )
             projects_out.append(_dump(pr))
 
         elif args.project_name:

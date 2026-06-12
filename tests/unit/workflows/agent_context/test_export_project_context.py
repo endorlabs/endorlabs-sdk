@@ -9,6 +9,7 @@ from types import SimpleNamespace
 from typing import Any
 from unittest.mock import patch
 
+from endorlabs.resources.project import is_hex_project_id
 from endorlabs.workflows.agent_context import export as export_mod
 from endorlabs.workflows.agent_context.export import build_context_manifest, parse_args
 from endorlabs.workflows.agent_context.hydration import ProjectResult, PVResult
@@ -27,7 +28,6 @@ from endorlabs.workflows.agent_context.session_artifacts import (
     SessionResult,
     VersionsContext,
 )
-from endorlabs.workflows.projects.resolve import is_hex_project_id
 
 
 def test_is_hex_project_id() -> None:
@@ -410,17 +410,17 @@ def test_main_index_only_success_flow(tmp_path: Path) -> None:
         meta=SimpleNamespace(name="repo"),
         tenant_meta=SimpleNamespace(namespace="root.ns"),
     )
-    fake_client = SimpleNamespace(_client=object(), close=lambda: None)
+    fake_client = SimpleNamespace(
+        _client=object(),
+        close=lambda: None,
+        Project=SimpleNamespace(resolve=lambda *_a, **_k: proj),
+    )
 
     with (
         patch.object(export_mod, "parse_args", return_value=args),
         patch(
             "endorlabs.workflows.agent_context.export.endorlabs.Client",
             return_value=fake_client,
-        ),
-        patch(
-            "endorlabs.workflows.agent_context.export.resolve_project",
-            return_value=proj,
         ),
         patch("endorlabs.workflows.agent_context.export.slugify", return_value="repo"),
         patch("endorlabs.workflows.agent_context.export.write_json"),
@@ -458,7 +458,11 @@ def test_main_session_summaries_writes_manifest_pointers(tmp_path: Path) -> None
         meta=SimpleNamespace(name="repo"),
         tenant_meta=SimpleNamespace(namespace="root.ns"),
     )
-    fake_client = SimpleNamespace(_client=object(), close=lambda: None)
+    fake_client = SimpleNamespace(
+        _client=object(),
+        close=lambda: None,
+        Project=SimpleNamespace(resolve=lambda *_a, **_k: proj),
+    )
     session_result = SessionResult(
         session_dir=str(tmp_path),
         status="success",
@@ -476,10 +480,6 @@ def test_main_session_summaries_writes_manifest_pointers(tmp_path: Path) -> None
         patch(
             "endorlabs.workflows.agent_context.export.endorlabs.Client",
             return_value=fake_client,
-        ),
-        patch(
-            "endorlabs.workflows.agent_context.export.resolve_project",
-            return_value=proj,
         ),
         patch(
             "endorlabs.workflows.agent_context.export.create_session",
