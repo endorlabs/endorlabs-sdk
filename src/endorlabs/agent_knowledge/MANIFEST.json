@@ -45,7 +45,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-11T04:54:24.993922+00:00",
+  "generated_at": "2026-06-12T00:53:27.031800+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -120,7 +120,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.2.0.dev1",
+  "sdk_version": "0.2.1.dev631",
   "skills": [
     {
       "description": "Author, validate, and import custom OpenGrep/Semgrep rule YAML into Endor Labs SemgrepRule resources. Use when writing or fixing rule syntax, Endor metadata shape, local opengrep/semgrep checks, or importing rules to a namespace \u2014 not for finding triage (hand off to endor-retrieve-scan-results).",
@@ -349,7 +349,7 @@
       "id": "troubleshooting-scans",
       "library_entrypoints": [
         "endorlabs.Client.ScanResult.list_for_project",
-        "endorlabs.workflows.troubleshooting_scans.resolve_project"
+        "endorlabs.Client.Project.resolve"
       ],
       "module": "endorlabs.workflows.troubleshooting_scans",
       "skill": "endor-troubleshooting-scans"

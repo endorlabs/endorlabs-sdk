@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from endorlabs.workflows.estate.collect.shards import ParentShard
+    from endorlabs.tools.list_sharding import ParentShard
 
 from endorlabs.client_surface import Client
 

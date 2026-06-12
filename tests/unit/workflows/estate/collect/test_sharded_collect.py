@@ -6,7 +6,7 @@ import threading
 import time
 from unittest.mock import Mock
 
-from endorlabs.workflows.estate.collect.shards import (
+from endorlabs.tools.list_sharding import (
     ParentShard,
     parallel_map_shards,
     project_dict_to_shard,

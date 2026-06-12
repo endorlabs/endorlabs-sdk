@@ -10,8 +10,6 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from endorlabs.api_client import APIClient
-from endorlabs.client_surface import Client
 from endorlabs.context.paths import workflow_sessions_root
 from endorlabs.utils.path_safety import safe_write_text
 
@@ -115,16 +113,6 @@ def write_text(
     return path
 
 
-def build_api_client() -> APIClient:
-    """Construct API client from environment variables."""
-    return APIClient()
-
-
-def build_scanlogs_client(tenant: str) -> Client:
-    """Construct high-level ``Client`` for ``ScanResult.get_logs``."""
-    return Client(tenant=tenant)
-
-
 def match_projects(
     projects: list[dict[str, Any]],
     *,
@@ -163,7 +151,7 @@ def parallel_collect_for_projects(
     progress_every: int = 50,
 ) -> list[Any]:
     """Parallel per-project fetch; flatten iterable results from each shard."""
-    from endorlabs.workflows.estate.collect.shards import (
+    from endorlabs.tools.list_sharding import (
         parallel_map_shards,
         project_dict_to_shard,
     )

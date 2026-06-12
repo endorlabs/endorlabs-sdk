@@ -1,10 +1,9 @@
-"""Resolve a Project from tenant root when direct GET in a namespace returns 404."""
+"""Project search helpers for workflow orchestration."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from endorlabs.resources.project import is_hex_project_id
 from endorlabs.workflows.estate.collect.bounds import (
     is_list_truncated,
     resolve_max_pages,
@@ -13,17 +12,7 @@ from endorlabs.workflows.estate.collect.bounds import (
 if TYPE_CHECKING:
     from endorlabs import Client
 
-__all__ = ["is_hex_project_id", "resolve_project", "search_projects_by_name_or_uuid"]
-
-
-def resolve_project(
-    client: Client,
-    namespace: str,
-    project: str,
-    warnings: list[str],
-) -> Any:
-    """Resolve a project by UUID (with traverse fallback) or by name (lookup)."""
-    return client.Project.resolve(project, namespace=namespace, warnings_out=warnings)
+__all__ = ["search_projects_by_name_or_uuid"]
 
 
 def search_projects_by_name_or_uuid(

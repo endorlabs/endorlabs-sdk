@@ -46,7 +46,7 @@ docs = [
     "beautifulsoup4==4.15.0",
     "markdownify==1.2.2",
 ]
-# DataFrame/Parquet export (estate cardinality tabular; utils.tabular shim) + estate graph metrics (igraph/leidenalg)
+# DataFrame/Parquet export (estate cardinality tabular) + estate graph metrics (igraph/leidenalg)
 analytics = [
     "pandas==3.0.3",
     "pyarrow==24.0.0",
@@ -358,7 +358,6 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 "src/endorlabs/workflows/callgraph/**" = ["C901", "SLF001", "S108", "TC001"]
 "src/endorlabs/workflows/agent_context/hydration.py" = ["C901"]
 "src/endorlabs/workflows/dependencies/metadata_fetch.py" = ["TC001"]
-"src/endorlabs/utils/api_pagination.py" = ["TC001"]
 
 [tool.ruff.format]
 quote-style = "double"

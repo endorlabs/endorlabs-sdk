@@ -8,6 +8,11 @@ from pathlib import Path
 from typing import Any
 
 from endorlabs import F
+from endorlabs.tools.list_sharding import (
+    ParentShard,
+    parallel_map_shards,
+    project_model_to_shard,
+)
 from endorlabs.utils.artifact_io import write_json
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.project_map.core import (
@@ -21,11 +26,6 @@ from endorlabs.workflows.estate.collect.bounds import (
     format_progress,
     is_list_truncated,
     resolve_max_pages,
-)
-from endorlabs.workflows.estate.collect.shards import (
-    ParentShard,
-    parallel_map_shards,
-    project_model_to_shard,
 )
 
 LOGGER = get_resource_logger(__name__)

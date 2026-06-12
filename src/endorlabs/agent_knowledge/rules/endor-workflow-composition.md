@@ -44,7 +44,7 @@ After a workflow run, treat outputs as source of truth:
 
 Generic entrypoints (no estate literals):
 
-- `client.Project.resolve()` — prefer over `workflows.projects.resolve.resolve_project`
+- `client.Project.resolve()` — resolve project by name or UUID
 - `client.CallGraphData.decode()` / `.fetch()` — call graph fetch + decode
 - `client.ScanResult.get_logs()` — scan log lines (ScanLogRequest wire API)
 - `client.Finding.list_for_scan()` — scan-scoped finding lists

@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: ec7cf54afff9df1f4b34d56302d5ce410745b0e962a0f58f3c225299afb926ce
+x-endor-source-sha256: 376022a5c54fa4409e67ea4865e57ace040ef2bb031f0c860ff1792303b01692
 ---
 
 # Workflow composition
@@ -49,7 +49,7 @@ After a workflow run, treat outputs as source of truth:
 
 Generic entrypoints (no estate literals):
 
-- `client.Project.resolve()` — prefer over `workflows.projects.resolve.resolve_project`
+- `client.Project.resolve()` — resolve project by name or UUID
 - `client.CallGraphData.decode()` / `.fetch()` — call graph fetch + decode
 - `client.ScanResult.get_logs()` — scan log lines (ScanLogRequest wire API)
 - `client.Finding.list_for_scan()` — scan-scoped finding lists

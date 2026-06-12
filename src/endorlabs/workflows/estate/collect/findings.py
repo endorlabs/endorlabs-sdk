@@ -8,14 +8,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import endorlabs
-from endorlabs.utils.logging_config import get_resource_logger
-from endorlabs.workflows.estate.analyze.risk.scoring import normalize_finding_record
-from endorlabs.workflows.estate.collect.namespaces import list_estate_namespace_names
-from endorlabs.workflows.estate.collect.shards import (
+from endorlabs.tools.list_sharding import (
     ParentShard,
     parallel_map_shards,
     project_model_to_shard,
 )
+from endorlabs.utils.logging_config import get_resource_logger
+from endorlabs.workflows.estate.analyze.risk.scoring import normalize_finding_record
+from endorlabs.workflows.estate.collect.namespaces import list_estate_namespace_names
 from endorlabs.workflows.estate.filters.main_context import (
     MAIN_CONTEXT_LIST_FILTER,
     MAIN_CONTEXT_TYPE,
