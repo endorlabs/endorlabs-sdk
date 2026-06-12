@@ -1,0 +1,92 @@
+{
+  "edges": [
+    {
+      "id": "project.findings",
+      "from_kind": "Project",
+      "to_kind": "Finding",
+      "edge": "list_by_uuid_field",
+      "tier": "B",
+      "public_method": "Finding.list_by_project",
+      "filter_field": "spec.project_uuid",
+      "uuid_from": "source.uuid",
+      "namespace_from": "source",
+      "list_only": false
+    },
+    {
+      "id": "project.scan_results",
+      "from_kind": "Project",
+      "to_kind": "ScanResult",
+      "edge": "list_by_parent",
+      "tier": "B",
+      "public_method": "ScanResult.list_by_project",
+      "parent_kind": "project",
+      "namespace_from": "source"
+    },
+    {
+      "id": "scan.findings",
+      "from_kind": "ScanResult",
+      "to_kind": "Finding",
+      "edge": "list_by_index_field",
+      "tier": "B",
+      "public_method": "Finding.list_by_scan",
+      "filter_field": "context.scan_uuid",
+      "uuid_from": "source.uuid",
+      "namespace_from": "source",
+      "list_only": true
+    },
+    {
+      "id": "finding.dependency_metadata.get",
+      "from_kind": "Finding",
+      "to_kind": "DependencyMetadata",
+      "edge": "get_by_uuid",
+      "tier": "A",
+      "public_method": "Finding.to_dependency_metadata",
+      "uuid_from": "source.spec.target_uuid",
+      "namespace_from": "source"
+    },
+    {
+      "id": "finding.dependency_metadata.by_package",
+      "from_kind": "Finding",
+      "to_kind": "DependencyMetadata",
+      "edge": "list_by_attribute",
+      "tier": "C",
+      "public_method": "Finding.to_dependency_metadata",
+      "source_attr": "spec.target_dependency_package_name",
+      "target_filter_field": "spec.dependency_data.package_name",
+      "match": "exact",
+      "namespace_from": "source",
+      "also_filter": "spec.importer_data.project_uuid==\"{source.spec.project_uuid}\""
+    },
+    {
+      "id": "finding.semgrep_rule.by_linter",
+      "from_kind": "Finding",
+      "to_kind": "SemgrepRule",
+      "edge": "via_intermediate",
+      "tier": "C",
+      "public_method": "Finding.to_semgrep_rule",
+      "when": {
+        "categories": ["FINDING_CATEGORY_SAST"]
+      },
+      "steps": [
+        {
+          "kind": "list_by_uuid_field",
+          "through_kind": "LinterResult",
+          "filter_field": "spec.project_uuid",
+          "uuid_from": "source.spec.project_uuid"
+        },
+        {
+          "kind": "get_by_uuid",
+          "uuid_from": "through.spec.semgrep.rule_uuid",
+          "optional": true
+        },
+        {
+          "kind": "list_by_attribute",
+          "source_attr": "through.spec.semgrep.rule_name",
+          "target_filter_field": "meta.name",
+          "match": "substring",
+          "optional": true
+        }
+      ]
+    }
+  ]
+}

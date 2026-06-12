@@ -60,7 +60,9 @@ def test_fetch_scan_results_writes_raw_and_summary_artifacts() -> None:
     mock_client.Project.list.return_value = [
         Mock(model_dump=Mock(return_value=projects[0])),
     ]
-    mock_client.ScanResult.list_for_project = Mock(return_value=[{"uuid": "scan-1"}])
+    mock_client.ScanResult.list_by_project = Mock(
+        return_value=Mock(values=[{"uuid": "scan-1"}])
+    )
     with (
         patch(
             "endorlabs.workflows.troubleshooting_scans.fetch_scan_results.Client",

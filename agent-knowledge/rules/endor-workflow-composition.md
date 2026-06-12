@@ -45,7 +45,8 @@ Generic entrypoints (no estate literals):
 - `client.Project.resolve()` — resolve project by name or UUID
 - `client.CallGraphData.decode()` / `.fetch()` — call graph fetch + decode
 - `client.ScanResult.get_logs()` — scan log lines (ScanLogRequest wire API)
-- `client.Finding.list_for_scan()` — scan-scoped finding lists
+- `client.Finding.list_by_project()` / `list_by_scan()` — contract route lists
+- `client.ScanResult.list_by_project()` — scan results for a project
 - `client.<Resource>.count()` / `.list_groups()` / `.latest_created()` — list helpers (see [facade-helpers.md](../../docs/guides/facade-helpers.md))
 - `endorlabs.workflows.common.WorkflowResult`
 - `endorlabs.workflows.policies.run_validate_policy`

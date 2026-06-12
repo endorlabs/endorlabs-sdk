@@ -76,7 +76,18 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 - **List/filter scoped to a resource:** Use **`namespace=resource.namespace`** (alias of `tenant_meta.namespace` on models) or `list(parent=resource)` where the registry supports `parent_kind`.
 - **Discovery:** Use root namespace + `traverse=True` (for example `Project.list(traverse=True)`).
 
-**Project-scoped lists (MUST):** `Client(tenant=<estate_root>)` with default `traverse=False` lists only that namespace path — **not** child namespaces. A filter such as `spec.project_uuid==…` or `spec.importer_data.project_uuid==…` does **not** widen the path. Resolve the `Project` row first, then pass **`namespace=project.namespace`** on downstream lists (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get **empty results with no error** (silent miss). Alternatives: `Client(tenant=project.namespace)` for the rest of the session, or `traverse=True` only when deliberately searching tenant-wide (higher cost).
+**Project-scoped lists (MUST):** `Client(tenant=<estate_root>)` with default `traverse=False` lists only that namespace path — **not** child namespaces. A filter such as `spec.project_uuid==…` or `spec.importer_data.project_uuid==…` does **not** widen the path. Resolve the `Project` row first, then pass **`namespace=project.namespace`** on downstream lists (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get **empty results with no error** (silent miss). Alternatives: `Client(tenant=project.namespace)` for the rest of the session, **`client.Finding.list_by_project(project)`** / **`client.ScanResult.list_by_project(project)`** (contract routes), or `traverse=True` only when deliberately searching tenant-wide (higher cost).
+
+<a id="resource-routes-crud"></a>
+## Resource routes (CRUD+)
+
+- **Contract source:** `devtools/model_sync_profiles/route_contract_overlay.yaml` → generated `src/endorlabs/generated/route_contract.py` and [generated-reference/resource-routes.md](generated-reference/resource-routes.md).
+- **Runtime:** Facades mix in `RouteHostMixin`; public methods are thin wrappers over `_execute_route(edge_id, source=…)`.
+- **Return type:** `RouteResult[T]` from `endorlabs.operations.routes` — use `.values` for list edges, `.value` for GET/stitch; inspect `.edge_used` and `.warnings` (e.g. list-only index fields).
+- **Namespace:** Derived from the **source resource** (`tenant_meta.namespace`) unless `namespace=` is passed explicitly.
+- **Workflows** SHALL prefer route methods over hand-built filter strings for edges declared in the contract.
+- **No parallel discovery API** — no `client.ops` or `queries/` layer; routes stay on `client.<Kind>`.
+
 
 ## List parameters
 
