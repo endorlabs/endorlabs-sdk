@@ -34,7 +34,7 @@ Use **field-mask** (`mask=` / `--field-mask`) for smaller responses; with a **no
 | Goal | Traverse? |
 |------|-----------|
 | Findings or scans for a **resolved project** | **No** — `namespace=project.namespace` or `parent=project` |
-| **Discover** Project when namespace unknown | **Yes** — bounded `Project.list(..., traverse=True, max_pages=…)` |
+| **Discover** Project when namespace unknown | **Yes** — bounded `Project.search_by_name(query, traverse=True, max_pages=…)` (or exact `Project.list(filter='meta.name=="…"', traverse=True, max_pages=1)` when URL is known) |
 | **Tenant-wide** finding/report (user explicitly asked) | **Yes** — selective `filter`, cap `max_pages`; see [namespace-traversal.md](../contributing/namespace-traversal.md) |
 
 Do not run unbounded tenant-wide `Finding.list(traverse=True)` during routine single-repo triage.

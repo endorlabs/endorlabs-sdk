@@ -4,15 +4,15 @@ Auto-generated from `RESOURCE_REGISTRY`, builder return types,
 and payload models.
 Model sync contract: `src/endorlabs/generated/registry_contract.py` (41 resources, 41 canonical entities).
 
-## Create payload/builders
-
-| Resource | SDK create support | Builder | Payload model | Required fields | Optional fields |
-|----------|--------------------|---------|---------------|-----------------|-----------------|
 ## Model-sync coverage snapshot
 
 - facade contract resources: `41`
 - canonical entities (union): `41`
 
+## Create payload/builders
+
+| Resource | SDK create support | Builder | Payload model | Required fields | Optional fields |
+|----------|--------------------|---------|---------------|-----------------|-----------------|
 | APIKey | yes | build_create_payload | CreateAPIKeyPayload | meta, spec | propagate |
 | AuditLog | yes | build_create_payload | CreateAuditLogPayload | meta, spec | propagate |
 | AuthenticationLog | no | N/A | N/A | N/A | N/A |

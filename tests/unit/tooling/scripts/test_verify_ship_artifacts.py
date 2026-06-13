@@ -23,8 +23,10 @@ from verify_ship_artifacts import (  # noqa: E402
 def test_ship_git_paths_includes_core_artifacts() -> None:
     paths = ship_git_paths()
     assert "src/endorlabs/generated/registry_contract.py" in paths
+    assert "src/endorlabs/generated/route_contract.py" in paths
     assert "src/endorlabs/client_surface.pyi" in paths
     assert "docs/generated-reference/resources.md" in paths
+    assert "docs/generated-reference/resource-routes.md" in paths
 
 
 def test_changelog_has_version_matches_section() -> None:
@@ -97,6 +99,8 @@ def test_run_verify_skip_upstream_skips_upstream_only(tmp_path: Path) -> None:
         if _mentions(cmd, "model_sync.py") and "--verify-upstream-only" in cmd:
             raise AssertionError("upstream verify should be skipped")
         if _mentions(cmd, "model_sync.py"):
+            return ok
+        if _mentions(cmd, "generate_route_contract.py"):
             return ok
         if _mentions(cmd, "sync_agent_knowledge.py"):
             return ok

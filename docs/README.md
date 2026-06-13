@@ -17,8 +17,9 @@ Index for SDK-specific documentation.
 - [reference/api-surfaces.md](reference/api-surfaces.md) — Landing page to canonical generated API surfaces.
 - [reference/create-update-payloads.md](reference/create-update-payloads.md) — Landing page to canonical generated payload matrix.
 - [generated-reference/resources.md](generated-reference/resources.md) — Generated resource matrix from registry + spec.
-- [generated-reference/resources/README.md](generated-reference/resources/README.md) — Per-resource pages (create convenience kwargs, ops, examples).
+- [generated-reference/resources/README.md](generated-reference/resources/README.md) — Per-resource pages (CRUD, facade helpers, examples).
 - [generated-reference/api-surfaces.md](generated-reference/api-surfaces.md) — Generated facade and client surface inventory.
+- [generated-reference/resource-routes.md](generated-reference/resource-routes.md) — Generated relationship accessor edge table.
 - [generated-reference/create-update-payloads.md](generated-reference/create-update-payloads.md) — Generated create/update payload matrix.
 - [generated-reference/coverage.json](generated-reference/coverage.json) — Structured generated coverage metadata.
 
@@ -30,8 +31,19 @@ Index for SDK-specific documentation.
 
 - [guides/README.md](guides/README.md) — List of guides.
 - [guides/examples.md](guides/examples.md) — Skill walkthrough and minimal API snippets for a first tenant session.
+- [guides/facade-helpers.md](guides/facade-helpers.md) — When to use `search_by_*`, relationship accessors, `RouteResult`, wire helpers.
 - [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; SDK consumer UX.
 - [guides/retrieving-scan-results.md](guides/retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.
+
+## Shipped agent contracts (wheel)
+
+Normative shards for agents and skills (also under `agent-knowledge/contracts/` in this repo):
+
+- [resource-discovery.md](../agent-knowledge/contracts/resource-discovery.md) — `search_by_*` identity lane and disambiguation.
+- [list-parameters.md](../agent-knowledge/contracts/list-parameters.md) — Filter, mask, pagination, traverse.
+- [dependency-metadata.md](../agent-knowledge/contracts/dependency-metadata.md) — Tenant wire path vs OSS catalog plane.
+- [errors-and-auth.md](../agent-knowledge/contracts/errors-and-auth.md) — Exceptions and auth modes.
+- [canonical-naming.md](../agent-knowledge/contracts/canonical-naming.md) — Namespace and facade naming.
 
 ## Contributing
 
@@ -47,13 +59,15 @@ Index for SDK-specific documentation.
 
 ## When to update docs
 
-API or endpoint behavior changes -> [contracts.md](contracts.md) and [generated-reference/resources.md](generated-reference/resources.md). User-visible breaks or notable features -> [changelog.md](changelog.md) (**Unreleased**). New resources or operations -> reference index and [contributing/](contributing/) checklists. Drift and model consistency -> [contributing/docs-drift-workflow.md](contributing/docs-drift-workflow.md). **Internal:** utils (model_validation, optional `utils.schema_drift` probes, traversal), operations — not in top-level `__all__`. **Skills:** authored in `agent-knowledge/skills/`, shipped via `src/endorlabs/agent_knowledge/`, materialized to `.endorlabs-context/sdk/skills/` — see [contributing/repository-layout.md](contributing/repository-layout.md). Ephemeral session notes belong under `.endorlabs-context/workspace/sessions/<user>/notes/` — not tracked in `docs/`.
+API or endpoint behavior changes → [contracts.md](contracts.md) and [generated-reference/resources.md](generated-reference/resources.md). User-visible breaks or notable features → [changelog.md](changelog.md) (**Unreleased**). New resources or operations → reference index and [contributing/](contributing/) checklists. Drift and model consistency → [contributing/docs-drift-workflow.md](contributing/docs-drift-workflow.md). **Internal:** utils (model_validation, optional `utils.schema_drift` probes, traversal), operations — not in top-level `__all__`. **Skills:** authored in `agent-knowledge/skills/`, shipped via `src/endorlabs/agent_knowledge/`, materialized to `.endorlabs-context/sdk/skills/` — see [contributing/repository-layout.md](contributing/repository-layout.md). Ephemeral session notes belong under `.endorlabs-context/workspace/sessions/<user>/notes/` — not tracked in `docs/`.
 
 ## Generated reference docs
 
-The files in `docs/generated-reference/` are generated from SDK and spec sources of truth:
+Regenerate from repo root:
 
-- `uv run python devtools/generate_client_stub.py`
-- `uv run python devtools/generate_reference_docs.py`
+```bash
+uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
+uv run python devtools/generate_route_contract.py
+```
 
-CI validates both generated surfaces and fails if they are out of date.
+CI validates ship artifacts via `devtools/verify_ship_artifacts.py` (registry, route contract, reference docs, agent knowledge).
