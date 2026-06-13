@@ -2,12 +2,14 @@
 
 Auto-generated inventories for stable/public surfaces.
 
-## Top-level exports (`endorlabs.__all__`)
-
 ## Model-sync coverage snapshot
 
 - facade contract resources: `41`
 - canonical entities (union): `41`
+
+Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
+
+## Top-level exports (`endorlabs.__all__`)
 
 - `APIClient`
 - `AmbiguousError`
@@ -159,3 +161,59 @@ Auto-generated inventories for stable/public surfaces.
 | VectorStoreQuery | queries/vector-stores | tenant | — | create |
 | VersionUpgrade | version-upgrades | tenant | — | list, get, delete |
 | Vulnerability | vulnerabilities | oss | — | list, get |
+
+## Identity lane (`search_by_*`)
+
+Bounded list discovery; returns `list[T]` (not `RouteResult`).
+
+| Facade | Method | Match |
+|--------|--------|-------|
+| `Project` | `Project.search_by_name` | Substring on `meta.name`; partial UUID match |
+| `VectorStore` | `VectorStore.search_by_name` | Substring on `meta.name` |
+| `AuthorizationPolicy` | `AuthorizationPolicy.search_by_claims` | Claims substring match |
+| `Vulnerability` | `Vulnerability.search_by_vuln_alias` | Vuln alias substring (OSS scope) |
+
+## Relationship accessors (generated)
+
+From `route_contract.py`. Return `RouteResult` — use `.values` or `.value`.
+Full edge inventory: [resource-routes.md](resource-routes.md).
+
+| Public method | From → To | Edge id | Wire kind | Returns |
+|---------------|-----------|---------|-----------|---------|
+| `DependencyMetadata.list_for_context` | ScanResult → DependencyMetadata | `scan.dependency_metadata` | `list_by_context_partition` | RouteResult → `.values` |
+| `Finding.list_by_project` | Project → Finding | `project.findings` | `list_by_uuid_field` | RouteResult → `.values` |
+| `Finding.list_for_context` | ScanResult → Finding | `scan.findings` | `list_by_context_partition` | RouteResult → `.values` |
+| `Finding.to_dependency_metadata` | Finding → DependencyMetadata | `finding.dependency_metadata.by_package` | `list_by_attribute` | RouteResult → `.value` (fallback path) |
+| `FindingLog.list_for_context` | ScanResult → FindingLog | `scan.finding_logs` | `list_by_context_partition` | RouteResult → `.values` |
+| `LinterResult.list_for_context` | ScanResult → LinterResult | `scan.linter_results` | `list_by_context_partition` | RouteResult → `.values` |
+| `Metric.list_for_context` | ScanResult → Metric | `scan.metrics` | `list_by_context_partition` | RouteResult → `.values` |
+| `PackageLicense.list_for_context` | ScanResult → PackageLicense | `scan.package_licenses` | `list_by_context_partition` | RouteResult → `.values` |
+| `PackageVersion.list_by_project` | Project → PackageVersion | `project.package_versions` | `list_by_uuid_field` | RouteResult → `.values` |
+| `PackageVersion.list_for_context` | ScanResult → PackageVersion | `scan.package_versions` | `list_by_context_partition` | RouteResult → `.values` |
+| `RepositoryVersion.list_for_context` | ScanResult → RepositoryVersion | `scan.repository_versions` | `list_by_context_partition` | RouteResult → `.values` |
+| `ScanResult.list_by_project` | Project → ScanResult | `project.scan_results` | `list_by_parent` | RouteResult → `.values` |
+| `ScanWorkflowResult.list_for_context` | ScanResult → ScanWorkflowResult | `scan.scan_workflow_results` | `list_by_context_partition` | RouteResult → `.values` |
+| `VersionUpgrade.list_for_context` | ScanResult → VersionUpgrade | `scan.version_upgrades` | `list_by_context_partition` | RouteResult → `.values` |
+
+## Custom and wire facades
+
+| Facade | Method | Purpose |
+|--------|--------|---------|
+| `CallGraphData` | `decode(package_version, …)` | Decoded call graph JSON for a PackageVersion |
+| `CallGraphData` | `fetch(package_version, …)` | Raw CallGraphData wire envelope |
+| `ScanResult` | `get_logs(scan_result, …)` | Scan log messages via ScanLogRequest API |
+
+## Universal list helpers (`ListableFacade`)
+
+Available on every listable registry facade unless noted.
+
+| Method | Purpose |
+|--------|---------|
+| `count(**list_kwargs)` | Server-side row count |
+| `list_groups(*, paths, **kwargs)` | Group-by aggregation buckets |
+| `latest(sort_by=..., **kwargs)` | Newest single row (`max_pages=1`) |
+| `latest_created(**kwargs)` | Sugar for `sort_by="meta.create_time"` |
+| `latest_updated(**kwargs)` | Sugar for `sort_by="meta.update_time"` |
+| `parent(resource)` | GET parent row via registry `parent_kind` |
+
+`list(count=True)` emits `DeprecationWarning` and delegates to `count()`.

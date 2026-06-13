@@ -39,7 +39,7 @@ where projects usually live. Filters like `spec.project_uuid` or
 you often get **zero rows with no error**.
 
 1. **Discover** the project (when namespace unknown):
-   `Project.list(..., traverse=True)` and pick the intended row.
+   `Project.search_by_name(query, traverse=True, max_pages=…)` and pick the intended row.
 2. **Pin namespace** for all project-scoped lists:
    `namespace=project.namespace` on `Finding`, `ScanResult`, `PackageVersion`,
    and `DependencyMetadata`.

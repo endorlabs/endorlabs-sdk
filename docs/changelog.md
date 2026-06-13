@@ -42,7 +42,7 @@ V1 consumer facade cutover: package split, contract-driven routes, `search_by_*`
 - Removed **`workflows.projects.resolve`** (`search_projects_by_name_or_uuid`) — use `client.Project.search_by_name`.
 - Removed **`Finding.to_semgrep_rule`** — no workflow or skill consumer; use explicit `Finding.list` / `SemgrepRule.get` when needed.
 - Removed **`Finding.list_for_scan`** and **`ScanResult.list_for_project`** — use **`list_for_context`** / **`list_by_project`** (`RouteResult`).
-- Removed **`list_scan_results_for_project`** and **`list_projects`** from `workflows.troubleshooting_scans` — use `client.ScanResult.list_by_project` and `client.Project.list`.
+- Removed **`list_scan_results_for_project`** and **`list_projects`** from `workflows.troubleshooting_scans` — use `client.ScanResult.list_by_project` and `client.Project.search_by_name`.
 - Removed **`operations.call_graph`** — use **`resources.call_graph_data`** and `client.CallGraphData.decode` / `fetch`.
 - Removed **`workflows.callgraph.proto_decode`** — use **`resources.call_graph_data_proto`**.
 - **`retrieve_dep_metadata_full`** now takes **`endorlabs.Client`** (first argument), not `APIClient`.

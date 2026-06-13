@@ -74,7 +74,7 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 
 - **get / update / delete:** Accept UUID string or resource object.
 - **List/filter scoped to a resource:** Use **`namespace=resource.namespace`** (alias of `tenant_meta.namespace` on models) or `list(parent=resource)` where the registry supports `parent_kind`.
-- **Discovery:** Use root namespace + `traverse=True` (for example `Project.list(traverse=True)`).
+- **Discovery:** Use root namespace + `traverse=True` (for example `Project.list(traverse=True)` for namespace inventory). For project URL discovery, prefer **`Project.search_by_name`** — see [guides/facade-helpers.md](guides/facade-helpers.md) and shipped [resource-discovery.md](../agent-knowledge/contracts/resource-discovery.md).
 
 **Project-scoped lists (MUST):** `Client(tenant=<estate_root>)` with default `traverse=False` lists only that namespace path — **not** child namespaces. A filter such as `spec.project_uuid==…` or `spec.importer_data.project_uuid==…` does **not** widen the path. Resolve the `Project` row first, then pass **`namespace=project.namespace`** on downstream lists (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get **empty results with no error** (silent miss). Alternatives: `Client(tenant=project.namespace)` for the rest of the session, **`client.Finding.list_by_project(project)`** / **`client.ScanResult.list_by_project(project)`** (generated accessor helpers), or `traverse=True` only when deliberately searching tenant-wide (higher cost).
 
@@ -93,7 +93,7 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 
 - **filter**: Which rows match.
 - **mask**: Which fields are returned in list responses.
-- **List return shape:** After merge of `list_params` and flat kwargs (same rules as `list()`), if **mask** is non-empty when stripped, `list()` returns **`list[dict[str, Any]]`** (shallow-copied wire JSON per row) instead of full Pydantic models; `list_iter()` yields **`Iterator[T | dict[str, Any]]`** (each item is either a model or a dict). If **mask** is absent, empty, or whitespace-only, behavior is unchanged: full models only. **`search_by_*`** discovery methods forward list kwargs including **`mask=`** under the same rule. See [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md), [guides/facade-helpers.md](guides/facade-helpers.md), and shipped `contracts/resource-discovery.md`.
+- **List return shape:** After merge of `list_params` and flat kwargs (same rules as `list()`), if **mask** is non-empty when stripped, `list()` returns **`list[dict[str, Any]]`** (shallow-copied wire JSON per row) instead of full Pydantic models; `list_iter()` yields **`Iterator[T | dict[str, Any]]`** (each item is either a model or a dict). If **mask** is absent, empty, or whitespace-only, behavior is unchanged: full models only. **`search_by_*`** discovery methods forward list kwargs including **`mask=`** under the same rule. See [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md), [guides/facade-helpers.md](guides/facade-helpers.md), and [agent-knowledge/contracts/resource-discovery.md](../agent-knowledge/contracts/resource-discovery.md).
 - **MQL conventions:** `filter` query expressions and list `mask` projections mirror MongoDB-style MQL conventions.
 - **page_size**, **page_token**, **page_id**: Pagination controls.
 - **sort_by**, **desc**: Sorting controls mapped to `list_parameters.sort.path` and `list_parameters.sort.order`.

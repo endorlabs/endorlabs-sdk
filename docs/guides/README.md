@@ -3,6 +3,7 @@
 SDK how-to and workflows for **consumers** of the package.
 
 - [examples.md](examples.md) — Skill walkthrough and minimal API snippets for a first tenant session.
+- [facade-helpers.md](facade-helpers.md) — Identity lane (`search_by_*`), generated relationship accessors (`list_by_project`, `list_for_context`, `RouteResult`), wire helpers.
 - [consumer-ux-list-update.md](consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; SDK consumer UX.
 - [retrieving-scan-results.md](retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.
 - List performance (scope, traverse, debugging): [contributing/list-query-performance.md](../contributing/list-query-performance.md).
