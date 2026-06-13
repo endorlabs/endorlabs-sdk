@@ -9,7 +9,7 @@ from unittest.mock import Mock
 from endorlabs.workflows.estate.collect.runner import _collect_sharded_resource
 
 if TYPE_CHECKING:
-    from endorlabs.workflows.estate.collect.shards import ParentShard
+    from endorlabs.tools.list_sharding import ParentShard
 from endorlabs.workflows.estate.contracts import RESOURCE_FINDING, RESOURCE_PROJECT
 from endorlabs.workflows.estate.workspace.collect_manifest import (
     CollectManifest,

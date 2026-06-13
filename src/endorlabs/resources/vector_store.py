@@ -1,60 +1,30 @@
-"""VectorStore resource facade model.
-
-Read-oriented facade for vector store inventory resources.
-"""
+"""VectorStore — thin consumer wrapper over generated V1VectorStore."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, ClassVar
 
-from pydantic import Field
+from endorlabs.generated.models.vector_store_service import V1VectorStore
 
-from .base import BaseResource, BaseSpec
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin, VectorStoreSpec
 
 if TYPE_CHECKING:
     from ..client_surface import Client
     from .vector_store_query import VectorStoreQuery
 
 
-class VectorStoreSpec(BaseSpec):
-    """Vector store specification.
+class VectorStore(V1VectorStore, ConsumerResourceWireMixin, ConsumerResourceMixin):
+    """Consumer facade model for VectorStore (generated wire shape)."""
 
-    The API schema for this service is evolving; keep this permissive so list/get
-    can succeed without strict field coupling.
-    """
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("VectorStore")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("VectorStore")
 
-    dimensions: int | None = Field(None, description="Embedding dimensions")
-    embedding_model: str | None = Field(None, description="Embedding model")
-    embedding_provider: str | None = Field(None, description="Embedding provider")
-    uniqueness_fields: str | None = Field(
-        None, description="Metadata keys used for uniqueness"
-    )
-
-
-class VectorStore(BaseResource):
-    """Vector store resource.
-
-    Used for facade list/get operations.
-    """
-
-    spec: VectorStoreSpec | dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None, description="Vector store specification"
-    )
+    spec: VectorStoreSpec | None = None  # pyright: ignore[reportIncompatibleVariableOverride]
 
     def query(self, query: str, *, client: Client) -> VectorStoreQuery:
-        """Run a natural-language query against this vector store.
-
-        Delegates to ``client.VectorStoreQuery.create`` using this store's
-        ``uuid`` and ``tenant_meta.namespace``. Requires a hydrated store from
-        list/get (``namespace`` must be present).
-
-        Args:
-            query: Natural-language query (e.g. functions that sanitize input).
-            client: ``endorlabs.Client`` instance.
-
-        Returns:
-            ``VectorStoreQuery`` response from the API.
-        """
+        """Run a natural-language query against this vector store."""
         ns = self.namespace
         if ns is None:
             raise ValueError(

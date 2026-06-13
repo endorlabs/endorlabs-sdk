@@ -1,0 +1,167 @@
+{
+  "edges": [
+    {
+      "id": "project.findings",
+      "from_kind": "Project",
+      "to_kind": "Finding",
+      "edge": "list_by_uuid_field",
+      "tier": "B",
+      "public_method": "Finding.list_by_project",
+      "filter_field": "spec.project_uuid",
+      "uuid_from": "source.uuid",
+      "namespace_from": "source"
+    },
+    {
+      "id": "project.scan_results",
+      "from_kind": "Project",
+      "to_kind": "ScanResult",
+      "edge": "list_by_parent",
+      "tier": "B",
+      "public_method": "ScanResult.list_by_project",
+      "parent_kind": "project",
+      "namespace_from": "source"
+    },
+    {
+      "id": "project.package_versions",
+      "from_kind": "Project",
+      "to_kind": "PackageVersion",
+      "edge": "list_by_uuid_field",
+      "tier": "B",
+      "public_method": "PackageVersion.list_by_project",
+      "filter_field": "spec.project_uuid",
+      "uuid_from": "source.uuid",
+      "namespace_from": "source"
+    },
+    {
+      "id": "finding.dependency_metadata.get",
+      "from_kind": "Finding",
+      "to_kind": "DependencyMetadata",
+      "edge": "get_by_uuid",
+      "tier": "A",
+      "public_method": "Finding.to_dependency_metadata",
+      "uuid_from": "source.spec.target_uuid",
+      "namespace_from": "source"
+    },
+    {
+      "id": "finding.dependency_metadata.by_package",
+      "from_kind": "Finding",
+      "to_kind": "DependencyMetadata",
+      "edge": "list_by_attribute",
+      "tier": "C",
+      "public_method": "Finding.to_dependency_metadata",
+      "source_attr": "spec.target_dependency_package_name",
+      "target_filter_field": "spec.dependency_data.package_name",
+      "match": "exact",
+      "namespace_from": "source",
+      "also_filter": "spec.importer_data.project_uuid==\"{source.spec.project_uuid}\""
+    },
+    {
+      "id": "scan.findings",
+      "from_kind": "ScanResult",
+      "to_kind": "Finding",
+      "edge": "list_by_context_partition",
+      "tier": "B",
+      "public_method": "Finding.list_for_context",
+      "context_from": "context",
+      "namespace_from": "source",
+      "also_filter": "spec.project_uuid==\"{source.meta.parent_uuid}\""
+    },
+    {
+      "id": "scan.package_versions",
+      "from_kind": "ScanResult",
+      "to_kind": "PackageVersion",
+      "edge": "list_by_context_partition",
+      "tier": "B",
+      "public_method": "PackageVersion.list_for_context",
+      "context_from": "context",
+      "namespace_from": "source",
+      "also_filter": "spec.project_uuid==\"{source.meta.parent_uuid}\""
+    },
+    {
+      "id": "scan.dependency_metadata",
+      "from_kind": "ScanResult",
+      "to_kind": "DependencyMetadata",
+      "edge": "list_by_context_partition",
+      "tier": "B",
+      "public_method": "DependencyMetadata.list_for_context",
+      "context_from": "context",
+      "namespace_from": "source",
+      "also_filter": "spec.importer_data.project_uuid==\"{source.meta.parent_uuid}\""
+    },
+    {
+      "id": "scan.repository_versions",
+      "from_kind": "ScanResult",
+      "to_kind": "RepositoryVersion",
+      "edge": "list_by_context_partition",
+      "tier": "B",
+      "public_method": "RepositoryVersion.list_for_context",
+      "context_from": "context",
+      "namespace_from": "source",
+      "also_filter": "meta.parent_uuid==\"{source.meta.parent_uuid}\""
+    },
+    {
+      "id": "scan.finding_logs",
+      "from_kind": "ScanResult",
+      "to_kind": "FindingLog",
+      "edge": "list_by_context_partition",
+      "tier": "B",
+      "public_method": "FindingLog.list_for_context",
+      "context_from": "context",
+      "namespace_from": "source"
+    },
+    {
+      "id": "scan.linter_results",
+      "from_kind": "ScanResult",
+      "to_kind": "LinterResult",
+      "edge": "list_by_context_partition",
+      "tier": "B",
+      "public_method": "LinterResult.list_for_context",
+      "context_from": "context",
+      "namespace_from": "source",
+      "also_filter": "spec.project_uuid==\"{source.meta.parent_uuid}\""
+    },
+    {
+      "id": "scan.metrics",
+      "from_kind": "ScanResult",
+      "to_kind": "Metric",
+      "edge": "list_by_context_partition",
+      "tier": "B",
+      "public_method": "Metric.list_for_context",
+      "context_from": "context",
+      "namespace_from": "source"
+    },
+    {
+      "id": "scan.package_licenses",
+      "from_kind": "ScanResult",
+      "to_kind": "PackageLicense",
+      "edge": "list_by_context_partition",
+      "tier": "B",
+      "public_method": "PackageLicense.list_for_context",
+      "context_from": "context",
+      "namespace_from": "source",
+      "also_filter": "spec.project_uuid==\"{source.meta.parent_uuid}\""
+    },
+    {
+      "id": "scan.scan_workflow_results",
+      "from_kind": "ScanResult",
+      "to_kind": "ScanWorkflowResult",
+      "edge": "list_by_context_partition",
+      "tier": "B",
+      "public_method": "ScanWorkflowResult.list_for_context",
+      "context_from": "context",
+      "namespace_from": "source",
+      "also_filter": "meta.parent_uuid==\"{source.meta.parent_uuid}\""
+    },
+    {
+      "id": "scan.version_upgrades",
+      "from_kind": "ScanResult",
+      "to_kind": "VersionUpgrade",
+      "edge": "list_by_context_partition",
+      "tier": "B",
+      "public_method": "VersionUpgrade.list_for_context",
+      "context_from": "context",
+      "namespace_from": "source",
+      "also_filter": "spec.project_uuid==\"{source.meta.parent_uuid}\""
+    }
+  ]
+}

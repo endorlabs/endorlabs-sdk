@@ -1,36 +1,27 @@
-"""ScanProfile resource module for Endor Labs API.
-
-This module provides CRUD operations for ScanProfile resources following the
-established patterns from the Project and Finding resource implementations.
-
-API OPERATIONS SUPPORTED:
-- GET: List scan profiles, Get scan profile by UUID
-- POST: Create scan profile
-- PATCH: Update scan profile
-- DELETE: Delete scan profile
-
-API USAGE NOTES:
-- ScanProfiles define scan configuration including toolchains and scan parameters
-- ScanProfiles can be set as default for a namespace
-- ScanProfiles support propagation to child namespaces via propagate field
-- For more information, see the ScanProfileService REST API documentation
-"""
+"""ScanProfile — thin consumer wrapper over generated V1ScanProfile."""
 
 from __future__ import annotations
 
-from typing import Any, override
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..utils.logging_config import get_resource_logger
-from .base import (
-    BaseMeta,
-    BaseResource,
-    BaseSpec,
-    FlexibleEnum,
-)
+from endorlabs.generated.models.provisioning_result_service import V1ScanProfile
 
-logger = get_resource_logger(__name__)
+from .base import FlexibleEnum
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin
+
+
+class ScanProfile(V1ScanProfile, ConsumerResourceWireMixin, ConsumerResourceMixin):
+    """Consumer facade model for ScanProfile (generated wire shape)."""
+
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("ScanProfile")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("ScanProfile")
+
+
+# --- integration / create-update compat (pre-cutover helpers) ---
 
 
 class AISastAnalysisMode(FlexibleEnum):
@@ -170,116 +161,6 @@ class AISastAnalysisParameters(BaseModel):
     )
 
 
-class ScanProfileMeta(BaseMeta):
-    """Scan profile metadata extending BaseMeta."""
-
-    # ScanProfile-specific fields only (universal fields inherited from BaseMeta)
-    pass  # No additional fields needed, all were universal
-
-
-class ScanProfileSpec(BaseSpec):
-    """Scan profile specification extending BaseSpec.
-
-    Field Mutability Guide:
-    ======================
-
-    FIELD MUTABILITY (per OpenAPI spec):
-    =====================================
-    MUTABLE FIELDS:
-    - toolchain_profile: Toolchain configuration (can be updated)
-    - automated_scan_parameters: Scan parameters (can be updated)
-    - remediation_parameters: Remediation settings (can be updated)
-    - is_default: Default profile flag (can be updated)
-    - security_review_scanner_parameters: Security review settings
-    - exporter_parameters: Exporter settings
-    - ai_sast_analysis_parameters: AI SAST analysis settings
-
-    Note: All spec fields are mutable and can be updated via PATCH.
-    """
-
-    # Optional fields (all are optional per OpenAPI spec)
-    toolchain_profile: dict[str, Any] | None = Field(
-        None,
-        description="OS/architecture-specific toolchain configuration. "
-        "Structure: os -> arch -> toolchains (e.g., java_tool_chain, "
-        "python_tool_chain).",
-    )
-    automated_scan_parameters: AutomatedScanParameters | None = Field(
-        None,
-        description="Parameters applied during cloud scans by Endor Labs",
-    )
-    remediation_parameters: RemediationParameters | None = Field(
-        None, description="Parameters required for remediation actions"
-    )
-    is_default: bool | None = Field(
-        None, description="Indicates this is the namespace default profile"
-    )
-    security_review_scanner_parameters: SecurityReviewScannerParameters | None = Field(
-        None, description="Parameters for security review scanner"
-    )
-    exporter_parameters: ExporterParameters | None = Field(
-        None, description="Parameters for exporter"
-    )
-    ai_sast_analysis_parameters: AISastAnalysisParameters | None = Field(
-        None, description="Parameters for AI SAST analysis workflow"
-    )
-
-
-class ScanProfile(BaseResource):
-    """An Endor Labs ScanProfile entity extending BaseResource.
-
-    ScanProfile-specific fields (universal fields inherited from BaseResource).
-
-    OPERATION SUPPORT:
-    ==================
-    ✅ GET: List scan profiles, Get by UUID
-    ✅ POST: Create scan profile
-    ✅ PATCH: Update scan profile
-    ✅ DELETE: Delete scan profile
-
-    FIELD MUTABILITY:
-    =================
-    IMMUTABLE FIELDS (readOnly: true in API spec):
-    - uuid: Unique identifier (readOnly: true)
-    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
-    - meta.kind, meta.version: Resource metadata
-    - meta.created_by, meta.updated_by: Audit fields
-    - meta.references, meta.index_data: System-managed fields
-    - tenant_meta.namespace: Namespace assignment
-
-    MUTABLE FIELDS:
-    - meta.name, meta.description, meta.tags: Metadata
-    - meta.annotations: Resource annotations
-    - spec.*: All spec fields are mutable
-    - propagate: Namespace visibility flag
-    """
-
-    # ScanProfile-specific fields (universal fields inherited from BaseResource)
-    # spec optional on response when API returns partial body (e.g. after update)
-    spec: ScanProfileSpec | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None, description="Scan profile specification"
-    )
-    propagate: bool | None = Field(
-        None,
-        description="Indicates object should be visible in child namespaces",
-    )
-
-    model_config = ConfigDict(extra="ignore")
-
-    def __init__(self, **data: Any) -> None:
-        # Convert spec to ScanProfileSpec if present (partial response may omit spec)
-        spec_val = data.get("spec")
-        if spec_val is not None and isinstance(spec_val, dict):
-            data["spec"] = ScanProfileSpec(**spec_val)
-        super().__init__(**data)
-
-    @override
-    @classmethod
-    def get_mutable_fields_cls(cls) -> list[str]:
-        """Get list of mutable fields for ScanProfile."""
-        return ["meta.name", "meta.description", "meta.tags", "spec"]
-
-
 class ScanProfileMetaCreate(BaseModel):
     """Metadata for creating a ScanProfile."""
 
@@ -319,25 +200,6 @@ class CreateScanProfilePayload(BaseModel):
     meta: ScanProfileMetaCreate
     spec: ScanProfileSpecCreate
     propagate: bool | None = Field(None, description="Make visible in child namespaces")
-
-
-def build_create_payload(
-    *,
-    name: str,
-    description: str | None = None,
-    is_default: bool | None = None,
-    propagate: bool | None = None,
-    **spec_kwargs: Any,
-) -> CreateScanProfilePayload:
-    """Build CreateScanProfilePayload from kwargs (decoupled facade create).
-
-    Required: name.
-    Optional: description, is_default, propagate, and any spec fields
-    (e.g. automated_scan_parameters, toolchain_profile) passed as spec_kwargs.
-    """
-    meta = ScanProfileMetaCreate(name=name, description=description)
-    spec = ScanProfileSpecCreate(is_default=is_default, **spec_kwargs)
-    return CreateScanProfilePayload(meta=meta, spec=spec, propagate=propagate)
 
 
 class ScanProfileMetaUpdate(BaseModel):
@@ -415,4 +277,13 @@ class UpdateScanProfilePayload(BaseModel):
     )
     propagate: bool | None = Field(
         None, description="Updated namespace visibility flag"
+    )
+
+
+def build_create_payload(**kwargs: Any) -> CreateScanProfilePayload:
+    """Build CreateScanProfilePayload from kwargs (decoupled facade create)."""
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateScanProfilePayload, kwargs, attr_name="ScanProfile"
     )

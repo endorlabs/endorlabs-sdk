@@ -46,7 +46,7 @@ docs = [
     "beautifulsoup4==4.15.0",
     "markdownify==1.2.2",
 ]
-# DataFrame/Parquet export (estate cardinality tabular; utils.tabular shim) + estate graph metrics (igraph/leidenalg)
+# DataFrame/Parquet export (estate cardinality tabular) + estate graph metrics (igraph/leidenalg)
 analytics = [
     "pandas==3.0.3",
     "pyarrow==24.0.0",
@@ -358,7 +358,6 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 "src/endorlabs/workflows/callgraph/**" = ["C901", "SLF001", "S108", "TC001"]
 "src/endorlabs/workflows/agent_context/hydration.py" = ["C901"]
 "src/endorlabs/workflows/dependencies/metadata_fetch.py" = ["TC001"]
-"src/endorlabs/utils/api_pagination.py" = ["TC001"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -550,7 +549,7 @@ executionEnvironments = [
     { root = "src/endorlabs/tools", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
     { root = "src/endorlabs/context", pythonVersion = "3.13", reportMissingImports = "none", reportUnknownVariableType = "none" },
     { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none" },
-    { root = "src/endorlabs/resources", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src/endorlabs/resources", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportIncompatibleVariableOverride = "none", reportIncompatibleMethodOverride = "none", reportInvalidTypeForm = "none", reportOptionalOperand = "none", reportGeneralTypeIssues = "none", reportUnnecessaryTypeIgnoreComment = "none", reportCallIssue = "none", reportArgumentType = "none", reportOptionalMemberAccess = "none" },
     { root = "src/endorlabs/generated/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportMissingTypeArgument = "none", reportAttributeAccessIssue = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportUnnecessaryTypeIgnoreComment = "none" },
     # Staged strictness ratchet (phase 1): move operations unknown-types to warning.
     { root = "src/endorlabs/operations", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },

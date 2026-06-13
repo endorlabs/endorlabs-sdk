@@ -16,8 +16,7 @@ import pytest
 import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
-from endorlabs.core.exceptions import AmbiguousError, NotFoundError, ValidationError
-from endorlabs.core.filter import F
+from endorlabs.core.exceptions import NotFoundError, ValidationError
 from endorlabs.facade import CallGraphDataFacade
 from tests.conftest import (
     TEST_MAX_PAGES,
@@ -253,7 +252,6 @@ def test_client_exposes_all_registry_resources(
         )
         assert hasattr(facade, "list")
         assert hasattr(facade, "list_iter")
-        assert hasattr(facade, "lookup")
         assert hasattr(facade, "get")
 
 
@@ -273,8 +271,6 @@ def test_registry_supported_ops_not_implemented_contract(
                 facade.list(namespace=namespace, max_pages=TEST_MAX_PAGES)
             with pytest.raises(NotImplementedError, match="support list_iter"):
                 list(facade.list_iter(namespace=namespace, max_pages=TEST_MAX_PAGES))
-            with pytest.raises(NotImplementedError, match="support lookup"):
-                facade.lookup(namespace=namespace, max_pages=TEST_MAX_PAGES)
 
         if "get" not in entry.supported_ops:
             with pytest.raises(NotImplementedError, match="support get"):
@@ -957,96 +953,25 @@ def test_list_explicit_kwargs_override_list_params(
     assert lp.filter == "from_explicit"
 
 
-def test_lookup_returns_single_item(
+def test_project_search_by_name_filters_client_side(
     client_with_mock_transport: Client,
 ) -> None:
-    """lookup(name='only') returns the single item when list returns one."""
+    """search_by_name returns substring matches from list results."""
     client = client_with_mock_transport
-    single = Mock(
-        uuid="proj-1",
+    a = Mock(
+        uuid="proj-a",
+        meta=Mock(name="https://github.com/org/repo-a"),
         tenant_meta=Mock(namespace=TEST_NAMESPACE_DEFAULT),
     )
-    mock_list = Mock(return_value=[single])
-    client.Project._ops.list = mock_list
-    result = client.Project.lookup(name="only", max_pages=2)
-    assert result is single
-    mock_list.assert_called_once()
-    args, _ = mock_list.call_args
-    assert args[2] == 2
-
-
-def test_lookup_raises_not_found_when_zero(
-    client_with_mock_transport: Client,
-) -> None:
-    """lookup(...) raises NotFoundError when list returns no items."""
-    client = client_with_mock_transport
-    client.Project._ops.list = Mock(return_value=[])
-    with pytest.raises(NotFoundError, match="No resource matched"):
-        client.Project.lookup(name="missing", max_pages=2)
-
-
-def test_lookup_raises_ambiguous_when_multiple(
-    client_with_mock_transport: Client,
-) -> None:
-    """lookup(...) raises AmbiguousError when list returns more than one."""
-    client = client_with_mock_transport
-    a = Mock(uuid="proj-a", tenant_meta=Mock(namespace=TEST_NAMESPACE_DEFAULT))
-    b = Mock(uuid="proj-b", tenant_meta=Mock(namespace=TEST_NAMESPACE_DEFAULT))
-    client.Project._ops.list = Mock(return_value=[a, b])
-    with pytest.raises(AmbiguousError, match="Multiple resources"):
-        client.Project.lookup(name="dup", max_pages=2)
-
-
-def test_lookup_calls_list_with_identity_kwargs(
-    client_with_mock_transport: Client,
-) -> None:
-    """lookup(name='x') calls list with name and max_pages=2; filter built from name."""
-    client = client_with_mock_transport
-    single = Mock(
-        uuid="p1",
+    b = Mock(
+        uuid="proj-b",
+        meta=Mock(name="other"),
         tenant_meta=Mock(namespace=TEST_NAMESPACE_DEFAULT),
     )
-    mock_list = Mock(return_value=[single])
-    client.Project._ops.list = mock_list
-    client.Project.lookup(name="backend")
-    mock_list.assert_called_once()
-    args, _ = mock_list.call_args
-    lp = args[1]
-    assert lp is not None
-    assert lp.filter is not None
-    assert "meta.name" in lp.filter
-    assert "backend" in lp.filter
-    assert args[2] == 2
-
-
-def test_lookup_raises_value_error_when_mask_kwarg_set(
-    client_with_mock_transport: Client,
-) -> None:
-    """lookup raises before list() when mask= is non-empty (typed resource only)."""
-    client = client_with_mock_transport
-    mock_list = Mock(return_value=[])
-    client.Project._ops.list = mock_list
-    with pytest.raises(ValidationError, match="lookup returns a typed resource"):
-        client.Project.lookup(mask="uuid", name="x", max_pages=2)
-    mock_list.assert_not_called()
-
-
-def test_lookup_raises_value_error_when_list_params_mask_set(
-    client_with_mock_transport: Client,
-) -> None:
-    """lookup raises when ListParameters.mask is non-empty."""
-    from endorlabs.core.types import ListParameters
-
-    client = client_with_mock_transport
-    mock_list = Mock(return_value=[])
-    client.Project._ops.list = mock_list
-    with pytest.raises(ValidationError, match="lookup returns a typed resource"):
-        client.Project.lookup(
-            list_params=ListParameters(mask="meta.name"),
-            name="x",
-            max_pages=2,
-        )
-    mock_list.assert_not_called()
+    client.Project.list = Mock(return_value=[a, b])
+    out = client.Project.search_by_name("org/repo", traverse=True, max_pages=2)
+    assert out == [a]
+    client.Project.list.assert_called_once()
 
 
 def test_list_with_identity_kwargs_builds_filter_when_in_map(
@@ -1064,28 +989,6 @@ def test_list_with_identity_kwargs_builds_filter_when_in_map(
     assert lp.filter is not None
     assert "meta.name" in lp.filter
     assert "my-policy" in lp.filter
-
-
-def test_authorization_policy_lookup_builds_filter_from_name(
-    client_with_mock_transport: Client,
-) -> None:
-    """authorization_policy.lookup(name='x') delegates to list with filter from name."""
-    client = client_with_mock_transport
-    single = Mock(
-        uuid="ap-1",
-        tenant_meta=Mock(namespace=TEST_NAMESPACE_DEFAULT),
-    )
-    mock_list = Mock(return_value=[single])
-    client.AuthorizationPolicy._ops.list = mock_list
-    result = client.AuthorizationPolicy.lookup(name="only-one", max_pages=2)
-    assert result is single
-    mock_list.assert_called_once()
-    args, _ = mock_list.call_args
-    lp = args[1]
-    assert lp is not None
-    assert lp.filter is not None
-    assert "meta.name" in lp.filter
-    assert "only-one" in lp.filter
 
 
 def test_list_name_raises_when_not_in_identity_map(
@@ -1265,17 +1168,6 @@ def test_facade_list_count_true_emits_deprecation_and_uses_count(
     client.Finding.count.assert_called_once()
 
 
-def test_project_resolve_delegates(client_with_mock_transport: Client) -> None:
-    client = client_with_mock_transport
-    project = Mock()
-    client.Project.lookup = Mock(return_value=project)
-    out = client.Project.resolve(
-        "https://github.com/org/repo", namespace="tenant.child"
-    )
-    assert out is project
-    client.Project.lookup.assert_called_once()
-
-
 def test_call_graph_data_decode(
     client_with_mock_transport: Client, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1297,27 +1189,28 @@ def test_call_graph_data_decode(
     assert out.summary["uuid"] == "cg1"
 
 
-def test_scan_result_list_for_project(client_with_mock_transport: Client) -> None:
-    """ScanResult.list_for_project filters by parent and optional status."""
+def test_scan_result_list_by_project(client_with_mock_transport: Client) -> None:
+    """ScanResult.list_by_project filters by parent and optional status."""
     client = client_with_mock_transport
     sr1 = Mock()
     sr1.spec = Mock(status="STATUS_SUCCESS")
     sr2 = Mock()
     sr2.spec = Mock(status="STATUS_FAILED")
-    client.ScanResult.list = Mock(return_value=[sr1, sr2])
+    route_result = Mock(
+        values=[sr1, sr2], edge_used="project.scan_results", warnings=[]
+    )
+    client.ScanResult._execute_route = Mock(return_value=route_result)
 
-    out = client.ScanResult.list_for_project(
+    out = client.ScanResult.list_by_project(
         "p1",
         namespace="tenant.child",
         limit=10,
         status_filter="STATUS_SUCCESS",
     )
-    client.ScanResult.list.assert_called_once()
-    kwargs = client.ScanResult.list.call_args.kwargs
-    assert kwargs["namespace"] == "tenant.child"
-    assert str(kwargs["filter"]) == str(F("meta.parent_uuid") == "p1")
-    assert kwargs["sort_by"] == "meta.create_time"
-    assert kwargs["desc"] is True
-    assert kwargs["max_pages"] == 1
-    assert kwargs["page_size"] == 10
-    assert out == [sr1]
+    client.ScanResult._execute_route.assert_called_once()
+    call = client.ScanResult._execute_route.call_args
+    assert call.args[0] == "project.scan_results"
+    assert call.kwargs["source"] == "p1"
+    assert call.kwargs["namespace"] == "tenant.child"
+    assert call.kwargs["page_size"] == 10
+    assert out.values == [sr1]

@@ -48,7 +48,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "APIKeyServiceCreateAPIKeyBody"
       ],
-      "description": "API Key resource model extending BaseResource.",
+      "description": "Consumer facade model for APIKey (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -117,7 +117,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "AuditLogServiceCreateAuditLogBody"
       ],
-      "description": "Audit Log resource model extending BaseResource.",
+      "description": "Consumer facade model for AuditLog (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -184,7 +184,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "AuthenticationLogServiceCreateAuthenticationLogBody"
       ],
-      "description": "Authentication Log resource model. List and get only.",
+      "description": "Consumer facade model for AuthenticationLog (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -255,7 +255,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "AuthorizationPolicyServiceCreateAuthorizationPolicyBody"
       ],
-      "description": "Authorization Policy resource model extending BaseResource.",
+      "description": "Consumer facade model for AuthorizationPolicy (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -328,7 +328,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "CodeOwnersServiceCreateCodeOwnersBody"
       ],
-      "description": "Code Owners resource model. List, get, create, update, delete.",
+      "description": "Consumer facade model for CodeOwners (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -480,7 +480,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "EndorLicenseServiceCreateEndorLicenseBody"
       ],
-      "description": "Endor License resource model. List and get only.",
+      "description": "Consumer facade model for EndorLicense (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -583,7 +583,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "FindingServiceCreateFindingBody"
       ],
-      "description": "An Endor Labs finding entity extending BaseResource.",
+      "description": "Consumer facade model for Finding (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -681,7 +681,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "FindingLogServiceCreateFindingLogBody"
       ],
-      "description": "An Endor Labs FindingLog entity extending BaseResource.",
+      "description": "Consumer facade model for FindingLog (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -714,6 +714,54 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "list"
       ],
       "update_payload_entities": [],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    {
+      "accepted_canonical_entities": [
+        "v1IdentityProvider"
+      ],
+      "attr_name": "IdentityProvider",
+      "build_create_payload_fn_import_path": "endorlabs.resources.identity_provider:build_create_payload",
+      "build_create_payload_fn_name": "identity_provider_build_create",
+      "canonical_entities": [
+        "v1IdentityProvider"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "oidc_provider",
+        "saml_provider"
+      ],
+      "create_convenience_spec_required": [],
+      "create_mode": "unsupported",
+      "create_payload_entities": [
+        "IdentityProviderServiceCreateIdentityProviderBody"
+      ],
+      "description": "Consumer facade model for IdentityProvider (generated wire shape).",
+      "filter_kwarg_map": {},
+      "has_tag_methods": false,
+      "identity_filter_fields": [],
+      "immutable_fields": [],
+      "model_class": "IdentityProvider",
+      "model_class_import_path": "endorlabs.resources.identity_provider:IdentityProvider",
+      "mutable_fields": [],
+      "parent_kind": null,
+      "resource_name": "identity-providers",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ],
+      "update_payload_entities": [
+        "IdentityProviderServiceUpdateIdentityProviderBody"
+      ],
       "update_requires_mask": false,
       "workflow_flags": []
     },
@@ -768,7 +816,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "InstallationServiceCreateInstallationBody"
       ],
-      "description": "Installation resource model extending BaseResource.",
+      "description": "Consumer facade model for Installation (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -848,7 +896,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "InvitationServiceCreateInvitationBody"
       ],
-      "description": "Invitation resource model. List, get, create, update, delete.",
+      "description": "Consumer facade model for Invitation (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -940,7 +988,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "LinterResultServiceCreateLinterResultBody"
       ],
-      "description": "LinterResult resource model extending BaseResource.",
+      "description": "Consumer facade model for LinterResult (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -1033,7 +1081,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "MalwareServiceCreateMalwareBody",
         "QueryMalwareServiceCreateQueryMalwareBody"
       ],
-      "description": "Malware resource model.",
+      "description": "Consumer facade model for Malware (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -1107,7 +1155,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "MetricServiceCreateMetricBody"
       ],
-      "description": "Metric resource model extending BaseResource.",
+      "description": "Consumer facade model for Metric (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -1179,7 +1227,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "NamespaceServiceCreateNamespaceBody"
       ],
-      "description": "An Endor Labs namespace entity extending BaseResource.",
+      "description": "Consumer facade model for Namespace (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -1246,7 +1294,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "NotificationTargetServiceCreateNotificationTargetBody"
       ],
-      "description": "Notification Target resource model.",
+      "description": "Consumer facade model for NotificationTarget (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -1318,7 +1366,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "PRCommentConfigServiceCreatePRCommentConfigBody"
       ],
-      "description": "PR comment configuration resource model.",
+      "description": "Consumer facade model for PRCommentConfig (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -1363,6 +1411,69 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
     },
     {
       "accepted_canonical_entities": [
+        "v1PackageFirewallLog"
+      ],
+      "attr_name": "PackageFirewallLog",
+      "build_create_payload_fn_import_path": "endorlabs.resources.package_firewall_log:build_create_payload",
+      "build_create_payload_fn_name": "package_firewall_log_build_create",
+      "canonical_entities": [
+        "v1PackageFirewallLog"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "ecosystem",
+        "package_name",
+        "package_version",
+        "request_type",
+        "block_reason",
+        "malware_uuid",
+        "api_key_id",
+        "remote_address",
+        "request_uri",
+        "blocked_at",
+        "package_age_hours",
+        "reason",
+        "action",
+        "package_license",
+        "action_at",
+        "cvss_severity_level",
+        "cvss_vuln_uuid"
+      ],
+      "create_convenience_spec_required": [
+        "ecosystem",
+        "package_name"
+      ],
+      "create_mode": "unsupported",
+      "create_payload_entities": [
+        "PackageFirewallLogServiceCreatePackageFirewallLogBody"
+      ],
+      "description": "Consumer facade model for PackageFirewallLog (generated wire shape).",
+      "filter_kwarg_map": {},
+      "has_tag_methods": false,
+      "identity_filter_fields": [],
+      "immutable_fields": [],
+      "model_class": "PackageFirewallLog",
+      "model_class_import_path": "endorlabs.resources.package_firewall_log:PackageFirewallLog",
+      "mutable_fields": [],
+      "parent_kind": null,
+      "resource_name": "package-firewall-logs",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ],
+      "update_payload_entities": [],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    {
+      "accepted_canonical_entities": [
         "v1PackageLicense"
       ],
       "attr_name": "PackageLicense",
@@ -1394,7 +1505,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "PackageLicenseServiceCreatePackageLicenseBody"
       ],
-      "description": "PackageLicense resource model extending BaseResource.",
+      "description": "Consumer facade model for PackageLicense (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": true,
       "identity_filter_fields": [],
@@ -1480,7 +1591,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "PackageVersionServiceCreatePackageVersionBody"
       ],
-      "description": "PackageVersion resource model extending BaseResource.",
+      "description": "Consumer facade model for PackageVersion (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -1573,7 +1684,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "PolicyServiceCreatePolicyBody"
       ],
-      "description": "Policy resource model extending BaseResource.",
+      "description": "Consumer facade model for Policy (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name",
         "policy_type": "spec.policy_type"
@@ -1666,7 +1777,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "PolicyTemplateServiceCreatePolicyTemplateBody"
       ],
-      "description": "Policy Template resource model. List and get only.",
+      "description": "Consumer facade model for PolicyTemplate (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -1740,7 +1851,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "ProjectServiceCreateProjectBody"
       ],
-      "description": "An Endor Labs project entity extending BaseResource.",
+      "description": "Consumer facade model for Project (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -1784,6 +1895,51 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
     },
     {
       "accepted_canonical_entities": [
+        "v1Query"
+      ],
+      "attr_name": "Query",
+      "build_create_payload_fn_import_path": "endorlabs.resources.query:build_create_payload",
+      "build_create_payload_fn_name": "query_build_create",
+      "canonical_entities": [
+        "v1Query"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "query_response"
+      ],
+      "create_convenience_spec_fields": [
+        "query_spec"
+      ],
+      "create_convenience_spec_required": [],
+      "create_mode": "both",
+      "create_payload_entities": [
+        "QueryServiceCreateQueryBody"
+      ],
+      "description": "Consumer facade model for Query (generated wire shape).",
+      "filter_kwarg_map": {},
+      "has_tag_methods": false,
+      "identity_filter_fields": [],
+      "immutable_fields": [],
+      "model_class": "Query",
+      "model_class_import_path": "endorlabs.resources.query:Query",
+      "mutable_fields": [],
+      "parent_kind": null,
+      "resource_name": "queries",
+      "scope": "tenant",
+      "supported_ops": [
+        "create"
+      ],
+      "update_payload_entities": [],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    {
+      "accepted_canonical_entities": [
         "v1QueryMalware"
       ],
       "attr_name": "QueryMalware",
@@ -1814,7 +1970,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "QueryMalwareServiceCreateQueryMalwareBody"
       ],
-      "description": "QueryMalware resource model returned by query endpoint.",
+      "description": "Consumer facade model for QueryMalware (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -1840,6 +1996,54 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "parent_kind": null,
       "resource_name": "queries/malware",
       "scope": "oss",
+      "supported_ops": [
+        "create"
+      ],
+      "update_payload_entities": [],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    {
+      "accepted_canonical_entities": [
+        "v1QuerySimilarPackages"
+      ],
+      "attr_name": "QuerySimilarPackages",
+      "build_create_payload_fn_import_path": "endorlabs.resources.query_similar_packages:build_create_payload",
+      "build_create_payload_fn_name": "query_similar_packages_build_create",
+      "canonical_entities": [
+        "v1QuerySimilarPackages"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "name",
+        "edit_distance",
+        "repo",
+        "exact_match"
+      ],
+      "create_convenience_spec_required": [
+        "name"
+      ],
+      "create_mode": "both",
+      "create_payload_entities": [
+        "QuerySimilarPackagesServiceCreateQuerySimilarPackagesBody"
+      ],
+      "description": "Consumer facade model for QuerySimilarPackages (generated wire shape).",
+      "filter_kwarg_map": {},
+      "has_tag_methods": false,
+      "identity_filter_fields": [],
+      "immutable_fields": [],
+      "model_class": "QuerySimilarPackages",
+      "model_class_import_path": "endorlabs.resources.query_similar_packages:QuerySimilarPackages",
+      "mutable_fields": [],
+      "parent_kind": null,
+      "resource_name": "queries/similar-packages",
+      "scope": "tenant",
       "supported_ops": [
         "create"
       ],
@@ -1881,7 +2085,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "QueryVulnerabilityServiceCreateQueryVulnerabilityBody"
       ],
-      "description": "QueryVulnerability resource model returned by query endpoint.",
+      "description": "Consumer facade model for QueryVulnerability (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -1958,7 +2162,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "RepositoryServiceCreateRepositoryBody"
       ],
-      "description": "Repository resource model extending BaseResource.",
+      "description": "Consumer facade model for Repository (generated wire shape).",
       "filter_kwarg_map": {
         "git_url": "spec.vcs_url",
         "name": "meta.name",
@@ -2035,7 +2239,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "RepositoryVersionServiceCreateRepositoryVersionBody"
       ],
-      "description": "RepositoryVersion resource model extending BaseResource.",
+      "description": "Consumer facade model for RepositoryVersion (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -2082,6 +2286,58 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
     },
     {
       "accepted_canonical_entities": [
+        "v1SavedQuery"
+      ],
+      "attr_name": "SavedQuery",
+      "build_create_payload_fn_import_path": "endorlabs.resources.saved_query:build_create_payload",
+      "build_create_payload_fn_name": "saved_query_build_create",
+      "canonical_entities": [
+        "v1SavedQuery"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "lock"
+      ],
+      "create_convenience_spec_fields": [
+        "query",
+        "monitor",
+        "query_type",
+        "is_default"
+      ],
+      "create_convenience_spec_required": [],
+      "create_mode": "unsupported",
+      "create_payload_entities": [
+        "SavedQueryServiceCreateSavedQueryBody"
+      ],
+      "description": "Consumer facade model for SavedQuery (generated wire shape).",
+      "filter_kwarg_map": {},
+      "has_tag_methods": false,
+      "identity_filter_fields": [],
+      "immutable_fields": [],
+      "model_class": "SavedQuery",
+      "model_class_import_path": "endorlabs.resources.saved_query:SavedQuery",
+      "mutable_fields": [],
+      "parent_kind": null,
+      "resource_name": "saved-queries",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ],
+      "update_payload_entities": [
+        "SavedQueryServiceUpdateSavedQueryBody"
+      ],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    {
+      "accepted_canonical_entities": [
         "v1ScanLogRequest"
       ],
       "attr_name": "ScanLogRequest",
@@ -2121,7 +2377,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "ScanLogRequestServiceCreateScanLogRequestBody"
       ],
-      "description": "An Endor Labs ScanLogRequest entity extending BaseResource.",
+      "description": "Consumer facade model for ScanLogRequest (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -2188,7 +2444,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "ScanProfileServiceCreateScanProfileBody"
       ],
-      "description": "An Endor Labs ScanProfile entity extending BaseResource.",
+      "description": "Consumer facade model for ScanProfile (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -2290,7 +2546,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "ScanResultServiceCreateScanResultBody"
       ],
-      "description": "An Endor Labs ScanResult entity extending BaseResource.",
+      "description": "Consumer facade model for ScanResult (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -2362,7 +2618,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "ScanWorkflowServiceCreateScanWorkflowBody"
       ],
-      "description": "Scan Workflow resource model. List and get only.",
+      "description": "Consumer facade model for ScanWorkflow (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -2433,7 +2689,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "ScanWorkflowResultServiceCreateScanWorkflowResultBody"
       ],
-      "description": "Scan Workflow Result resource model. List and get only.",
+      "description": "Consumer facade model for ScanWorkflowResult (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -2502,7 +2758,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "SemgrepRuleServiceCreateSemgrepRuleBody"
       ],
-      "description": "SemgrepRule resource model extending BaseResource.",
+      "description": "Consumer facade model for SemgrepRule (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -2551,262 +2807,6 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
     },
     {
       "accepted_canonical_entities": [
-        "v1IdentityProvider"
-      ],
-      "attr_name": "V1IdentityProvider",
-      "build_create_payload_fn_import_path": null,
-      "build_create_payload_fn_name": null,
-      "canonical_entities": [
-        "v1IdentityProvider"
-      ],
-      "convenience_skip_reason": null,
-      "create_convenience_meta_fields": [],
-      "create_convenience_payload_top_level_fields": [
-        "meta",
-        "propagate",
-        "tenant_meta"
-      ],
-      "create_convenience_read_only_spec_fields": [],
-      "create_convenience_spec_fields": [
-        "oidc_provider",
-        "saml_provider"
-      ],
-      "create_convenience_spec_required": [],
-      "create_mode": "unsupported",
-      "create_payload_entities": [
-        "IdentityProviderServiceCreateIdentityProviderBody"
-      ],
-      "description": "Represents an identity provider.",
-      "filter_kwarg_map": {},
-      "has_tag_methods": false,
-      "identity_filter_fields": [],
-      "immutable_fields": [],
-      "model_class": "V1IdentityProvider",
-      "model_class_import_path": "endorlabs.generated.models.identity_provider_service:V1IdentityProvider",
-      "mutable_fields": [],
-      "parent_kind": null,
-      "resource_name": "identity-providers",
-      "scope": "tenant",
-      "supported_ops": [
-        "get",
-        "list"
-      ],
-      "update_payload_entities": [
-        "IdentityProviderServiceUpdateIdentityProviderBody"
-      ],
-      "update_requires_mask": false,
-      "workflow_flags": []
-    },
-    {
-      "accepted_canonical_entities": [
-        "v1PackageFirewallLog"
-      ],
-      "attr_name": "V1PackageFirewallLog",
-      "build_create_payload_fn_import_path": null,
-      "build_create_payload_fn_name": null,
-      "canonical_entities": [
-        "v1PackageFirewallLog"
-      ],
-      "convenience_skip_reason": null,
-      "create_convenience_meta_fields": [],
-      "create_convenience_payload_top_level_fields": [
-        "meta",
-        "tenant_meta"
-      ],
-      "create_convenience_read_only_spec_fields": [],
-      "create_convenience_spec_fields": [
-        "ecosystem",
-        "package_name",
-        "package_version",
-        "request_type",
-        "block_reason",
-        "malware_uuid",
-        "api_key_id",
-        "remote_address",
-        "request_uri",
-        "blocked_at",
-        "package_age_hours",
-        "reason",
-        "action",
-        "package_license",
-        "action_at",
-        "cvss_severity_level",
-        "cvss_vuln_uuid"
-      ],
-      "create_convenience_spec_required": [
-        "ecosystem",
-        "package_name"
-      ],
-      "create_mode": "unsupported",
-      "create_payload_entities": [
-        "PackageFirewallLogServiceCreatePackageFirewallLogBody"
-      ],
-      "description": "PackageFirewallLog represents a package firewall audit event recording the",
-      "filter_kwarg_map": {},
-      "has_tag_methods": false,
-      "identity_filter_fields": [],
-      "immutable_fields": [],
-      "model_class": "V1PackageFirewallLog",
-      "model_class_import_path": "endorlabs.generated.models.package_firewall_log_service:V1PackageFirewallLog",
-      "mutable_fields": [],
-      "parent_kind": null,
-      "resource_name": "package-firewall-logs",
-      "scope": "tenant",
-      "supported_ops": [
-        "get",
-        "list"
-      ],
-      "update_payload_entities": [],
-      "update_requires_mask": false,
-      "workflow_flags": []
-    },
-    {
-      "accepted_canonical_entities": [
-        "v1Query"
-      ],
-      "attr_name": "V1Query",
-      "build_create_payload_fn_import_path": null,
-      "build_create_payload_fn_name": null,
-      "canonical_entities": [
-        "v1Query"
-      ],
-      "convenience_skip_reason": null,
-      "create_convenience_meta_fields": [],
-      "create_convenience_payload_top_level_fields": [
-        "meta",
-        "tenant_meta"
-      ],
-      "create_convenience_read_only_spec_fields": [
-        "query_response"
-      ],
-      "create_convenience_spec_fields": [
-        "query_spec"
-      ],
-      "create_convenience_spec_required": [],
-      "create_mode": "payload-only",
-      "create_payload_entities": [
-        "QueryServiceCreateQueryBody"
-      ],
-      "description": "Query implements the metric query requests.",
-      "filter_kwarg_map": {},
-      "has_tag_methods": false,
-      "identity_filter_fields": [],
-      "immutable_fields": [],
-      "model_class": "V1Query",
-      "model_class_import_path": "endorlabs.generated.models.query_service:V1Query",
-      "mutable_fields": [],
-      "parent_kind": null,
-      "resource_name": "queries",
-      "scope": "tenant",
-      "supported_ops": [
-        "create"
-      ],
-      "update_payload_entities": [],
-      "update_requires_mask": false,
-      "workflow_flags": []
-    },
-    {
-      "accepted_canonical_entities": [
-        "v1QuerySimilarPackages"
-      ],
-      "attr_name": "V1QuerySimilarPackages",
-      "build_create_payload_fn_import_path": null,
-      "build_create_payload_fn_name": null,
-      "canonical_entities": [
-        "v1QuerySimilarPackages"
-      ],
-      "convenience_skip_reason": null,
-      "create_convenience_meta_fields": [],
-      "create_convenience_payload_top_level_fields": [
-        "meta",
-        "tenant_meta"
-      ],
-      "create_convenience_read_only_spec_fields": [],
-      "create_convenience_spec_fields": [
-        "name",
-        "edit_distance",
-        "repo",
-        "exact_match"
-      ],
-      "create_convenience_spec_required": [
-        "name"
-      ],
-      "create_mode": "payload-only",
-      "create_payload_entities": [
-        "QuerySimilarPackagesServiceCreateQuerySimilarPackagesBody"
-      ],
-      "description": "QuerySimilarPackages implements the similar packages query requests.",
-      "filter_kwarg_map": {},
-      "has_tag_methods": false,
-      "identity_filter_fields": [],
-      "immutable_fields": [],
-      "model_class": "V1QuerySimilarPackages",
-      "model_class_import_path": "endorlabs.generated.models.query_similar_packages_service:V1QuerySimilarPackages",
-      "mutable_fields": [],
-      "parent_kind": null,
-      "resource_name": "queries/similar-packages",
-      "scope": "tenant",
-      "supported_ops": [
-        "create"
-      ],
-      "update_payload_entities": [],
-      "update_requires_mask": false,
-      "workflow_flags": []
-    },
-    {
-      "accepted_canonical_entities": [
-        "v1SavedQuery"
-      ],
-      "attr_name": "V1SavedQuery",
-      "build_create_payload_fn_import_path": null,
-      "build_create_payload_fn_name": null,
-      "canonical_entities": [
-        "v1SavedQuery"
-      ],
-      "convenience_skip_reason": null,
-      "create_convenience_meta_fields": [],
-      "create_convenience_payload_top_level_fields": [
-        "meta",
-        "propagate",
-        "tenant_meta"
-      ],
-      "create_convenience_read_only_spec_fields": [
-        "lock"
-      ],
-      "create_convenience_spec_fields": [
-        "query",
-        "monitor",
-        "query_type",
-        "is_default"
-      ],
-      "create_convenience_spec_required": [],
-      "create_mode": "unsupported",
-      "create_payload_entities": [
-        "SavedQueryServiceCreateSavedQueryBody"
-      ],
-      "description": "SavedQuery implements the metric query requests.",
-      "filter_kwarg_map": {},
-      "has_tag_methods": false,
-      "identity_filter_fields": [],
-      "immutable_fields": [],
-      "model_class": "V1SavedQuery",
-      "model_class_import_path": "endorlabs.generated.models.saved_query_service:V1SavedQuery",
-      "mutable_fields": [],
-      "parent_kind": null,
-      "resource_name": "saved-queries",
-      "scope": "tenant",
-      "supported_ops": [
-        "get",
-        "list"
-      ],
-      "update_payload_entities": [
-        "SavedQueryServiceUpdateSavedQueryBody"
-      ],
-      "update_requires_mask": false,
-      "workflow_flags": []
-    },
-    {
-      "accepted_canonical_entities": [
         "v1VectorStore"
       ],
       "attr_name": "VectorStore",
@@ -2840,7 +2840,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "VectorStoreQueryServiceCreateVectorStoreQueryBody",
         "VectorStoreServiceCreateVectorStoreBody"
       ],
-      "description": "Vector store resource.",
+      "description": "Consumer facade model for VectorStore (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },
@@ -2912,7 +2912,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "VectorStoreQueryServiceCreateVectorStoreQueryBody"
       ],
-      "description": "VectorStoreQuery resource model returned by the query endpoint.",
+      "description": "Consumer facade model for VectorStoreQuery (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -2981,7 +2981,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_payload_entities": [
         "VersionUpgradeServiceCreateVersionUpgradeBody"
       ],
-      "description": "Version Upgrade resource model. List and get only.",
+      "description": "Consumer facade model for VersionUpgrade (generated wire shape).",
       "filter_kwarg_map": {},
       "has_tag_methods": false,
       "identity_filter_fields": [],
@@ -3054,7 +3054,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "QueryVulnerabilityServiceCreateQueryVulnerabilityBody",
         "VulnerabilityServiceCreateVulnerabilityBody"
       ],
-      "description": "Vulnerability resource model.",
+      "description": "Consumer facade model for Vulnerability (generated wire shape).",
       "filter_kwarg_map": {
         "name": "meta.name"
       },

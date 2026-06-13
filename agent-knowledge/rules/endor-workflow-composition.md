@@ -13,7 +13,8 @@ summary: >-
 | Layer | Location | Responsibility | Must not |
 |-------|----------|----------------|----------|
 | **Primitives** | `Client`, `APIClient` | CRUD/list/get per resource | Orchestration, file I/O, argparse |
-| **Tools** | `endorlabs.tools.*` | Reusable domain utilities (e.g. list sharding) | Tenant-wide workflow opinions, CLI mains |
+| **Tools** | `endorlabs.tools.*` | Reusable list composition (e.g. `list_sharding` over accessors) | Tenant-wide workflow opinions, CLI mains |
+| **Utils** | `endorlabs.utils.*` | Transport/concurrency/namespace helpers | Domain list composition |
 | **Workflow libraries** | `endorlabs.workflows.*` (non-`cli`) | `Client` in → typed `WorkflowResult` out | `print()`, argparse, cwd-relative writes |
 | **Workflow CLIs** | `*.cli`, `troubleshooting_scans/*` | Args, artifacts, filenames | Become copy-paste targets for agents |
 | **Session scripts** | `workspace/sessions/<user>/scripts/` | Thin glue on artifacts + library imports | Live in `src/`, reimplement discovery |
@@ -42,10 +43,11 @@ After a workflow run, treat outputs as source of truth:
 
 Generic entrypoints (no estate literals):
 
-- `client.Project.resolve()` — prefer over `workflows.projects.resolve.resolve_project`
+- `client.Project.search_by_name()` — bounded project discovery by repo URL substring or partial UUID
 - `client.CallGraphData.decode()` / `.fetch()` — call graph fetch + decode
 - `client.ScanResult.get_logs()` — scan log lines (ScanLogRequest wire API)
-- `client.Finding.list_for_scan()` — scan-scoped finding lists
+- `client.Finding.list_by_project()` / `list_for_context()` — generated relationship accessors
+- `client.ScanResult.list_by_project()` — scan results for a project
 - `client.<Resource>.count()` / `.list_groups()` / `.latest_created()` — list helpers (see [facade-helpers.md](../../docs/guides/facade-helpers.md))
 - `endorlabs.workflows.common.WorkflowResult`
 - `endorlabs.workflows.policies.run_validate_policy`

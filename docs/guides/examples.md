@@ -76,28 +76,26 @@ print(f"Critical findings (first page): {len(critical)}")
 Use `F().matches(...)` on string fields and `F().contains(...)` on array fields only.
 See [contracts/list-parameters.md](../../agent-knowledge/contracts/list-parameters.md).
 
-## 4. Lookup, cross-resource joins, streaming
+## 4. Discovery, cross-resource joins, streaming
 
 ```python
 from endorlabs import F
 
-# Lookup by repo URL (may raise AmbiguousError if registered in multiple namespaces)
-project = client.Project.lookup(
-    name="https://github.com/endorlabs/endorlabs-sdk.git",
+# Discovery by repo URL substring (bounded list; pick row or disambiguate)
+projects = client.Project.search_by_name(
+    "github.com/endorlabs/endorlabs-sdk",
     traverse=True,
+    max_pages=2,
 )
+project = projects[0] if projects else None
 
-scan_results = client.ScanResult.list(
-    parent=project,
+scan_results = client.ScanResult.list_by_project(
+    project,
     sort_by="meta.create_time",
     desc=True,
     max_pages=1,
 )
-findings = client.Finding.list(
-    filter=F("spec.project_uuid") == project.uuid,
-    namespace=project.namespace,
-    max_pages=1,
-)
+findings = client.Finding.list_by_project(project, max_pages=1)
 
 count = 0
 for row in client.Finding.list_iter(traverse=True, max_pages=1):

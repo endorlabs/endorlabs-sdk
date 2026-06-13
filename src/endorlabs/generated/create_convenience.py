@@ -159,6 +159,11 @@ FINDING_LOG_SPEC_REQUIRED = (
 FINDING_LOG_META_FIELDS = ()
 FINDING_LOG_PAYLOAD_TOP_LEVEL_FIELDS = ("context", "meta", "tenant_meta")
 
+IDENTITY_PROVIDER_SPEC_FIELDS = ("oidc_provider", "saml_provider")
+IDENTITY_PROVIDER_SPEC_REQUIRED = ()
+IDENTITY_PROVIDER_META_FIELDS = ()
+IDENTITY_PROVIDER_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
+
 INSTALLATION_SPEC_FIELDS = (
     "public",
     "external_id",
@@ -266,6 +271,29 @@ P_R_COMMENT_CONFIG_SPEC_REQUIRED = ("template",)
 P_R_COMMENT_CONFIG_META_FIELDS = ()
 P_R_COMMENT_CONFIG_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
 
+PACKAGE_FIREWALL_LOG_SPEC_FIELDS = (
+    "ecosystem",
+    "package_name",
+    "package_version",
+    "request_type",
+    "block_reason",
+    "malware_uuid",
+    "api_key_id",
+    "remote_address",
+    "request_uri",
+    "blocked_at",
+    "package_age_hours",
+    "reason",
+    "action",
+    "package_license",
+    "action_at",
+    "cvss_severity_level",
+    "cvss_vuln_uuid",
+)
+PACKAGE_FIREWALL_LOG_SPEC_REQUIRED = ("ecosystem", "package_name")
+PACKAGE_FIREWALL_LOG_META_FIELDS = ()
+PACKAGE_FIREWALL_LOG_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
+
 PACKAGE_LICENSE_SPEC_FIELDS = (
     "code_licenses",
     "package_manager_licenses",
@@ -362,6 +390,11 @@ PROJECT_SPEC_REQUIRED = ("platform_source",)
 PROJECT_META_FIELDS = ()
 PROJECT_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "processing_status", "tenant_meta")
 
+QUERY_SPEC_FIELDS = ("query_spec",)
+QUERY_SPEC_REQUIRED = ()
+QUERY_META_FIELDS = ()
+QUERY_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
+
 QUERY_MALWARE_SPEC_FIELDS = (
     "package_version_name",
     "package_version_names",
@@ -376,6 +409,11 @@ QUERY_MALWARE_PAYLOAD_TOP_LEVEL_FIELDS = (
     "responses",
     "tenant_meta",
 )
+
+QUERY_SIMILAR_PACKAGES_SPEC_FIELDS = ("name", "edit_distance", "repo", "exact_match")
+QUERY_SIMILAR_PACKAGES_SPEC_REQUIRED = ("name",)
+QUERY_SIMILAR_PACKAGES_META_FIELDS = ()
+QUERY_SIMILAR_PACKAGES_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
 
 QUERY_VULNERABILITY_SPEC_FIELDS = (
     "package_version_name",
@@ -424,6 +462,11 @@ REPOSITORY_VERSION_PAYLOAD_TOP_LEVEL_FIELDS = (
     "scan_object",
     "tenant_meta",
 )
+
+SAVED_QUERY_SPEC_FIELDS = ("query", "monitor", "query_type", "is_default")
+SAVED_QUERY_SPEC_REQUIRED = ()
+SAVED_QUERY_META_FIELDS = ()
+SAVED_QUERY_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
 
 SCAN_LOG_REQUEST_SPEC_FIELDS = (
     "max_entries",
@@ -517,49 +560,6 @@ SEMGREP_RULE_SPEC_FIELDS = ("rule", "disabled", "yaml")
 SEMGREP_RULE_SPEC_REQUIRED = ()
 SEMGREP_RULE_META_FIELDS = ()
 SEMGREP_RULE_PAYLOAD_TOP_LEVEL_FIELDS = ("disabled", "meta", "propagate", "tenant_meta")
-
-V1_IDENTITY_PROVIDER_SPEC_FIELDS = ("oidc_provider", "saml_provider")
-V1_IDENTITY_PROVIDER_SPEC_REQUIRED = ()
-V1_IDENTITY_PROVIDER_META_FIELDS = ()
-V1_IDENTITY_PROVIDER_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
-
-V1_PACKAGE_FIREWALL_LOG_SPEC_FIELDS = (
-    "ecosystem",
-    "package_name",
-    "package_version",
-    "request_type",
-    "block_reason",
-    "malware_uuid",
-    "api_key_id",
-    "remote_address",
-    "request_uri",
-    "blocked_at",
-    "package_age_hours",
-    "reason",
-    "action",
-    "package_license",
-    "action_at",
-    "cvss_severity_level",
-    "cvss_vuln_uuid",
-)
-V1_PACKAGE_FIREWALL_LOG_SPEC_REQUIRED = ("ecosystem", "package_name")
-V1_PACKAGE_FIREWALL_LOG_META_FIELDS = ()
-V1_PACKAGE_FIREWALL_LOG_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
-
-V1_QUERY_SPEC_FIELDS = ("query_spec",)
-V1_QUERY_SPEC_REQUIRED = ()
-V1_QUERY_META_FIELDS = ()
-V1_QUERY_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
-
-V1_QUERY_SIMILAR_PACKAGES_SPEC_FIELDS = ("name", "edit_distance", "repo", "exact_match")
-V1_QUERY_SIMILAR_PACKAGES_SPEC_REQUIRED = ("name",)
-V1_QUERY_SIMILAR_PACKAGES_META_FIELDS = ()
-V1_QUERY_SIMILAR_PACKAGES_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
-
-V1_SAVED_QUERY_SPEC_FIELDS = ("query", "monitor", "query_type", "is_default")
-V1_SAVED_QUERY_SPEC_REQUIRED = ()
-V1_SAVED_QUERY_META_FIELDS = ()
-V1_SAVED_QUERY_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
 
 VECTOR_STORE_SPEC_FIELDS = ("vector_store_uuid", "query", "metadata_filter")
 VECTOR_STORE_SPEC_REQUIRED = ("vector_store_uuid", "query")

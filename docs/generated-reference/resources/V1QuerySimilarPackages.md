@@ -21,7 +21,7 @@ QuerySimilarPackages implements the similar packages query requests.
 ## Create
 
 - **Mode:** `payload-only`
-- **Model import:** `endorlabs.generated.models.query_similar_packages_service:V1QuerySimilarPackages`
+- **Model import:** `endorlabs.resources.query_similar_packages:QuerySimilarPackages`
 - **Payload model:** `CreateV1QuerySimilarPackagesPayload`
 
 ### Payload top-level fields

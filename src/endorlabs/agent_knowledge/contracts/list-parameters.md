@@ -34,8 +34,7 @@ See also [docs/guides/examples.md](../../docs/guides/examples.md) (SDK examples)
 When **mask** is non-empty after strip, `list()` returns **`list[dict[str, Any]]`** (wire JSON rows).
 When mask is absent or whitespace-only, full Pydantic models are returned.
 
-**`lookup()`** requires a typed resource and raises **`ValueError`** when an effective non-empty
-mask is present. Use **`list()`** / **`list_iter()`** for masked dict rows.
+**`search_by_*`** and **`list()`** / **`list_iter()`** accept the same list kwargs including **`mask=`**; with a non-empty mask, rows are **`dict`**, not typed models.
 
 ## Consumer UX
 

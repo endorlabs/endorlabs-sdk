@@ -5,17 +5,18 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
 import endorlabs
-from endorlabs.utils.logging_config import get_resource_logger
-from endorlabs.workflows.estate.analyze.risk.scoring import normalize_finding_record
-from endorlabs.workflows.estate.collect.namespaces import list_estate_namespace_names
-from endorlabs.workflows.estate.collect.shards import (
+from endorlabs.tools.list_sharding import (
     ParentShard,
     parallel_map_shards,
     project_model_to_shard,
 )
+from endorlabs.utils.logging_config import get_resource_logger
+from endorlabs.workflows.estate.analyze.risk.scoring import normalize_finding_record
+from endorlabs.workflows.estate.collect.namespaces import list_estate_namespace_names
 from endorlabs.workflows.estate.filters.main_context import (
     MAIN_CONTEXT_LIST_FILTER,
     MAIN_CONTEXT_TYPE,
@@ -45,16 +46,12 @@ FINDING_LIST_MASK = (
 )
 
 
-def findings_filter_for_project(project_uuid: str) -> str:
-    """Main-context project-scoped SCA + vulnerability finding filter."""
+def findings_filter_for_project(_project_uuid: str) -> str:
+    """Main-context SCA + vulnerability finding filter (no project_uuid clause)."""
     category = endorlabs.F("spec.finding_categories").contains(
         FINDING_CATEGORY_SCA
     ) | endorlabs.F("spec.finding_categories").contains(FINDING_CATEGORY_VULNERABILITY)
-    return str(
-        (endorlabs.F("context.type") == MAIN_CONTEXT_TYPE)
-        & (endorlabs.F("spec.project_uuid") == project_uuid)
-        & category
-    )
+    return str((endorlabs.F("context.type") == MAIN_CONTEXT_TYPE) & category)
 
 
 def discover_project_shards(client: Client, estate_root: str) -> list[ParentShard]:
@@ -82,13 +79,19 @@ def _fetch_findings_for_shard(
     page_size: int,
 ) -> tuple[list[dict[str, Any]], str | None]:
     try:
-        rows = client.Finding.list(
+        source = SimpleNamespace(
+            uuid=shard.key,
+            tenant_meta=SimpleNamespace(namespace=shard.namespace),
+        )
+        result = client.Finding.list_by_project(
+            source,
             filter=findings_filter_for_project(shard.key),
             namespace=shard.namespace,
             mask=FINDING_LIST_MASK,
             max_pages=max_pages,
             page_size=page_size,
         )
+        rows = result.values or []
     except Exception as exc:
         return [], f"{shard.namespace}/{shard.key}: {exc}"
     normalized = [normalize_finding_record(row) for row in rows]

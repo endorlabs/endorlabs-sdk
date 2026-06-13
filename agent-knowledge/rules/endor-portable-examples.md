@@ -34,5 +34,5 @@ integration tests with env vars, or user-provided inputs.
 ## Runtime resolution
 
 - Tenant/namespace: `ENDOR_NAMESPACE`, CLI `--tenant` / `--namespace`, or `Client(tenant=…)`.
-- Project: user-provided URL/UUID or `Project.list` / `resolve_project` at runtime.
+- Project: user-provided URL/UUID or `Project.search_by_name` / `Project.get` at runtime.
 - Never hardcode production UUIDs in skills or contracts.

@@ -1,6 +1,6 @@
 # PRCommentConfig
 
-PR comment configuration resource model.
+Consumer facade model for PRCommentConfig (generated wire shape).
 
 ## Client access
 

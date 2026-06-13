@@ -19,7 +19,7 @@ API FEATURES:
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, override
+from typing import Any, ClassVar
 
 import yaml
 from pydantic import (
@@ -31,13 +31,17 @@ from pydantic import (
     model_validator,
 )
 
+from endorlabs.generated.models.semgrep_rule_service import V1SemgrepRule
+
 from ..utils.logging_config import get_resource_logger
 from .base import (
     BaseMeta,
-    BaseResource,
     BaseSpec,
     FlexibleEnum,
 )
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin
 
 logger = get_resource_logger(__name__)
 
@@ -343,77 +347,13 @@ class SemgrepRuleMetaCreate(BaseMeta):
     pass
 
 
-class SemgrepRule(BaseResource):
-    """SemgrepRule resource model extending BaseResource.
+class SemgrepRule(V1SemgrepRule, ConsumerResourceWireMixin, ConsumerResourceMixin):
+    """Consumer facade model for SemgrepRule (generated wire shape)."""
 
-    OPERATION SUPPORT:
-    ==================
-    ✅ GET: List semgrep rules, Get by UUID
-    ✅ POST: Create new semgrep rules
-    ✅ PATCH: Update existing semgrep rules
-    ✅ DELETE: Delete semgrep rules
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("SemgrepRule")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("SemgrepRule")
 
-    FIELD MUTABILITY:
-    =================
-    IMMUTABLE FIELDS (read-only, system-managed):
-    - uuid: Unique identifier
-    - meta.create_time, meta.created_by: Creation metadata
-    - meta.update_time, meta.updated_by: Auto-managed timestamps
-    - spec.defined_by: Rule creator (read-only)
-    - spec.severity_level: Computed severity (read-only)
-    - tenant_meta.namespace: Namespace assignment
-
-    MUTABLE FIELDS (can be updated via PATCH):
-    - meta.name: Rule name
-    - meta.description: Rule description
-    - meta.tags: Rule tags
-    - spec.rule: Semgrep native rule definition
-    - spec.disabled: Enable/disable flag
-    - spec.yaml: Original YAML format
-    - propagate: Whether to propagate to child namespaces
-    - disabled: Top-level disabled flag
-
-    FEATURES:
-    =========
-    - Semgrep-compatible rule format
-    - Comprehensive metadata (CWE, OWASP, references)
-    - Taint tracking patterns (sources, sinks, propagators, sanitizers)
-    - Path inclusion/exclusion
-    - Advanced options (symbolic propagation, interfile analysis)
-    - Severity level computation
-    - Namespace propagation control
-    """
-
-    spec: SemgrepRuleSpec | None = Field(None, description="Semgrep rule specification")  # type: ignore
-    disabled: bool | None = Field(None, description="Whether rule is disabled")
-
-    model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
-
-    @override
-    @classmethod
-    def get_mutable_fields_cls(cls) -> list[str]:
-        """Get list of mutable fields for SemgrepRule."""
-        return ["meta.name", "meta.description", "meta.tags", "spec"]
-
-    @override
-    @classmethod
-    def get_immutable_fields_cls(cls) -> list[str]:
-        """Get list of immutable fields for SemgrepRule."""
-        return [
-            "uuid",
-            "meta.create_time",
-            "meta.created_by",
-            "meta.update_time",
-            "meta.updated_by",
-            "meta.upsert_time",
-            "meta.kind",
-            "meta.version",
-            "meta.references",
-            "meta.index_data",
-            "tenant_meta.namespace",
-            "spec.defined_by",
-            "spec.severity_level",
-        ]
+    spec: SemgrepRuleSpec | None = None  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 def _rule_to_yaml(rule: SemgrepNativeRule) -> str:

@@ -1,46 +1,20 @@
-"""ScanWorkflowResult resource module for Endor Labs API.
-
-Scan workflow results correspond to workflow scan results. List and get only;
-API may omit list.objects when empty (treat as []).
-"""
+"""ScanWorkflowResult — thin consumer wrapper over generated V1ScanWorkflowResult."""
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import ClassVar
 
-from pydantic import Field
+from endorlabs.generated.models.scan_workflow_result_service import V1ScanWorkflowResult
 
-from ..utils.logging_config import get_resource_logger
-from .base import (
-    BaseMeta,
-    BaseResource,
-    BaseSpec,
-)
-
-logger = get_resource_logger(__name__)
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin
 
 
-class ScanWorkflowResultSpec(BaseSpec):
-    """Scan workflow result specification extending BaseSpec."""
+class ScanWorkflowResult(
+    V1ScanWorkflowResult, ConsumerResourceWireMixin, ConsumerResourceMixin
+):
+    """Consumer facade model for ScanWorkflowResult (generated wire shape)."""
 
-    # Spec may have many fields; use dict for flexibility
-    steps: list[dict[str, Any]] | None = Field(
-        None,
-        description="Workflow result steps.",
-    )
-
-
-class ScanWorkflowResultMeta(BaseMeta):
-    """Scan workflow result metadata extending BaseMeta."""
-
-    pass
-
-
-class ScanWorkflowResult(BaseResource):
-    """Scan Workflow Result resource model. List and get only."""
-
-    spec: ScanWorkflowResultSpec | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None, description="Scan workflow result specification"
-    )
-
-    model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("ScanWorkflowResult")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("ScanWorkflowResult")

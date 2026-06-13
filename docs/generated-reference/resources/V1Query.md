@@ -21,7 +21,7 @@ Query implements the metric query requests.
 ## Create
 
 - **Mode:** `payload-only`
-- **Model import:** `endorlabs.generated.models.query_service:V1Query`
+- **Model import:** `endorlabs.resources.query:Query`
 - **Payload model:** `CreateV1QueryPayload`
 
 ### Payload top-level fields

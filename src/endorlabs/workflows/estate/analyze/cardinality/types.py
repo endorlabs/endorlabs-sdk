@@ -59,8 +59,3 @@ class RiskRankedCardinalityResult(WorkflowResult):
     ranking_table: TabularExport = field(default_factory=TabularExport)
     version_detail_table: TabularExport = field(default_factory=TabularExport)
     document: dict[str, Any] = field(default_factory=dict)
-
-
-# Backward-compatible aliases for earlier estate-export naming.
-EstateDependencyExportStats = VersionCardinalityStats
-EstateDependencyExportResult = VersionCardinalityResult

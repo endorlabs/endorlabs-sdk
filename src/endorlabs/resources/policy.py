@@ -1,40 +1,24 @@
-"""Policy resource module for Endor Labs API.
+"""Policy — thin consumer wrapper over generated V1Policy."""
 
-This module provides comprehensive policy management capabilities including
-listing, examining, creating, updating, and deleting policies.
-
-API OPERATIONS SUPPORTED:
-- GET: List policies, Get policy by UUID
-- POST: Create new policies
-- PATCH: Update existing policies
-- DELETE: Delete policies
-
-API FEATURES:
-- Full CRUD operations supported
-- Policy type filtering (SYSTEM_FINDING, USER_FINDING, ADMISSION, ML_FINDING, etc.)
-- OPA/Rego rule support
-- Template system integration
-- Project selector and exception support
-- Namespace propagation control
-"""
+# ruff: noqa: TC001  # Pydantic field types must resolve at model build time.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, cast, override
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pydantic import BaseModel, Field, field_validator
 
-from ..core.types import ListParameters
-from ..operations import BaseResourceOperations
+from endorlabs.core.types import ListParameters
+from endorlabs.generated.models.policy_service import PolicyPolicyType, V1Policy
+from endorlabs.operations import BaseResourceOperations
+
 from ..utils.logging_config import get_resource_logger
-from .base import (
-    BaseMeta,
-    BaseResource,
-    BaseSpec,
-    FlexibleEnum,
-)
-from .finding_config import FindingConfig  # noqa: TC001
-from .notification_config import NotificationConfig  # noqa: TC001
+from .base import BaseMeta, BaseSpec, FlexibleEnum
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerPolicySpec, ConsumerResourceWireMixin
+from .finding_config import FindingConfig
+from .notification_config import NotificationConfig
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -55,6 +39,73 @@ class PolicyType(FlexibleEnum):
     REMEDIATION = "POLICY_TYPE_REMEDIATION"
     SYSTEM_FINDING = "POLICY_TYPE_SYSTEM_FINDING"
     USER_FINDING = "POLICY_TYPE_USER_FINDING"
+
+
+class Policy(V1Policy, ConsumerResourceWireMixin, ConsumerResourceMixin):
+    """Consumer facade model for Policy (generated wire shape)."""
+
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("Policy")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("Policy")
+
+    spec: ConsumerPolicySpec | None = None  # pyright: ignore[reportIncompatibleVariableOverride]
+
+
+def list_policies_by_type(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    policy_type: PolicyType | PolicyPolicyType,
+) -> list[Policy]:
+    """List policies filtered by type."""
+    ptype = policy_type.value if hasattr(policy_type, "value") else str(policy_type)
+    list_params = ListParameters(
+        filter=f'spec.policy_type=="{ptype}"',
+    )
+    ops = BaseResourceOperations(client, "policies", Policy)
+    return cast("list[Policy]", ops.list(tenant_meta_namespace, list_params))
+
+
+def list_policies_by_namespace(
+    client: APIClient, tenant_meta_namespace: str, target_namespace: str
+) -> list[Policy]:
+    """List policies filtered by namespace."""
+    list_params = ListParameters(
+        filter=f'tenant_meta.namespace=="{target_namespace}"',
+    )
+    ops = BaseResourceOperations(client, "policies", Policy)
+    return cast("list[Policy]", ops.list(tenant_meta_namespace, list_params))
+
+
+def list_policies_paginated(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    page_size: int = 10,
+    page_token: str | None = None,
+) -> list[Policy]:
+    """List policies with pagination."""
+    list_params = ListParameters(
+        page_size=page_size,
+        page_token=page_token,
+    )
+    ops = BaseResourceOperations(client, "policies", Policy)
+    return cast("list[Policy]", ops.list(tenant_meta_namespace, list_params))
+
+
+def list_policies_sorted(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    sort_by: str = "meta.create_time",
+    desc: bool = True,
+) -> list[Policy]:
+    """List policies with sorting."""
+    list_params = ListParameters(
+        sort_by=sort_by,
+        desc=desc,
+    )
+    ops = BaseResourceOperations(client, "policies", Policy)
+    return cast("list[Policy]", ops.list(tenant_meta_namespace, list_params))
+
+
+# --- integration / create-update compat (pre-cutover helpers) ---
 
 
 class ExceptionReason(FlexibleEnum):
@@ -204,96 +255,12 @@ class PolicyMetaUpdate(BaseModel):
         return v.strip() if v else v
 
 
-class Policy(BaseResource):
-    """Policy resource model extending BaseResource.
-
-    OPERATION SUPPORT:
-    ==================
-    ✅ GET: List policies, Get by UUID
-    ✅ POST: Create new policies
-    ✅ PATCH: Update existing policies
-    ✅ DELETE: Delete policies
-
-    FIELD MUTABILITY:
-    =================
-    IMMUTABLE FIELDS (read-only, system-managed):
-    - uuid: Unique identifier
-    - meta.create_time, meta.created_by: Creation metadata
-    - meta.update_time, meta.updated_by: Auto-managed timestamps
-    - spec.policy_type: Policy type (set at creation)
-    - spec.template_uuid: Template reference (set at creation)
-    - tenant_meta.namespace: Namespace assignment
-
-    MUTABLE FIELDS (can be updated via PATCH):
-    - meta.name: Policy name
-    - meta.description: Policy description
-    - meta.tags: Policy tags
-    - spec.rule: OPA/Rego rule definition
-    - spec.disable: Enable/disable flag
-    - spec.project_selector: Projects to apply policy to
-    - spec.project_exceptions: Projects to exclude from policy
-    - spec.template_values: Template configuration values
-    - propagate: Whether to propagate to child namespaces
-
-    FEATURES:
-    =========
-    - OPA/Rego rule support for custom policy logic
-    - Template system for reusable policy patterns
-    - Project selector and exception support
-    - Multiple policy types (SYSTEM_FINDING, USER_FINDING, ADMISSION, ML_FINDING, etc.)
-    - Namespace propagation control
-    """
-
-    # Policy-specific fields (universal fields inherited from BaseResource)
-    spec: PolicySpec | None = Field(None, description="Policy specification")  # type: ignore
-
-    model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
-
-    @override
-    @classmethod
-    def get_mutable_fields_cls(cls) -> list[str]:
-        """Get list of mutable fields for Policy."""
-        return [
-            "meta.name",
-            "meta.description",
-            "meta.tags",
-            "spec.rule",
-            "spec.disable",
-            "spec.project_selector",
-            "spec.project_exceptions",
-            "spec.template_values",
-            "propagate",
-        ]
-
-    @override
-    @classmethod
-    def get_immutable_fields_cls(cls) -> list[str]:
-        """Get list of immutable fields for Policy."""
-        return [
-            "uuid",
-            "meta.create_time",
-            "meta.created_by",
-            "meta.update_time",
-            "meta.updated_by",
-            "spec.policy_type",
-            "spec.template_uuid",
-            "tenant_meta.namespace",
-        ]
-
-
 class CreatePolicyPayload(BaseModel):
     """Payload for creating a new policy."""
 
     meta: PolicyMeta = Field(..., description="Policy metadata")
     spec: PolicySpec = Field(..., description="Policy specification")
     propagate: bool | None = Field(True, description="Propagate to child namespaces")
-
-
-def build_create_payload(**kwargs: Any) -> CreatePolicyPayload:
-    """Build CreatePolicyPayload from kwargs (decoupled facade create)."""
-    from ..utils.create_payload import pass_through_create_payload
-
-    return pass_through_create_payload(CreatePolicyPayload, kwargs, attr_name="Policy")
 
 
 class UpdatePolicyPayload(BaseModel):
@@ -343,54 +310,8 @@ class UpdatePolicyPayload(BaseModel):
     propagate: bool | None = Field(None, description="Propagate to child namespaces")
 
 
-# Convenience functions for common filtering patterns
-def list_policies_by_type(
-    client: APIClient, tenant_meta_namespace: str, policy_type: PolicyType
-) -> list[Policy]:
-    """List policies filtered by type."""
-    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
-        filter=f"spec.policy_type=={policy_type.value}",
-    )
-    ops = BaseResourceOperations(client, "policies", Policy)
-    return cast("list[Policy]", ops.list(tenant_meta_namespace, list_params))
+def build_create_payload(**kwargs: Any) -> CreatePolicyPayload:
+    """Build CreatePolicyPayload from kwargs (decoupled facade create)."""
+    from ..utils.create_payload import pass_through_create_payload
 
-
-def list_policies_by_namespace(
-    client: APIClient, tenant_meta_namespace: str, target_namespace: str
-) -> list[Policy]:
-    """List policies filtered by namespace."""
-    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
-        filter=f"tenant_meta.namespace=={target_namespace}",
-    )
-    ops = BaseResourceOperations(client, "policies", Policy)
-    return cast("list[Policy]", ops.list(tenant_meta_namespace, list_params))
-
-
-def list_policies_paginated(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    page_size: int = 10,
-    page_token: str | None = None,
-) -> list[Policy]:
-    """List policies with pagination."""
-    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
-        page_size=page_size,
-        page_token=page_token,
-    )
-    ops = BaseResourceOperations(client, "policies", Policy)
-    return cast("list[Policy]", ops.list(tenant_meta_namespace, list_params))
-
-
-def list_policies_sorted(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    sort_by: str = "meta.create_time",
-    desc: bool = True,
-) -> list[Policy]:
-    """List policies with sorting."""
-    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
-        sort_by=sort_by,
-        desc=desc,
-    )
-    ops = BaseResourceOperations(client, "policies", Policy)
-    return cast("list[Policy]", ops.list(tenant_meta_namespace, list_params))
+    return pass_through_create_payload(CreatePolicyPayload, kwargs, attr_name="Policy")

@@ -18,25 +18,13 @@ _ALLOWED_OVERRIDE_KEYS = {
     "filter_kwarg_map",
     "create_mode",
     "workflow_flags",
+    "model_class_import_path",
+    "build_create_payload_fn_import_path",
+    "build_create_payload_fn_name",
 }
 
 # Keep this intentionally small: only explicit SDK divergences belong here.
 RESOURCE_CONTRACT_OVERLAY_BY_ATTR: dict[str, dict[str, Any]] = {
-    # endorctl --resource PackageFirewallLog; generated model keeps V1 prefix.
-    "V1PackageFirewallLog": {
-        "attr_name": "PackageFirewallLog",
-    },
-    # OpenAPI exposes POST-only query endpoints (no collection GET/list).
-    "V1Query": {
-        "supported_ops": ["create"],
-        "create_mode": "payload-only",
-    },
-    "V1QuerySimilarPackages": {
-        "supported_ops": ["create"],
-        "create_mode": "payload-only",
-    },
-    # Tenant-scoped importer rows: list/get use the customer namespace path
-    # (see tests/unit/client/test_client_facade.py).
     "DependencyMetadata": {
         "supported_ops": ["create", "delete", "get", "list"],
         "workflow_flags": ["project-namespace-list"],
@@ -49,6 +37,51 @@ RESOURCE_CONTRACT_OVERLAY_BY_ATTR: dict[str, dict[str, Any]] = {
     },
     "PackageVersion": {
         "workflow_flags": ["project-namespace-list"],
+    },
+    "IdentityProvider": {
+        "model_class_import_path": (
+            "endorlabs.resources.identity_provider:IdentityProvider"
+        ),
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.identity_provider:build_create_payload"
+        ),
+        "build_create_payload_fn_name": "build_create_payload",
+    },
+    "PackageFirewallLog": {
+        "model_class_import_path": (
+            "endorlabs.resources.package_firewall_log:PackageFirewallLog"
+        ),
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.package_firewall_log:build_create_payload"
+        ),
+        "build_create_payload_fn_name": "build_create_payload",
+    },
+    "Query": {
+        "supported_ops": ["create"],
+        "create_mode": "payload-only",
+        "model_class_import_path": "endorlabs.resources.query:Query",
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.query:build_create_payload"
+        ),
+        "build_create_payload_fn_name": "build_create_payload",
+    },
+    "QuerySimilarPackages": {
+        "supported_ops": ["create"],
+        "create_mode": "payload-only",
+        "model_class_import_path": (
+            "endorlabs.resources.query_similar_packages:QuerySimilarPackages"
+        ),
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.query_similar_packages:build_create_payload"
+        ),
+        "build_create_payload_fn_name": "build_create_payload",
+    },
+    "SavedQuery": {
+        "model_class_import_path": "endorlabs.resources.saved_query:SavedQuery",
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.saved_query:build_create_payload"
+        ),
+        "build_create_payload_fn_name": "build_create_payload",
     },
 }
 

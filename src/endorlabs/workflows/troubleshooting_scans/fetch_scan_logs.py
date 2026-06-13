@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-if TYPE_CHECKING:
-    from endorlabs.client_surface import Client
+from endorlabs.client_surface import Client
 from endorlabs.utils.logging_config import get_resource_logger
 
 from .common import (
-    build_scanlogs_client,
     default_troubleshooting_output_dir,
     load_json,
     root_tenant,
@@ -55,7 +53,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     root = root_tenant(args.tenant)
     output_dir = Path(args.output_dir)
-    scanlogs_client = build_scanlogs_client(args.namespace)
+    scanlogs_client = Client(tenant=args.namespace)
 
     uuids: list[str] = []
     first = selected_pairs[0]

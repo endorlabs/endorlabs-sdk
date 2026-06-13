@@ -220,13 +220,14 @@ def _list_projects_in_namespace(client: Client, namespace: str) -> list[Any]:
 def _list_package_versions_for_project(
     client: Client,
     namespace: str,
-    project_uuid: str,
+    project: Any,
 ) -> list[Any]:
-    package_versions = client.PackageVersion.list(
+    route = client.PackageVersion.list_by_project(
+        project,
         namespace=namespace,
-        filter=endorlabs.F("spec.project_uuid") == project_uuid,
         traverse=False,
     )
+    package_versions = route.values or []
     seen: set[str] = set()
     unique: list[Any] = []
     for pv in package_versions:
@@ -255,7 +256,7 @@ def _collect_importer_shards(
         wire_ns = _project_wire_namespace(project, namespace)
         try:
             package_versions = _list_package_versions_for_project(
-                client, wire_ns, project_uuid
+                client, wire_ns, project
             )
         except Exception as exc:
             errors.append(

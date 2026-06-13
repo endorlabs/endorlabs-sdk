@@ -63,6 +63,47 @@ class TestFinding:
         assert got.uuid == item.uuid
 
     @pytest.fixture
+    def updatable_finding(self):
+        """Return a finding suitable for PATCH tag tests (``spec.dismiss`` is false).
+
+        ``meta.tags`` and ``spec.finding_tags`` are different fields on the wire:
+
+        - ``meta.tags`` — generic resource labels (e.g. ``defectdojo/defectdojo-django:latest``).
+        - ``spec.finding_tags`` — triage/classification enums (``FINDING_TAGS_DIRECT``, …).
+
+        Both are listed as mutable in the registry contract, but the API may ignore
+        tag mutations when ``spec.dismiss`` is true (dismissed/suppressed findings).
+        That behavior is server policy, not something the SDK should paper over in
+        ``deserialize_list_row`` or list/update wiring — the client should surface
+        the response as returned.
+        """
+        from endorlabs.core.exceptions import NotFoundError, ServerError
+        from endorlabs.core.types import ListParameters
+
+        try:
+            results = self.endor_client.Finding.list(
+                list_params=ListParameters(page_size=TEST_PAGE_SIZE),
+                max_pages=TEST_MAX_PAGES,
+            )
+        except NotFoundError:
+            pytest.skip(
+                "List returned 404 (resource does not exist to user: "
+                "namespace not accessible to credential or resource no longer exists)"
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not results:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        for item in results:
+            if not (item.spec and getattr(item.spec, "dismiss", False)):
+                return item
+        pytest.skip(
+            "No non-dismissed finding in scope; tag PATCH is not exercised when "
+            "spec.dismiss is true (API returns success but leaves meta.tags and "
+            "spec.finding_tags unchanged)"
+        )
+
+    @pytest.fixture
     def sample_finding(self):
         """Fetch minimal sample data (1 item) for UUID operations.
 
@@ -131,94 +172,96 @@ class TestFinding:
                 )
 
     @pytest.mark.writes
-    def test_finding_update_with_mask(self, sample_finding) -> None:
-        """Test UPDATE finding operation with update_mask parameter.
+    def test_finding_update_with_mask(self, updatable_finding) -> None:
+        """PATCH ``meta.tags`` and ``spec.finding_tags`` with separate semantics.
 
-        Local-only: updating findings requires elevated permissions (403 in CI).
+        Registry marks both paths mutable, but they mean different things on the wire:
+
+        - ``meta.tags`` — free-form resource labels (image refs, project labels, …).
+        - ``spec.finding_tags`` — ``FINDING_TAGS_*`` enums used for triage/filtering.
+
+        Example row shape::
+
+            "finding_tags": ["FINDING_TAGS_DIRECT", "FINDING_TAGS_UNFIXABLE", …]
+            "tags": ["defectdojo/defectdojo-django:latest"]
+
+        We assert each field with values appropriate to that field. Dismissed findings
+        (``spec.dismiss=true``) are excluded via ``updatable_finding`` — not handled
+        in SDK wiring, because empty/stale tags after PATCH reflect API policy.
         """
         print("\n=== TESTING FINDING UPDATE WITH MASK ===")
 
-        finding_uuid = sample_finding.uuid
+        finding_uuid = updatable_finding.uuid
+        ns = updatable_finding.namespace or self.namespace
 
-        # Get current finding state
-        current_finding = self.endor_client.Finding.get(finding_uuid)
+        current_finding = self.endor_client.Finding.get(finding_uuid, namespace=ns)
         if not current_finding:
             pytest.skip(f"Could not retrieve finding {finding_uuid}")
 
-        # Store original values
-        original_tags = current_finding.meta.tags or []
-        original_finding_tags = current_finding.spec.finding_tags or []
+        original_meta_tags = list(current_finding.meta.tags or [])
+        original_finding_tags = list(current_finding.spec.finding_tags or [])
 
-        # Create update payload - only update safe fields
-        # Note: dismiss field is managed automatically by API and cannot be set directly
-        # Use set to avoid duplicates if test runs multiple times
-        new_tags = list(set([*original_tags, "test-update", "mask-test"]))
-        # Use valid FindingTags enum values
-        # (API may require enum values, not arbitrary strings)
-        # UNDER_REVIEW is a valid enum value that can be used for testing
         from endorlabs.resources.finding import FindingTags
 
+        # meta.tags: label-style strings (not FINDING_TAGS_* enums)
+        new_meta_tags = list({*original_meta_tags, "integration-test-label"})
+        # spec.finding_tags: triage enums only
         new_finding_tags = list(
-            set(
-                (original_finding_tags or [])
-                + [FindingTags.UNDER_REVIEW.value, FindingTags.TEST.value]
-            )
+            {
+                *original_finding_tags,
+                FindingTags.UNDER_REVIEW.value,
+                FindingTags.TEST.value,
+            }
         )
 
         update_payload = UpdateFindingPayload(
-            meta=FindingMetaUpdate(tags=new_tags),
-            spec=FindingSpec(
-                finding_tags=new_finding_tags,
-                # Don't set dismiss - API manages it automatically
-            ),
+            meta=FindingMetaUpdate(tags=new_meta_tags),
+            spec=FindingSpec(finding_tags=new_finding_tags),
         )
 
         print(f"Updating finding: {finding_uuid}")
-        print(f"New tags: {new_tags}")
-        print(f"New finding_tags: {new_finding_tags}")
+        print(f"New meta.tags: {new_meta_tags}")
+        print(f"New spec.finding_tags: {new_finding_tags}")
 
-        # Update the finding with update_mask (exclude spec.dismiss - API manages it)
         updated_finding = self.endor_client.Finding.update(
             finding_uuid,
             update_payload,
             update_mask="meta.tags,spec.finding_tags",
+            namespace=ns,
         )
 
         assert updated_finding is not None, "Finding update should succeed"
-        assert "test-update" in updated_finding.meta.tags, (
-            "Updated tag should be present"
-        )
-        assert "mask-test" in updated_finding.meta.tags, "Updated tag should be present"
-        # Check for valid enum values (API may normalize to enum values)
+
         finding_tags_values = updated_finding.spec.finding_tags or []
         assert (
             FindingTags.UNDER_REVIEW.value in finding_tags_values
             or FindingTags.UNDER_REVIEW.value.replace("FINDING_TAGS_", "")
             in [tag.replace("FINDING_TAGS_", "") for tag in finding_tags_values]
-        ), "Updated finding tag UNDER_REVIEW should be present"
+        ), "spec.finding_tags should reflect triage enum PATCH"
         assert (
             FindingTags.TEST.value in finding_tags_values
             or FindingTags.TEST.value.replace("FINDING_TAGS_", "")
             in [tag.replace("FINDING_TAGS_", "") for tag in finding_tags_values]
-        ), "Updated finding tag TEST should be present"
+        ), "spec.finding_tags should reflect triage enum PATCH"
+
+        assert "integration-test-label" in (updated_finding.meta.tags or []), (
+            "meta.tags should reflect free-form label PATCH (distinct from spec.finding_tags)"
+        )
 
         print(f"[SUCCESS] Finding updated: {updated_finding.uuid}")
-        print(f"Updated tags: {updated_finding.meta.tags}")
-        print(f"Updated finding_tags: {updated_finding.spec.finding_tags}")
+        print(f"Updated meta.tags: {updated_finding.meta.tags}")
+        print(f"Updated spec.finding_tags: {updated_finding.spec.finding_tags}")
 
-        # Restore original values if possible
         restore_payload = UpdateFindingPayload(
-            meta=FindingMetaUpdate(tags=original_tags),
-            spec=FindingSpec(
-                finding_tags=original_finding_tags,
-                # Don't set dismiss - API manages it automatically
-            ),
+            meta=FindingMetaUpdate(tags=original_meta_tags),
+            spec=FindingSpec(finding_tags=original_finding_tags),
         )
         try:
             self.endor_client.Finding.update(
                 finding_uuid,
                 restore_payload,
                 update_mask="meta.tags,spec.finding_tags",
+                namespace=ns,
             )
             print("[CLEANUP] Restored original finding values")
         except Exception as e:
