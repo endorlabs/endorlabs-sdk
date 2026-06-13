@@ -14,19 +14,29 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from typing import Any
 
 from endorlabs.api_client import APIClient
 
+_NAMESPACE_ENV_KEY = "ENDOR_NAMESPACE"
 DEFAULT_TEMPLATE_REQUEST_UUID = "69700bbbcb7b6d4001d5b4e9"
 DEFAULT_ADMIN_NAMESPACE = "endor-admin"
-DEFAULT_TARGET_TENANT = "doordash"
 DEFAULT_APPROVERS = [
     "ypulse@endor.ai",
     "kdogra@endor.ai",
     "lmoreno@endor.ai",
 ]
+
+
+def _resolve_target_tenant(cli_tenant: str | None) -> str:
+    tenant = (cli_tenant or os.getenv(_NAMESPACE_ENV_KEY) or "").strip()
+    if not tenant:
+        raise ValueError(
+            f"Target tenant required: pass --target-tenant or set {_NAMESPACE_ENV_KEY}."
+        )
+    return tenant
 
 
 def _require_dict(value: Any, *, name: str) -> dict[str, Any]:
@@ -170,8 +180,11 @@ def main() -> int:
     )
     parser.add_argument(
         "--target-tenant",
-        default=DEFAULT_TARGET_TENANT,
-        help="Tenant namespace to target (default: doordash).",
+        default=None,
+        help=(
+            "Tenant namespace to target. "
+            f"Falls back to {_NAMESPACE_ENV_KEY} when omitted."
+        ),
     )
     parser.add_argument(
         "--approver",
@@ -193,17 +206,18 @@ def main() -> int:
 
     client = APIClient(auth_method="admin")
     try:
+        target_tenant = _resolve_target_tenant(args.target_tenant)
         source_request = _get_service_request(
             client,
             admin_namespace=args.admin_namespace,
             request_uuid=args.template_request_uuid,
         )
         target_system_config_uuid = _resolve_target_system_config_uuid(
-            client, tenant=args.target_tenant
+            client, tenant=target_tenant
         )
         payload = _build_payload(
             source_request=source_request,
-            target_tenant=args.target_tenant,
+            target_tenant=target_tenant,
             target_system_config_uuid=target_system_config_uuid,
             approvers_override=list(args.approver),
         )
@@ -213,13 +227,13 @@ def main() -> int:
             client,
             admin_namespace=args.admin_namespace,
             name=name,
-            target_tenant=args.target_tenant,
+            target_tenant=target_tenant,
         )
 
         result: dict[str, Any] = {
             "mode": "apply" if args.apply else "dry-run",
             "admin_namespace": args.admin_namespace,
-            "target_tenant": args.target_tenant,
+            "target_tenant": target_tenant,
             "template_request_uuid": args.template_request_uuid,
             "target_system_config_uuid": target_system_config_uuid,
             "existing_count": len(existing),
