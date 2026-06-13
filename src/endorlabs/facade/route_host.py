@@ -7,6 +7,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
+from ..core.filter import FilterExpression
 from ..operations import BaseResourceOperations
 from ..operations.route_contract import RouteContract, RouteEdge
 from ..operations.routes import RouteExecutor, RouteResult
@@ -85,6 +86,41 @@ class RouteHostMixin:
                 list_fn_for_parent=list_fn,
             )
         return executor.execute(edge, source=source, **list_kwargs)
+
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = None,
+        namespace: str | None = None,
+        **kwargs: Any,
+    ) -> RouteResult[Any]:
+        """List rows in the same scan plane as *source*.
+
+        Filters on ``context.type`` and optional ``context.id``.
+        """
+        entry = getattr(self, "_entry", None)
+        if entry is None:
+            raise RuntimeError("Route host missing registry entry.")
+        contract = self._route_contract
+        if contract is None:
+            raise RuntimeError("Route contract not configured on this facade.")
+        method_name = f"{entry.attr_name}.list_for_context"
+        matches = [
+            e
+            for e in contract.edges
+            if e.public_method == method_name and e.edge == "list_by_context_partition"
+        ]
+        if len(matches) != 1:
+            raise RuntimeError(
+                f"Expected exactly one list_for_context edge for {entry.attr_name!r}, "
+                f"found {len(matches)}."
+            )
+        if filter is not None:
+            kwargs = {**kwargs, "filter": filter}
+        if namespace is not None:
+            kwargs = {**kwargs, "namespace": namespace}
+        return self._execute_route(matches[0].id, source=source, **kwargs)
 
     def _get_route_executor(self) -> RouteExecutor:
         if self._route_executor is not None:

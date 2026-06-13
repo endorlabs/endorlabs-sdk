@@ -14,6 +14,7 @@ RouteEdgeKind = Literal[
     "list_by_uuid_field",
     "list_by_index_field",
     "list_by_attribute",
+    "list_by_context_partition",
     "via_intermediate",
 ]
 
@@ -24,6 +25,7 @@ VALID_EDGE_KINDS: frozenset[str] = frozenset(
         "list_by_uuid_field",
         "list_by_index_field",
         "list_by_attribute",
+        "list_by_context_partition",
         "via_intermediate",
     }
 )
@@ -79,6 +81,7 @@ class RouteEdge:
     target_filter_field: str | None = None
     match: Literal["exact", "substring", "regex"] | None = None
     also_filter: str | None = None
+    context_from: str = "context"
     when: RouteWhen | None = None
     steps: tuple[RouteChainStep, ...] = field(default_factory=tuple)
 
@@ -158,6 +161,7 @@ class RouteEdge:
             also_filter=raw.get("also_filter")
             if isinstance(raw.get("also_filter"), str)
             else None,
+            context_from=str(raw.get("context_from", "context")),
             when=RouteWhen.from_dict(
                 raw.get("when") if isinstance(raw.get("when"), dict) else None
             ),

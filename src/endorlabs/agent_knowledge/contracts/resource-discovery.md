@@ -105,6 +105,28 @@ findings = client.Finding.list_by_project(
 ).values
 ```
 
+### Scan-plane partition (same `context.type` + `context.id`)
+
+```python
+from endorlabs.facade import context_partition_filter
+
+scans = client.ScanResult.list_by_project(project, limit=1)
+if scans.values:
+    scan = scans.values[0]
+    findings = client.Finding.list_for_context(scan, max_pages=5).values
+
+# Manual composition
+findings = client.Finding.list_by_project(
+    project,
+    filter=context_partition_filter(scan.context),
+    max_pages=5,
+).values
+```
+
+Do **not** filter on `context.scan_uuid` — OpenAPI `v1Context` exposes `type`, `id`, `tags`, `will_be_deleted_at` only.
+
+For exact finding UUIDs on a scan record, use `ScanResult.spec.findings` + `Finding.get(uuid)`.
+
 ## Disambiguation
 
 When `search_by_name` returns multiple projects (same URL in different namespaces), workflows must pick a row, narrow `namespace=`, or fail explicitly — not rely on facade cardinality enforcement.

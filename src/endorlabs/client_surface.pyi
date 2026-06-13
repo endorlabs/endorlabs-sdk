@@ -180,6 +180,7 @@ class _DependencyMetadataFacade(ResourceRuntimeFacade[DependencyMetadata]):
         data: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> DependencyMetadata: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _EndorLicenseFacade(ListableFacade[EndorLicense]):
     """Platform license assigned to a tenant."""
@@ -244,8 +245,8 @@ class _FindingFacade(ResourceRuntimeFacade[Finding]):
         **kwargs: Any,
     ) -> Finding: ...
     def list_by_project(self, *args: Any, **kwargs: Any) -> Any: ...
-    def list_by_scan(self, *args: Any, **kwargs: Any) -> Any: ...
     def to_dependency_metadata(self, *args: Any, **kwargs: Any) -> Any: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _FindingLogFacade(ResourceRuntimeFacade[FindingLog]):
     """Historical snapshot of a finding state.
@@ -281,6 +282,7 @@ class _FindingLogFacade(ResourceRuntimeFacade[FindingLog]):
         location: Any | None = None,
         **kwargs: Any,
     ) -> FindingLog: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _InstallationFacade(ResourceRuntimeFacade[Installation]):
     """SCM platform integration (GitHub, GitLab, Azure, Bitbucket).
@@ -374,6 +376,7 @@ class _LinterResultFacade(ResourceRuntimeFacade[LinterResult]):
         endor_fingerprint: Any | None = None,
         **kwargs: Any,
     ) -> LinterResult: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _MalwareFacade(ListableFacade[Malware]):
     """Open-source malware records.
@@ -410,6 +413,7 @@ class _MetricFacade(ResourceRuntimeFacade[Metric]):
         raw: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> Metric: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _NamespaceFacade(ResourceRuntimeFacade[Namespace]):
     """Isolate and organize resources in a parent-child hierarchy.
@@ -498,6 +502,7 @@ class _PackageLicenseFacade(ResourceRuntimeFacade[PackageLicense]):
         version: Any | None = None,
         **kwargs: Any,
     ) -> PackageLicense: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _PackageVersionFacade(ResourceRuntimeFacade[PackageVersion]):
     """Package version with dependency information.
@@ -532,6 +537,7 @@ class _PackageVersionFacade(ResourceRuntimeFacade[PackageVersion]):
         **kwargs: Any,
     ) -> PackageVersion: ...
     def list_by_project(self, *args: Any, **kwargs: Any) -> Any: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _PolicyFacade(ResourceRuntimeFacade[Policy]):
     """Rule controlling scan behavior, findings, and workflows.
@@ -710,6 +716,7 @@ class _RepositoryVersionFacade(ResourceRuntimeFacade[RepositoryVersion]):
         last_commit_date: Any | None = None,
         **kwargs: Any,
     ) -> RepositoryVersion: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _ScanLogRequestFacade(ResourceRuntimeFacade[ScanLogRequest]):
     """Request for scan log messages.
@@ -805,7 +812,7 @@ class _ScanWorkflowFacade(ResourceRuntimeFacade[ScanWorkflow]):
 class _ScanWorkflowResultFacade(ResourceRuntimeFacade[ScanWorkflowResult]):
     """Result from a scan workflow execution."""
 
-    pass
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _SemgrepRuleFacade(ResourceRuntimeFacade[SemgrepRule]):
     """Custom SAST rule in Semgrep/OpenGrep format.
@@ -907,7 +914,7 @@ class _VectorStoreQueryFacade(ResourceRuntimeFacade[VectorStoreQuery]):
 class _VersionUpgradeFacade(ResourceRuntimeFacade[VersionUpgrade]):
     """Suggested dependency version upgrade."""
 
-    pass
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _VulnerabilityFacade(ListableFacade[Vulnerability]):
     """Open-source vulnerability records.

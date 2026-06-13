@@ -10,6 +10,7 @@ See also [resource-discovery contract](../agent-knowledge/contracts/resource-dis
 |-------|------|
 | `facade/` | Public helpers on resource facades + `CallGraphData` custom facade |
 | `facade/search.py` | Shared `search_by_*` helpers (identity lane) |
+| `facade/context_partition.py` | Scan-plane list filters (`context_partition_filter`, `main_context_filter`) |
 | `operations/routes.py` | Generated accessor executors (`RouteExecutor`, `RouteResult`) |
 | `operations/` | Pagination, group wire parsing |
 | `resources/call_graph_data.py` | CallGraphData fetch/decode wire helpers |
@@ -65,19 +66,35 @@ project = client.Project.get(project_uuid, namespace="tenant.child")
 
 ## Generated accessor helpers (codegen)
 
-From `devtools/model_sync_profiles/route_contract_overlay.yaml` → `src/endorlabs/generated/route_contract.py` and [resource-routes.md](../generated-reference/resource-routes.md).
+From `devtools/model_sync_profiles/route_contract_overlay.yaml` (manual FK/parent edges) plus `route_partition_targets.yaml` (codegen `list_for_context` edges) → `src/endorlabs/generated/route_contract.py` and [resource-routes.md](../generated-reference/resource-routes.md).
 
-Regenerate: `uv run python devtools/generate_route_contract.py`
+Regenerate: `uv run python devtools/generate_route_contract.py` (also refreshes `tests/fixtures/routes/golden_edges.json`).
 
 | Method | From → To | Returns |
 |--------|-----------|---------|
 | `Finding.list_by_project(project, …)` | Project → Finding | `RouteResult` → findings |
-| `Finding.list_by_scan(scan, …)` | ScanResult → Finding | `RouteResult` → findings |
+| `{Kind}.list_for_context(source, …)` | ScanResult (or any row with `.context`) → listable kind | `RouteResult` → rows in same scan plane |
 | `ScanResult.list_by_project(project, …)` | Project → ScanResult | `RouteResult` → scan results |
 | `PackageVersion.list_by_project(project, …)` | Project → PackageVersion | `RouteResult` → package versions |
 | `Finding.to_dependency_metadata(finding, …)` | Finding → DependencyMetadata | `RouteResult` → dependency row |
 
+**Scan plane:** `list_for_context` filters on OpenAPI `v1Context` fields (`context.type`, `context.id`). Do **not** use `context.scan_uuid` — it is not on the wire filter schema.
+
 **Prefer these** over hand-built `filter='spec.project_uuid==…'`, `list(parent=project)`, or `filter='context.scan_uuid==…'` when the relationship is in the contract.
+
+For manual composition:
+
+```python
+from endorlabs.facade import context_partition_filter
+
+findings = client.Finding.list_by_project(
+    project,
+    filter=context_partition_filter(scan.context),
+    max_pages=5,
+).values
+```
+
+For exact finding UUIDs attached to one scan record, hydrate from `ScanResult.spec.findings` via `Finding.get(uuid)` — not a list route.
 
 `ScanResult.list_by_project` adds a **workflow preset** on top of the generated edge: newest-first, default `max_pages=1`, optional `limit` (→ `page_size`) and client-side `status_filter`. Pass explicit `sort_by`, `max_pages`, `list_params`, or date bounds to override.
 
@@ -140,8 +157,7 @@ findings = client.Finding.list_by_project(
 
 scans = client.ScanResult.list_by_project(project, limit=5)
 if scans.values:
-    scan_findings = client.Finding.list_by_scan(scans.values[0], max_pages=1)
-    print(scan_findings.warnings)
+    scan_findings = client.Finding.list_for_context(scans.values[0], max_pages=1)
 
 for finding in findings or []:
     dm = client.Finding.to_dependency_metadata(finding)
