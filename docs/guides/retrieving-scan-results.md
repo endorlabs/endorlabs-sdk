@@ -5,14 +5,27 @@ Agent skill (on-demand): [endor-retrieve-scan-results](../../agent-knowledge/ski
 ## Concepts
 
 - **ScanResult**: Scan metadata, environment, runtime stats, policies triggered; `spec.findings` holds Finding UUIDs.
-- **Finding**: Security findings; linked by `context.scan_uuid` and `spec.project_uuid`.
-- **Relationship**: Project (`meta.name` = repo URL) → ScanResult (`meta.parent_uuid` = Project UUID) → Finding rows (via `spec.findings` UUIDs or `Finding.list` filters).
+- **Finding**: Security findings; linked by `context.type` / `context.id` (scan plane) and `spec.project_uuid`.
+- **Relationship**: Project (`meta.name` = repo URL) → ScanResult (`meta.parent_uuid` = Project UUID) → Finding rows (via `list_for_context(scan)`, `list_by_project`, or `spec.findings` UUIDs + `get`).
 
 ## Default workflow (one project)
 
-1. **Resolve Project** — filter on `meta.name` (repo URL). If namespace is known, pass **`namespace=`**; if unknown, **`Project.list(..., traverse=True, max_pages=1)`** for discovery only.
-2. **Latest ScanResult** — `ScanResult.list(parent=project, sort_by="meta.create_time", desc=True, max_pages=1)`.
-3. **Findings** — `Finding.list(filter=f'spec.project_uuid=="{project.uuid}"', namespace=project.namespace)` or filter by `context.scan_uuid`. **Do not** use `traverse=True` here — wrong namespace causes empty rows, not errors ([contracts.md](../contracts.md) — project-scoped lists).
+1. **Resolve Project** — `client.Project.search_by_name(query, …)` or `Project.get(uuid)` when UUID is known.
+2. **Scan results** — `client.ScanResult.list_by_project(project, max_pages=1, sort_by="meta.create_time", desc=True)` or `ScanResult.list(parent=project, sort_by="meta.create_time", desc=True, max_pages=1)`.
+3. **Findings** — `client.Finding.list_by_project(project, max_pages=…)` or `Finding.list_for_context(scan, max_pages=…)`. **Do not** use `traverse=True` here — wrong namespace causes empty rows, not errors ([contracts.md](../contracts.md) — project-scoped lists).
+
+Generated accessor helpers return `RouteResult`; use `.values` for rows. See [facade-helpers.md](facade-helpers.md) and [resource-routes.md](../generated-reference/resource-routes.md).
+
+```python
+projects = client.Project.search_by_name(repo_url, namespace=ns, max_pages=2)
+project = projects[0] if projects else None
+findings = client.Finding.list_by_project(project, max_pages=1)
+scans = client.ScanResult.list_by_project(
+    project, max_pages=1, sort_by="meta.create_time", desc=True
+)
+if scans.values:
+    scan_findings = client.Finding.list_for_context(scans.values[0], max_pages=1)
+```
 
 Use **field-mask** (`mask=` / `--field-mask`) for smaller responses; with a **non-empty** mask, `list()` returns **dict** rows, not full resource models.
 

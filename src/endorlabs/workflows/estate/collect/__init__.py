@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+from endorlabs.tools.list_sharding import (
+    ParentShard,
+    parallel_map_shards,
+    project_dict_to_shard,
+    project_model_to_shard,
+    resolve_worker_count,
+)
+
 from .bounds import (
     count_for_progress,
     count_list_delta_check,
@@ -19,13 +27,6 @@ from .dependency_metadata import (
     load_dependency_metadata_records,
 )
 from .runner import CollectResult, collect_workspace
-from .shards import (
-    ParentShard,
-    parallel_map_shards,
-    project_dict_to_shard,
-    project_model_to_shard,
-    resolve_worker_count,
-)
 
 __all__ = [
     "CollectResult",

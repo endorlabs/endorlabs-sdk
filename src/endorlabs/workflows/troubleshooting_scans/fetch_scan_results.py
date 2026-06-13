@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from endorlabs.workflows.estate.collect.shards import ParentShard
+    from endorlabs.tools.list_sharding import ParentShard
 
 from endorlabs.client_surface import Client
 
@@ -29,12 +29,13 @@ def _list_scan_dicts(
     limit: int,
     status_filter: str | None = None,
 ) -> list[dict[str, Any]]:
-    rows = client.ScanResult.list_for_project(
+    result = client.ScanResult.list_by_project(
         project_uuid,
         namespace=namespace,
         limit=limit,
         status_filter=status_filter,
     )
+    rows = result.values or []
     return [object_to_dict(item) for item in rows]
 
 

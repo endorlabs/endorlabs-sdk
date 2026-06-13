@@ -1,36 +1,28 @@
-"""Repository resource module for Endor Labs API.
-
-This module provides CRUD operations for Repository resources following the established
-patterns from the base class implementation.
-
-API OPERATIONS SUPPORTED:
-- GET: List repositories, Get repository by UUID
-
-API LIMITATIONS:
-- CREATE: Not supported by API (repositories are managed by platform integrations)
-- UPDATE: Not supported by API (repository metadata is read-only)
-- DELETE: Not supported by API (repositories are managed by platform integrations)
-
-Note: Repositories are auto-discovered and managed through platform integrations
-(GitHub, GitLab, etc.) and cannot be manually created, updated, or deleted via API.
-"""
+"""Repository — thin consumer wrapper over generated V1Repository."""
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, override
+from typing import Any, ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
+
+from endorlabs.generated.models.repository_service import V1Repository
 
 from ..utils.logging_config import get_resource_logger
-from .base import (
-    BaseMeta,
-    BaseResource,
-    BaseSpec,
-    FlexibleEnum,
-)
+from .base import BaseMeta, BaseSpec, FlexibleEnum
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin
 
 logger = get_resource_logger(__name__)
+
+
+class Repository(V1Repository, ConsumerResourceWireMixin, ConsumerResourceMixin):
+    """Consumer facade model for Repository (generated wire shape)."""
+
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("Repository")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("Repository")
 
 
 class PlatformSource(FlexibleEnum):
@@ -200,54 +192,19 @@ class RepositorySpec(BaseSpec):
         return v
 
 
-class Repository(BaseResource):
-    """Repository resource model extending BaseResource.
+class RepositoryMetaCreate(BaseModel):
+    """Repository metadata for creation."""
 
-    OPERATION SUPPORT:
-    ==================
-    ✅ GET: List repositories, Get by UUID
-    ❌ CREATE: Not supported (managed by platform integrations)
-    ❌ UPDATE: Not supported (repository metadata is read-only)
-    ❌ DELETE: Not supported (managed by platform integrations)
-
-    FIELD MUTABILITY:
-    =================
-    IMMUTABLE FIELDS (read-only, system-managed):
-    - uuid: Unique identifier
-    - meta.name: Repository name (set by platform)
-    - spec.platform_source: Platform source (set at discovery)
-    - spec.http_clone_url: Clone URL (set by platform)
-    - spec.external_id: External platform ID (set by platform)
-    - tenant_meta.namespace: Namespace assignment
-    - All spec fields: Platform-managed metadata
-
-    Note: Repository metadata is automatically synchronized from platform integrations
-    and cannot be manually modified through the API.
-    """
-
-    # Repository-specific fields (universal fields inherited from BaseResource)
-    spec: RepositorySpec = Field(..., description="Repository specification")  # type: ignore
-    # Conditional attributes from Resource Guide example
-    ingested_object: dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None, description="Ingested object information", alias="ingested_object"
-    )
-
-    model_config = ConfigDict(extra="ignore")
-
-    def __init__(self, **data: Any) -> None:
-        # Convert spec to RepositorySpec if it's a dict
-        if "spec" in data and isinstance(data["spec"], dict):
-            data["spec"] = RepositorySpec(**data["spec"])
-        super().__init__(**data)
-
-    @override
-    @classmethod
-    def get_mutable_fields_cls(cls) -> list[str]:
-        """Get list of mutable fields for Repository."""
-        return ["meta.name", "meta.description", "meta.tags", "spec"]
+    name: str = Field(..., description="Repository name")
+    description: str | None = Field(None, description="Repository description")
 
 
-# Payload models for create and update operations
+class RepositoryMetaUpdate(BaseModel):
+    """Repository metadata for update."""
+
+    description: str | None = Field(None, description="Repository description")
+
+
 class CreateRepositoryPayload(BaseModel):
     """Payload for creating a repository."""
 
@@ -255,18 +212,6 @@ class CreateRepositoryPayload(BaseModel):
         ..., description="Repository metadata for creation"
     )
     spec: RepositorySpec = Field(..., description="Repository specification")
-
-
-def build_create_payload(
-    *,
-    name: str,
-    description: str | None = None,
-    **spec_kwargs: Any,
-) -> CreateRepositoryPayload:
-    """Build CreateRepositoryPayload from kwargs (decoupled facade create)."""
-    meta = RepositoryMetaCreate(name=name, description=description)
-    spec = RepositorySpec(**spec_kwargs)
-    return CreateRepositoryPayload(meta=meta, spec=spec)
 
 
 class UpdateRepositoryPayload(BaseModel):
@@ -280,14 +225,10 @@ class UpdateRepositoryPayload(BaseModel):
     )
 
 
-class RepositoryMetaCreate(BaseModel):
-    """Repository metadata for creation."""
+def build_create_payload(**kwargs: Any) -> CreateRepositoryPayload:
+    """Build CreateRepositoryPayload from kwargs (decoupled facade create)."""
+    from ..utils.create_payload import pass_through_create_payload
 
-    name: str = Field(..., description="Repository name")
-    description: str | None = Field(None, description="Repository description")
-
-
-class RepositoryMetaUpdate(BaseModel):
-    """Repository metadata for update."""
-
-    description: str | None = Field(None, description="Repository description")
+    return pass_through_create_payload(
+        CreateRepositoryPayload, kwargs, attr_name="Repository"
+    )

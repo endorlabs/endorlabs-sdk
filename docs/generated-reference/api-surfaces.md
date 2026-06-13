@@ -93,7 +93,6 @@ Auto-generated inventories for stable/public surfaces.
 | Method | Primary purpose | Key parameters |
 |--------|------------------|----------------|
 | `list` | List resources with paging/filtering; non-empty `mask` → `dict` rows | `traverse`, `namespace`, `list_params`, `filter`, `mask`, `max_pages` |
-| `lookup` | Return exactly one matching **model** (no list `mask`) | `filter`, identity kwargs via `filter_kwarg_map`, `max_pages` |
 | `list_iter` | Stream list results; non-empty `mask` → dict items | same as `list`, iterator output |
 | `get` | Fetch one resource by id or resource object | `id_or_resource`, `namespace` |
 | `create` | Create resource from payload or builder kwargs | `payload`, `name`, `description`, `namespace_uuid`, `namespace`, `**kwargs` |
@@ -104,7 +103,6 @@ Auto-generated inventories for stable/public surfaces.
 ### `_ListableFacade` methods
 
 - `list(self, traverse: 'bool' = False, concurrent: 'bool' = True, max_workers: 'int' = 10, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int | None' = None, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, ci_run_uuid: 'str | None' = None, **kwargs: 'Any') -> 'list[T] | list[dict[str, Any]]'`
-- `lookup(self, traverse: 'bool' = False, concurrent: 'bool' = True, max_workers: 'int' = 10, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int' = 2, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, ci_run_uuid: 'str | None' = None, **kwargs: 'Any') -> 'T'`
 - `list_iter(self, traverse: 'bool' = False, concurrent: 'bool' = False, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int | None' = None, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, ci_run_uuid: 'str | None' = None, **kwargs: 'Any') -> 'Iterator[T | dict[str, Any]]'`
 
 ### `ResourceRuntimeFacade` methods (`ResourceFacade` alias)
@@ -129,6 +127,7 @@ Auto-generated inventories for stable/public surfaces.
 | EndorLicense | endor-licenses | tenant | — | list, get |
 | Finding | findings | tenant | — | list, get, create, update, delete |
 | FindingLog | finding-logs | tenant | — | list, get, create, delete |
+| IdentityProvider | identity-providers | tenant | — | list, get |
 | Installation | installations | tenant | — | list, get, create, update, delete |
 | Invitation | invitations | tenant | — | list, get, create, update, delete |
 | LinterResult | linter-results | tenant | — | list, get, create, delete |
@@ -143,20 +142,19 @@ Auto-generated inventories for stable/public surfaces.
 | Policy | policies | tenant | — | list, get, create, update, delete |
 | PolicyTemplate | policy-templates | tenant | — | list, get |
 | Project | projects | tenant | — | list, get, create, update, delete |
+| Query | queries | tenant | — | create |
 | QueryMalware | queries/malware | oss | — | create |
+| QuerySimilarPackages | queries/similar-packages | tenant | — | create |
 | QueryVulnerability | queries/vulnerabilities | oss | — | create |
 | Repository | repositories | tenant | — | list, get, create, update, delete |
 | RepositoryVersion | repository-versions | tenant | project | list, get, create, update, delete |
+| SavedQuery | saved-queries | tenant | — | list, get |
 | ScanLogRequest | scan-log-requests | tenant | — | create |
 | ScanProfile | scan-profiles | tenant | — | list, get, create, update, delete |
 | ScanResult | scan-results | tenant | project | list, get, create, update, delete |
 | ScanWorkflow | scan-workflows | tenant | — | list, get, delete |
 | ScanWorkflowResult | scan-workflow-results | tenant | — | list, get, delete |
 | SemgrepRule | semgrep-rules | tenant | — | list, get, create, update, delete |
-| V1IdentityProvider | identity-providers | tenant | — | list, get |
-| V1Query | queries | tenant | — | create |
-| V1QuerySimilarPackages | queries/similar-packages | tenant | — | create |
-| V1SavedQuery | saved-queries | tenant | — | list, get |
 | VectorStore | vector-stores | tenant | — | list, get |
 | VectorStoreQuery | queries/vector-stores | tenant | — | create |
 | VersionUpgrade | version-upgrades | tenant | — | list, get, delete |

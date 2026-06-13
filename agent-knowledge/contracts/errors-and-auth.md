@@ -21,6 +21,8 @@ Do not invent credential or settings env var names.
 Use top-level `endorlabs` exception types (`NotFoundError`, `UnauthorizedError`,
 `ValidationError`, `AmbiguousError`, …). Resources may return `None` on 404 where documented.
 
+**Note:** `AmbiguousError` is no longer raised by facade discovery — use `search_by_*` and explicit disambiguation instead of exact-match `lookup()`.
+
 ## Local OpenAPI spec
 
 Preferred path after `init()`:

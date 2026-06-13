@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
-from endorlabs.resources.policy import Policy, PolicySpec, PolicyType
+from endorlabs.resources.consumer.wire_compat import ConsumerPolicySpec
+from endorlabs.resources.policy import Policy, PolicyType
 from endorlabs.workflows.policies.validate import build_validation_body
 
 
 def test_build_validation_body_template_policy() -> None:
-    policy = Policy(
+    policy = Policy.model_construct(
         uuid="policy-1",
         meta={"name": "test-exception"},
-        spec=PolicySpec(
-            policy_type=PolicyType.EXCEPTION,
+        spec=ConsumerPolicySpec.model_construct(
+            policy_type=PolicyType.EXCEPTION.value,
             template_uuid="6839f54bfc0b87f4c01f2d83",
             template_values={
                 "VulnID": {"values": ["CVE-2026-42033"]},
@@ -35,11 +36,11 @@ def test_build_validation_body_template_policy() -> None:
 
 
 def test_build_validation_body_rule_policy() -> None:
-    policy = Policy(
+    policy = Policy.model_construct(
         uuid="policy-2",
         meta={"name": "rego-only"},
-        spec=PolicySpec(
-            policy_type=PolicyType.EXCEPTION,
+        spec=ConsumerPolicySpec.model_construct(
+            policy_type=PolicyType.EXCEPTION.value,
             rule="package example\n",
             query_statements=["data.example.match_finding"],
             resource_kinds=["Finding"],

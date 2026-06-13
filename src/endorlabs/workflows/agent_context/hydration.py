@@ -121,19 +121,15 @@ def process_project(
 
     # 1. PackageVersions
     logger.info("  Fetching PackageVersions ...")
-    from endorlabs import F
-
     missing: list[str] = []
     if pv_uuid_order:
-        pvs_full = cast(
-            "list[Any]",
-            client.PackageVersion.list(  # type: ignore[attr-defined]
-                namespace=project_ns,
-                filter=F("spec.project_uuid") == project.uuid,
-                max_pages=pv_list_max_pages,
-                page_size=pv_list_page_size,
-            ),
+        route = client.PackageVersion.list_by_project(
+            project,
+            namespace=project_ns,
+            max_pages=pv_list_max_pages,
+            page_size=pv_list_page_size,
         )
+        pvs_full = cast("list[Any]", route.values or [])
         listed_cap = pv_list_max_pages * pv_list_page_size
         result.pv_list_truncated = len(pvs_full) >= listed_cap
         by_uuid = {pv.uuid: pv for pv in pvs_full if getattr(pv, "uuid", None)}
@@ -152,15 +148,13 @@ def process_project(
         if pv_limit and pv_limit > 0:
             pvs = pvs[:pv_limit]
     else:
-        pvs = cast(
-            "list[Any]",
-            client.PackageVersion.list(  # type: ignore[attr-defined]
-                namespace=project_ns,
-                filter=F("spec.project_uuid") == project.uuid,
-                max_pages=1,
-                page_size=pv_limit,
-            ),
+        route = client.PackageVersion.list_by_project(
+            project,
+            namespace=project_ns,
+            max_pages=1,
+            page_size=pv_limit,
         )
+        pvs = cast("list[Any]", route.values or [])
         pvs = pvs[:pv_limit]
         if deterministic:
             pvs = sorted(pvs, key=lambda pv: str(pv.meta.name if pv.meta else pv.uuid))

@@ -76,13 +76,24 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 - **List/filter scoped to a resource:** Use **`namespace=resource.namespace`** (alias of `tenant_meta.namespace` on models) or `list(parent=resource)` where the registry supports `parent_kind`.
 - **Discovery:** Use root namespace + `traverse=True` (for example `Project.list(traverse=True)`).
 
-**Project-scoped lists (MUST):** `Client(tenant=<estate_root>)` with default `traverse=False` lists only that namespace path — **not** child namespaces. A filter such as `spec.project_uuid==…` or `spec.importer_data.project_uuid==…` does **not** widen the path. Resolve the `Project` row first, then pass **`namespace=project.namespace`** on downstream lists (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get **empty results with no error** (silent miss). Alternatives: `Client(tenant=project.namespace)` for the rest of the session, or `traverse=True` only when deliberately searching tenant-wide (higher cost).
+**Project-scoped lists (MUST):** `Client(tenant=<estate_root>)` with default `traverse=False` lists only that namespace path — **not** child namespaces. A filter such as `spec.project_uuid==…` or `spec.importer_data.project_uuid==…` does **not** widen the path. Resolve the `Project` row first, then pass **`namespace=project.namespace`** on downstream lists (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get **empty results with no error** (silent miss). Alternatives: `Client(tenant=project.namespace)` for the rest of the session, **`client.Finding.list_by_project(project)`** / **`client.ScanResult.list_by_project(project)`** (generated accessor helpers), or `traverse=True` only when deliberately searching tenant-wide (higher cost).
+
+<a id="generated-accessor-helpers"></a>
+## Generated accessor helpers
+
+- **Contract source:** `devtools/model_sync_profiles/route_contract_overlay.yaml` → generated `src/endorlabs/generated/route_contract.py` and [generated-reference/resource-routes.md](generated-reference/resource-routes.md).
+- **Runtime:** Facades mix in `RouteHostMixin`; public methods are thin wrappers over `_execute_route(edge_id, source=…)`.
+- **Return type:** `RouteResult[T]` from `endorlabs.operations.routes` — use `.values` for list edges, `.value` for GET/stitch; inspect `.edge_used` and `.warnings` (e.g. list-only index fields).
+- **Namespace:** Derived from the **source resource** (`tenant_meta.namespace`) unless `namespace=` is passed explicitly.
+- **Workflows** SHALL prefer generated accessor helpers over hand-built filter strings for edges declared in the contract. Workflow-specific sort windows, limits, and post-filters belong in `workflows/`, not on the facade.
+- **No parallel discovery API** — no `client.ops` or `queries/` layer; accessors stay on `client.<Kind>`.
+
 
 ## List parameters
 
 - **filter**: Which rows match.
 - **mask**: Which fields are returned in list responses.
-- **List return shape:** After merge of `list_params` and flat kwargs (same rules as `list()`), if **mask** is non-empty when stripped, `list()` returns **`list[dict[str, Any]]`** (shallow-copied wire JSON per row) instead of full Pydantic models; `list_iter()` yields **`Iterator[T | dict[str, Any]]`** (each item is either a model or a dict). If **mask** is absent, empty, or whitespace-only, behavior is unchanged: full models only. **`lookup()`** requires a typed resource and raises **`ValidationError`** when an effective non-empty list mask is present; use **`list()`** / **`list_iter()`** for masked dict rows. See [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md) and [changelog.md](changelog.md).
+- **List return shape:** After merge of `list_params` and flat kwargs (same rules as `list()`), if **mask** is non-empty when stripped, `list()` returns **`list[dict[str, Any]]`** (shallow-copied wire JSON per row) instead of full Pydantic models; `list_iter()` yields **`Iterator[T | dict[str, Any]]`** (each item is either a model or a dict). If **mask** is absent, empty, or whitespace-only, behavior is unchanged: full models only. **`search_by_*`** discovery methods forward list kwargs including **`mask=`** under the same rule. See [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md), [guides/facade-helpers.md](guides/facade-helpers.md), and shipped `contracts/resource-discovery.md`.
 - **MQL conventions:** `filter` query expressions and list `mask` projections mirror MongoDB-style MQL conventions.
 - **page_size**, **page_token**, **page_id**: Pagination controls.
 - **sort_by**, **desc**: Sorting controls mapped to `list_parameters.sort.path` and `list_parameters.sort.order`.

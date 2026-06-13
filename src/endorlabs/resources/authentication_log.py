@@ -1,71 +1,20 @@
-"""AuthenticationLog resource module for Endor Labs API.
-
-Represents authentication events (login, API key, etc.). This resource is
-system-owned: LIST is supported; GET, UPDATE, and DELETE return 403 (only
-system can perform them). The Client exposes list() only; use
-client.AuthenticationLog.list().
-"""
+"""AuthenticationLog — thin consumer wrapper over generated V1AuthenticationLog."""
 
 from __future__ import annotations
 
 from typing import ClassVar
 
-from pydantic import Field
+from endorlabs.generated.models.authentication_log_service import V1AuthenticationLog
 
-from ..utils.logging_config import get_resource_logger
-from .base import (
-    BaseMeta,
-    BaseResource,
-    BaseSpec,
-)
-
-logger = get_resource_logger(__name__)
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin
 
 
-class AuthenticationLogSpec(BaseSpec):
-    """Authentication log specification extending BaseSpec."""
+class AuthenticationLog(
+    V1AuthenticationLog, ConsumerResourceWireMixin, ConsumerResourceMixin
+):
+    """Consumer facade model for AuthenticationLog (generated wire shape)."""
 
-    success: bool | None = Field(
-        None,
-        description="True if authentication was successful.",
-    )
-    authorized_tenants: list[str] | None = Field(
-        None,
-        description="Tenants accessible by the user at authentication time.",
-    )
-    error_message: str | None = Field(
-        None,
-        description="Error message if authentication failed.",
-    )
-    claims: list[str] | None = Field(
-        None,
-        description="Authentication claims.",
-    )
-    remote_address: str | None = Field(
-        None,
-        description="Source IP address.",
-    )
-    status: int | None = Field(
-        None,
-        description="Return code of the authentication.",
-    )
-    uri: str | None = Field(
-        None,
-        description="Request URI (e.g. /v1/auth/api-key).",
-    )
-
-
-class AuthenticationLogMeta(BaseMeta):
-    """Authentication log metadata extending BaseMeta."""
-
-    pass
-
-
-class AuthenticationLog(BaseResource):
-    """Authentication Log resource model. List and get only."""
-
-    spec: AuthenticationLogSpec | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None, description="Authentication log specification"
-    )
-
-    model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("AuthenticationLog")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("AuthenticationLog")

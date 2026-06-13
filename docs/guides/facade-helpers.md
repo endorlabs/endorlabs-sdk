@@ -2,35 +2,116 @@
 
 Normative catalog for SDK facade helpers. Wire logic lives in `operations/`; workflows orchestrate only.
 
+See also [resource-discovery contract](../agent-knowledge/contracts/resource-discovery.md) (shipped in wheel).
+
 ## Layer placement
 
 | Layer | Owns |
 |-------|------|
-| `facade.py` | Public helpers on resource facades + `CallGraphData` custom facade |
+| `facade/` | Public helpers on resource facades + `CallGraphData` custom facade |
+| `facade/search.py` | Shared `search_by_*` helpers (identity lane) |
+| `facade/context_partition.py` | Scan-plane list filters (`context_partition_filter`, `main_context_filter`) |
+| `operations/routes.py` | Generated accessor executors (`RouteExecutor`, `RouteResult`) |
 | `operations/` | Pagination, group wire parsing |
 | `resources/call_graph_data.py` | CallGraphData fetch/decode wire helpers |
 | `api_client.py` | `get_all` — single low-level pagination loop |
-| `workflows/` | Orchestration — **must not** duplicate list/count/group pagination |
-| `tools/` | Composition (`list_sharding`, hydration orchestration) |
+| `workflows/` | Orchestration — **must not** duplicate list/count/group pagination or hand-built relationship filters when a generated accessor exists |
+| `tools/` | Composition (`list_sharding`) — parallel list over project shards |
+| `utils/` | Infra (`parallel`, namespace) — not domain list composition |
 
 ## Facade naming rules
 
 1. **`client.<Kind>`** matches the endorctl resource kind (PascalCase).
-2. **CRUD** (`list`, `get`, `lookup`) return **`<Kind>` models** (or masked `dict` rows).
-3. **Auxiliary helpers** on the **wire resource facade** when the API entity is clear:
-   - `client.CallGraphData.decode(package_version)` → `CallGraphDecoded`
-   - `client.CallGraphData.fetch(package_version)` → raw envelope `dict`
-4. **Parent-scoped sugar** on the facade the caller already holds when that is more ergonomic:
-   - `client.ScanResult.get_logs(scan_result)` → `list[ScanLogRequestLogMessage]` (wire: ScanLogRequest POST)
-   - `client.Finding.list_for_scan(scan_result)` → `list[Finding]`
-   - `client.ScanResult.list_for_project(project, …)` → `list[ScanResult]`
-   - `client.Project.resolve(name_or_uuid)` → `Project`
-5. **Custom facades** only when the kind is not yet on `registry_contract` but needs a client attr — today: **`CallGraphData`** only. Do **not** add parallel attrs like `ScanLogs`.
+2. **CRUD** (`list`, `get`) return **`<Kind>` models** (or masked `dict` rows).
+3. **Generated accessor helpers** return **`RouteResult`** with `.values` / `.value`, `.edge_used`, `.warnings`. See [resource-routes.md](../generated-reference/resource-routes.md).
+4. **`search_by_*`** return **`list[T]`** (same as `list()` for return shape; forwards `mask`, `filter`, etc.).
+5. **Wire/auxiliary helpers** — custom decode/fetch, log POST (below).
+6. **Custom facades** only when the kind is not yet on `registry_contract` — today: **`CallGraphData`** only.
+
+## Identity lane (`search_by_*`)
+
+| Method | Resource | Returns |
+|--------|----------|---------|
+| `Project.search_by_name(query, …)` | Project | `list[Project]` |
+| `VectorStore.search_by_name(query, …)` | VectorStore | `list[VectorStore]` |
+| `AuthorizationPolicy.search_by_claims(query, …)` | AuthorizationPolicy | `list[AuthorizationPolicy]` |
+| `Vulnerability.search_by_vuln_alias(query, …)` | Vulnerability (OSS) | `list[Vulnerability]` |
+
+Discovery always returns a **bounded list**; callers disambiguate. Supports `namespace=`, `traverse=`, `max_pages=`, `mask=`, `filter=` (including `F()`), and other `list()` kwargs. **`count=True` is rejected.**
+
+```python
+import endorlabs
+from endorlabs import F
+
+client = endorlabs.Client(tenant="tenant.root")
+
+# Fuzzy repo URL
+projects = client.Project.search_by_name(
+    "github.com/org/repo",
+    traverse=True,
+    max_pages=2,
+)
+
+# Server-side pre-filter + fuzzy match
+projects = client.Project.search_by_name(
+    "repo",
+    traverse=True,
+    filter=F("meta.tags").contains("production"),
+    max_pages=2,
+)
+
+# Known UUID
+project = client.Project.get(project_uuid, namespace="tenant.child")
+```
+
+## Generated accessor helpers (codegen)
+
+From `devtools/model_sync_profiles/route_contract_overlay.yaml` (manual FK/parent edges) plus `route_partition_targets.yaml` (codegen `list_for_context` edges) → `src/endorlabs/generated/route_contract.py` and [resource-routes.md](../generated-reference/resource-routes.md).
+
+Regenerate: `uv run python devtools/generate_route_contract.py` (also refreshes `tests/fixtures/routes/golden_edges.json`).
+
+| Method | From → To | Returns |
+|--------|-----------|---------|
+| `Finding.list_by_project(project, …)` | Project → Finding | `RouteResult` → findings |
+| `{Kind}.list_for_context(source, …)` | ScanResult (or any row with `.context`) → listable kind | `RouteResult` → rows in same scan plane |
+| `ScanResult.list_by_project(project, …)` | Project → ScanResult | `RouteResult` → scan results |
+| `PackageVersion.list_by_project(project, …)` | Project → PackageVersion | `RouteResult` → package versions |
+| `Finding.to_dependency_metadata(finding, …)` | Finding → DependencyMetadata | `RouteResult` → dependency row |
+
+**Scan plane:** `list_for_context` filters on OpenAPI `v1Context` fields (`context.type`, `context.id`). Do **not** use `context.scan_uuid` — it is not on the wire filter schema.
+
+**Prefer these** over hand-built `filter='spec.project_uuid==…'`, `list(parent=project)`, or `filter='context.scan_uuid==…'` when the relationship is in the contract.
+
+For manual composition:
+
+```python
+from endorlabs.facade import context_partition_filter
+
+findings = client.Finding.list_by_project(
+    project,
+    filter=context_partition_filter(scan.context),
+    max_pages=5,
+).values
+```
+
+For exact finding UUIDs attached to one scan record, hydrate from `ScanResult.spec.findings` via `Finding.get(uuid)` — not a list route.
+
+`ScanResult.list_by_project` adds a **workflow preset** on top of the generated edge: newest-first, default `max_pages=1`, optional `limit` (→ `page_size`) and client-side `status_filter`. Pass explicit `sort_by`, `max_pages`, `list_params`, or date bounds to override.
+
+For the latest scan only, use `ScanResult.list_by_project(project, limit=1).values[0]`.
+
+## Wire helpers
+
+| Method | Input | Returns |
+|--------|-------|---------|
+| `CallGraphData.decode(package_version)` | `PackageVersion` or UUID + `namespace=` | `CallGraphDecoded` |
+| `CallGraphData.fetch(package_version)` | same | raw CallGraphData envelope |
+| `ScanResult.get_logs(scan_result, …)` | `ScanResult` or UUID + `namespace=` | `ScanLogRequestLogMessage[]` |
 
 ## Pagination
 
 - `list(max_pages=None)` fetches **all pages** via `get_all()`.
-- Bounded helpers (`latest`, `lookup` default) set `max_pages=1` (or explicit cap).
+- Generated accessors forward `max_pages`, `filter`, `list_params`, `mask`, and other list kwargs to the underlying wire op.
 - Do **not** set `page_size` unless the user asks.
 
 ## Universal helpers (`ListableFacade`)
@@ -46,49 +127,44 @@ Normative catalog for SDK facade helpers. Wire logic lives in `operations/`; wor
 
 `list(count=True)` emits `DeprecationWarning` and delegates to `count()`.
 
-## Resource helpers
-
-| Method | Input | Returns |
-|--------|-------|---------|
-| `CallGraphData.decode(package_version)` | `PackageVersion` or UUID + `namespace=` | `CallGraphDecoded` |
-| `CallGraphData.fetch(package_version)` | same | raw CallGraphData envelope |
-| `ScanResult.get_logs(scan_result, …)` | `ScanResult` or UUID + `namespace=` | `ScanLogRequestLogMessage[]` |
-| `Project.resolve(name_or_uuid, …)` | name or UUID | `Project` |
-| `Finding.list_for_scan(scan_result, …)` | `ScanResult` | `list[Finding]` |
-| `ScanResult.list_for_project(project, …)` | `Project` or UUID | `list[ScanResult]` |
-| `ScanResult.latest_created(parent=project, …)` | `Project` parent | `ScanResult \| None` |
-
-### `CallGraphData`
-
-Supported decode/fetch sources: **`PackageVersion`** (`meta.parent_uuid == package_version.uuid`).
+### Example: project-scoped retrieval (base + `F()`)
 
 ```python
-decoded = client.CallGraphData.decode(package_version)
-raw = client.CallGraphData.fetch(package_version)
+import endorlabs
+from endorlabs import F
+
+client = endorlabs.Client(tenant="tenant.child")
+matches = client.Project.search_by_name(
+    "https://github.com/org/repo",
+    namespace="tenant.child",
+    max_pages=2,
+)
+project = matches[0] if matches else None
+
+# String filter
+findings = client.Finding.list_by_project(
+    project,
+    filter='spec.level=="FINDING_LEVEL_CRITICAL"',
+    max_pages=5,
+).values
+
+# F() — composable, injection-safe
+findings = client.Finding.list_by_project(
+    project,
+    filter=F("spec.level") == "FINDING_LEVEL_CRITICAL",
+    max_pages=5,
+).values
+
+scans = client.ScanResult.list_by_project(project, limit=5)
+if scans.values:
+    scan_findings = client.Finding.list_for_context(scans.values[0], max_pages=1)
+
+for finding in findings or []:
+    dm = client.Finding.to_dependency_metadata(finding)
+    if dm.value:
+        print(dm.edge_used, dm.value.uuid)
 ```
 
-Requires optional `zstandard` for zstd/protobuf payloads when decoding.
+## Sharded parallel lists
 
-### `ScanResult.get_logs`
-
-Uses ScanLogRequest POST under the hood. For embedded lines only, GET the scan-result resource (`spec.logs`).
-
-## Removed modules (upgraders)
-
-| Removed | Use instead |
-|---------|-------------|
-| `endorlabs.utils.api_pagination` | `facade.list()` / `api_client.get_all` |
-| `bounds.list_resource_count` | `facade.count()` or `count_for_progress` |
-| `group_list.iter_group_*` | `facade.list_groups()` |
-| `workflows.callgraph.fetch.retrieve_*` | `CallGraphData.decode` / `fetch` |
-| `workflows.callgraph.decoded.decode_payload` | `CallGraphData.decode` |
-| `workflows.troubleshooting_scans.list_scan_results_for_project` | `client.ScanResult.list_for_project` |
-| `workflows.troubleshooting_scans.list_projects` | `client.Project.list` |
-| `retrieve_dep_metadata_full(api_client, …)` | `retrieve_dep_metadata_full(client, …)` via `client.DependencyMetadata.list` |
-| `client.ScanLogs` | `client.ScanResult.get_logs` |
-
-## See also
-
-- [consumer-ux-list-update.md](consumer-ux-list-update.md)
-- [contracts.md](../contracts.md)
-- [list-query-performance.md](../contributing/list-query-performance.md)
+For tenant-wide collection, use `endorlabs.tools.list_sharding` (`ParentShard`, `parallel_map_shards`, `list_for_shards`) with **`list_by_project`** per shard — see [list-query-performance.md](../contributing/list-query-performance.md) and estate collect workflows.

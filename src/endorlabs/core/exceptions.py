@@ -178,6 +178,20 @@ class MethodNotSupportedError(EndorAPIError):
         super().__init__(message, status_code=501, **kwargs)
 
 
+class RouteNotApplicableError(EndorAPIError):
+    """Stitched route preconditions failed (kind, namespace, or ``when`` gate)."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        edge_id: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        self.edge_id = edge_id
+        super().__init__(message, **kwargs)
+
+
 def map_status_code_to_exception(
     status_code: int,
     message: str | None = None,

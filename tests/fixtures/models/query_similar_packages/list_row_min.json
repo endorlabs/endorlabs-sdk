@@ -1,0 +1,9 @@
+{
+  "uuid": "000000000000000000000001",
+  "meta": {
+    "name": "wire-query_similar_packages"
+  },
+  "tenant_meta": {
+    "namespace": "tenant.example"
+  }
+}

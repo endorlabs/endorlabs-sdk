@@ -148,7 +148,7 @@ def test_join_version_usage_and_risk_orphan_warning() -> None:
 def test_findings_filter_includes_main_context() -> None:
     filt = findings_filter_for_project("proj-uuid")
     assert MAIN_CONTEXT_LIST_FILTER in filt or "CONTEXT_TYPE_MAIN" in filt
-    assert "proj-uuid" in filt
+    assert "spec.project_uuid" not in filt
     assert "spec.finding_categories contains" in filt
     assert "FINDING_CATEGORY_SCA" in filt
     assert "&&" not in filt
@@ -227,16 +227,18 @@ def test_export_risk_ranked_version_cardinality_mocked() -> None:
     client.Project.list.return_value = [
         MagicMock(uuid="proj-1", tenant_meta=MagicMock(namespace="tenant"))
     ]
-    client.Finding.list.return_value = [
-        {
-            "spec": {
-                "level": "FINDING_LEVEL_CRITICAL",
-                "finding_categories": ["FINDING_CATEGORY_SCA"],
-                "target_dependency_package_name": "pypi://django",
-                "target_dependency_version": "4.2",
+    client.Finding.list_by_project.return_value = Mock(
+        values=[
+            {
+                "spec": {
+                    "level": "FINDING_LEVEL_CRITICAL",
+                    "finding_categories": ["FINDING_CATEGORY_SCA"],
+                    "target_dependency_package_name": "pypi://django",
+                    "target_dependency_version": "4.2",
+                }
             }
-        }
-    ]
+        ]
+    )
 
     from endorlabs.operations.list_response import (
         GroupBucket,
@@ -274,7 +276,7 @@ def test_export_risk_ranked_version_cardinality_mocked() -> None:
     assert len(result.document["packages"]) == 1
     assert result.document["packages"][0]["package_name"] == "pypi://django"
     assert result.ranking_table.row_count >= 1
-    call_kwargs = client.Finding.list.call_args.kwargs
+    call_kwargs = client.Finding.list_by_project.call_args.kwargs
     assert "CONTEXT_TYPE_MAIN" in call_kwargs["filter"]
     assert call_kwargs["mask"] == FINDING_LIST_MASK
 

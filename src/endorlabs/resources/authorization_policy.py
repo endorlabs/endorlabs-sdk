@@ -1,43 +1,96 @@
-"""Authorization Policy resource module for Endor Labs API.
-
-This module provides comprehensive authorization policy management capabilities
-including listing, examining, creating, updating, and deleting authorization policies.
-
-API OPERATIONS SUPPORTED:
-- GET: List authorization policies, Get authorization policy by UUID
-- POST: Create new authorization policies
-- PATCH: Update existing authorization policies
-- DELETE: Delete authorization policies
-
-API FEATURES:
-- Full CRUD operations supported
-- System role-based permissions (ADMIN, READ_ONLY, CODE_SCANNER, etc.)
-- Resource-specific permission rules
-- Authorization clause matching
-- Namespace targeting and propagation
-- Expiration time support
-"""
+"""AuthorizationPolicy — thin consumer wrapper over generated V1AuthorizationPolicy."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, cast, override
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pydantic import BaseModel, Field, field_validator
 
-from ..core.types import ListParameters
-from ..operations import BaseResourceOperations
-from ..utils.logging_config import get_resource_logger
-from .base import (
-    BaseMeta,
-    BaseResource,
-    BaseSpec,
-    FlexibleEnum,
+from endorlabs.core.types import ListParameters
+from endorlabs.generated.models.authorization_policy_service import (
+    V1AuthorizationPolicy,
 )
+from endorlabs.operations import BaseResourceOperations
+
+from .base import BaseMeta, BaseSpec, FlexibleEnum
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
 
-logger = get_resource_logger(__name__)
+
+class AuthorizationPolicy(
+    V1AuthorizationPolicy, ConsumerResourceWireMixin, ConsumerResourceMixin
+):
+    """Consumer facade model for AuthorizationPolicy (generated wire shape)."""
+
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("AuthorizationPolicy")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("AuthorizationPolicy")
+
+
+def list_authorization_policies_by_role(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    role: SystemRole,
+) -> list[AuthorizationPolicy]:
+    """List authorization policies filtered by system role."""
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
+        filter=f"spec.permissions.roles=={role.value}",
+    )
+    ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
+    rows = ops.list(tenant_meta_namespace, list_params)
+    return cast("list[AuthorizationPolicy]", rows)
+
+
+def list_authorization_policies_by_namespace(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    target_namespace: str,
+) -> list[AuthorizationPolicy]:
+    """List authorization policies filtered by target namespace."""
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
+        filter=f"spec.target_namespaces=={target_namespace}",
+    )
+    ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
+    rows = ops.list(tenant_meta_namespace, list_params)
+    return cast("list[AuthorizationPolicy]", rows)
+
+
+def list_authorization_policies_paginated(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    page_size: int = 10,
+    page_token: str | None = None,
+) -> list[AuthorizationPolicy]:
+    """List authorization policies with pagination."""
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
+        page_size=page_size,
+        page_token=page_token,
+    )
+    ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
+    rows = ops.list(tenant_meta_namespace, list_params)
+    return cast("list[AuthorizationPolicy]", rows)
+
+
+def list_authorization_policies_sorted(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    sort_by: str = "meta.create_time",
+    desc: bool = True,
+) -> list[AuthorizationPolicy]:
+    """List authorization policies with sorting."""
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
+        sort_by=sort_by,
+        desc=desc,
+    )
+    ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
+    rows = ops.list(tenant_meta_namespace, list_params)
+    return cast("list[AuthorizationPolicy]", rows)
+
+
+# --- integration / create-update compat (pre-cutover helpers) ---
 
 
 class SystemRole(FlexibleEnum):
@@ -218,85 +271,6 @@ class AuthorizationPolicyMeta(BaseMeta):
         return v.strip() if v else v
 
 
-class AuthorizationPolicy(BaseResource):
-    """Authorization Policy resource model extending BaseResource.
-
-    OPERATION SUPPORT:
-    ==================
-    ✅ GET: List authorization policies, Get by UUID
-    ✅ POST: Create new authorization policies
-    ✅ PATCH: Update existing authorization policies
-    ✅ DELETE: Delete authorization policies
-
-    FIELD MUTABILITY:
-    =================
-    IMMUTABLE FIELDS (read-only, system-managed):
-    - uuid: Unique identifier
-    - meta.create_time, meta.created_by: Creation metadata
-    - meta.update_time, meta.updated_by: Auto-managed timestamps
-    - spec.is_support_policy: Support policy flag (read-only)
-    - tenant_meta.namespace: Namespace assignment
-
-    MUTABLE FIELDS (can be updated via PATCH):
-    - meta.name: Policy name
-    - meta.description: Policy description
-    - meta.tags: Policy tags
-    - spec.clause: Authorization clauses
-    - spec.target_namespaces: Target namespaces
-    - spec.propagate: Propagation flag
-    - spec.permissions: Permissions configuration
-    - spec.expiration_time: Expiration time
-    - propagate: Whether to propagate to child namespaces
-
-    FEATURES:
-    =========
-    - System role-based permissions (ADMIN, READ_ONLY, CODE_SCANNER, etc.)
-    - Resource-specific permission rules
-    - Authorization clause matching with AND logic
-    - Namespace targeting and propagation
-    - Expiration time support
-    """
-
-    # Authorization policy-specific fields
-    # (universal fields inherited from BaseResource)
-    spec: AuthorizationPolicySpec | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None, description="Authorization policy specification"
-    )
-
-    model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
-
-    @override
-    @classmethod
-    def get_mutable_fields_cls(cls) -> list[str]:
-        """Get list of mutable fields for AuthorizationPolicy."""
-        return [
-            "meta.name",
-            "meta.description",
-            "meta.tags",
-            "spec",
-            "propagate",
-        ]
-
-    @override
-    @classmethod
-    def get_immutable_fields_cls(cls) -> list[str]:
-        """Get list of immutable fields for AuthorizationPolicy."""
-        return [
-            "uuid",
-            "meta.create_time",
-            "meta.created_by",
-            "meta.update_time",
-            "meta.updated_by",
-            "meta.upsert_time",
-            "meta.kind",
-            "meta.version",
-            "meta.references",
-            "meta.index_data",
-            "tenant_meta.namespace",
-            "spec.is_support_policy",
-        ]
-
-
 class CreateAuthorizationPolicyPayload(BaseModel):
     """Payload for creating a new authorization policy."""
 
@@ -307,15 +281,6 @@ class CreateAuthorizationPolicyPayload(BaseModel):
         ..., description="Authorization policy specification"
     )
     propagate: bool | None = Field(True, description="Propagate to child namespaces")
-
-
-def build_create_payload(**kwargs: Any) -> CreateAuthorizationPolicyPayload:
-    """Build CreateAuthorizationPolicyPayload from kwargs (decoupled create)."""
-    from ..utils.create_payload import pass_through_create_payload
-
-    return pass_through_create_payload(
-        CreateAuthorizationPolicyPayload, kwargs, attr_name="AuthorizationPolicy"
-    )
 
 
 class UpdateAuthorizationPolicyPayload(BaseModel):
@@ -369,62 +334,10 @@ class UpdateAuthorizationPolicyPayload(BaseModel):
     propagate: bool | None = Field(None, description="Propagate to child namespaces")
 
 
-# Convenience functions for common filtering patterns
-def list_authorization_policies_by_role(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    role: SystemRole,
-) -> list[AuthorizationPolicy]:
-    """List authorization policies filtered by system role."""
-    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
-        filter=f"spec.permissions.roles=={role.value}",
+def build_create_payload(**kwargs: Any) -> CreateAuthorizationPolicyPayload:
+    """Build CreateAuthorizationPolicyPayload from kwargs (decoupled facade create)."""
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateAuthorizationPolicyPayload, kwargs, attr_name="AuthorizationPolicy"
     )
-    ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
-    rows = ops.list(tenant_meta_namespace, list_params)
-    return cast("list[AuthorizationPolicy]", rows)
-
-
-def list_authorization_policies_by_namespace(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    target_namespace: str,
-) -> list[AuthorizationPolicy]:
-    """List authorization policies filtered by target namespace."""
-    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
-        filter=f"spec.target_namespaces=={target_namespace}",
-    )
-    ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
-    rows = ops.list(tenant_meta_namespace, list_params)
-    return cast("list[AuthorizationPolicy]", rows)
-
-
-def list_authorization_policies_paginated(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    page_size: int = 10,
-    page_token: str | None = None,
-) -> list[AuthorizationPolicy]:
-    """List authorization policies with pagination."""
-    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
-        page_size=page_size,
-        page_token=page_token,
-    )
-    ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
-    rows = ops.list(tenant_meta_namespace, list_params)
-    return cast("list[AuthorizationPolicy]", rows)
-
-
-def list_authorization_policies_sorted(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    sort_by: str = "meta.create_time",
-    desc: bool = True,
-) -> list[AuthorizationPolicy]:
-    """List authorization policies with sorting."""
-    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
-        sort_by=sort_by,
-        desc=desc,
-    )
-    ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
-    rows = ops.list(tenant_meta_namespace, list_params)
-    return cast("list[AuthorizationPolicy]", rows)

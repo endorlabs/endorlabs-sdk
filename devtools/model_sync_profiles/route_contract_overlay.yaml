@@ -1,0 +1,50 @@
+edges:
+  - id: project.findings
+    from_kind: Project
+    to_kind: Finding
+    edge: list_by_uuid_field
+    tier: B
+    public_method: Finding.list_by_project
+    filter_field: spec.project_uuid
+    uuid_from: source.uuid
+    namespace_from: source
+
+  - id: project.scan_results
+    from_kind: Project
+    to_kind: ScanResult
+    edge: list_by_parent
+    tier: B
+    public_method: ScanResult.list_by_project
+    parent_kind: project
+    namespace_from: source
+
+  - id: project.package_versions
+    from_kind: Project
+    to_kind: PackageVersion
+    edge: list_by_uuid_field
+    tier: B
+    public_method: PackageVersion.list_by_project
+    filter_field: spec.project_uuid
+    uuid_from: source.uuid
+    namespace_from: source
+
+  - id: finding.dependency_metadata.get
+    from_kind: Finding
+    to_kind: DependencyMetadata
+    edge: get_by_uuid
+    tier: A
+    public_method: Finding.to_dependency_metadata
+    uuid_from: source.spec.target_uuid
+    namespace_from: source
+
+  - id: finding.dependency_metadata.by_package
+    from_kind: Finding
+    to_kind: DependencyMetadata
+    edge: list_by_attribute
+    tier: C
+    public_method: Finding.to_dependency_metadata
+    source_attr: spec.target_dependency_package_name
+    target_filter_field: spec.dependency_data.package_name
+    match: exact
+    namespace_from: source
+    also_filter: 'spec.importer_data.project_uuid=="{source.spec.project_uuid}"'

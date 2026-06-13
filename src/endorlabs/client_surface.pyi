@@ -6,11 +6,6 @@ from typing import Any
 
 from .api_client import APIClient
 from .facade import CallGraphDataFacade, ListableFacade, ResourceRuntimeFacade
-from .generated.models.identity_provider_service import V1IdentityProvider
-from .generated.models.package_firewall_log_service import V1PackageFirewallLog
-from .generated.models.query_service import V1Query
-from .generated.models.query_similar_packages_service import V1QuerySimilarPackages
-from .generated.models.saved_query_service import V1SavedQuery
 from .resources.api_key import APIKey, CreateAPIKeyPayload
 from .resources.audit_log import AuditLog, CreateAuditLogPayload
 from .resources.authentication_log import AuthenticationLog
@@ -26,6 +21,7 @@ from .resources.dependency_metadata import (
 from .resources.endor_license import EndorLicense
 from .resources.finding import CreateFindingPayload, Finding
 from .resources.finding_log import CreateFindingLogPayload, FindingLog
+from .resources.identity_provider import IdentityProvider
 from .resources.installation import CreateInstallationPayload, Installation
 from .resources.invitation import CreateInvitationPayload, Invitation
 from .resources.linter_result import CreateLinterResultPayload, LinterResult
@@ -36,13 +32,16 @@ from .resources.notification_target import (
     CreateNotificationTargetPayload,
     NotificationTarget,
 )
+from .resources.package_firewall_log import PackageFirewallLog
 from .resources.package_license import CreatePackageLicensePayload, PackageLicense
 from .resources.package_version import CreatePackageVersionPayload, PackageVersion
 from .resources.policy import CreatePolicyPayload, Policy
 from .resources.policy_template import PolicyTemplate
 from .resources.pr_comment_config import CreatePRCommentConfigPayload, PRCommentConfig
 from .resources.project import CreateProjectPayload, Project
+from .resources.query import Query
 from .resources.query_malware import CreateQueryMalwarePayload, QueryMalware
+from .resources.query_similar_packages import QuerySimilarPackages
 from .resources.query_vulnerability import (
     CreateQueryVulnerabilityPayload,
     QueryVulnerability,
@@ -52,6 +51,7 @@ from .resources.repository_version import (
     CreateRepositoryVersionPayload,
     RepositoryVersion,
 )
+from .resources.saved_query import SavedQuery
 from .resources.scan_log_request import ScanLogRequest
 from .resources.scan_profile import CreateScanProfilePayload, ScanProfile
 from .resources.scan_result import CreateScanResultPayload, ScanResult
@@ -180,6 +180,7 @@ class _DependencyMetadataFacade(ResourceRuntimeFacade[DependencyMetadata]):
         data: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> DependencyMetadata: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _EndorLicenseFacade(ListableFacade[EndorLicense]):
     """Platform license assigned to a tenant."""
@@ -243,6 +244,9 @@ class _FindingFacade(ResourceRuntimeFacade[Finding]):
         ignore: Any | None = None,
         **kwargs: Any,
     ) -> Finding: ...
+    def list_by_project(self, *args: Any, **kwargs: Any) -> Any: ...
+    def to_dependency_metadata(self, *args: Any, **kwargs: Any) -> Any: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _FindingLogFacade(ResourceRuntimeFacade[FindingLog]):
     """Historical snapshot of a finding state.
@@ -278,6 +282,16 @@ class _FindingLogFacade(ResourceRuntimeFacade[FindingLog]):
         location: Any | None = None,
         **kwargs: Any,
     ) -> FindingLog: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
+
+class _IdentityProviderFacade(ListableFacade[IdentityProvider]):
+    """Consumer facade model for IdentityProvider (generated wire shape)."""
+
+    def get(
+        self,
+        id_or_resource: str | IdentityProvider,
+        namespace: str | None = ...,
+    ) -> IdentityProvider: ...
 
 class _InstallationFacade(ResourceRuntimeFacade[Installation]):
     """SCM platform integration (GitHub, GitLab, Azure, Bitbucket).
@@ -371,6 +385,7 @@ class _LinterResultFacade(ResourceRuntimeFacade[LinterResult]):
         endor_fingerprint: Any | None = None,
         **kwargs: Any,
     ) -> LinterResult: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _MalwareFacade(ListableFacade[Malware]):
     """Open-source malware records.
@@ -407,6 +422,7 @@ class _MetricFacade(ResourceRuntimeFacade[Metric]):
         raw: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> Metric: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _NamespaceFacade(ResourceRuntimeFacade[Namespace]):
     """Isolate and organize resources in a parent-child hierarchy.
@@ -450,7 +466,7 @@ class _NotificationTargetFacade(ResourceRuntimeFacade[NotificationTarget]):
     ) -> NotificationTarget: ...
 
 class _PRCommentConfigFacade(ResourceRuntimeFacade[PRCommentConfig]):
-    """PR comment configuration resource model.
+    """Consumer facade model for PRCommentConfig (generated wire shape).
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -469,6 +485,15 @@ class _PRCommentConfigFacade(ResourceRuntimeFacade[PRCommentConfig]):
         platform_type: Any | None = None,
         **kwargs: Any,
     ) -> PRCommentConfig: ...
+
+class _PackageFirewallLogFacade(ListableFacade[PackageFirewallLog]):
+    """Package firewall audit event recording action and trigger reason."""
+
+    def get(
+        self,
+        id_or_resource: str | PackageFirewallLog,
+        namespace: str | None = ...,
+    ) -> PackageFirewallLog: ...
 
 class _PackageLicenseFacade(ResourceRuntimeFacade[PackageLicense]):
     """License information for a package.
@@ -495,6 +520,7 @@ class _PackageLicenseFacade(ResourceRuntimeFacade[PackageLicense]):
         version: Any | None = None,
         **kwargs: Any,
     ) -> PackageLicense: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _PackageVersionFacade(ResourceRuntimeFacade[PackageVersion]):
     """Package version with dependency information.
@@ -528,6 +554,8 @@ class _PackageVersionFacade(ResourceRuntimeFacade[PackageVersion]):
         precomputed_call_graph_state: Any | None = None,
         **kwargs: Any,
     ) -> PackageVersion: ...
+    def list_by_project(self, *args: Any, **kwargs: Any) -> Any: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _PolicyFacade(ResourceRuntimeFacade[Policy]):
     """Rule controlling scan behavior, findings, and workflows.
@@ -602,6 +630,14 @@ class _ProjectFacade(ResourceRuntimeFacade[Project]):
         **kwargs: Any,
     ) -> Project: ...
 
+class _QueryFacade(ResourceRuntimeFacade[Query]):
+    """Consumer facade model for Query (generated wire shape).
+
+    Create mode: payload-only.
+    """
+
+    pass
+
 class _QueryMalwareFacade(ResourceRuntimeFacade[QueryMalware]):
     """Advanced malware query endpoint.
 
@@ -623,6 +659,14 @@ class _QueryMalwareFacade(ResourceRuntimeFacade[QueryMalware]):
         mask: Any | None = None,
         **kwargs: Any,
     ) -> QueryMalware: ...
+
+class _QuerySimilarPackagesFacade(ResourceRuntimeFacade[QuerySimilarPackages]):
+    """Consumer facade model for QuerySimilarPackages (generated wire shape).
+
+    Create mode: payload-only.
+    """
+
+    pass
 
 class _QueryVulnerabilityFacade(ResourceRuntimeFacade[QueryVulnerability]):
     """Advanced vulnerability query endpoint.
@@ -706,6 +750,16 @@ class _RepositoryVersionFacade(ResourceRuntimeFacade[RepositoryVersion]):
         last_commit_date: Any | None = None,
         **kwargs: Any,
     ) -> RepositoryVersion: ...
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
+
+class _SavedQueryFacade(ListableFacade[SavedQuery]):
+    """Consumer facade model for SavedQuery (generated wire shape)."""
+
+    def get(
+        self,
+        id_or_resource: str | SavedQuery,
+        namespace: str | None = ...,
+    ) -> SavedQuery: ...
 
 class _ScanLogRequestFacade(ResourceRuntimeFacade[ScanLogRequest]):
     """Request for scan log messages.
@@ -791,6 +845,7 @@ class _ScanResultFacade(ResourceRuntimeFacade[ScanResult]):
         provisioning_result: Any | None = None,
         **kwargs: Any,
     ) -> ScanResult: ...
+    def list_by_project(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _ScanWorkflowFacade(ResourceRuntimeFacade[ScanWorkflow]):
     """Workflow orchestrating scan steps."""
@@ -800,7 +855,7 @@ class _ScanWorkflowFacade(ResourceRuntimeFacade[ScanWorkflow]):
 class _ScanWorkflowResultFacade(ResourceRuntimeFacade[ScanWorkflowResult]):
     """Result from a scan workflow execution."""
 
-    pass
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _SemgrepRuleFacade(ResourceRuntimeFacade[SemgrepRule]):
     """Custom SAST rule in Semgrep/OpenGrep format.
@@ -823,49 +878,6 @@ class _SemgrepRuleFacade(ResourceRuntimeFacade[SemgrepRule]):
         yaml: Any | None = None,
         **kwargs: Any,
     ) -> SemgrepRule: ...
-
-class _V1IdentityProviderFacade(ListableFacade[V1IdentityProvider]):
-    """Represents an identity provider."""
-
-    def get(
-        self,
-        id_or_resource: str | V1IdentityProvider,
-        namespace: str | None = ...,
-    ) -> V1IdentityProvider: ...
-
-class _V1PackageFirewallLogFacade(ListableFacade[V1PackageFirewallLog]):
-    """Package firewall audit event recording action and trigger reason."""
-
-    def get(
-        self,
-        id_or_resource: str | V1PackageFirewallLog,
-        namespace: str | None = ...,
-    ) -> V1PackageFirewallLog: ...
-
-class _V1QueryFacade(ResourceRuntimeFacade[V1Query]):
-    """Query implements the metric query requests.
-
-    Create mode: payload-only.
-    """
-
-    pass
-
-class _V1QuerySimilarPackagesFacade(ResourceRuntimeFacade[V1QuerySimilarPackages]):
-    """QuerySimilarPackages implements the similar packages query requests.
-
-    Create mode: payload-only.
-    """
-
-    pass
-
-class _V1SavedQueryFacade(ListableFacade[V1SavedQuery]):
-    """SavedQuery implements the metric query requests."""
-
-    def get(
-        self,
-        id_or_resource: str | V1SavedQuery,
-        namespace: str | None = ...,
-    ) -> V1SavedQuery: ...
 
 class _VectorStoreFacade(ListableFacade[VectorStore]):
     """Tenant vector store inventory (embeddings index metadata).
@@ -902,7 +914,7 @@ class _VectorStoreQueryFacade(ResourceRuntimeFacade[VectorStoreQuery]):
 class _VersionUpgradeFacade(ResourceRuntimeFacade[VersionUpgrade]):
     """Suggested dependency version upgrade."""
 
-    pass
+    def list_for_context(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class _VulnerabilityFacade(ListableFacade[Vulnerability]):
     """Open-source vulnerability records.
@@ -922,13 +934,13 @@ class Client:
 
     Resources:
     APIKey, AuditLog, AuthenticationLog, AuthorizationPolicy, CodeOwners,
-    DependencyMetadata, EndorLicense, Finding, FindingLog, Installation,
-    Invitation, LinterResult, Malware, Metric, Namespace, NotificationTarget,
-    PRCommentConfig, PackageFirewallLog, PackageLicense, PackageVersion,
-    Policy, PolicyTemplate, Project, QueryMalware, QueryVulnerability,
-    Repository, RepositoryVersion, ScanLogRequest, ScanProfile, ScanResult,
-    ScanWorkflow, ScanWorkflowResult, SemgrepRule, V1IdentityProvider, V1Query,
-    V1QuerySimilarPackages, V1SavedQuery, VectorStore, VectorStoreQuery,
+    DependencyMetadata, EndorLicense, Finding, FindingLog, IdentityProvider,
+    Installation, Invitation, LinterResult, Malware, Metric, Namespace,
+    NotificationTarget, PRCommentConfig, PackageFirewallLog, PackageLicense,
+    PackageVersion, Policy, PolicyTemplate, Project, Query, QueryMalware,
+    QuerySimilarPackages, QueryVulnerability, Repository, RepositoryVersion,
+    SavedQuery, ScanLogRequest, ScanProfile, ScanResult, ScanWorkflow,
+    ScanWorkflowResult, SemgrepRule, VectorStore, VectorStoreQuery,
     VersionUpgrade, Vulnerability
     Custom: CallGraphData
     """
@@ -951,6 +963,8 @@ class Client:
     """Security or compliance finding from a scan."""
     FindingLog: _FindingLogFacade
     """Historical snapshot of a finding state."""
+    IdentityProvider: _IdentityProviderFacade
+    """Consumer facade model for IdentityProvider (generated wire shape)."""
     Installation: _InstallationFacade
     """SCM platform integration (GitHub, GitLab, Azure, Bitbucket)."""
     Invitation: _InvitationFacade
@@ -966,7 +980,9 @@ class Client:
     NotificationTarget: _NotificationTargetFacade
     """Integration endpoint for notification delivery."""
     PRCommentConfig: _PRCommentConfigFacade
-    """PR comment configuration resource model."""
+    """Consumer facade model for PRCommentConfig (generated wire shape)."""
+    PackageFirewallLog: _PackageFirewallLogFacade
+    """Package firewall audit event recording action and trigger reason."""
     PackageLicense: _PackageLicenseFacade
     """License information for a package."""
     PackageVersion: _PackageVersionFacade
@@ -977,14 +993,20 @@ class Client:
     """Reusable template for creating policies."""
     Project: _ProjectFacade
     """Logical root for a repository and its scan results."""
+    Query: _QueryFacade
+    """Consumer facade model for Query (generated wire shape)."""
     QueryMalware: _QueryMalwareFacade
     """Advanced malware query endpoint."""
+    QuerySimilarPackages: _QuerySimilarPackagesFacade
+    """Consumer facade model for QuerySimilarPackages (generated wire shape)."""
     QueryVulnerability: _QueryVulnerabilityFacade
     """Advanced vulnerability query endpoint."""
     Repository: _RepositoryFacade
     """Source control repository metadata."""
     RepositoryVersion: _RepositoryVersionFacade
     """Versioned snapshot of a repository."""
+    SavedQuery: _SavedQueryFacade
+    """Consumer facade model for SavedQuery (generated wire shape)."""
     ScanLogRequest: _ScanLogRequestFacade
     """Request for scan log messages."""
     ScanProfile: _ScanProfileFacade
@@ -997,16 +1019,6 @@ class Client:
     """Result from a scan workflow execution."""
     SemgrepRule: _SemgrepRuleFacade
     """Custom SAST rule in Semgrep/OpenGrep format."""
-    V1IdentityProvider: _V1IdentityProviderFacade
-    """Represents an identity provider."""
-    PackageFirewallLog: _V1PackageFirewallLogFacade
-    """Package firewall audit event recording action and trigger reason."""
-    V1Query: _V1QueryFacade
-    """Query implements the metric query requests."""
-    V1QuerySimilarPackages: _V1QuerySimilarPackagesFacade
-    """QuerySimilarPackages implements the similar packages query requests."""
-    V1SavedQuery: _V1SavedQueryFacade
-    """SavedQuery implements the metric query requests."""
     VectorStore: _VectorStoreFacade
     """Tenant vector store inventory (embeddings index metadata)."""
     VectorStoreQuery: _VectorStoreQueryFacade

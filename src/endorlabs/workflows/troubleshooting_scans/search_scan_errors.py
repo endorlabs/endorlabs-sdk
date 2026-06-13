@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from endorlabs.client_surface import Client
-from endorlabs.workflows.estate.collect.shards import ParentShard
+from endorlabs.tools.list_sharding import ParentShard
 
 from .common import (
     default_troubleshooting_output_dir,
@@ -154,10 +154,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         project_hits: list[dict[str, Any]] = []
         scan_results = [
             object_to_dict(item)
-            for item in client.ScanResult.list_for_project(
-                shard.key,
-                namespace=shard.namespace,
-                limit=args.limit,
+            for item in (
+                client.ScanResult.list_by_project(
+                    shard.key,
+                    namespace=shard.namespace,
+                    limit=args.limit,
+                ).values
+                or []
             )
         ]
         for scan_result in scan_results:

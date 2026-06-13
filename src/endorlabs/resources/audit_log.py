@@ -1,31 +1,4 @@
-"""AuditLog resource module for Endor Labs API.
-
-This module provides comprehensive audit log querying capabilities including
-listing, examining, and filtering audit logs to track user actions and system
-operations for compliance and security monitoring.
-
-API OPERATIONS SUPPORTED:
-- GET: List audit logs, Get audit log by UUID, List archived audit logs
-- POST: Create audit log entry (manual)
-- DELETE: Delete audit log entry
-
-API FEATURES:
-- Active audit logs (last 30 days)
-- Archived audit logs (30+ days old, retained for 3 years)
-- Filtering by operation type, message kind, time range, claims, IP address
-- Support for identifying API key activity via claims filtering
-- Pagination support for large result sets
-- Field masking for performance optimization
-
-AUDIT LOG RETENTION:
-- Active logs: 30 days in active database
-- Archived logs: 3 years in archive storage
-- Both support same filters, pagination, and field masks
-
-TIMEOUT CONSIDERATIONS:
-Audit log queries may take longer than other API operations. Default timeout
-is 20 seconds. Use --timeout option to override if needed.
-"""
+"""AuditLog — thin consumer wrapper over generated V1AuditLog."""
 
 from __future__ import annotations
 
@@ -33,15 +6,22 @@ from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field, field_validator
 
-from ..utils.logging_config import get_resource_logger
-from .base import (
-    BaseMeta,
-    BaseResource,
-    BaseSpec,
-    FlexibleEnum,
-)
+from endorlabs.generated.models.audit_log_service import V1AuditLog
 
-logger = get_resource_logger(__name__)
+from .base import BaseMeta, BaseSpec, FlexibleEnum
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin
+
+
+class AuditLog(V1AuditLog, ConsumerResourceWireMixin, ConsumerResourceMixin):
+    """Consumer facade model for AuditLog (generated wire shape)."""
+
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("AuditLog")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("AuditLog")
+
+
+# --- integration / create-update compat (pre-cutover helpers) ---
 
 
 class AuditLogOperation(FlexibleEnum):
@@ -132,82 +112,6 @@ class AuditLogMeta(BaseMeta):
 
     # No additional fields needed - BaseMeta provides all required fields
     pass
-
-
-class AuditLog(BaseResource):
-    """Audit Log resource model extending BaseResource.
-
-    OPERATION SUPPORT:
-    ==================
-    ✅ GET: List audit logs, Get by UUID, List archived audit logs
-    ✅ POST: Create audit log entry (manual)
-    ✅ DELETE: Delete audit log entry
-    ❌ PATCH: Audit logs are immutable (cannot be updated)
-
-    FIELD MUTABILITY:
-    =================
-    IMMUTABLE FIELDS (read-only, system-managed):
-    - uuid: Unique identifier
-    - meta.create_time, meta.created_by: Creation metadata
-    - meta.update_time, meta.updated_by: Auto-managed timestamps
-    - spec.operation: Operation type (set at creation)
-    - spec.message_uuid: Resource UUID (set at creation)
-    - spec.message_kind: Resource type (set at creation)
-    - spec.payload: Operation payload (set at creation)
-    - spec.claims: Authentication claims (set at creation)
-    - spec.remote_address: Source IP (set at creation)
-    - tenant_meta.namespace: Namespace assignment
-
-    FEATURES:
-    =========
-    - Active logs: Last 30 days in active database
-    - Archived logs: 30+ days old, retained for 3 years
-    - Filtering by operation, message kind, time range, claims, IP
-    - API key identification via spec.claims filtering
-    - Pagination support for large result sets
-    - Field masking for performance optimization
-    - Timeout considerations (default 20s, can override)
-
-    USAGE EXAMPLES:
-    ===============
-    # List all audit logs
-    logs = list_audit_logs(client, "tenant.namespace")
-
-    # Filter by operation type
-    creates = list_audit_logs(
-        client, "tenant.namespace",
-        list_params=ListParameters(
-            filter="spec.operation=='OPERATION_CREATE'"
-        )
-    )
-
-    # Filter by time range
-    recent = list_audit_logs(
-        client, "tenant.namespace",
-        list_params=ListParameters(
-            filter=(
-                "meta.create_time>=date(2025-01-01T00:00:00Z) "
-                "and meta.create_time<=date(2025-01-31T23:59:59Z)"
-            )
-        )
-    )
-
-    # Identify API key activity via claims
-    api_key_activity = list_audit_logs(
-        client, "tenant.namespace",
-        list_params=ListParameters(
-            filter="spec.claims matches '.*api-key.*'"
-        )
-    )
-
-    # List archived logs (30+ days old)
-    archived = list_archived_audit_logs(client, "tenant.namespace")
-    """
-
-    # Audit log-specific fields (universal fields inherited from BaseResource)
-    spec: AuditLogSpec | None = Field(None, description="Audit log specification")  # type: ignore
-
-    model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
 
 
 class CreateAuditLogPayload(BaseModel):

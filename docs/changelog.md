@@ -8,12 +8,17 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- **Scan-plane partition accessors** — `{Kind}.list_for_context(source)` and `context_partition_filter()` list rows sharing `context.type` + `context.id` with a source row (e.g. `ScanResult`). See [facade-helpers.md](guides/facade-helpers.md) and [resource-routes.md](generated-reference/resource-routes.md).
+- **Generated accessor helpers** — `Finding.list_by_project`, `Finding.to_dependency_metadata`, `ScanResult.list_by_project`, `PackageVersion.list_by_project` return `RouteResult`; relationship map in [resource-routes.md](generated-reference/resource-routes.md). Regenerate with `devtools/generate_route_contract.py`.
+- **Identity lane** — `Project.search_by_name`, `VectorStore.search_by_name`, `AuthorizationPolicy.search_by_claims`, `Vulnerability.search_by_vuln_alias` (bounded list discovery; forwards `list()` kwargs including `mask` and `filter` / `F()`). Contract: [resource-discovery.md](../agent-knowledge/contracts/resource-discovery.md).
+- **Facade package** — `facade/` split (`base`, `runtime`, `route_host`, `specialized`, `search`) replacing monolithic `facade.py`.
 - **Facade list helpers** — `count()`, `list_groups()`, `latest()` / `latest_created()` / `latest_updated()`, `parent()` on listable facades; catalog in [facade-helpers.md](guides/facade-helpers.md).
-- **Facade sugar** — `Project.resolve()`, `Finding.list_for_scan()`, `ScanResult.list_for_project()`, `CallGraphData.decode()` / `fetch()`, `ScanResult.get_logs()`, `ScanResult.latest_created(parent=…)`.
+- **Facade sugar** — `CallGraphData.decode()` / `fetch()`, `ScanResult.get_logs()`, `ScanResult.latest_created(parent=…)`.
 
 ### Changed
 
-- **Discovery API not pursued** — no `client.at` / `ScopedClient`, catalog presets (`queries/`, `access/` layers), or `discovery-presets` contract. Project-scoped discovery stays on facade sugar (`Project.resolve`, `list_for_scan`, …) and explicit `namespace=project.namespace` ([facade-helpers.md](guides/facade-helpers.md), `endor-namespace-scoping` rule).
+- **Discovery** — use `search_by_*` + explicit disambiguation or `get(uuid)` instead of `lookup()` / `Project.resolve()`. See [facade-helpers.md](guides/facade-helpers.md) and `resource-discovery` contract.
+- Troubleshooting scan workflows use `ScanResult.list_by_project` and `Project.search_by_name` instead of hand-built filters / `workflows.projects.resolve`.
 - Architecture doc: consumer vs generated model planes ([architecture.md](contributing/architecture.md)); removed per-resource schema drift validators; `PolicySpec.finding` / `.notification` use typed config models.
 - Estate grouped counts and collect preflight use `facade.count()` / `DependencyMetadata.list_groups()` instead of workflow-local pagination helpers.
 - Troubleshooting scan workflows and dependency metadata fetch use `Client` facades instead of raw `APIClient.get` / `get_all` loops.
@@ -21,8 +26,13 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Breaking
 
-- Removed **`list_scan_results_for_project`** and **`list_projects`** from `workflows.troubleshooting_scans` — use `client.ScanResult.list_for_project` and `client.Project.list`.
-- Removed **`workflows.callgraph.decoded.decode_payload`** — use `client.CallGraphData.decode`.
+- Removed **`Finding.list_by_scan`** — use **`Finding.list_for_context(scan)`** or `list_by_project` + `context_partition_filter(scan.context)`; no shim.
+- Removed **`ListableFacade.lookup()`** — use `search_by_*` (discovery) or `get(uuid)`; no shim.
+- Removed **`Project.resolve()`** — use `Project.search_by_name`, `get(uuid)`, or `workflows.projects.discovery.resolve_project_candidate`.
+- Removed **`workflows.projects.resolve`** (`search_projects_by_name_or_uuid`) — use `client.Project.search_by_name`.
+- Removed **`Finding.to_semgrep_rule`** — no workflow or skill consumer; use explicit `Finding.list` / `SemgrepRule.get` when needed.
+- Removed **`Finding.list_for_scan`** and **`ScanResult.list_for_project`** — use **`list_for_context`** / **`list_by_project`** (`RouteResult`).
+- Removed **`list_scan_results_for_project`** and **`list_projects`** from `workflows.troubleshooting_scans` — use `client.ScanResult.list_by_project` and `client.Project.list`.
 - Removed **`operations.call_graph`** — use **`resources.call_graph_data`** and `client.CallGraphData.decode` / `fetch`.
 - Removed **`workflows.callgraph.proto_decode`** — use **`resources.call_graph_data_proto`**.
 - **`retrieve_dep_metadata_full`** now takes **`endorlabs.Client`** (first argument), not `APIClient`.
@@ -32,6 +42,9 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - Removed **`list_resource_count`** from `workflows.estate.collect.bounds` — use `facade.count()` or `count_for_progress`.
 - Removed **`retrieve_call_graph_full`** / **`retrieve_call_graph_for_client`** from `workflows.callgraph.fetch` — use `client.CallGraphData.decode` / `fetch`.
 - Removed **`client.ScanLogs`** — use `client.ScanResult.get_logs`.
+- Removed **`workflows.estate.collect.shards`** — use **`endorlabs.tools.list_sharding`**.
+- Removed **`endorlabs.utils.tabular`** re-exports — use **`workflows.estate.analyze.cardinality.tabular`**.
+- Removed **`workflows.projects.resolve.resolve_project`** and **`troubleshooting_scans.resolve_project`** re-export — use **`client.Project.search_by_name`** ([facade-helpers.md](guides/facade-helpers.md)).
 - Removed **`endorlabs.tools.dependency_explorer`** — use `workflows.agent_context.hydration`, `workflows.dependencies.*`, `workflows.callgraph.*`, and `client.CallGraphData`.
 - Removed **`endorlabs.models`** — use **`endorlabs.resources.base`** (and `resources.finding_config`, `resources.notification_config`, `resources.exception_config`, `resources.field_aliases`).
 - Removed **`SchemaDriftDetector`** from **`endorlabs.utils`** — opt-in wire probes: `endorlabs.utils.schema_drift.log_unknown_wire_keys` (not in `__all__`).

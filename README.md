@@ -75,7 +75,7 @@ Source repo: [`endorlabs/endorlabs-sdk`](https://github.com/endorlabs/endorlabs-
 | `analytics` | `pip install 'endorlabs[analytics]'`    | DataFrame / Parquet export and estate graph metrics — see [docs/estate/README.md](docs/estate/README.md) |
 
 
-CSV export from `workflows.estate.analyze.cardinality.tabular` works without extras (`utils.tabular` re-exports the same API). In this repo: `uv sync --extra docs --extra analytics`.
+CSV export from `workflows.estate.analyze.cardinality.tabular` works without extras. In this repo: `uv sync --extra docs --extra analytics`.
 
 ## Quick start
 
@@ -114,7 +114,8 @@ workflow CLI (see [docs/contributing/list-query-performance.md](docs/contributin
 
 ```python
 repo_url = "https://github.com/tgowan-endor/BenchmarkJava.git"
-project = client.Project.lookup(traverse=True, filter=f"meta.name=={repo_url}")
+projects = client.Project.search_by_name(repo_url, traverse=True, max_pages=2)
+project = projects[0] if projects else None
 
 client.Project.update(project, scan_state="SCAN_STATE_REQUEST_FULL_RESCAN")
 

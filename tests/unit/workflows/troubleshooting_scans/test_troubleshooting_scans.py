@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from endorlabs.workflows.projects.discovery import duplicate_project_decision
 from endorlabs.workflows.troubleshooting_scans.common import (
     build_filename,
     date_window_from_bounds,
-    duplicate_project_decision,
     parse_app_scan_history_url,
     parse_endor_app_url,
     scan_result_extended_summary,
