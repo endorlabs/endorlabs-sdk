@@ -108,6 +108,16 @@
       ]
     },
     {
+      "attr_name": "IdentityProvider",
+      "doc_path": "docs/generated-reference/resources/IdentityProvider.md",
+      "resource_name": "identity-providers",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ]
+    },
+    {
       "attr_name": "Installation",
       "doc_path": "docs/generated-reference/resources/Installation.md",
       "resource_name": "installations",
@@ -280,10 +290,28 @@
       ]
     },
     {
+      "attr_name": "Query",
+      "doc_path": "docs/generated-reference/resources/Query.md",
+      "resource_name": "queries",
+      "scope": "tenant",
+      "supported_ops": [
+        "create"
+      ]
+    },
+    {
       "attr_name": "QueryMalware",
       "doc_path": "docs/generated-reference/resources/QueryMalware.md",
       "resource_name": "queries/malware",
       "scope": "oss",
+      "supported_ops": [
+        "create"
+      ]
+    },
+    {
+      "attr_name": "QuerySimilarPackages",
+      "doc_path": "docs/generated-reference/resources/QuerySimilarPackages.md",
+      "resource_name": "queries/similar-packages",
+      "scope": "tenant",
       "supported_ops": [
         "create"
       ]
@@ -321,6 +349,16 @@
         "get",
         "list",
         "update"
+      ]
+    },
+    {
+      "attr_name": "SavedQuery",
+      "doc_path": "docs/generated-reference/resources/SavedQuery.md",
+      "resource_name": "saved-queries",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
       ]
     },
     {
@@ -391,44 +429,6 @@
         "get",
         "list",
         "update"
-      ]
-    },
-    {
-      "attr_name": "V1IdentityProvider",
-      "doc_path": "docs/generated-reference/resources/V1IdentityProvider.md",
-      "resource_name": "identity-providers",
-      "scope": "tenant",
-      "supported_ops": [
-        "get",
-        "list"
-      ]
-    },
-    {
-      "attr_name": "V1Query",
-      "doc_path": "docs/generated-reference/resources/V1Query.md",
-      "resource_name": "queries",
-      "scope": "tenant",
-      "supported_ops": [
-        "create"
-      ]
-    },
-    {
-      "attr_name": "V1QuerySimilarPackages",
-      "doc_path": "docs/generated-reference/resources/V1QuerySimilarPackages.md",
-      "resource_name": "queries/similar-packages",
-      "scope": "tenant",
-      "supported_ops": [
-        "create"
-      ]
-    },
-    {
-      "attr_name": "V1SavedQuery",
-      "doc_path": "docs/generated-reference/resources/V1SavedQuery.md",
-      "resource_name": "saved-queries",
-      "scope": "tenant",
-      "supported_ops": [
-        "get",
-        "list"
       ]
     },
     {

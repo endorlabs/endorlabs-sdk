@@ -185,6 +185,26 @@
       }
     },
     {
+      "attr_name": "IdentityProvider",
+      "parent_kind": null,
+      "resource_name": "identity-providers",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
       "attr_name": "Installation",
       "parent_kind": null,
       "resource_name": "installations",
@@ -465,10 +485,50 @@
       }
     },
     {
+      "attr_name": "Query",
+      "parent_kind": null,
+      "resource_name": "queries",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      }
+    },
+    {
       "attr_name": "QueryMalware",
       "parent_kind": null,
       "resource_name": "queries/malware",
       "scope": "oss",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "QuerySimilarPackages",
+      "parent_kind": null,
+      "resource_name": "queries/similar-packages",
+      "scope": "tenant",
       "supported_ops_sdk": {
         "create": true,
         "delete": false,
@@ -535,6 +595,26 @@
         "get": true,
         "list": true,
         "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "SavedQuery",
+      "parent_kind": null,
+      "resource_name": "saved-queries",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
       },
       "supported_ops_spec": {
         "create": true,
@@ -655,86 +735,6 @@
         "get": true,
         "list": true,
         "update": true
-      },
-      "supported_ops_spec": {
-        "create": true,
-        "delete": true,
-        "get": true,
-        "list": true,
-        "update": false
-      }
-    },
-    {
-      "attr_name": "V1IdentityProvider",
-      "parent_kind": null,
-      "resource_name": "identity-providers",
-      "scope": "tenant",
-      "supported_ops_sdk": {
-        "create": false,
-        "delete": false,
-        "get": true,
-        "list": true,
-        "update": false
-      },
-      "supported_ops_spec": {
-        "create": true,
-        "delete": true,
-        "get": true,
-        "list": true,
-        "update": false
-      }
-    },
-    {
-      "attr_name": "V1Query",
-      "parent_kind": null,
-      "resource_name": "queries",
-      "scope": "tenant",
-      "supported_ops_sdk": {
-        "create": true,
-        "delete": false,
-        "get": false,
-        "list": false,
-        "update": false
-      },
-      "supported_ops_spec": {
-        "create": true,
-        "delete": false,
-        "get": false,
-        "list": false,
-        "update": false
-      }
-    },
-    {
-      "attr_name": "V1QuerySimilarPackages",
-      "parent_kind": null,
-      "resource_name": "queries/similar-packages",
-      "scope": "tenant",
-      "supported_ops_sdk": {
-        "create": true,
-        "delete": false,
-        "get": false,
-        "list": false,
-        "update": false
-      },
-      "supported_ops_spec": {
-        "create": true,
-        "delete": false,
-        "get": false,
-        "list": false,
-        "update": false
-      }
-    },
-    {
-      "attr_name": "V1SavedQuery",
-      "parent_kind": null,
-      "resource_name": "saved-queries",
-      "scope": "tenant",
-      "supported_ops_sdk": {
-        "create": false,
-        "delete": false,
-        "get": true,
-        "list": true,
-        "update": false
       },
       "supported_ops_spec": {
         "create": true,

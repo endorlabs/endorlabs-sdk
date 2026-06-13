@@ -59,7 +59,7 @@ class CustomFacadeEntry:
     """
 
     attr_name: str
-    factory: Callable[["APIClient", str | None], Any]  # noqa: UP037
+    factory: Callable[[APIClient, str | None], Any]
     pyi_facade_class: str
     pyi_import_module: str
     pyi_attr_doc: str

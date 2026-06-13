@@ -13,6 +13,7 @@ One page per SDK facade resource (`client.<AttrName>`).
 | `EndorLicense` | `endor-licenses` | `tenant` | get, list | [EndorLicense.md](EndorLicense.md) |
 | `Finding` | `findings` | `tenant` | create, delete, get, list, update | [Finding.md](Finding.md) |
 | `FindingLog` | `finding-logs` | `tenant` | create, delete, get, list | [FindingLog.md](FindingLog.md) |
+| `IdentityProvider` | `identity-providers` | `tenant` | get, list | [IdentityProvider.md](IdentityProvider.md) |
 | `Installation` | `installations` | `tenant` | create, delete, get, list, update | [Installation.md](Installation.md) |
 | `Invitation` | `invitations` | `tenant` | create, delete, get, list, update | [Invitation.md](Invitation.md) |
 | `LinterResult` | `linter-results` | `tenant` | create, delete, get, list | [LinterResult.md](LinterResult.md) |
@@ -27,20 +28,19 @@ One page per SDK facade resource (`client.<AttrName>`).
 | `Policy` | `policies` | `tenant` | create, delete, get, list, update | [Policy.md](Policy.md) |
 | `PolicyTemplate` | `policy-templates` | `tenant` | get, list | [PolicyTemplate.md](PolicyTemplate.md) |
 | `Project` | `projects` | `tenant` | create, delete, get, list, update | [Project.md](Project.md) |
+| `Query` | `queries` | `tenant` | create | [Query.md](Query.md) |
 | `QueryMalware` | `queries/malware` | `oss` | create | [QueryMalware.md](QueryMalware.md) |
+| `QuerySimilarPackages` | `queries/similar-packages` | `tenant` | create | [QuerySimilarPackages.md](QuerySimilarPackages.md) |
 | `QueryVulnerability` | `queries/vulnerabilities` | `oss` | create | [QueryVulnerability.md](QueryVulnerability.md) |
 | `Repository` | `repositories` | `tenant` | create, delete, get, list, update | [Repository.md](Repository.md) |
 | `RepositoryVersion` | `repository-versions` | `tenant` | create, delete, get, list, update | [RepositoryVersion.md](RepositoryVersion.md) |
+| `SavedQuery` | `saved-queries` | `tenant` | get, list | [SavedQuery.md](SavedQuery.md) |
 | `ScanLogRequest` | `scan-log-requests` | `tenant` | create | [ScanLogRequest.md](ScanLogRequest.md) |
 | `ScanProfile` | `scan-profiles` | `tenant` | create, delete, get, list, update | [ScanProfile.md](ScanProfile.md) |
 | `ScanResult` | `scan-results` | `tenant` | create, delete, get, list, update | [ScanResult.md](ScanResult.md) |
 | `ScanWorkflow` | `scan-workflows` | `tenant` | delete, get, list | [ScanWorkflow.md](ScanWorkflow.md) |
 | `ScanWorkflowResult` | `scan-workflow-results` | `tenant` | delete, get, list | [ScanWorkflowResult.md](ScanWorkflowResult.md) |
 | `SemgrepRule` | `semgrep-rules` | `tenant` | create, delete, get, list, update | [SemgrepRule.md](SemgrepRule.md) |
-| `V1IdentityProvider` | `identity-providers` | `tenant` | get, list | [V1IdentityProvider.md](V1IdentityProvider.md) |
-| `V1Query` | `queries` | `tenant` | create | [V1Query.md](V1Query.md) |
-| `V1QuerySimilarPackages` | `queries/similar-packages` | `tenant` | create | [V1QuerySimilarPackages.md](V1QuerySimilarPackages.md) |
-| `V1SavedQuery` | `saved-queries` | `tenant` | get, list | [V1SavedQuery.md](V1SavedQuery.md) |
 | `VectorStore` | `vector-stores` | `tenant` | get, list | [VectorStore.md](VectorStore.md) |
 | `VectorStoreQuery` | `queries/vector-stores` | `tenant` | create | [VectorStoreQuery.md](VectorStoreQuery.md) |
 | `VersionUpgrade` | `version-upgrades` | `tenant` | delete, get, list | [VersionUpgrade.md](VersionUpgrade.md) |

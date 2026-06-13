@@ -9,10 +9,22 @@ from unittest.mock import Mock, patch
 import pytest
 
 from endorlabs.client_surface import Client
-from endorlabs.resources.base import TenantMeta
-from endorlabs.resources.namespace import Namespace, NamespaceMeta, NamespaceSpec
+from endorlabs.generated.models.namespace_service import V1Meta, V1NamespaceSpec
+from endorlabs.resources.namespace import Namespace
 from endorlabs.utils.parallel import execute_across_namespaces
 from tests.conftest import TEST_MAX_PAGES, TEST_NAMESPACE_DEFAULT
+
+
+def _namespace_row(
+    *, uuid: str, name: str, full_name: str, namespace: str = "tenant"
+) -> Namespace:
+    return Namespace.model_construct(
+        uuid=uuid,
+        meta=V1Meta.model_construct(name=name),
+        spec=V1NamespaceSpec.model_construct(full_name=full_name),
+        tenant_meta={"namespace": namespace},
+    )
+
 
 # ============================================================================
 # Unit tests for execute_across_namespaces utility
@@ -157,18 +169,8 @@ class TestFacadeConcurrentList:
 
         client = client_with_mock_transport
 
-        mock_ns1 = Namespace(
-            uuid="ns-1",
-            meta=NamespaceMeta(name="child1"),
-            spec=NamespaceSpec(full_name="tenant.child1"),
-            tenant_meta=TenantMeta(namespace="tenant"),
-        )
-        mock_ns2 = Namespace(
-            uuid="ns-2",
-            meta=NamespaceMeta(name="child2"),
-            spec=NamespaceSpec(full_name="tenant.child2"),
-            tenant_meta=TenantMeta(namespace="tenant"),
-        )
+        mock_ns1 = _namespace_row(uuid="ns-1", name="child1", full_name="tenant.child1")
+        mock_ns2 = _namespace_row(uuid="ns-2", name="child2", full_name="tenant.child2")
 
         mock_ns_ops_list = Mock(return_value=[mock_ns1, mock_ns2])
 
@@ -212,12 +214,7 @@ class TestFacadeConcurrentList:
 
         client = client_with_mock_transport
 
-        mock_ns1 = Namespace(
-            uuid="ns-1",
-            meta=NamespaceMeta(name="child1"),
-            spec=NamespaceSpec(full_name="tenant.child1"),
-            tenant_meta=TenantMeta(namespace="tenant"),
-        )
+        mock_ns1 = _namespace_row(uuid="ns-1", name="child1", full_name="tenant.child1")
 
         query_fn_calls: list[dict] = []
 
@@ -255,18 +252,8 @@ class TestFacadeConcurrentList:
 
         client = client_with_mock_transport
 
-        mock_ns1 = Namespace(
-            uuid="ns-1",
-            meta=NamespaceMeta(name="child1"),
-            spec=NamespaceSpec(full_name="tenant.child1"),
-            tenant_meta=TenantMeta(namespace="tenant"),
-        )
-        mock_ns2 = Namespace(
-            uuid="ns-2",
-            meta=NamespaceMeta(name="child2"),
-            spec=NamespaceSpec(full_name="tenant.child2"),
-            tenant_meta=TenantMeta(namespace="tenant"),
-        )
+        mock_ns1 = _namespace_row(uuid="ns-1", name="child1", full_name="tenant.child1")
+        mock_ns2 = _namespace_row(uuid="ns-2", name="child2", full_name="tenant.child2")
 
         merged_results = [
             Mock(uuid="proj-1"),
@@ -342,12 +329,7 @@ class TestFacadeConcurrentList:
 
         client = client_with_mock_transport
 
-        mock_ns1 = Namespace(
-            uuid="ns-1",
-            meta=NamespaceMeta(name="child1"),
-            spec=NamespaceSpec(full_name="tenant.child1"),
-            tenant_meta=TenantMeta(namespace="tenant"),
-        )
+        mock_ns1 = _namespace_row(uuid="ns-1", name="child1", full_name="tenant.child1")
 
         captured_query_fn = None
 

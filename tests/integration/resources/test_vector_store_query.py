@@ -89,5 +89,6 @@ class TestVectorStoreQuery:
             pytest.skip(f"Vector store query create not available: {exc}")
 
         assert result is not None
-        if result.spec is not None and result.spec.metadata_filter is not None:
-            assert result.spec.metadata_filter == filter_value
+        metadata_filter = getattr(result.spec, "metadata_filter", None)
+        if metadata_filter is not None:
+            assert metadata_filter == filter_value

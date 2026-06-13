@@ -1,82 +1,66 @@
-"""CodeOwners resource module for Endor Labs API.
-
-Code owner information for a project. List, get, create, update, delete.
-endorctl uses resource name CodeOwners (capital O).
-"""
+"""CodeOwners — thin consumer wrapper over generated V1CodeOwners."""
 
 from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from ..utils.logging_config import get_resource_logger
-from .base import (
-    BaseMeta,
-    BaseResource,
-    BaseSpec,
-)
+from endorlabs.generated.models.code_owners_service import V1CodeOwners
 
-logger = get_resource_logger(__name__)
+from .base import BaseMeta, BaseSpec
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin
 
 
 class CodeOwnerData(BaseModel):
-    """Code owner data per path/pattern (v1CodeOwnerData)."""
+    """Code owner data per path/pattern."""
+
+    model_config = ConfigDict(extra="allow")
 
     owners: list[str] = Field(..., description="List of code owners")
-    paths: list[str] | None = Field(None, description="List of owned paths")
-    labels: list[str] | None = Field(None, description="List of labels")
-
-    model_config: ClassVar[dict[str, str]] = {"extra": "allow"}  # type: ignore[assignment]
+    paths: list[str] | None = None
+    labels: list[str] | None = None
 
 
 class CodeOwnersVersion(BaseModel):
-    """Version of the CODEOWNERS file (ref, sha, metadata)."""
+    """Version of the CODEOWNERS file."""
 
-    ref: str | None = Field(None, description="Resolved ref (e.g. branch or tag).")
-    sha: str | None = Field(None, description="Commit SHA.")
-    metadata: dict[str, Any] | None = Field(None, description="Version metadata.")
+    model_config = ConfigDict(extra="allow")
 
-    model_config: ClassVar[dict[str, str]] = {"extra": "allow"}  # type: ignore[assignment]
+    ref: str | None = None
+    sha: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class CodeOwnersSpec(BaseSpec):
-    """Code owners specification extending BaseSpec."""
+    """Code owners specification."""
 
-    patterns: dict[str, CodeOwnerData | dict[str, Any]] | None = Field(
-        None,
-        description=(
-            "Map of path/pattern to code owner data. "
-            "Refreshed from CODEOWNERS file or populated manually."
-        ),
-    )
-    version: CodeOwnersVersion | None = Field(
-        None,
-        description="Version of the CODEOWNERS file (ref, sha, metadata).",
-    )
+    patterns: dict[str, CodeOwnerData | dict[str, Any]] | None = None
+    version: CodeOwnersVersion | None = None
 
 
 class CodeOwnersMeta(BaseMeta):
-    """Code owners metadata extending BaseMeta."""
+    """Code owners metadata."""
 
     pass
 
 
-class CodeOwners(BaseResource):
-    """Code Owners resource model. List, get, create, update, delete."""
+class CodeOwners(V1CodeOwners, ConsumerResourceWireMixin, ConsumerResourceMixin):
+    """Consumer facade model for CodeOwners (generated wire shape)."""
 
-    spec: CodeOwnersSpec | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None, description="Code owners specification"
-    )
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("CodeOwners")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("CodeOwners")
 
-    model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
+    spec: CodeOwnersSpec | None = None  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class CreateCodeOwnersPayload(BaseModel):
     """Payload for creating code owners."""
 
-    meta: CodeOwnersMeta = Field(..., description="Code owners metadata")
-    spec: CodeOwnersSpec = Field(..., description="Code owners specification")
+    meta: CodeOwnersMeta = Field(...)
+    spec: CodeOwnersSpec = Field(...)
 
 
 def build_create_payload(**kwargs: Any) -> CreateCodeOwnersPayload:

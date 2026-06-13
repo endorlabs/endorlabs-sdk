@@ -1,5 +1,4 @@
 # pyright: reportUninitializedInstanceVariable=false
-# ruff: noqa: TC001
 """Private route host mixin for BaseFacade (generated accessor helpers)."""
 
 from __future__ import annotations
@@ -7,14 +6,14 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
-from ..core.filter import FilterExpression
 from ..operations import BaseResourceOperations
-from ..operations.route_contract import RouteContract, RouteEdge
 from ..operations.routes import RouteExecutor, RouteResult
 from ..registry import RESOURCE_REGISTRY
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
+    from ..core.filter import FilterExpression
+    from ..operations.route_contract import RouteContract, RouteEdge
 
 
 def _registry_attr_by_kind() -> dict[str, str]:

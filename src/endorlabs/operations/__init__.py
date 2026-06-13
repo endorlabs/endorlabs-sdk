@@ -106,6 +106,12 @@ class BaseResourceOperations[T: BaseModel]:
         self.model_class = model_class
         self.logger = get_resource_logger(f"{__name__}.{resource_name}")
 
+    def _parse_response(self, payload: dict[str, Any]) -> T:
+        """Deserialize API JSON into a resource model with wire tolerance."""
+        from ..resources.consumer.wire_compat import deserialize_list_row
+
+        return cast("T", deserialize_list_row(self.model_class, payload))
+
     def _dump_for_api(
         self, model: BaseModel, exclude_none: bool = True
     ) -> dict[str, Any]:
@@ -303,7 +309,7 @@ class BaseResourceOperations[T: BaseModel]:
             return [dict(item) for item in all_items]
 
         try:
-            return [self.model_class(**item) for item in all_items]
+            return [self._parse_response(item) for item in all_items]
         except ValidationError as e:
             # Pydantic validation error on response (full-model path only)
             from ..core.exceptions import ServerError
@@ -345,7 +351,7 @@ class BaseResourceOperations[T: BaseModel]:
             if masked:
                 yield dict(item)
             else:
-                yield self.model_class(**item)
+                yield self._parse_response(item)
 
     def get(self, tenant_meta_namespace: str, resource_uuid: str) -> T:
         """Universal get operation with fallback to list+filter.
@@ -363,7 +369,7 @@ class BaseResourceOperations[T: BaseModel]:
                 f"v1/namespaces/{ns}/{self.resource_name}/{resource_uuid}"
             )
             data = res.json()
-            return self.model_class(**data)
+            return self._parse_response(data)
         except EndorAPIError as e:
             # Re-raise our custom exceptions
             raise e from None
@@ -518,7 +524,7 @@ class BaseResourceOperations[T: BaseModel]:
                 data_obj.get("uuid", "unknown"),
             )
 
-            return self.model_class(**data_obj)
+            return self._parse_response(data_obj)
         except EndorAPIError as e:
             # Re-raise our custom exceptions
             raise e from None
@@ -653,7 +659,7 @@ class BaseResourceOperations[T: BaseModel]:
                 resource_uuid,
             )
 
-            return self.model_class(**data)
+            return self._parse_response(data)
 
         except EndorAPIError as e:
             # Re-raise our custom exceptions
