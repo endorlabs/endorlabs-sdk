@@ -9,6 +9,7 @@ import pytest
 import endorlabs
 from endorlabs.core.exceptions import ServerError
 from tests.conftest import CANONICAL_SDK_REPO_URL, TEST_MAX_PAGES_TRAVERSE
+from tests.integration.client.helper_assertions import nested_attr
 
 
 @pytest.mark.integration
@@ -72,3 +73,5 @@ class TestRetrievingScanResultsWorkflow:
                 )
 
         assert isinstance(findings, list)
+        if findings:
+            assert all(nested_attr(f, "uuid") for f in findings[:5])
