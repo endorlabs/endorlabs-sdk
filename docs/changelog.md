@@ -8,6 +8,16 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+### Changed
+
+### Breaking
+
+## 0.3.0
+
+V1 consumer facade cutover: package split, contract-driven routes, `search_by_*` discovery, generated relationship accessors, and removal of deprecated lookup/resolve/shim surfaces. See **Breaking** below for migration paths.
+
+### Added
+
 - **Scan-plane partition accessors** — `{Kind}.list_for_context(source)` and `context_partition_filter()` list rows sharing `context.type` + `context.id` with a source row (e.g. `ScanResult`). See [facade-helpers.md](guides/facade-helpers.md) and [resource-routes.md](generated-reference/resource-routes.md).
 - **Generated accessor helpers** — `Finding.list_by_project`, `Finding.to_dependency_metadata`, `ScanResult.list_by_project`, `PackageVersion.list_by_project` return `RouteResult`; relationship map in [resource-routes.md](generated-reference/resource-routes.md). Regenerate with `devtools/generate_route_contract.py`.
 - **Identity lane** — `Project.search_by_name`, `VectorStore.search_by_name`, `AuthorizationPolicy.search_by_claims`, `Vulnerability.search_by_vuln_alias` (bounded list discovery; forwards `list()` kwargs including `mask` and `filter` / `F()`). Contract: [resource-discovery.md](../agent-knowledge/contracts/resource-discovery.md).
