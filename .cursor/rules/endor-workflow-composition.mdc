@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: 6605c51be4748a8f4e8885b2fb54aa196827b834726c10aa3de3733af94a6e2c
+x-endor-source-sha256: 6c04eaf8112b449cba55a83438928955503ba8468a9a56ebf7f530e0a5b2ae36
 ---
 
 # Workflow composition
@@ -53,7 +53,7 @@ Generic entrypoints (no estate literals):
 - `client.Project.search_by_name()` — bounded project discovery by repo URL substring or partial UUID
 - `client.CallGraphData.decode()` / `.fetch()` — call graph fetch + decode
 - `client.ScanResult.get_logs()` — scan log lines (ScanLogRequest wire API)
-- `client.Finding.list_by_project()` / `list_by_scan()` — generated relationship accessors
+- `client.Finding.list_by_project()` / `list_for_context()` — generated relationship accessors
 - `client.ScanResult.list_by_project()` — scan results for a project
 - `client.<Resource>.count()` / `.list_groups()` / `.latest_created()` — list helpers (see [facade-helpers.md](../../docs/guides/facade-helpers.md))
 - `endorlabs.workflows.common.WorkflowResult`

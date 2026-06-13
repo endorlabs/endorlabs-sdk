@@ -62,8 +62,9 @@ def test_rejects_unknown_edge_kind() -> None:
         )
 
 
-def test_scan_findings_is_list_only() -> None:
+def test_scan_findings_uses_context_partition() -> None:
     edge = load_golden_contract().edge_by_id("scan.findings")
     assert edge is not None
-    assert edge.list_only is True
-    assert edge.filter_field == "context.scan_uuid"
+    assert edge.edge == "list_by_context_partition"
+    assert edge.public_method == "Finding.list_for_context"
+    assert edge.context_from == "context"

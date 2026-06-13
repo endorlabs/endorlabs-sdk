@@ -31,7 +31,7 @@ Prefer these before assuming full-tenant sweeps or hand-built relationship filte
 
 - **Ambiguous project URL:** identical `meta.name` may exist under multiple child namespaces. Use `Project.search_by_name(..., traverse=True, max_pages=…)` and pick the row for the intended namespace, or use project UUID with `get()`.
 - **Project-scoped list namespace:** resolve `Project` first; pass `namespace=project.namespace` on downstream lists or use **`list_by_project`** accessors. Empty rows often mean wrong namespace, not missing data.
-- **Generated accessor helpers:** use `Finding.list_by_project`, `Finding.list_by_scan`, `ScanResult.list_by_project`, `Finding.to_dependency_metadata` — relationship map in [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md).
+- **Generated accessor helpers:** use `Finding.list_by_project`, `Finding.list_for_context`, `ScanResult.list_by_project`, `Finding.to_dependency_metadata` — relationship map in [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md).
 - **Finding branch field:** `spec.source_code_version.ref` may be a short branch name, not `refs/heads/main`. List findings without a branch filter first, or use `RepositoryVersion.list`.
 - **Tenant-wide scan fetch:** `fetch_scan_results --all-projects` is O(projects × scans). Prefer `--project-name` / `--project-uuid` for interactive RCA.
 - **Relationship map:** `estate.analyze.project_map.map` uses a bounded `PackageVersion` list — distinguish wrong namespace / unscanned consumers from pagination truncation before raising caps.

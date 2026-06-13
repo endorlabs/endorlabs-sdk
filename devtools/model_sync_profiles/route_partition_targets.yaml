@@ -1,0 +1,55 @@
+# Scan-plane partition edges (list_for_context) — codegen input for
+# devtools/generate_route_contract.py. Manual FK/parent edges stay in
+# route_contract_overlay.yaml.
+#
+# project_list_filter_field: optional list filter path on the target kind,
+# combined with source.meta.parent_uuid when the source is ScanResult.
+# Omit for partition + namespace-only scoping (log-style resources).
+#
+# When omitted, codegen inherits project_list_filter_field from a matching
+# project.* list_by_uuid_field edge in route_contract_overlay.yaml (same to_kind).
+
+defaults:
+  from_kind: ScanResult
+  edge: list_by_context_partition
+  tier: B
+  context_from: context
+  namespace_from: source
+  project_uuid_from: source.meta.parent_uuid
+
+targets:
+  - kind: Finding
+    edge_id: scan.findings
+
+  - kind: PackageVersion
+    edge_id: scan.package_versions
+
+  - kind: DependencyMetadata
+    edge_id: scan.dependency_metadata
+    project_list_filter_field: spec.importer_data.project_uuid
+
+  - kind: RepositoryVersion
+    edge_id: scan.repository_versions
+    project_list_filter_field: meta.parent_uuid
+
+  - kind: FindingLog
+    edge_id: scan.finding_logs
+
+  - kind: LinterResult
+    edge_id: scan.linter_results
+    project_list_filter_field: spec.project_uuid
+
+  - kind: Metric
+    edge_id: scan.metrics
+
+  - kind: PackageLicense
+    edge_id: scan.package_licenses
+    project_list_filter_field: spec.project_uuid
+
+  - kind: ScanWorkflowResult
+    edge_id: scan.scan_workflow_results
+    project_list_filter_field: meta.parent_uuid
+
+  - kind: VersionUpgrade
+    edge_id: scan.version_upgrades
+    project_list_filter_field: spec.project_uuid

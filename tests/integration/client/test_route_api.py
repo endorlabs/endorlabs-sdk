@@ -5,13 +5,9 @@ from __future__ import annotations
 import pytest
 
 import endorlabs
-from endorlabs.core.exceptions import (
-    RouteNotApplicableError,
-    ServerError,
-    ValidationError,
-)
+from endorlabs.core.exceptions import RouteNotApplicableError, ServerError
+from endorlabs.facade.context_partition import context_partition_filter
 from endorlabs.operations.routes import RouteResult
-from endorlabs.utils.namespace import resolve_namespace_for_resource
 from tests.conftest import TEST_MAX_PAGES
 
 
@@ -31,6 +27,22 @@ class TestRouteAPI:
         if not projects:
             pytest.skip("No projects in scope")
         return projects[0]
+
+    def _first_scan(self, project):
+        try:
+            scan_result = self.client.ScanResult.list_by_project(
+                project,
+                max_pages=TEST_MAX_PAGES,
+            )
+        except ServerError as err:
+            pytest.skip(f"ScanResult list unavailable: {err}")
+        if not scan_result.values:
+            pytest.skip("No scan results for project")
+        scan = scan_result.values[0]
+        ctx = getattr(scan, "context", None)
+        if ctx is None or not getattr(ctx, "type", None):
+            pytest.skip("Scan has no usable context partition")
+        return project, scan
 
     def test_finding_list_by_project_returns_route_result(self) -> None:
         project = self._first_project()
@@ -53,30 +65,71 @@ class TestRouteAPI:
         assert result.edge_used == "project.scan_results"
         assert result.values is not None
 
-    def test_finding_list_by_scan_when_scan_exists(self) -> None:
-        project = self._first_project()
-        project_ns = resolve_namespace_for_resource(
-            project, getattr(self.client, "_default_namespace", None)
-        )
-        scan_result = self.client.ScanResult.list_by_project(
-            project,
-            namespace=project_ns,
-            max_pages=TEST_MAX_PAGES,
-        )
-        if not scan_result.values:
-            pytest.skip("No scan results for project")
-        scan = scan_result.values[0]
+    def test_finding_list_for_context_matches_scan_plane(self) -> None:
+        _project, scan = self._first_scan(self._first_project())
         try:
-            result = self.client.Finding.list_by_scan(
+            result = self.client.Finding.list_for_context(
                 scan,
                 max_pages=TEST_MAX_PAGES,
             )
-        except (ServerError, ValidationError) as err:
-            if "context.scan_uuid" in str(err):
-                pytest.skip("context.scan_uuid not filterable in this namespace")
-            pytest.skip(f"Finding list_by_scan unavailable: {err}")
+        except ServerError as err:
+            pytest.skip(f"Finding list_for_context unavailable: {err}")
         assert result.edge_used == "scan.findings"
-        assert result.warnings
+        assert result.values is not None
+
+    def test_finding_list_for_context_partition_integrity(self) -> None:
+        _project, scan = self._first_scan(self._first_project())
+        ctx = scan.context
+        try:
+            result = self.client.Finding.list_for_context(
+                scan,
+                max_pages=TEST_MAX_PAGES,
+            )
+        except ServerError as err:
+            pytest.skip(f"Finding list_for_context unavailable: {err}")
+        for row in (result.values or [])[:5]:
+            row_ctx = getattr(row, "context", None)
+            assert row_ctx is not None
+            assert getattr(row_ctx, "type", None) == getattr(ctx, "type", None)
+            ctx_id = getattr(ctx, "id", None)
+            if ctx_id:
+                assert getattr(row_ctx, "id", None) == ctx_id
+
+    def test_finding_list_for_context_equivalent_to_manual_filter(self) -> None:
+        project, scan = self._first_scan(self._first_project())
+        try:
+            accessor = self.client.Finding.list_for_context(
+                scan,
+                max_pages=TEST_MAX_PAGES,
+            )
+            manual = self.client.Finding.list_by_project(
+                project,
+                filter=context_partition_filter(scan.context),
+                max_pages=TEST_MAX_PAGES,
+            )
+        except ServerError as err:
+            pytest.skip(f"Finding partition list unavailable: {err}")
+        accessor_ids = {getattr(r, "uuid", None) for r in (accessor.values or [])}
+        manual_ids = {getattr(r, "uuid", None) for r in (manual.values or [])}
+        assert accessor_ids.issubset(manual_ids)
+
+    @pytest.mark.parametrize(
+        ("edge_id", "list_method"),
+        [
+            ("scan.package_versions", "PackageVersion"),
+            ("scan.dependency_metadata", "DependencyMetadata"),
+        ],
+    )
+    def test_list_for_context_partition_smoke(
+        self, edge_id: str, list_method: str
+    ) -> None:
+        _project, scan = self._first_scan(self._first_project())
+        facade = getattr(self.client, list_method)
+        try:
+            result = facade.list_for_context(scan, max_pages=TEST_MAX_PAGES)
+        except ServerError as err:
+            pytest.skip(f"{list_method} list_for_context unavailable: {err}")
+        assert result.edge_used == edge_id
         assert result.values is not None
 
     def test_finding_to_dependency_metadata_when_target_present(self) -> None:
