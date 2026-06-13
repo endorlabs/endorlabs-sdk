@@ -10,8 +10,13 @@
 #   uv run python devtools/verify_ship_artifacts.py --fetch-spec  (pre-push; CI lint)
 #
 # Ship-artifact verify runs before ruff/pyright on commit (local spec, regen + git
-# diff) so linters typecheck regenerated surfaces. Pre-push runs the full gate
-# (--fetch-spec, upstream SHA) and replaces separate upstream/agent-knowledge hooks.
+# diff) so linters typecheck regenerated surfaces. Pre-push runs only the upstream
+# full gate (--fetch-spec), model-sync contract validate, and bandit — not a second
+# pass of ruff/pyright/pytest or skip-upstream ship verify.
+#
+# default_stages: pre-commit only — hooks without explicit stages do not rerun on
+# push (pre-commit 4.x otherwise defaults to all stages).
+default_stages: [pre-commit]
 #
 # We use local `uv run` hooks instead of astral-sh/ruff-pre-commit because that
 # hook passes --force-exclude, which skips paths listed in [tool.ruff] exclude
@@ -174,6 +179,7 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
+        stages: [pre-commit]
         args: [--skip, "*.json,*.lock,.git,.endorlabs-context,src/endorlabs/generated"]
         # pre-push passes explicit paths; --skip alone does not ignore them.
         exclude: ^src/endorlabs/generated/.*$
@@ -192,6 +198,7 @@ repos:
     rev: v8.28.0
     hooks:
       - id: gitleaks
+        stages: [pre-commit]
         args: ["--staged", "--redact"]
         pass_filenames: false
 
@@ -200,11 +207,17 @@ repos:
     rev: v5.0.0
     hooks:
       - id: check-yaml
+        stages: [pre-commit]
       - id: check-toml
+        stages: [pre-commit]
       - id: check-added-large-files
+        stages: [pre-commit]
         args: [--maxkb=500]
       - id: detect-private-key
+        stages: [pre-commit]
       - id: end-of-file-fixer
+        stages: [pre-commit]
         exclude: ^src/endorlabs/generated/
       - id: trailing-whitespace
+        stages: [pre-commit]
         exclude: ^src/endorlabs/generated/
