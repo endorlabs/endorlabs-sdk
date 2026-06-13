@@ -7,6 +7,8 @@ See ``agent-knowledge/skills/endor-validate-policy/`` and
 ``python -m endorlabs.workflows.policies.validate``.
 """
 
+# ruff: noqa: TC001, SLF001
+
 from __future__ import annotations
 
 import argparse
@@ -18,7 +20,7 @@ from typing import Any
 
 import endorlabs
 from endorlabs.core.exceptions import EndorAPIError, PermissionDeniedError
-from endorlabs.resources.policy import Policy  # noqa: TC001
+from endorlabs.resources.policy import Policy
 
 
 @dataclass
@@ -57,6 +59,36 @@ def _policy_target_kind(policy: Policy) -> str | None:
     return str(tk) if tk else None
 
 
+def _template_values_for_request(template_values: Any) -> Any:
+    if isinstance(template_values, dict):
+        return {
+            key: (
+                value.model_dump(mode="json") if hasattr(value, "model_dump") else value
+            )
+            for key, value in template_values.items()
+        }
+    return template_values
+
+
+def _append_template_or_rule_request(spec: Any, request: dict[str, Any]) -> None:
+    if spec.template_uuid:
+        request["template_uuid"] = spec.template_uuid
+        if spec.template_values:
+            request["template_values"] = _template_values_for_request(
+                spec.template_values
+            )
+        return
+    if not spec.rule:
+        raise ValueError(
+            "Policy has no template_uuid; spec.rule is required for validate"
+        )
+    request["rule"] = spec.rule
+    if spec.query_statements:
+        request["query_statements"] = list(spec.query_statements)
+    if spec.resource_kinds:
+        request["resource_kinds"] = list(spec.resource_kinds)
+
+
 def build_validation_body(
     *,
     namespace: str,
@@ -76,20 +108,7 @@ def build_validation_body(
     if spec.policy_type is not None:
         request["policy_type"] = _enum_value(spec.policy_type)
 
-    if spec.template_uuid:
-        request["template_uuid"] = spec.template_uuid
-        if spec.template_values:
-            request["template_values"] = spec.template_values
-    else:
-        if not spec.rule:
-            raise ValueError(
-                "Policy has no template_uuid; spec.rule is required for validate"
-            )
-        request["rule"] = spec.rule
-        if spec.query_statements:
-            request["query_statements"] = list(spec.query_statements)
-        if spec.resource_kinds:
-            request["resource_kinds"] = list(spec.resource_kinds)
+    _append_template_or_rule_request(spec, request)
 
     if spec.project_selector:
         request["project_selector"] = list(spec.project_selector)
@@ -114,7 +133,7 @@ def validate_policy(
     body: dict[str, Any],
 ) -> dict[str, Any]:
     """POST policy/validate and return parsed JSON."""
-    api = client._client  # noqa: SLF001
+    api = client._client
     if api is None:
         raise RuntimeError("Client has no API connection")
     path = f"v1/namespaces/{namespace}/policy/validate"

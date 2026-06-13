@@ -1,4 +1,3 @@
-# ruff: noqa: TC001
 """Resource-specific facade subclasses and custom facades."""
 
 from __future__ import annotations
@@ -6,13 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast, override
 
 from ..core.exceptions import RouteNotApplicableError
-from ..core.filter import FilterExpression
 from ..operations.routes import RouteResult
 from ..utils.namespace import resolve_namespace_for_resource
 from .runtime import ResourceRuntimeFacade
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
+    from ..core.filter import FilterExpression
 
 
 class ScanResultFacade(ResourceRuntimeFacade[Any]):

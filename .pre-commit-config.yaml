@@ -87,6 +87,15 @@ repos:
         require_serial: true
         files: (^pyproject\.toml$|^tests/.*|^src/endorlabs/.*|.*\.(py|pyi)$)
 
+      - id: consumer-wire-fixtures-verify
+        name: consumer wire fixtures verify
+        entry: uv
+        args: [run, python, devtools/audit_consumer_surfaces.py, --check]
+        language: system
+        pass_filenames: false
+        require_serial: true
+        files: (^tests/fixtures/models/.*|^src/endorlabs/resources/.*|^devtools/audit_consumer_surfaces\.py$)
+
       # Paths must stay aligned with ci-pr-main.yml "Validate CI-critical automation scripts".
       - id: ruff-check-ci-critical-automation
         name: ruff check (CI-critical automation; E,F,I,UP)

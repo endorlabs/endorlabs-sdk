@@ -1,11 +1,4 @@
-"""VectorStoreQuery resource module for Endor Labs API.
-
-This resource maps to ``POST /v1/namespaces/{namespace}/queries/vector-stores``
-(tenant namespace; matches ``VectorStoreQueryService_CreateVectorStoreQuery``) and
-supports natural-language queries against a vector store identified by UUID
-(typically ``function_summary`` or ``file_summary`` stores from
-``client.VectorStore``).
-"""
+"""VectorStoreQuery — thin consumer wrapper with create payload helpers."""
 
 from __future__ import annotations
 
@@ -13,63 +6,38 @@ from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from endorlabs.generated.models.vector import V1VectorStoreQuery
+
 from ..generated.create_convenience import (
     VECTOR_STORE_QUERY_META_FIELDS,
     VECTOR_STORE_QUERY_SPEC_FIELDS,
 )
 from ..utils.create_payload import promote_create_kwargs
-from ..utils.logging_config import get_resource_logger
-from .base import BaseMeta, BaseResource, BaseSpec
-
-logger = get_resource_logger(__name__)
+from .base import BaseSpec
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin
 
 
 class VectorStoreQuerySpec(BaseSpec):
     """VectorStoreQuery request specification."""
 
-    vector_store_uuid: str | None = Field(
-        None,
-        description=(
-            "UUID of the VectorStore to query (e.g. function_summary or file_summary)."
-        ),
-    )
-    query: str | None = Field(
-        None,
-        description="Natural-language query string.",
-    )
+    vector_store_uuid: str | None = Field(None, description="UUID of the VectorStore.")
+    query: str | None = Field(None, description="Natural-language query string.")
     metadata_filter: dict[str, Any] | None = Field(
-        None,
-        description="Optional metadata filter to scope similarity search.",
+        None, description="Optional metadata filter."
     )
 
     model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")
 
 
-class VectorStoreQuery(BaseResource):
-    """VectorStoreQuery resource model returned by the query endpoint."""
+class VectorStoreQuery(
+    V1VectorStoreQuery, ConsumerResourceWireMixin, ConsumerResourceMixin
+):
+    """Consumer facade model for VectorStoreQuery (generated wire shape)."""
 
-    uuid: str | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None,
-        description="UUID (often null for this request/response style API).",
-    )
-    meta: BaseMeta | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None,
-        description="Metadata (may be null in responses).",
-    )
-    spec: VectorStoreQuerySpec | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None,
-        description="Query request specification.",
-    )
-    response: dict[str, Any] | None = Field(
-        None,
-        description="Single query response payload.",
-    )
-    responses: dict[str, Any] | None = Field(
-        None,
-        description="Batch query response map.",
-    )
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("VectorStoreQuery")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("VectorStoreQuery")
 
 
 class VectorStoreQueryMetaCreate(BaseModel):
@@ -86,11 +54,7 @@ class CreateVectorStoreQueryPayload(BaseModel):
 
 
 def build_create_payload(**kwargs: Any) -> CreateVectorStoreQueryPayload:
-    """Build CreateVectorStoreQueryPayload from kwargs.
-
-    Supports either explicit payload style (``meta=...``, ``spec=...``) or
-    convenience kwargs used by ``ResourceRuntimeFacade.create(...)``.
-    """
+    """Build CreateVectorStoreQueryPayload from kwargs."""
     meta_aliases = {
         name: "name" for name in VECTOR_STORE_QUERY_META_FIELDS if name == "name"
     }

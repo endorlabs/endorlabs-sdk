@@ -53,12 +53,7 @@ class TestPackageVersion:
         print("\n=== TESTING PACKAGE VERSION UPDATE WITH MASK ===")
 
         package_version_uuid = sample_package_version.uuid
-        # Use the package version's actual namespace
-        package_namespace = (
-            sample_package_version.tenant_meta.namespace
-            if sample_package_version.tenant_meta
-            else self.namespace
-        )
+        package_namespace = sample_package_version.namespace or self.namespace
 
         # Get current package version state
         pv_client = endorlabs.Client(tenant=package_namespace, api_client=self.client)

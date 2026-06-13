@@ -1,20 +1,4 @@
-"""APIKey resource module for Endor Labs API.
-
-This module provides comprehensive API key management capabilities including
-listing, examining, creating, and deleting API keys.
-
-API OPERATIONS SUPPORTED:
-- GET: List API keys, Get API key by UUID
-- POST: Create new API keys
-- DELETE: Delete API keys
-
-API FEATURES:
-- Full CRUD operations supported (except UPDATE - API keys cannot be updated)
-- System role-based permissions (ADMIN, READ_ONLY, CODE_SCANNER, etc.)
-- Resource-specific permission rules
-- Expiration time support
-- Namespace propagation control
-"""
+"""APIKey — thin consumer wrapper over generated V1APIKey."""
 
 from __future__ import annotations
 
@@ -22,14 +6,22 @@ from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field, field_validator
 
-from ..utils.logging_config import get_resource_logger
-from .base import (
-    BaseMeta,
-    BaseResource,
-    BaseSpec,
-)
+from endorlabs.generated.models.a_p_i_key_service import V1APIKey
 
-logger = get_resource_logger(__name__)
+from .base import BaseMeta, BaseSpec
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin
+
+
+class APIKey(V1APIKey, ConsumerResourceWireMixin, ConsumerResourceMixin):
+    """Consumer facade model for APIKey (generated wire shape)."""
+
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("APIKey")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("APIKey")
+
+
+# --- integration / create-update compat (pre-cutover helpers) ---
 
 
 class PermissionsMethods(BaseModel):
@@ -134,50 +126,6 @@ class APIKeyMeta(BaseMeta):
         if v is not None and not v.strip():
             raise ValueError("description cannot be empty or whitespace")
         return v.strip() if v else v
-
-
-class APIKey(BaseResource):
-    """API Key resource model extending BaseResource.
-
-    OPERATION SUPPORT:
-    ==================
-    ✅ GET: List API keys, Get by UUID
-    ✅ POST: Create new API keys
-    ❌ PATCH: API keys cannot be updated (immutable after creation)
-    ✅ DELETE: Delete API keys
-
-    FIELD MUTABILITY:
-    =================
-    IMMUTABLE FIELDS (read-only, system-managed):
-    - uuid: Unique identifier
-    - meta.create_time, meta.created_by: Creation metadata
-    - meta.update_time, meta.updated_by: Auto-managed timestamps
-    - spec.key: API key identifier (returned on creation)
-    - spec.secret: API key secret (returned on creation, only shown once)
-    - spec.issuing_user: User that created the key
-    - tenant_meta.namespace: Namespace assignment
-
-    MUTABLE FIELDS (set at creation only, cannot be updated):
-    - meta.name: API key name
-    - meta.description: API key description
-    - meta.tags: API key tags
-    - spec.permissions: Permissions configuration
-    - spec.expiration_time: Expiration time
-    - propagate: Whether to propagate to child namespaces
-
-    FEATURES:
-    =========
-    - System role-based permissions (ADMIN, READ_ONLY, CODE_SCANNER, etc.)
-    - Resource-specific permission rules
-    - Expiration time support
-    - Namespace propagation control
-    - Credentials (key/secret) returned only on creation
-    """
-
-    # API key-specific fields (universal fields inherited from BaseResource)
-    spec: APIKeySpec | None = Field(None, description="API key specification")  # type: ignore
-
-    model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
 
 
 class CreateAPIKeyPayload(BaseModel):
