@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, cast, override
 
 from ..core.exceptions import RouteNotApplicableError
 from ..core.filter import FilterExpression
@@ -238,6 +238,22 @@ class PackageVersionFacade(ResourceRuntimeFacade[Any]):
             kwargs = {**kwargs, "filter": filter}
         return self._execute_route("project.package_versions", source=project, **kwargs)
 
+    @override
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = None,
+        namespace: str | None = None,
+        **kwargs: Any,
+    ) -> RouteResult[Any]:
+        """List package versions in the same scan plane as *source*."""
+        if filter is not None:
+            kwargs = {**kwargs, "filter": filter}
+        if namespace is not None:
+            kwargs = {**kwargs, "namespace": namespace}
+        return self._execute_route("scan.package_versions", source=source, **kwargs)
+
 
 class FindingFacade(ResourceRuntimeFacade[Any]):
     """Finding facade with generated relationship accessors."""
@@ -254,20 +270,21 @@ class FindingFacade(ResourceRuntimeFacade[Any]):
             kwargs = {**kwargs, "filter": filter}
         return self._execute_route("project.findings", source=project, **kwargs)
 
-    def list_by_scan(
+    @override
+    def list_for_context(
         self,
-        scan_result: Any,
+        source: Any,
         *,
-        namespace: str | None = None,
         filter: str | FilterExpression | None = None,
+        namespace: str | None = None,
         **kwargs: Any,
     ) -> RouteResult[Any]:
-        """List findings for a scan (generated accessor ``scan.findings``)."""
+        """List findings in the same scan plane as *source* (``scan.findings``)."""
         if filter is not None:
             kwargs = {**kwargs, "filter": filter}
         if namespace is not None:
             kwargs = {**kwargs, "namespace": namespace}
-        return self._execute_route("scan.findings", source=scan_result, **kwargs)
+        return self._execute_route("scan.findings", source=source, **kwargs)
 
     def to_dependency_metadata(
         self,

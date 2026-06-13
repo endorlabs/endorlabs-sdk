@@ -18,17 +18,6 @@ edges:
     parent_kind: project
     namespace_from: source
 
-  - id: scan.findings
-    from_kind: ScanResult
-    to_kind: Finding
-    edge: list_by_index_field
-    tier: B
-    public_method: Finding.list_by_scan
-    filter_field: context.scan_uuid
-    uuid_from: source.uuid
-    namespace_from: source
-    list_only: true
-
   - id: project.package_versions
     from_kind: Project
     to_kind: PackageVersion

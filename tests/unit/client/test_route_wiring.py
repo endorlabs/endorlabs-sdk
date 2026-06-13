@@ -39,13 +39,14 @@ def test_finding_list_by_project_delegates_to_execute_route(
         assert result is route_result
 
 
-def test_finding_list_by_scan_delegates_to_execute_route(
+def test_finding_list_for_context_delegates_to_execute_route(
     client_with_mock_transport: Client,
 ) -> None:
     client = client_with_mock_transport
     scan = SimpleNamespace(
         uuid="scan-1",
         tenant_meta=SimpleNamespace(namespace=TEST_NAMESPACE_DEFAULT),
+        context=SimpleNamespace(type="CONTEXT_TYPE_MAIN", id="main"),
     )
     route_result = Mock(values=[])
     with patch.object(
@@ -53,8 +54,35 @@ def test_finding_list_by_scan_delegates_to_execute_route(
         "_execute_route",
         return_value=route_result,
     ) as execute:
-        client.Finding.list_by_scan(scan)
-        execute.assert_called_once_with("scan.findings", source=scan)
+        client.Finding.list_for_context(scan, max_pages=2)
+        execute.assert_called_once_with(
+            "scan.findings",
+            source=scan,
+            max_pages=2,
+        )
+
+
+def test_dependency_metadata_list_for_context_uses_mixin_route(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mock = Mock(spec=endorlabs.api_client.APIClient)
+    client = endorlabs.Client(api_client=mock, tenant=TEST_NAMESPACE_DEFAULT)
+    scan = SimpleNamespace(
+        uuid="scan-1",
+        tenant_meta=SimpleNamespace(namespace=TEST_NAMESPACE_DEFAULT),
+        context=SimpleNamespace(type="CONTEXT_TYPE_MAIN", id="main"),
+    )
+    route_result = Mock(values=[])
+    with patch.object(
+        client.DependencyMetadata,
+        "_execute_route",
+        return_value=route_result,
+    ) as execute:
+        client.DependencyMetadata.list_for_context(scan)
+        execute.assert_called_once_with(
+            "scan.dependency_metadata",
+            source=scan,
+        )
 
 
 def test_scan_result_list_by_project_uses_parent_list(

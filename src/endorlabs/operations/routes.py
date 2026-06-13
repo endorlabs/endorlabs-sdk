@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from ..core.exceptions import RouteNotApplicableError
 from ..core.filter import F
 from ..core.types import ListParameters
+from ..facade.context_partition import context_partition_filter
 from ..utils.namespace import resolve_namespace_for_resource
 from . import BaseResourceOperations
 from .route_contract import RouteChainStep, RouteEdge, RouteWhen
@@ -71,6 +72,7 @@ def format_filter_template(
 
     def repl(match: re.Match[str]) -> str:
         path = match.group(1)
+        path = path.removeprefix("source.")
         value = resolve_attr_path(source, path, context=context)
         return "" if value is None else str(value)
 
@@ -150,6 +152,15 @@ class RouteExecutor:
             )
         if edge.edge == "list_by_attribute":
             return self._list_by_attribute(
+                edge,
+                source=source,
+                namespace=ns,
+                filter=filter,
+                max_pages=max_pages,
+                **list_kwargs,
+            )
+        if edge.edge == "list_by_context_partition":
+            return self._list_by_context_partition(
                 edge,
                 source=source,
                 namespace=ns,
@@ -309,6 +320,33 @@ class RouteExecutor:
             warnings=warnings,
             **list_kwargs,
         )
+
+    def _list_by_context_partition(
+        self,
+        edge: RouteEdge,
+        *,
+        source: Any,
+        namespace: str,
+        filter: str | None,
+        max_pages: int | None,
+        **list_kwargs: Any,
+    ) -> RouteResult[Any]:
+        context_path = edge.context_from or "context"
+        context = resolve_attr_path(source, context_path)
+        if context is None or not getattr(context, "type", None):
+            raise RouteNotApplicableError(
+                f"Missing context partition at {context_path!r} on source.",
+                edge_id=edge.id,
+            )
+        clause = context_partition_filter(context)
+        if edge.also_filter:
+            extra = format_filter_template(edge.also_filter, source)
+            clause = f"{extra} AND {clause}"
+        filter_text = str(filter) if filter is not None else None
+        merged = f"{filter_text} AND {clause}" if filter_text else clause
+        lp = ListParameters(filter=merged)  # pyright: ignore[reportCallIssue]
+        rows = self._ops(edge.to_kind).list(namespace, lp, max_pages, **list_kwargs)
+        return RouteResult(edge_used=edge.id, values=list(rows))
 
     def _list_by_attribute(
         self,

@@ -23,6 +23,8 @@ def _scan() -> SimpleNamespace:
     return SimpleNamespace(
         uuid="scan-uuid-1",
         tenant_meta=SimpleNamespace(namespace="tenant.child"),
+        meta=SimpleNamespace(parent_uuid="proj-uuid-1"),
+        context=SimpleNamespace(type="CONTEXT_TYPE_CI_RUN", id="pr-1"),
     )
 
 
@@ -87,8 +89,9 @@ def test_list_routes_call_ops_with_expected_filter(edge_id: str, setup) -> None:
     if edge_id == "project.findings":
         assert 'spec.project_uuid=="proj-uuid-1"' in lp.filter
     if edge_id == "scan.findings":
-        assert 'context.scan_uuid=="scan-uuid-1"' in lp.filter
-        assert result.warnings
+        assert '(context.type=="CONTEXT_TYPE_CI_RUN")' in lp.filter
+        assert '(context.id=="pr-1")' in lp.filter
+        assert 'spec.project_uuid=="proj-uuid-1"' in lp.filter
 
 
 def test_get_by_uuid_route() -> None:
@@ -150,6 +153,38 @@ def _semgrep_chain_edge() -> RouteEdge:
             ],
         }
     )
+
+
+def test_list_by_context_partition_missing_context_raises() -> None:
+    contract = load_golden_contract()
+    edge = contract.edge_by_id("scan.findings")
+    assert edge is not None
+    executor = _executor(Finding=Mock())
+    scan = SimpleNamespace(
+        uuid="scan-1",
+        tenant_meta=SimpleNamespace(namespace="tenant.child"),
+        meta=SimpleNamespace(parent_uuid="proj-1"),
+        context=None,
+    )
+    with pytest.raises(RouteNotApplicableError, match="Missing context partition"):
+        executor.execute(edge, source=scan)
+
+
+def test_list_by_context_partition_merges_caller_filter() -> None:
+    contract = load_golden_contract()
+    edge = contract.edge_by_id("scan.findings")
+    assert edge is not None
+    mock_ops = Mock()
+    mock_ops.list.return_value = []
+    executor = _executor(Finding=mock_ops)
+    executor.execute(
+        edge,
+        source=_scan(),
+        filter='spec.level=="FINDING_LEVEL_CRITICAL"',
+    )
+    lp = mock_ops.list.call_args[0][1]
+    assert 'spec.level=="FINDING_LEVEL_CRITICAL"' in lp.filter
+    assert "context.type" in lp.filter
 
 
 def test_when_gate_rejects_non_sast() -> None:

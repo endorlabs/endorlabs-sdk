@@ -9,7 +9,7 @@ description: 'Project-scoped SDK workflow: resolve Project → latest ScanResult
 
 # Retrieving Scan Results and Findings
 
-**Default path:** one **Project** → **`ScanResult.list_by_project(project)`** → **`Finding.list_by_project(project)`** / **`Finding.list_by_scan(scan)`** — no `traverse=True` on findings after the project is resolved.
+**Default path:** one **Project** → **`ScanResult.list_by_project(project)`** → **`Finding.list_by_project(project)`** / **`Finding.list_for_context(scan)`** — no `traverse=True` on findings after the project is resolved.
 
 For **scan pipeline** regressions (bounded scan window, heuristic pair scoring, scan logs via `ScanResult.get_logs`, aggregate diffs), use [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) first, then return here with scan UUIDs for finding-level drill-down.
 
@@ -21,9 +21,9 @@ Human-oriented reference: [docs/guides/retrieving-scan-results.md](../../../docs
 |----------|-----------|------------|
 | **Project** | A monitored repository | `meta.name` = repo URL, `uuid` |
 | **ScanResult** | One scan's metadata, stats, policies triggered | `meta.parent_uuid` = Project UUID, `spec.findings` = Finding UUIDs |
-| **Finding** | A security finding | `context.scan_uuid`, `spec.project_uuid`, `spec.level` |
+| **Finding** | A security finding | `context.type`, `context.id`, `spec.project_uuid`, `spec.level` |
 
-**Relationship chain:** Project (by repo URL) → ScanResult (by parent UUID) → Finding (by scan or project UUID).
+**Relationship chain:** Project (by repo URL) → ScanResult (by parent UUID) → Finding rows in the **same scan plane** (`context.type` + `context.id`) or via `spec.findings` UUID list + `get`.
 
 ## Workflow (project-scoped)
 
@@ -72,8 +72,8 @@ Use **generated accessor helpers** — they derive namespace from the source res
 # All findings for the project (preferred)
 findings = client.Finding.list_by_project(project, max_pages=5).values or []
 
-# One scan's findings
-findings = client.Finding.list_by_scan(latest_scan, max_pages=5).values or []
+# One scan plane's findings (preferred when you have a ScanResult row)
+findings = client.Finding.list_for_context(latest_scan, max_pages=5).values or []
 
 # Severity filter — merge with accessor list kwargs
 findings = client.Finding.list_by_project(
@@ -126,7 +126,7 @@ Findings are generated **per RepositoryVersion** (branch). Two scanned branches 
 | Field | Purpose |
 |-------|---------|
 | `spec.source_code_version.ref` | Branch the finding came from |
-| `context.scan_uuid` | UUID of the scan run |
+| `context.type` / `context.id` | Scan plane (MAIN, CI_RUN, REF, …) |
 
 > **Agent note — `ref` shape:** `spec.source_code_version.ref` may be a **short branch name** (`main`) rather than `refs/heads/main`. Branch filters that assume full ref strings can return **zero rows**. List findings **without** a branch filter first, or use `RepositoryVersion.list` for scanned refs. See [AGENTS.md](../../../AGENTS.md#agent-notes).
 
@@ -153,7 +153,7 @@ When counting severity or unique issues, dedupe by explanation/remediation or fi
 |-----------|---------|
 | Latest scan for a project | `ScanResult.list_by_project(project, limit=1).values[0]` |
 | Findings for a project | `Finding.list_by_project(project, max_pages=…).values` |
-| Findings for one scan | `Finding.list_by_scan(scan, max_pages=…).values` |
+| Findings for one scan plane | `Finding.list_for_context(scan, max_pages=…).values` |
 | Discover project by URL | `Project.list(filter='meta.name=="…"', traverse=True, max_pages=1)` |
 | Tenant-wide critical (explicit ask) | `Finding.list(filter='spec.level==FINDING_LEVEL_CRITICAL', traverse=True, max_pages=5)` |
 
