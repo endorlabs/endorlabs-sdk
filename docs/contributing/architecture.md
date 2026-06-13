@@ -83,12 +83,16 @@ New API resources are **modeled by model sync**, not hand-added to `Client` one 
 
 ## Consumer vs generated models
 
-Two model planes coexist until per-resource cutover completes:
+Two model planes: **wire truth** in `generated/models/` and **consumer runtime** in
+`resources/`. Wire golden tests: `tests/fixtures/models/{module}/list_row_min.json`
+(gated by `devtools/audit_consumer_surfaces.py --check`).
 
 | Plane | Location | Role |
 | ----- | -------- | ---- |
 | **Wire truth** | `src/endorlabs/generated/models/**`, `generated/registry_contract.py` | OpenAPI-shaped `V1*` types, CRUD metadata — **never hand-edit** |
-| **Consumer runtime** | `resources/base.py`, `resources/{kind}.py`, `resources/*_config.py` | What `Client.*.list()` / `get()` deserialize into; greenfield names, mask tolerance, `.update()`, `build_create_payload` |
+| **Consumer runtime** | `resources/{kind}.py`, `resources/consumer/`, `*_config.py` | What `Client.*.list()` / `get()` deserialize into; mask tolerance, `.update()`, `build_create_payload` |
+
+**Consumer pattern:** `class Kind(V1Kind, ConsumerResourceWireMixin, ConsumerResourceMixin)` with registry-backed mutable/immutable field lists from `resources/consumer/registry_fields.py`. Legacy `BaseResource` in `resources/base.py` remains for compat only.
 
 **Naming rule:** `generated/models` = wire mirror; `resources/` = consumer types for the primary registry kinds (plus wire helpers such as `call_graph_data*.py`).
 
@@ -129,7 +133,8 @@ flowchart TB
     Workflows --> Client
 ```
 
-**Long-term cutover:** Flip `model_class_import_path` per resource so type bodies live in `generated/models/`; keep thin `resources/{kind}.py` for payload builders and facade sugar.
+**Consumer modules** use thin `V1*` wrappers plus `resources/consumer/` mixins; keep
+`resources/{kind}.py` for payload builders and facade sugar.
 
 ## When to Use
 

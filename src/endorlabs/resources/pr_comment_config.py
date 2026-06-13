@@ -1,8 +1,4 @@
-"""PRCommentConfig resource module for Endor Labs API.
-
-PR comment template configuration used by SCM integrations.
-List, get, create, update, delete.
-"""
+"""PRCommentConfig — thin consumer wrapper over generated V1PRCommentConfig."""
 
 from __future__ import annotations
 
@@ -10,15 +6,24 @@ from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field
 
-from ..utils.logging_config import get_resource_logger
-from .base import (
-    BaseMeta,
-    BaseResource,
-    BaseSpec,
-    FlexibleEnum,
-)
+from endorlabs.generated.models.p_r_comment_config_service import V1PRCommentConfig
 
-logger = get_resource_logger(__name__)
+from .base import BaseMeta, BaseSpec, FlexibleEnum
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin
+
+
+class PRCommentConfig(
+    V1PRCommentConfig, ConsumerResourceWireMixin, ConsumerResourceMixin
+):
+    """Consumer facade model for PRCommentConfig (generated wire shape)."""
+
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("PRCommentConfig")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("PRCommentConfig")
+
+
+# --- integration / create-update compat (pre-cutover helpers) ---
 
 
 class PlatformSource(FlexibleEnum):
@@ -65,20 +70,6 @@ class PRCommentConfigMeta(BaseMeta):
     """PR comment configuration metadata extending BaseMeta."""
 
     pass
-
-
-class PRCommentConfig(BaseResource):
-    """PR comment configuration resource model."""
-
-    spec: PRCommentConfigSpec | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None, description="PR comment configuration spec"
-    )
-    propagate: bool | None = Field(
-        None,
-        description="Whether this config should propagate to child namespaces.",
-    )
-
-    model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
 
 
 class CreatePRCommentConfigPayload(BaseModel):

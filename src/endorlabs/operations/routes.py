@@ -1,11 +1,11 @@
-# ruff: noqa: D102, TC001, UP046, SIM108
+# ruff: noqa: D102, UP046, SIM108
 """Generic route executors for generated relationship accessors."""
 
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Generic, Literal, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, cast
 
 from pydantic import BaseModel
 
@@ -14,8 +14,10 @@ from ..core.filter import F
 from ..core.types import ListParameters
 from ..facade.context_partition import context_partition_filter
 from ..utils.namespace import resolve_namespace_for_resource
-from . import BaseResourceOperations
 from .route_contract import RouteChainStep, RouteEdge, RouteWhen
+
+if TYPE_CHECKING:
+    from . import BaseResourceOperations
 
 T = TypeVar("T", bound=BaseModel)
 

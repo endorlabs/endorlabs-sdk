@@ -1,31 +1,27 @@
-"""RepositoryVersion resource module for Endor Labs API.
-
-This module provides CRUD operations for RepositoryVersion resources following the
-established patterns from the base class implementation.
-
-API OPERATIONS SUPPORTED:
-- GET: List repository versions, Get repository version by UUID
-
-API LIMITATIONS:
-- CREATE: Not supported (repository versions managed by platform integrations)
-- UPDATE: Not supported by API (repository versions are read-only)
-- DELETE: Not supported (repository versions managed by platform integrations)
-
-Note: Repository versions are automatically discovered and managed through platform
-integrations and cannot be manually created, updated, or deleted through the API.
-"""
+"""RepositoryVersion — thin consumer wrapper over generated V1RepositoryVersion."""
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, override
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..utils.logging_config import get_resource_logger
-from .base import BaseMeta, BaseResource, BaseSpec
+from endorlabs.generated.models.repository_version_service import V1RepositoryVersion
 
-logger = get_resource_logger(__name__)
+from .base import BaseMeta, BaseSpec
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin
+
+
+class RepositoryVersion(
+    V1RepositoryVersion, ConsumerResourceWireMixin, ConsumerResourceMixin
+):
+    """Consumer facade model for RepositoryVersion (generated wire shape)."""
+
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("RepositoryVersion")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("RepositoryVersion")
 
 
 class RepositoryVersionMeta(BaseMeta):
@@ -90,66 +86,19 @@ class RepositoryVersionSpec(BaseSpec):
     )  # IMMUTABLE: System-managed
 
 
-class RepositoryVersion(BaseResource):
-    """RepositoryVersion resource model extending BaseResource.
+class RepositoryVersionMetaCreate(BaseModel):
+    """RepositoryVersion metadata for creation."""
 
-    OPERATION SUPPORT:
-    ==================
-    ✅ GET: List repository versions, Get by UUID
-    ❌ CREATE: Not supported (managed by platform integrations)
-    ❌ UPDATE: Not supported (repository versions are read-only)
-    ❌ DELETE: Not supported (managed by platform integrations)
-
-    FIELD MUTABILITY (per OpenAPI spec):
-    =====================================
-    IMMUTABLE FIELDS (readOnly: true in API spec):
-    - uuid: Unique identifier (readOnly: true in UpdateRepositoryVersion request body)
-    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
-      (readOnly: true in v1Meta)
-    - meta.kind, meta.version: Resource metadata (readOnly: true in v1Meta)
-    - meta.created_by, meta.updated_by: Audit fields (readOnly: true in v1Meta)
-    - meta.references, meta.index_data: System-managed fields (readOnly: true in v1Meta)
-    - tenant_meta.namespace: Namespace assignment
-
-    MUTABLE FIELDS (NOT readOnly in API spec):
-    - meta.name, meta.description, meta.tags: Metadata
-    - spec.version: Version information (NOT readOnly in v1RepositoryVersionSpec)
-    - spec.last_commit_date: Last commit date (NOT readOnly in v1RepositoryVersionSpec)
-    - scan_object.*: Scan object fields
-    - context.*: Context fields
-
-    Note: Repository versions are automatically synchronized from platform integrations
-    and typically should not be manually updated through the API.
-    """
-
-    # RepositoryVersion-specific fields (universal fields inherited from BaseResource)
-    spec: RepositoryVersionSpec = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        ..., description="RepositoryVersion specification"
-    )
-    # Conditional attributes from Resource Guide example
-    context: dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None, description="Contextual information", alias="context"
-    )
-    scan_object: ScanObject | dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None, description="Scan object information", alias="scan_object"
-    )
-
-    model_config = ConfigDict(extra="ignore")
-
-    def __init__(self, **data: Any) -> None:
-        # Convert spec to RepositoryVersionSpec if it's a dict
-        if "spec" in data and isinstance(data["spec"], dict):
-            data["spec"] = RepositoryVersionSpec(**data["spec"])
-        super().__init__(**data)
-
-    @override
-    @classmethod
-    def get_mutable_fields_cls(cls) -> list[str]:
-        """Get list of mutable fields for RepositoryVersion."""
-        return ["meta.name", "meta.description", "meta.tags", "spec"]
+    name: str = Field(..., description="RepositoryVersion name")
+    description: str | None = Field(None, description="RepositoryVersion description")
 
 
-# Payload models for create and update operations
+class RepositoryVersionMetaUpdate(BaseModel):
+    """RepositoryVersion metadata for update."""
+
+    description: str | None = Field(None, description="RepositoryVersion description")
+
+
 class CreateRepositoryVersionPayload(BaseModel):
     """Payload for creating a repository version."""
 
@@ -158,15 +107,6 @@ class CreateRepositoryVersionPayload(BaseModel):
     )
     spec: RepositoryVersionSpec = Field(
         ..., description="RepositoryVersion specification"
-    )
-
-
-def build_create_payload(**kwargs: Any) -> CreateRepositoryVersionPayload:
-    """Build CreateRepositoryVersionPayload from kwargs (decoupled create)."""
-    from ..utils.create_payload import pass_through_create_payload
-
-    return pass_through_create_payload(
-        CreateRepositoryVersionPayload, kwargs, attr_name="RepositoryVersion"
     )
 
 
@@ -181,14 +121,10 @@ class UpdateRepositoryVersionPayload(BaseModel):
     )
 
 
-class RepositoryVersionMetaCreate(BaseModel):
-    """RepositoryVersion metadata for creation."""
+def build_create_payload(**kwargs: Any) -> CreateRepositoryVersionPayload:
+    """Build CreateRepositoryVersionPayload from kwargs (decoupled facade create)."""
+    from ..utils.create_payload import pass_through_create_payload
 
-    name: str = Field(..., description="RepositoryVersion name")
-    description: str | None = Field(None, description="RepositoryVersion description")
-
-
-class RepositoryVersionMetaUpdate(BaseModel):
-    """RepositoryVersion metadata for update."""
-
-    description: str | None = Field(None, description="RepositoryVersion description")
+    return pass_through_create_payload(
+        CreateRepositoryVersionPayload, kwargs, attr_name="RepositoryVersion"
+    )

@@ -1,67 +1,20 @@
-"""PolicyTemplate resource module for Endor Labs API.
-
-Policy templates can be used to create policies from templates. This resource
-is system-owned: LIST is supported; GET, UPDATE, and DELETE return 403 (only
-system can perform them). The Client exposes list() only; use
-client.PolicyTemplate.list().
-"""
+"""PolicyTemplate — thin consumer wrapper over generated V1PolicyTemplate."""
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import ClassVar
 
-from pydantic import Field
+from endorlabs.generated.models.policy_template_service import V1PolicyTemplate
 
-from ..utils.logging_config import get_resource_logger
-from .base import (
-    BaseMeta,
-    BaseResource,
-    BaseSpec,
-)
-
-logger = get_resource_logger(__name__)
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin
 
 
-class PolicyTemplateSpec(BaseSpec):
-    """Policy template specification extending BaseSpec."""
+class PolicyTemplate(
+    V1PolicyTemplate, ConsumerResourceWireMixin, ConsumerResourceMixin
+):
+    """Consumer facade model for PolicyTemplate (generated wire shape)."""
 
-    rule: str | None = Field(
-        None,
-        description="Policy template rule in text format (e.g. Rego).",
-    )
-    template_parameters: list[dict[str, Any]] | None = Field(
-        None,
-        description="Template parameters.",
-    )
-    finding_categories: list[str] | None = Field(
-        None,
-        description="Finding categories.",
-    )
-    policy_type: str | None = Field(
-        None,
-        description="Policy type.",
-    )
-    query_statements: list[str] | None = Field(
-        None,
-        description="Query statements.",
-    )
-    resource_kinds: list[str] | None = Field(
-        None,
-        description="Resource kinds.",
-    )
-
-
-class PolicyTemplateMeta(BaseMeta):
-    """Policy template metadata extending BaseMeta."""
-
-    pass
-
-
-class PolicyTemplate(BaseResource):
-    """Policy Template resource model. List and get only."""
-
-    spec: PolicyTemplateSpec | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None, description="Policy template specification"
-    )
-
-    model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("PolicyTemplate")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("PolicyTemplate")

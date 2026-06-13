@@ -1,35 +1,22 @@
-"""ScanLogRequest resource module for Endor Labs API.
-
-This module provides operations for retrieving scan result logs via the
-ScanLogRequest API. This is a request-based API (not standard CRUD).
-
-API OPERATIONS SUPPORTED:
-- POST: Create scan log request (retrieves logs in response)
-
-API USAGE NOTES:
-- ScanLogRequest is a request-based API, not a standard CRUD resource
-- Create a request with filters to retrieve scan logs
-- Logs are returned in the response's spec.log_messages array
-- Can filter by scan_result_uuid, execution_id, project_uuid, etc.
-- Namespace: the path namespace must be the one that owns the scan result
-  (use the scan result's tenant_meta.namespace; parent namespace will fail).
-- For more information, see the ScanLogRequestService REST API documentation
-"""
+"""ScanLogRequest — thin consumer wrapper over generated V1ScanLogRequest."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field, model_validator
 
-from ..operations import BaseResourceOperations
-from ..utils.logging_config import get_resource_logger
-from .base import (
-    BaseMeta,
-    BaseResource,
-    BaseSpec,
-    FlexibleEnum,
+from endorlabs.generated.models.scan_log_request_service import (
+    V1LogLevel,
+    V1ScanLogRequest,
+    V1ScanLogRequestLogMessage,
 )
+
+from ..utils.logging_config import get_resource_logger
+from .base import FlexibleEnum
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import ConsumerResourceWireMixin, ScanLogRequestSpec
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -51,175 +38,45 @@ class ScanLogLevel(FlexibleEnum):
     DEBUG = "LOG_LEVEL_DEBUG"
 
 
-class ScanLogRequestLogMessage(BaseModel):
-    """Log message structure returned in scan log requests."""
-
-    level: ScanLogLevel | None = Field(None, description="Log level")
-    json_payload: dict[str, Any] | None = Field(
-        None, description="JSON payload of the message"
-    )
-    tags: dict[str, str] | None = Field(
-        None, description="Tags associated with the log message"
-    )
-    timestamp: str | None = Field(
-        None,
-        description="Timestamp of the log message",
-        json_schema_extra={"format": "date-time"},
-    )
+ScanLogRequestLogMessage = V1ScanLogRequestLogMessage
 
 
-class ScanLogRequestMeta(BaseMeta):
-    """Scan log request metadata extending BaseMeta."""
+class ScanLogRequest(
+    V1ScanLogRequest, ConsumerResourceWireMixin, ConsumerResourceMixin
+):
+    """Consumer facade model for ScanLogRequest (generated wire shape)."""
 
-    # ScanLogRequest-specific fields only (universal fields inherited from BaseMeta)
-    pass  # No additional fields needed, all were universal
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("ScanLogRequest")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("ScanLogRequest")
 
+    spec: ScanLogRequestSpec | None = None  # pyright: ignore[reportIncompatibleVariableOverride]
 
-class ScanLogRequestSpec(BaseSpec):
-    """Scan log request specification extending BaseSpec.
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_spec_dict(cls, data: Any) -> Any:
+        from .consumer.wire_compat import coerce_legacy_tenant_meta
 
-    This spec is used both for creating requests (input) and receiving
-    responses (output). The log_messages field is read-only and only
-    present in responses.
-    """
-
-    # Required fields
-    max_entries: int = Field(..., description="Maximum number of log entries to return")
-
-    # Optional filter fields
-    start_time: str | None = Field(
-        None,
-        description="Start time for log retrieval. If not defined, uses "
-        "create time of corresponding scan request.",
-        json_schema_extra={"format": "date-time"},
-    )
-    end_time: str | None = Field(
-        None,
-        description="End time cap for log retrieval. Default is 2 days "
-        "from start_time.",
-        json_schema_extra={"format": "date-time"},
-    )
-    newest_first: bool | None = Field(
-        None, description="Return log entries in reverse chronological order"
-    )
-    log_levels: list[ScanLogLevel] | None = Field(
-        None, description="Log levels to filter by"
-    )
-
-    # Filter by resource UUIDs
-    scan_result_uuid: str | None = Field(
-        None, description="UUID of scan result to filter logs"
-    )
-    execution_id: str | None = Field(
-        None,
-        description="Execution ID of scan to filter logs. Maps to "
-        "spec.result.ci_run_uuid in ScanRequest and "
-        "spec.environment.config.ExecutionID in ScanResult. "
-        "Performance: Provide spec.start_time to avoid DB lookups.",
-    )
-    project_uuid: str | None = Field(None, description="Project UUID to filter logs")
-    installation_uuid: str | None = Field(
-        None, description="Installation UUID to filter logs"
-    )
-    scan_request_uuid: str | None = Field(
-        None, description="Scan request UUID to filter logs"
-    )
-    onprem_scheduler_uuid: str | None = Field(
-        None, description="On-prem scheduler UUID to filter logs"
-    )
-
-    # Admin-only fields
-    admin_filter: str | None = Field(
-        None, description="Extra filter available only for admin users"
-    )
-
-    # Read-only response fields
-    applied_filter: str | None = Field(
-        None,
-        description="Filter that was applied to logs",
-        json_schema_extra={"readOnly": True},
-    )
-    log_messages: list[ScanLogRequestLogMessage] | None = Field(
-        None,
-        description="Array of log messages (read-only, present in response)",
-        json_schema_extra={"readOnly": True},
-    )
-
-
-class ScanLogRequest(BaseResource):
-    """An Endor Labs ScanLogRequest entity extending BaseResource.
-
-    ScanLogRequest-specific fields (universal fields inherited from BaseResource).
-
-    OPERATION SUPPORT:
-    ==================
-    ✅ POST: Create scan log request (retrieves logs in response)
-    ❌ GET: Not supported (request-based API)
-    ❌ LIST: Not supported (request-based API)
-    ❌ PATCH: Not supported (request-based API)
-    ❌ DELETE: Not supported (request-based API)
-
-    SPECIAL NOTES:
-    ==============
-    - This is a request-based API, not standard CRUD
-    - Create a request with filters to retrieve scan logs
-    - Logs are returned in spec.log_messages array
-    - Use get_scan_result_logs() helper for convenience
-    - UUID may be None in responses (request-based API)
-    """
-
-    # ScanLogRequest-specific fields (universal fields inherited from BaseResource)
-    spec: ScanLogRequestSpec = Field(..., description="Scan log request specification")  # type: ignore
-    uuid: str | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        None, description="UUID (may be None for request-based API)"
-    )
-
-    model_config = ConfigDict(extra="ignore")
-
-    def __init__(self, **data: Any) -> None:
-        # Convert spec to ScanLogRequestSpec if it's a dict
-        if "spec" in data and isinstance(data["spec"], dict):
-            data["spec"] = ScanLogRequestSpec(**data["spec"])
-        super().__init__(**data)
+        data = coerce_legacy_tenant_meta(data)
+        if isinstance(data, dict) and isinstance(data.get("spec"), dict):
+            data = {**data, "spec": ScanLogRequestSpec(**data["spec"])}
+        return data
 
 
 class ScanLogRequestSpecCreate(BaseModel):
     """Specification for creating a ScanLogRequest."""
 
     max_entries: int = Field(..., description="Maximum number of log entries to return")
-    start_time: str | None = Field(
-        None,
-        description="Start time for log retrieval",
-        json_schema_extra={"format": "date-time"},
-    )
-    end_time: str | None = Field(
-        None,
-        description="End time cap for log retrieval",
-        json_schema_extra={"format": "date-time"},
-    )
-    newest_first: bool | None = Field(
-        None, description="Return logs in reverse chronological order"
-    )
-    log_levels: list[ScanLogLevel] | None = Field(
-        None, description="Log levels to filter by"
-    )
-    scan_result_uuid: str | None = Field(
-        None, description="UUID of scan result to filter logs"
-    )
-    execution_id: str | None = Field(
-        None, description="Execution ID of scan to filter logs"
-    )
-    project_uuid: str | None = Field(None, description="Project UUID to filter logs")
-    installation_uuid: str | None = Field(
-        None, description="Installation UUID to filter logs"
-    )
-    scan_request_uuid: str | None = Field(
-        None, description="Scan request UUID to filter logs"
-    )
-    onprem_scheduler_uuid: str | None = Field(
-        None, description="On-prem scheduler UUID to filter logs"
-    )
-    admin_filter: str | None = Field(None, description="Admin-only filter")
+    start_time: str | None = None
+    end_time: str | None = None
+    newest_first: bool | None = None
+    log_levels: list[ScanLogLevel | V1LogLevel | str] | None = None
+    scan_result_uuid: str | None = None
+    execution_id: str | None = None
+    project_uuid: str | None = None
+    installation_uuid: str | None = None
+    scan_request_uuid: str | None = None
+    onprem_scheduler_uuid: str | None = None
+    admin_filter: str | None = None
 
 
 class ScanLogRequestMetaCreate(BaseModel):
@@ -246,40 +103,10 @@ def get_scan_result_logs(
     start_time: str | None = None,
     end_time: str | None = None,
     newest_first: bool | None = None,
-) -> list[ScanLogRequestLogMessage] | None:
-    """Retrieve logs for a specific scan result.
+) -> list[V1ScanLogRequestLogMessage] | None:
+    """Retrieve logs for a specific scan result."""
+    from endorlabs.operations import BaseResourceOperations
 
-    Convenience helper that creates a ScanLogRequest and extracts the log
-    messages from the response.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Namespace that owns the scan result
-            (e.g. scan_result.tenant_meta.namespace).
-        scan_result_uuid: UUID of the scan result to get logs for
-        max_entries: Maximum number of log entries to return (default: 100)
-        log_levels: Optional list of log levels to filter by
-        start_time: Optional start time for log retrieval (ISO format)
-        end_time: Optional end time for log retrieval (ISO format)
-        newest_first: Optional flag to return logs in reverse chronological order
-
-    Returns:
-        List of log messages if successful, None otherwise
-
-    Example:
-        >>> # Get error and warning logs for a scan result
-        >>> logs = get_scan_result_logs(
-        ...     client,
-        ...     namespace,
-        ...     "scan-result-uuid",
-        ...     max_entries=50,
-        ...     log_levels=[ScanLogLevel.ERROR, ScanLogLevel.WARNING]
-        ... )
-        >>> if logs:
-        ...     for log in logs:
-        ...         print(f"{log.timestamp} [{log.level}]: {log.json_payload}")
-
-    """
     payload = CreateScanLogRequestPayload(
         meta=ScanLogRequestMetaCreate(name=f"scan-logs-{scan_result_uuid[:8]}"),
         spec=ScanLogRequestSpecCreate(
@@ -289,12 +116,6 @@ def get_scan_result_logs(
             start_time=start_time,
             end_time=end_time,
             newest_first=newest_first,
-            execution_id=None,
-            project_uuid=None,
-            installation_uuid=None,
-            scan_request_uuid=None,
-            onprem_scheduler_uuid=None,
-            admin_filter=None,
         ),
     )
 

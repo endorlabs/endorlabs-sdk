@@ -153,8 +153,12 @@ class TestAuditLog:
         assert_bounded_log_rows(filtered_logs)
         for log_item in filtered_logs:
             if log_item.meta.create_time:
-                log_time_str = log_item.meta.create_time.replace("Z", "+00:00")
-                log_time = datetime.fromisoformat(log_time_str)
+                create_time = log_item.meta.create_time
+                if isinstance(create_time, datetime):
+                    log_time = create_time
+                else:
+                    log_time_str = create_time.replace("Z", "+00:00")
+                    log_time = datetime.fromisoformat(log_time_str)
                 if log_time.tzinfo is None:
                     log_time = log_time.replace(tzinfo=UTC)
                 assert from_date <= log_time <= to_date

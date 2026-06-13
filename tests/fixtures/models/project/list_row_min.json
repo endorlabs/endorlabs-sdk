@@ -1,0 +1,9 @@
+{
+  "uuid": "000000000000000000000001",
+  "meta": {
+    "name": "wire-project"
+  },
+  "tenant_meta": {
+    "namespace": "tenant.example"
+  }
+}

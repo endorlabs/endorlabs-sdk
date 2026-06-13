@@ -1,0 +1,9 @@
+{
+  "uuid": "000000000000000000000001",
+  "meta": {
+    "name": "wire-version_upgrade"
+  },
+  "tenant_meta": {
+    "namespace": "tenant.example"
+  }
+}

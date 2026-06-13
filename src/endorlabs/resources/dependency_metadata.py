@@ -10,41 +10,36 @@ from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field
 
-from endorlabs.generated.models.dependency_metadata_service import V1DependencyMetadata
+from endorlabs.generated.models.dependency_metadata_service import (
+    V1DependencyMetadata,
+)
+from endorlabs.generated.models.dependency_metadata_service import (
+    V1DependencyMetadataSpec as _V1DependencyMetadataSpec,
+)
+
+from .consumer.mixin import ConsumerResourceMixin
+from .consumer.registry_fields import immutable_fields_for, mutable_fields_for
+from .consumer.wire_compat import (
+    ConsumerContext,
+    ConsumerResourceWireMixin,
+    partial_spec_model,
+)
+
+DependencyMetadataSpec = partial_spec_model(
+    _V1DependencyMetadataSpec, name="DependencyMetadataSpec"
+)
 
 
-class DependencyMetadata(V1DependencyMetadata):
+class DependencyMetadata(
+    V1DependencyMetadata, ConsumerResourceWireMixin, ConsumerResourceMixin
+):
     """Facade model for DependencyMetadata (generated wire shape)."""
 
-    _MUTABLE_FIELDS: ClassVar[list[str]] = [
-        "meta.description",
-        "meta.name",
-        "meta.tags",
-        "spec",
-    ]
-    _IMMUTABLE_FIELDS: ClassVar[list[str]] = [
-        "meta.create_time",
-        "meta.created_by",
-        "meta.index_data",
-        "meta.kind",
-        "meta.references",
-        "meta.update_time",
-        "meta.updated_by",
-        "meta.upsert_time",
-        "meta.version",
-        "tenant_meta.namespace",
-        "uuid",
-    ]
+    _MUTABLE_FIELDS: ClassVar[list[str]] = mutable_fields_for("DependencyMetadata")
+    _IMMUTABLE_FIELDS: ClassVar[list[str]] = immutable_fields_for("DependencyMetadata")
 
-    @classmethod
-    def get_mutable_fields_cls(cls) -> list[str]:
-        """Return mutable field paths for updates."""
-        return list(cls._MUTABLE_FIELDS)
-
-    @classmethod
-    def get_immutable_fields_cls(cls) -> list[str]:
-        """Return read-only field paths."""
-        return list(cls._IMMUTABLE_FIELDS)
+    spec: DependencyMetadataSpec | None = None  # pyright: ignore[reportIncompatibleVariableOverride]
+    context: ConsumerContext | None = None  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class CreateDependencyMetadataPayload(BaseModel):
