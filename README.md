@@ -127,13 +127,12 @@ client.wait_until(
     timeout=300,
 )
 
-scans = client.ScanResult.list(
-    parent=project,
-    max_pages=1,
-    sort_by="meta.create_time",
-    desc=True,
-)
+scans = client.ScanResult.list_by_project(project, limit=1)
+latest_scan = scans.values[0] if scans.values else None
+findings = client.Finding.list_for_context(latest_scan, max_pages=1) if latest_scan else None
 ```
+
+**Relationship accessors** — prefer generated helpers over hand-built filters when the edge exists in the contract (`list_by_project`, `list_for_context`, `Finding.to_dependency_metadata`). They return `RouteResult` (use `.values` / `.value`). Catalog: [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md) · guide: [docs/guides/facade-helpers.md](docs/guides/facade-helpers.md).
 
 More patterns (filters, `F()`, masks, namespace scoping): [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md), [docs/guides/retrieving-scan-results.md](docs/guides/retrieving-scan-results.md).
 

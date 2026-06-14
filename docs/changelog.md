@@ -8,6 +8,16 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+### Changed
+
+### Breaking
+
+## 0.3.0
+
+V1 consumer facade cutover: package split, contract-driven routes, `search_by_*` discovery, generated relationship accessors, and removal of deprecated lookup/resolve/shim surfaces. See **Breaking** below for migration paths.
+
+### Added
+
 - **Scan-plane partition accessors** — `{Kind}.list_for_context(source)` and `context_partition_filter()` list rows sharing `context.type` + `context.id` with a source row (e.g. `ScanResult`). See [facade-helpers.md](guides/facade-helpers.md) and [resource-routes.md](generated-reference/resource-routes.md).
 - **Generated accessor helpers** — `Finding.list_by_project`, `Finding.to_dependency_metadata`, `ScanResult.list_by_project`, `PackageVersion.list_by_project` return `RouteResult`; relationship map in [resource-routes.md](generated-reference/resource-routes.md). Regenerate with `devtools/generate_route_contract.py`.
 - **Identity lane** — `Project.search_by_name`, `VectorStore.search_by_name`, `AuthorizationPolicy.search_by_claims`, `Vulnerability.search_by_vuln_alias` (bounded list discovery; forwards `list()` kwargs including `mask` and `filter` / `F()`). Contract: [resource-discovery.md](../agent-knowledge/contracts/resource-discovery.md).
@@ -32,7 +42,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - Removed **`workflows.projects.resolve`** (`search_projects_by_name_or_uuid`) — use `client.Project.search_by_name`.
 - Removed **`Finding.to_semgrep_rule`** — no workflow or skill consumer; use explicit `Finding.list` / `SemgrepRule.get` when needed.
 - Removed **`Finding.list_for_scan`** and **`ScanResult.list_for_project`** — use **`list_for_context`** / **`list_by_project`** (`RouteResult`).
-- Removed **`list_scan_results_for_project`** and **`list_projects`** from `workflows.troubleshooting_scans` — use `client.ScanResult.list_by_project` and `client.Project.list`.
+- Removed **`list_scan_results_for_project`** and **`list_projects`** from `workflows.troubleshooting_scans` — use `client.ScanResult.list_by_project` and `client.Project.search_by_name`.
 - Removed **`operations.call_graph`** — use **`resources.call_graph_data`** and `client.CallGraphData.decode` / `fetch`.
 - Removed **`workflows.callgraph.proto_decode`** — use **`resources.call_graph_data_proto`**.
 - **`retrieve_dep_metadata_full`** now takes **`endorlabs.Client`** (first argument), not `APIClient`.
