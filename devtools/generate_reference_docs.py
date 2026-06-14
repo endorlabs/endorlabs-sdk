@@ -51,28 +51,28 @@ COVERAGE_JSON = GENERATED_REFERENCE_DIR / "coverage.json"
 SDK_OP_ORDER = ("list", "get", "create", "update", "delete")
 
 RESOURCE_LIMITATIONS: dict[str, str] = {
-    "project": "Platform-managed",
-    "repository": "Platform-managed",
-    "repository_version": "Platform-managed",
-    "package_version": "Scan-discovered; API may return 501 for PATCH",
-    "finding": "Scan-generated",
-    "scan_result": "Scan-generated",
-    "policy": "Rego in payload",
-    "installation": "Platform-managed",
-    "metric": "Analytics-generated",
-    "dependency_metadata": "OSS namespace; relationship resource",
-    "linter_result": "Scan-generated",
-    "scan_log_request": "Request-based only; no list/get/delete for log messages",
-    "scan_workflow": "Platform-managed",
-    "scan_workflow_result": "Platform-managed",
-    "version_upgrade": "Platform-managed",
-    "authentication_log": "Tenant-context read-only resource",
-    "endor_license": "Tenant-context read-only resource",
-    "policy_template": "Tenant-context read-only resource",
-    "vulnerability": "OSS-scoped vulnerability dataset",
-    "malware": "OSS-scoped malware dataset",
-    "query_vulnerability": "Request-based query endpoint (create only)",
-    "query_malware": "Request-based query endpoint (create only)",
+    "Project": "Platform-managed",
+    "Repository": "Platform-managed",
+    "RepositoryVersion": "Platform-managed",
+    "PackageVersion": "Scan-discovered; API may return 501 for PATCH",
+    "Finding": "Scan-generated",
+    "ScanResult": "Scan-generated",
+    "Policy": "Rego in payload",
+    "Installation": "Platform-managed",
+    "Metric": "Analytics-generated",
+    "DependencyMetadata": "Relationship resource; see dependency-metadata contract",
+    "LinterResult": "Scan-generated",
+    "ScanLogRequest": "Request-based only; no list/get/delete for log messages",
+    "ScanWorkflow": "Platform-managed",
+    "ScanWorkflowResult": "Platform-managed",
+    "VersionUpgrade": "Platform-managed",
+    "AuthenticationLog": "Tenant-context read-only resource",
+    "EndorLicense": "Tenant-context read-only resource",
+    "PolicyTemplate": "Tenant-context read-only resource",
+    "Vulnerability": "OSS-scoped vulnerability dataset",
+    "Malware": "OSS-scoped malware dataset",
+    "QueryVulnerability": "Request-based query endpoint (create only)",
+    "QueryMalware": "Request-based query endpoint (create only)",
 }
 
 
@@ -270,11 +270,15 @@ def _generate_resources_md(spec: dict[str, Any]) -> str:
         "- Scope values: `tenant` (default namespace resolution), `oss`",
         "  (namespace fixed to `oss`).",
         "",
+    ]
+    lines.extend(_model_sync_coverage_lines())
+    lines.extend(
+        [
         "| Resource | List (sdk/spec) | Get (sdk/spec) | Create (sdk/spec) | "
         "Update (sdk/spec) | Delete (sdk/spec) | Scope | Parent | Limitations |",
         "|----------|------------------|----------------|-------------------|-------------------|-------------------|-------|--------|-------------|",
-    ]
-    lines.extend(_model_sync_coverage_lines())
+        ]
+    )
     for entry in sorted(RESOURCE_REGISTRY, key=lambda e: e.attr_name):
         spec_support = _spec_support_by_op(spec, entry.resource_name)
         limitations = RESOURCE_LIMITATIONS.get(entry.attr_name, "—")
@@ -329,13 +333,17 @@ def _generate_payloads_md() -> str:
         "and payload models.",
         _model_sync_summary(),
         "",
+    ]
+    lines.extend(_model_sync_coverage_lines())
+    lines.extend(
+        [
         "## Create payload/builders",
         "",
         "| Resource | SDK create support | Builder | Payload model | "
         "Required fields | Optional fields |",
         "|----------|--------------------|---------|---------------|-----------------|-----------------|",
-    ]
-    lines.extend(_model_sync_coverage_lines())
+        ]
+    )
     for entry in sorted(RESOURCE_REGISTRY, key=lambda e: e.attr_name):
         create_supported = "create" in entry.supported_ops
         builder = entry.build_create_payload_fn
@@ -418,15 +426,28 @@ def _format_signature_line(name: str, fn: Any) -> str:
 
 
 def _generate_api_surfaces_md() -> str:
+    from doc_facade_helpers import (
+        render_custom_facades_table,
+        render_identity_lane_table,
+        render_listable_helpers_table,
+        render_route_accessor_table,
+    )
+
     lines = [
         "# API Surfaces (generated)",
         "",
         "Auto-generated inventories for stable/public surfaces.",
         "",
-        "## Top-level exports (`endorlabs.__all__`)",
-        "",
     ]
     lines.extend(_model_sync_coverage_lines())
+    lines.extend(
+        [
+            "Normative usage: [facade-helpers.md](../guides/facade-helpers.md).",
+            "",
+            "## Top-level exports (`endorlabs.__all__`)",
+            "",
+        ]
+    )
     lines.extend([f"- `{symbol}`" for symbol in sorted(endorlabs.__all__)])
 
     lines.extend(
@@ -508,12 +529,23 @@ def _generate_api_surfaces_md() -> str:
             f"{ops} |"
         )
 
+    lines.extend(
+        [
+            "",
+            render_identity_lane_table(),
+            render_route_accessor_table(),
+            render_custom_facades_table(),
+            render_listable_helpers_table(),
+        ]
+    )
+
     lines.append("")
     return "\n".join(lines)
 
 
 def _write_if_changed(path: Path, content: str) -> bool:
     path.parent.mkdir(parents=True, exist_ok=True)
+    content = content.rstrip("\n") + "\n"
     old = path.read_text(encoding="utf-8") if path.exists() else ""
     if old == content:
         return False

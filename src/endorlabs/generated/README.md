@@ -7,6 +7,9 @@ construction.
 
 - `registry_contract.py` - generated runtime registry contract used by
   `endorlabs.registry`.
+- `route_contract.py` - generated relationship accessor edges for
+  `list_by_project`, `list_for_context`, and stitch helpers.
+- `resource_index.json` - index for per-resource reference pages.
 - `models/**` - generated model modules produced by model-sync (no on-disk staging tree).
 
 There is no committed `workspace/model-sync/` staging directory; the runtime contract lives in `registry_contract.py` only.
@@ -29,7 +32,7 @@ There is no committed `workspace/model-sync/` staging directory; the runtime con
 
 - Generated CRUD metadata/resources flow through the registry adapter.
 - Manual custom facades remain explicit in `CUSTOM_FACADE_REGISTRY` (for example
-  `ScanLogs`).
+  `CallGraphData`).
 
 ## Maintenance checklist for future agents
 

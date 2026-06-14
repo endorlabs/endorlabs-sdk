@@ -50,15 +50,21 @@ client = endorlabs.Client(tenant=os.getenv("ENDOR_NAMESPACE", "tenant.namespace"
 namespaces = client.Namespace.list(traverse=True)
 print(f"Namespaces: {len(namespaces)}")
 
-projects = client.Project.list(traverse=True, max_pages=1, page_size=25)
+projects = client.Project.search_by_name(
+    "github.com/org/repo",
+    traverse=True,
+    max_pages=2,
+)
 for project in projects[:5]:
     print(project.meta.name if project.meta else project.uuid)
 ```
 
+For repo URL discovery, prefer **`Project.search_by_name`** over unfiltered `Project.list(traverse=True)` — see [facade-helpers.md](facade-helpers.md). Tenant-wide namespace inventory still uses `Namespace.list(traverse=True)` (shown above).
+
 **Skill:** [endor-retrieve-scan-results](../../agent-knowledge/skills/endor-retrieve-scan-results/SKILL.md) —
 Project → ScanResult → Finding hierarchy, namespace scoping, and filters.
 
-**Guide:** [retrieving-scan-results.md](retrieving-scan-results.md)
+**Guide:** [retrieving-scan-results.md](retrieving-scan-results.md) · **Accessors:** [facade-helpers.md](facade-helpers.md) · [resource-routes.md](../generated-reference/resource-routes.md)
 
 ## 3. Filters with `F()`
 

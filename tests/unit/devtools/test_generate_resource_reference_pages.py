@@ -56,6 +56,32 @@ def test_render_vector_store_query_page(vector_store_query_contract: dict) -> No
     assert "VectorStore.md" in page
 
 
+def test_render_project_page_includes_search_by_name() -> None:
+    from generate_resource_reference_pages import _load_contract_resources
+
+    contract = _load_contract_resources()["Project"]
+    page = _render_resource_page(
+        "Project",
+        contract,
+        "Logical root for a repository and its scan results.",
+        {"Project": ["Finding", "ScanResult"]},
+    )
+    assert "## Facade helpers" in page
+    assert "search_by_name" in page
+
+
+def test_generate_prunes_stale_resource_pages() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+    stale = repo_root / "docs" / "generated-reference" / "resources" / "StaleResource.md"
+    stale.write_text("# Stale\n", encoding="utf-8")
+    try:
+        generate_resource_reference_pages()
+        assert not stale.is_file()
+    finally:
+        if stale.is_file():
+            stale.unlink()
+
+
 def test_generate_writes_vector_store_query_page() -> None:
     generate_resource_reference_pages()
     repo_root = Path(__file__).resolve().parents[3]

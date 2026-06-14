@@ -44,8 +44,9 @@ uv run python devtools/verify_ship_artifacts.py --fetch-spec
 ```
 
 The verifier (in order): upstream OpenAPI SHA check (`--verify-upstream-only`), full model-sync
-regeneration, `git diff` on committed generated surfaces (`src/endorlabs/generated/**`,
-`client_surface.pyi`, `docs/generated-reference/**`), and `sync_agent_knowledge.py --verify`.
+regeneration, route contract regeneration (`generate_route_contract.py`), `git diff` on committed
+generated surfaces (`src/endorlabs/generated/**`, `client_surface.pyi`,
+`docs/generated-reference/**`), and `sync_agent_knowledge.py --verify`.
 
 Release workflows also pass `--verify-changelog VERSION` so `docs/changelog.md` contains a
 matching `## VERSION` section before publish.
@@ -68,6 +69,7 @@ When verify fails, regenerate and commit in your PR:
 
 ```bash
 uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
+uv run python devtools/generate_route_contract.py
 uv run python devtools/sync_agent_knowledge.py
 ```
 

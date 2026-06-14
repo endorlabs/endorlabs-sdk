@@ -114,7 +114,7 @@ findings = client.Finding.list(
 | Scenario | Traverse? |
 |----------|-----------|
 | **Findings / ScanResults for a resolved project** | **No** — use `namespace=project.namespace` or `parent=project` |
-| **Discover Project** when namespace unknown | **Yes** — `Project.list(..., traverse=True, max_pages=…)` |
+| **Discover Project** when namespace unknown | **Yes** — `Project.search_by_name(query, traverse=True, max_pages=…)` |
 | **User explicitly requests tenant-wide report** | **Yes** — selective `filter`, cap `max_pages` |
 | **update / delete on a resource** | **No** — pass the resource object or correct namespace |
 
@@ -155,7 +155,7 @@ When counting severity or unique issues, dedupe by explanation/remediation or fi
 | Latest scan for a project | `ScanResult.list_by_project(project, limit=1).values[0]` |
 | Findings for a project | `Finding.list_by_project(project, max_pages=…).values` |
 | Findings for one scan plane | `Finding.list_for_context(scan, max_pages=…).values` |
-| Discover project by URL | `Project.list(filter='meta.name=="…"', traverse=True, max_pages=1)` |
+| Discover project by URL | `Project.search_by_name("github.com/org/repo", traverse=True, max_pages=2)` |
 | Tenant-wide critical (explicit ask) | `Finding.list(filter='spec.level==FINDING_LEVEL_CRITICAL', traverse=True, max_pages=5)` |
 
 ## Related skills
