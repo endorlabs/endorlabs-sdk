@@ -26,7 +26,7 @@ The `traverse` parameter in `ListParameters` automatically queries all child nam
 ```python
 import endorlabs
 
-client = endorlabs.Client(tenant="endor-solutions-tgowan")
+client = endorlabs.Client(tenant="auri")
 
 # Query all DependencyMetadata across all namespaces
 all_deps = client.DependencyMetadata.list(traverse=True)

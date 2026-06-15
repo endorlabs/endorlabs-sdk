@@ -20,12 +20,12 @@ Each skill is a directory with `SKILL.md` plus optional reference files. Format:
 
 | Skill | Trigger | Source docs |
 |-------|---------|-------------|
-| [endor-project-retrieval-bundle](endor-project-retrieval-bundle/) | Single-project retrieval bundle: `endor-agent-context`, manifest, optional session summaries; [MULTIPASS_LLM_CONTRACT.md](endor-project-retrieval-bundle/MULTIPASS_LLM_CONTRACT.md) | `endorlabs.workflows.agent_context` |
+| [endor-project-retrieval-bundle](endor-project-retrieval-bundle/) | Single-project retrieval bundle: `endor-agent-context`, manifest, optional session summaries; [multipass-llm-contract.md](endor-project-retrieval-bundle/multipass-llm-contract.md) | `endorlabs.workflows.agent_context` |
 | [endor-namespace-relationship-map](endor-namespace-relationship-map/) | Namespace consumer→producer project graph (live API); breaking-change focus filter | `endorlabs.workflows.estate.analyze.project_map` |
 | [endor-custom-sast-rules](endor-custom-sast-rules/) | SemgrepRule YAML authoring, validation, import | Canonical (skill-owned) |
 | [endor-dependency-provenance](endor-dependency-provenance/) | Resolve exact package lineage by manifest path/ref and direct-vs-transitive introduction routes | Skill-owned |
 | [endor-dependency-finding-provenance](endor-dependency-finding-provenance/) | Trace vulnerability/dependency lineage and commit-scoped presence across findings, package versions, and artifacts | Skill-owned |
-| [endor-fetch-and-search-call-graph](endor-fetch-and-search-call-graph/) | Fetch/decode call graphs and run safe node/edge/path retrieval workflows | `endorlabs.workflows.callgraph` |
+| [endor-fetch-and-search-call-graph](endor-fetch-and-search-call-graph/) | Fetch/decode call graphs; direct-edge and multi-hop path search (customer PV plane) | `endorlabs.workflows.callgraph` |
 | [endor-implement-sdk-resource](endor-implement-sdk-resource/) | Model-sync-first surface extension, overlay, integration tests | `docs/contributing/architecture.md`, `integration-resource-tests.md` |
 | [endor-model-sync-drift](endor-model-sync-drift/) | OpenAPI/provenance drift; regen `registry_contract`, stubs, reference docs; CI/pre-push verify failures | `docs/contributing/docs-drift-workflow.md`, `devtools/sync/` |
 | [endor-retrieve-scan-results](endor-retrieve-scan-results/) | Querying findings, scan results, or projects | `docs/guides/`, `docs/contributing/` |
@@ -65,6 +65,7 @@ For **Claude API** users: zip each skill directory and upload via the `/v1/skill
 ## Relationship to Other Docs
 
 - **`docs/`**: Full reference material. Skills condense and link to these; originals are unchanged. Namespace bulk workflows (`endor-estate` pull/analyze) are **not** agent skills — see [`docs/estate/`](../docs/estate/README.md) and `workflows.yaml` (`estate-workspace`, `agent_visible: false`).
+- **Evidence discipline:** Distinguish API/artifact-backed claims from inferred conclusions; see [INDEX.md](INDEX.md#evidence-vs-inference) and skill **endor-troubleshoot-sdk** (maintainers: `docs/contributing/troubleshooting.md`).
 - **`rules/`** — always load via `agent_knowledge_bootstrap_paths()` (namespace, workspace, composition, list performance, local context, portable examples).
 - **`contracts/`** — on-demand SDK reference semantics (list parameters, naming, errors, dependency metadata).
 - **`.cursor/rules/`**: Always-on project rules (apply every session). Skills are on-demand (apply when triggered).

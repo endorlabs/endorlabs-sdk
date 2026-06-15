@@ -154,7 +154,7 @@ def test_authoring_skills_validate_against_schema(skill_name: str) -> None:
 
 
 def test_list_skill_refs_uses_posix_byte_order() -> None:
-    """Match Linux CI ordering: uppercase filenames before lowercase directories."""
+    """Match Linux CI ordering: byte-sorted relative paths under the skill dir."""
     skill_dir = (
         REPO_ROOT
         / "src"
@@ -166,7 +166,7 @@ def test_list_skill_refs_uses_posix_byte_order() -> None:
     refs = list_skill_refs(
         skill_dir, bundle_skill_prefix="skills/endor-custom-sast-rules"
     )
-    assert refs[-1] == "skills/endor-custom-sast-rules/scripts/sast_rule_manager.py"
+    assert refs[-1] == "skills/endor-custom-sast-rules/syntax-reference.md"
     assert refs == sorted(refs, key=str.encode)
 
 

@@ -180,13 +180,13 @@ class AuthorizationPolicySpec(BaseSpec):
             "Authorization clauses - list of claims that must match "
             "(AND operation).\n\n"
             "CLAUSE FORMATS:\n"
-            "• User Email: 'user@endor.ai', 'tgowan@endor.ai'\n"
-            "• Domain Wildcard: '*@endor.ai' (all users from domain)\n"
-            "• Identity Provider UUID: '68fae83022a47bdae812bb42' "
+            "• User Email: 'user@example.com', 'admin@example.com'\n"
+            "• Domain Wildcard: '*@example.com' (all users from domain)\n"
+            "• Identity Provider UUID: '0123456789abcdef01234567' "
             "(all users from this IDP)\n"
-            "• API Key: 'example-api-key-placeholder' with 'api-key'\n"
+            "• API Key: 'my-service-credential' with claim 'api-key'\n"
             "• Group Claims: 'group=developers', 'group=admins'\n"
-            "• Mixed: 'tgowan@endor.ai,68fae83022a47bdae812bb42' "
+            "• Mixed: 'admin@example.com,0123456789abcdef01234567' "
             "(user + IDP)\n\n"
             "SECURITY: All clauses must match (AND logic) for policy to apply."
         ),
@@ -311,7 +311,7 @@ class UpdateAuthorizationPolicyPayload(BaseModel):
         ...         description="Updated description"
         ...     ),
         ...     spec=AuthorizationPolicySpec(
-        ...         clause=["user@endor.ai"],
+        ...         clause=["user@example.com"],
         ...         target_namespaces=["namespace"],
         ...         propagate=False,
         ...         permissions=AuthorizationPolicyPermissions(

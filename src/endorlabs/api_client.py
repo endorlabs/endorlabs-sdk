@@ -1,10 +1,7 @@
 """API Client for Endor Labs REST API.
 
-    Provides REST calls with retry, rate limiting, pagination,
-    and logging with redaction.
-
-Author:
-    tgowan@endor.ai
+Provides REST calls with retry, rate limiting, pagination,
+and logging with redaction.
 """
 
 import html

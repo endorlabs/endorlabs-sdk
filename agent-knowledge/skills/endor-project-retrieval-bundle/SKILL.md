@@ -3,7 +3,7 @@ name: endor-project-retrieval-bundle
 description: >-
   Deterministic single-project retrieval bundle via endor-agent-context:
   context_manifest.json, dependency explorer artifacts, optional session
-  summaries, PV index + hydration, optional call-graph sweep. Not namespace
+  summaries, PV index + hydration, optional call-graph export. Not namespace
   topology or breaking-change consumer discovery — hand off to
   endor-namespace-relationship-map.
 endorlabs:
@@ -17,6 +17,7 @@ endorlabs:
     library_entrypoints:
       - endorlabs.workflows.agent_context.build_context_manifest
       - endorlabs.workflows.agent_context.list_package_versions_for_index
+      - endorlabs.workflows.callgraph.run_callgraph_export
 ---
 
 # Project retrieval bundle
@@ -45,8 +46,8 @@ Produce a **versioned, machine-readable retrieval bundle for one project** via *
 | **Who consumes packages my repo produces** (breaking-change blast radius) | — | [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md) with `--focus-producer-project-uuid`, or `endor-estate analyze -n <namespace_scope> --only-relationships --focus-producer-project-uuid` |
 | Full namespace project graph (all edges) | — | namespace relationship map or `endor-estate analyze --only-relationships` |
 | Bulk pull/analyze under a **namespace scope** (explicit user request) | — | [docs/estate/README.md](../../../docs/estate/README.md) (`endor-estate`) |
-| Function-level call graph search | `--callgraph-sweep` | [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md) |
-| Stitched vulnerable-function reachability | bundle as input | `endor-reachability-context` |
+| Function-level call graph search | `--callgraph-export` + `--decode-zstd` | [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md) — **read manifest first**; do not decode arbitrary PVs before export |
+| Stitched vulnerable-function reachability | bundle as input | `endor-reachability-context` → [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) |
 
 **Not `endor-estate`:** this skill is always **single-project** (`--project`). `endor-estate` uses **namespace scope** for multi-project workspace work.
 
@@ -55,7 +56,7 @@ Produce a **versioned, machine-readable retrieval bundle for one project** via *
 1. **Credentials** — `uv run --env-file .env`. Never paste secrets into skills or logs.
 2. **Export** — `uv run endor-agent-context` with `--tenant`, `--project`, optional `--namespace`, `--output-dir`. **Done** when `context_manifest.json` exists. Ambiguous repo URL → **`--namespace`** or **24-hex project UUID** ([AGENTS.md](../../../AGENTS.md#agent-notes)).
 3. **Optional session layer** — `--session-summaries` → `artifacts.session_summaries` in the manifest (counts + paths; read summaries only when needed).
-4. **Read manifest** — [MULTIPASS_LLM_CONTRACT.md](MULTIPASS_LLM_CONTRACT.md) for bounds (`inventory.truncated`, `--pv-limit`, session block).
+4. **Read manifest** — [multipass-llm-contract.md](multipass-llm-contract.md) for bounds (`inventory.truncated`, `--pv-limit`, session block).
 5. **Downstream** — relationship map for cross-repo impact, scan skills for posture, call-graph search as needed.
 
 ## Multi-pass behavior
@@ -64,9 +65,13 @@ Produce a **versioned, machine-readable retrieval bundle for one project** via *
 |------|------|---------|
 | **1 — Index** | `package_versions_index.json` | **On**; `--no-pv-index` to skip |
 | **2 — Hydrate** | BOM + CG + DependencyMetadata | **On** unless `--index-only` |
-| **3 — Sweep** | Full PV call-graph export | `--callgraph-sweep` |
+| **3 — Export** | Full PV call-graph export | `--callgraph-export` (+ `--decode-zstd` for search) |
 
-**Bounds:** Pass 2 default **`--pv-limit` 5** — do not infer repo-wide dependency/call-graph posture from the summary alone; escalate via manifest `warnings` or `--hydrate-top-n` / `--hydrate-pv-uuids` ([MULTIPASS_LLM_CONTRACT.md](MULTIPASS_LLM_CONTRACT.md)).
+Pass 3 writes `artifacts.callgraph_export` in `context_manifest.json`. **Call-graph export does not populate vector stores** — semantic function summaries use tenant `VectorStore` / `VectorStoreQuery` / `endor-vector-query` separately.
+
+**Hand off:** After Pass 3, follow [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md) for path search (direct edges **and** multi-hop BFS when wrappers sit between source and target).
+
+**Bounds:** Pass 2 default **`--pv-limit` 5** — do not infer repo-wide dependency/call-graph posture from the summary alone; escalate via manifest `warnings` or `--hydrate-top-n` / `--hydrate-pv-uuids` ([multipass-llm-contract.md](multipass-llm-contract.md)).
 
 ## CLI entrypoints
 
@@ -75,20 +80,20 @@ Produce a **versioned, machine-readable retrieval bundle for one project** via *
 | Export + manifest | `endor-agent-context` / `endorlabs.workflows.agent_context.export` |
 | Session summaries | `--session-summaries` |
 | PV index helpers | `endorlabs.workflows.agent_context.package_versions` |
-| Call-graph sweep | `--callgraph-sweep` |
+| Call-graph export | `--callgraph-export` |
 
 ## Key flags
 
 - **Core:** `--tenant`, `--project`, `--namespace`, `--output-dir`
 - **Pass 1:** `--no-pv-index`, `--pv-index-max-pages`, `--pv-index-page-size`
 - **Pass 2:** `--index-only`, `--pv-limit`, `--dep-metadata-max-pages`, `--hydrate-pv-uuids`, `--hydrate-top-n`
-- **Pass 3:** `--callgraph-sweep`, `--callgraph-max-pages`, `--decode-zstd`
+- **Pass 3:** `--callgraph-export`, `--callgraph-max-pages`, `--decode-zstd`
 - **Session:** `--session-summaries`
 - **`--deterministic`** — stable ordering for replay/diff
 
 ## Outputs
 
-- **Bundle:** `<output_dir>/<slug>_<timestamp>/` with `context_manifest.json` (version **2**), optional index, dependency explorer files, optional `callgraph_sweep/`, optional session subdir.
+- **Bundle:** `<output_dir>/<slug>_<timestamp>/` with `context_manifest.json` (version **2**), optional index, dependency explorer files, optional `callgraph_export/`, optional session subdir.
 - **Stdout:** absolute path to `context_manifest.json`.
 
 ## Linked skills

@@ -25,3 +25,25 @@ workflows:
       - endorlabs.workflows.estate.analyze_workspace
       - endorlabs.workflows.estate.export_version_cardinality_for_package_match
       - endorlabs.workflows.estate.export_risk_ranked_version_cardinality
+  - id: callgraph-path
+    cli: endor-callgraph-path
+    module: endorlabs.workflows.callgraph.path_cli
+    skill: null
+    default_output: stdout or caller path
+    agent_visible: true
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.callgraph.run_path_search
+      - endorlabs.workflows.callgraph.resolve_package_version_with_callgraph
+      - endorlabs.workflows.callgraph.find_call_graph_path
+  - id: vector-query
+    cli: endor-vector-query
+    module: endorlabs.workflows.vector_search.cli
+    skill: null
+    default_output: stdout or caller path
+    agent_visible: true
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.vector_search.list_tenant_vector_stores
+      - endorlabs.workflows.vector_search.probe_store_indexed_for_project
+      - endorlabs.workflows.vector_search.query_vector_store

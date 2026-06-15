@@ -35,6 +35,7 @@ from devtools.agent_knowledge_catalog import (
     AGENT_CONTRACTS_SUBDIR,
     AGENT_DIRNAME,
     AGENT_RULES_SUBDIR,
+    _is_shipped_rule,
     build_bootstrap_manifest_block,
     build_contract_manifest_entries,
     build_rules_manifest_entries,
@@ -216,6 +217,9 @@ def sync_rules_tree() -> int:
 
     for src_path in sorted(source_dir.glob("*.md")):
         parsed = parse_contract_md(src_path)
+
+        if not _is_shipped_rule(parsed.contract_id):
+            continue
 
         errors.extend(validate_rule(parsed, rule_schema_path=rule_schema))
 

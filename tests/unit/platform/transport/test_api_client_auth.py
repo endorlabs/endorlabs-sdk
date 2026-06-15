@@ -257,16 +257,14 @@ class TestBrowserAuthentication:
         mock_get_token.return_value = "browser-token-123"
 
         with _patch_httpx_client(get_return=_auth_get_response()):
-            client = APIClient(auth_method="sso", auth_tenant="endor-solutions-tgowan")
+            client = APIClient(auth_method="sso", auth_tenant="auri")
 
         assert client.auth_method == "sso"
         assert client._auth_type == "browser"
         assert client._token == "browser-token-123"
         mock_get_token.assert_called_once()
         assert mock_get_token.call_args.kwargs["method"] == "sso"
-        assert (
-            mock_get_token.call_args.kwargs["auth_tenant"] == "endor-solutions-tgowan"
-        )
+        assert mock_get_token.call_args.kwargs["auth_tenant"] == "auri"
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")

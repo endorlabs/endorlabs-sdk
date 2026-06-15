@@ -44,14 +44,14 @@ class TestWhoAmI:
     ) -> None:
         """whoami returns meta.name from matching AuthorizationPolicy."""
         mock_policy = Mock()
-        mock_policy.meta.name = "tgowan@endor.ai"
+        mock_policy.meta.name = "user@example.com"
 
         client_with_api_key.AuthorizationPolicy._ops.list = Mock(
             return_value=[mock_policy],
         )
 
         result = client_with_api_key.whoami()
-        assert result == "tgowan@endor.ai"
+        assert result == "user@example.com"
 
     def test_whoami_returns_none_when_no_match(
         self,

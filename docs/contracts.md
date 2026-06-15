@@ -10,7 +10,7 @@ This document is the in-repo source of truth for shared SDK semantics.
 ## Canonical naming
 
 - Use `tenant.namespace.child` only; never UUIDs in namespace paths.
-- Example: `tenant_meta_namespace="endor-solutions-tgowan"` or `"tenant.acme.backend"`.
+- Example: `tenant_meta_namespace="tenant.acme.backend"` or `"auri"`.
 - **`Client` facade attributes (`attr_name`):** Use **PascalCase** matching the
   resource model class name and `endorctl api … --resource <Kind>` (e.g.
   `client.Project`, `client.QueryVulnerability`). This is an intentional

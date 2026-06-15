@@ -280,10 +280,44 @@ class UpdateScanProfilePayload(BaseModel):
     )
 
 
+def _meta_create_name(meta: Any) -> str | None:
+    """Return ``meta.name`` from a dict or ``ScanProfileMetaCreate`` instance."""
+    if meta is None:
+        return None
+    if isinstance(meta, ScanProfileMetaCreate):
+        return meta.name
+    if isinstance(meta, dict):
+        name = meta.get("name")
+        return name if isinstance(name, str) else None
+    return getattr(meta, "name", None)
+
+
 def build_create_payload(**kwargs: Any) -> CreateScanProfilePayload:
     """Build CreateScanProfilePayload from kwargs (decoupled facade create)."""
-    from ..utils.create_payload import pass_through_create_payload
-
-    return pass_through_create_payload(
-        CreateScanProfilePayload, kwargs, attr_name="ScanProfile"
+    from ..generated.create_convenience import (
+        SCAN_PROFILE_PAYLOAD_TOP_LEVEL_FIELDS,
+        SCAN_PROFILE_SPEC_FIELDS,
     )
+    from ..utils.create_payload import promote_create_kwargs
+
+    if "payload" in kwargs:
+        return CreateScanProfilePayload(**kwargs)
+
+    raw = dict(kwargs)
+    top_level: dict[str, Any] = {}
+    for field in SCAN_PROFILE_PAYLOAD_TOP_LEVEL_FIELDS:
+        if field in raw and field not in {"meta", "spec", "tenant_meta"}:
+            top_level[field] = raw.pop(field)
+
+    payload_kwargs = promote_create_kwargs(
+        raw,
+        spec_fields=SCAN_PROFILE_SPEC_FIELDS,
+        meta_flat_aliases={"name": "name", "description": "description"},
+        resource_label="ScanProfile",
+    )
+    payload_kwargs.update(top_level)
+    if _meta_create_name(payload_kwargs.get("meta")) is None:
+        raise TypeError(
+            "ScanProfile.create requires name= or meta.name in the create payload."
+        )
+    return CreateScanProfilePayload(**payload_kwargs)
