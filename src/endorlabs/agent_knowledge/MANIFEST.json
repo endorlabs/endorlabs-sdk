@@ -55,19 +55,9 @@
       ]
     }
   ],
-  "generated_at": "2026-06-12T03:41:38.608148+00:00",
+  "generated_at": "2026-06-15T19:52:44.712165+00:00",
   "index": "INDEX.md",
   "rules": [
-    {
-      "id": "endor-changelog",
-      "path": "rules/endor-changelog.md",
-      "summary": "Record breaking changes and notable features in docs/changelog.md only; keep Unreleased high-signal; use PR intake block before merge.",
-      "tags": [
-        "changelog",
-        "docs",
-        "release"
-      ]
-    },
     {
       "id": "endor-list-query-performance",
       "path": "rules/endor-list-query-performance.md",
@@ -130,7 +120,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.2.1.dev631",
+  "sdk_version": "0.3.1.dev0",
   "skills": [
     {
       "description": "Author, validate, and import custom OpenGrep/Semgrep rule YAML into Endor Labs SemgrepRule resources. Use when writing or fixing rule syntax, Endor metadata shape, local opengrep/semgrep checks, or importing rules to a namespace \u2014 not for finding triage (hand off to endor-retrieve-scan-results).",
@@ -138,11 +128,11 @@
       "name": "endor-custom-sast-rules",
       "path": "skills/endor-custom-sast-rules/SKILL.md",
       "refs": [
-        "skills/endor-custom-sast-rules/AUTHORING.md",
-        "skills/endor-custom-sast-rules/IMPORT_EXPORT.md",
-        "skills/endor-custom-sast-rules/SEMGREP_RULE_SHAPE_GUARDRAILS.md",
-        "skills/endor-custom-sast-rules/SYNTAX_REFERENCE.md",
-        "skills/endor-custom-sast-rules/scripts/sast_rule_manager.py"
+        "skills/endor-custom-sast-rules/authoring.md",
+        "skills/endor-custom-sast-rules/import-export.md",
+        "skills/endor-custom-sast-rules/scripts/sast_rule_manager.py",
+        "skills/endor-custom-sast-rules/semgrep-rule-shape-guardrails.md",
+        "skills/endor-custom-sast-rules/syntax-reference.md"
       ]
     },
     {
@@ -160,12 +150,12 @@
       "refs": []
     },
     {
-      "description": "Fetch project call graph artifacts, decode zstd payloads into searchable node and edge files, and run safe intersection/path searches. Use when retrieving call graph data, checking whether symbols exist, and extracting node/edge/path facts for downstream reasoning.",
+      "description": "Fetch project call graph artifacts, decode zstd payloads into searchable node and edge files, and run safe direct-edge or multi-hop path searches on the customer PackageVersion plane. Use for static symbol paths (e.g. app code to a dependency API)\u2014not for Finding/CVE reachability triage (hand off to endor-reachability-provenance), scan finding lists (endor-retrieve-scan-results), or natural-language function summaries (VectorStoreQuery; separate flow).",
       "id": "endor-fetch-and-search-call-graph",
       "name": "endor-fetch-and-search-call-graph",
       "path": "skills/endor-fetch-and-search-call-graph/SKILL.md",
       "refs": [
-        "skills/endor-fetch-and-search-call-graph/CALL_GRAPH_FORMAT_AND_SEARCH.md"
+        "skills/endor-fetch-and-search-call-graph/call-graph-format-and-search.md"
       ]
     },
     {
@@ -190,12 +180,12 @@
       "refs": []
     },
     {
-      "description": "Deterministic single-project retrieval bundle via endor-agent-context: context_manifest.json, dependency explorer artifacts, optional session summaries, PV index + hydration, optional call-graph sweep. Not namespace topology or breaking-change consumer discovery \u2014 hand off to endor-namespace-relationship-map.",
+      "description": "Deterministic single-project retrieval bundle via endor-agent-context: context_manifest.json, dependency explorer artifacts, optional session summaries, PV index + hydration, optional call-graph export. Not namespace topology or breaking-change consumer discovery \u2014 hand off to endor-namespace-relationship-map.",
       "id": "endor-project-retrieval-bundle",
       "name": "endor-project-retrieval-bundle",
       "path": "skills/endor-project-retrieval-bundle/SKILL.md",
       "refs": [
-        "skills/endor-project-retrieval-bundle/MULTIPASS_LLM_CONTRACT.md"
+        "skills/endor-project-retrieval-bundle/multipass-llm-contract.md"
       ]
     },
     {
@@ -232,12 +222,12 @@
       "refs": []
     },
     {
-      "description": "Debug Endor Labs SDK errors, API failures, and test issues. Use when encountering 404 Not Found after traverse, 500 Server Error on list, \"Spec is not full\" errors, update_mask validation failures, namespace mismatches, or unexpected test skips. Covers platform-specific gotchas and resolution patterns.",
+      "description": "Debug Endor Labs SDK errors, API failures, and test issues. Use when validating SDK behavior against endorctl or contracts, 404 after traverse, list ServerError at wrong namespace, update_mask validation failures, namespace mismatches, or unexpected test skips.",
       "id": "endor-troubleshoot-sdk",
       "name": "endor-troubleshoot-sdk",
       "path": "skills/endor-troubleshoot-sdk/SKILL.md",
       "refs": [
-        "skills/endor-troubleshoot-sdk/KNOWN_ISSUES.md"
+        "skills/endor-troubleshoot-sdk/validation-reference.md"
       ]
     },
     {
@@ -253,8 +243,8 @@
       "name": "endor-validate-policy",
       "path": "skills/endor-validate-policy/SKILL.md",
       "refs": [
-        "skills/endor-validate-policy/API.md",
-        "skills/endor-validate-policy/ENDORCTL.md"
+        "skills/endor-validate-policy/policy-validation-api.md",
+        "skills/endor-validate-policy/policy-validation-endorctl.md"
       ]
     }
   ],
@@ -267,10 +257,25 @@
       "id": "agent-context",
       "library_entrypoints": [
         "endorlabs.workflows.agent_context.build_context_manifest",
-        "endorlabs.workflows.agent_context.list_package_versions_for_index"
+        "endorlabs.workflows.agent_context.list_package_versions_for_index",
+        "endorlabs.workflows.callgraph.run_callgraph_export"
       ],
       "module": "endorlabs.workflows.agent_context.cli",
       "skill": "endor-project-retrieval-bundle"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-callgraph-path",
+      "composition": "library_api",
+      "default_output": "stdout or caller path",
+      "id": "callgraph-path",
+      "library_entrypoints": [
+        "endorlabs.workflows.callgraph.run_path_search",
+        "endorlabs.workflows.callgraph.resolve_package_version_with_callgraph",
+        "endorlabs.workflows.callgraph.find_call_graph_path"
+      ],
+      "module": "endorlabs.workflows.callgraph.path_cli",
+      "skill": null
     },
     {
       "agent_visible": true,
@@ -279,7 +284,10 @@
       "default_output": "stdout or caller path",
       "id": "callgraph-search",
       "library_entrypoints": [
-        "endorlabs.workflows.callgraph.run_callgraph_sweep"
+        "endorlabs.workflows.callgraph.run_callgraph_export",
+        "endorlabs.workflows.callgraph.find_call_graph_path",
+        "endorlabs.workflows.callgraph.search_decoded_call_graph",
+        "endorlabs.workflows.callgraph.resolve_package_version_with_callgraph"
       ],
       "module": "endorlabs.workflows.callgraph.search",
       "skill": "endor-fetch-and-search-call-graph"
@@ -363,6 +371,20 @@
       ],
       "module": "endorlabs.workflows.troubleshooting_scans",
       "skill": "endor-troubleshooting-scans"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-vector-query",
+      "composition": "library_api",
+      "default_output": "stdout or caller path",
+      "id": "vector-query",
+      "library_entrypoints": [
+        "endorlabs.workflows.vector_search.list_tenant_vector_stores",
+        "endorlabs.workflows.vector_search.probe_store_indexed_for_project",
+        "endorlabs.workflows.vector_search.query_vector_store"
+      ],
+      "module": "endorlabs.workflows.vector_search.cli",
+      "skill": null
     }
   ]
 }

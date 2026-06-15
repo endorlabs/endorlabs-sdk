@@ -17,7 +17,7 @@ structurally close to what you need and adapt it.
 Good sources for reference rules:
 - `.endorlabs-context/semgrep-rules/` (rules already imported into your namespace)
 - [semgrep/semgrep-rules](https://github.com/semgrep/semgrep-rules) (community registry)
-- The Endor Labs platform UI or SDK export (see [IMPORT_EXPORT.md](IMPORT_EXPORT.md))
+- The Endor Labs platform UI or SDK export (see [import-export.md](import-export.md))
 
 ### Anatomy of a rule file
 
@@ -33,7 +33,7 @@ rules:
       category: security
       cwe: ["CWE-532: ..."]
       confidence: HIGH
-      # Endor-specific metadata (see SYNTAX_REFERENCE.md)
+      # Endor-specific metadata (see syntax-reference.md)
       endor-category: vulnerability
       endor-tags: [...]
       endor-targets: [ENDOR_TARGET_REPOSITORY]
@@ -210,7 +210,7 @@ These are recognized by the Endor Labs platform when rules are imported:
 | `endor-rule-origin.license` | Rule license | `Apache-2.0` |
 | `security-severity` | Severity string for platform display | `High` |
 
-See [SYNTAX_REFERENCE.md](SYNTAX_REFERENCE.md) for the full metadata template.
+See [syntax-reference.md](syntax-reference.md) for the full metadata template.
 
 ---
 
@@ -298,7 +298,7 @@ If the logger is followed (anywhere in the same scope) by an
 correctly suppressed, 0 false positives.
 
 After local validation, the rule was imported into Endor Labs with
-`sast_rule_manager.py import` (see [IMPORT_EXPORT.md](IMPORT_EXPORT.md)) and verified
+`sast_rule_manager.py import` (see [import-export.md](import-export.md)) and verified
 with `endorctl scan --sast` (28 findings across 27 files, matching the
 local results exactly).
 
@@ -306,6 +306,6 @@ local results exactly).
 
 ## References
 
-- [SYNTAX_REFERENCE.md](SYNTAX_REFERENCE.md) -- full syntax card
-- [IMPORT_EXPORT.md](IMPORT_EXPORT.md) -- import/export workflow
+- [syntax-reference.md](syntax-reference.md) -- full syntax card
+- [import-export.md](import-export.md) -- import/export workflow
 - [Semgrep Rule Syntax (official docs)](https://semgrep.dev/docs/writing-rules/rule-syntax)

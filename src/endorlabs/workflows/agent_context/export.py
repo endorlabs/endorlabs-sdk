@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Export a machine-readable project context bundle for agent workflows.
 
-Includes BOM, DependencyMetadata, and optional call graph sweep.
+Includes BOM, DependencyMetadata, and optional call graph export.
 
 Multi-pass retrieval:
   Pass 1 — optional wide ``package_versions_index.json`` (bounded list).
   Pass 2 — ``process_project`` hydration (default first *pv_limit* PVs, or
   selected UUIDs / top-N).
-  Pass 3 — optional ``--callgraph-sweep`` over listed package versions.
+  Pass 3 — optional ``--callgraph-export`` over listed package versions.
 
 Writes ``context_manifest.json`` and ``dependency-callgraph-summary.md`` under
 ``<output_dir>/<slug>_<timestamp>/``.
@@ -37,7 +37,7 @@ from endorlabs.workflows.agent_context.session_artifacts import (
     build_project_session_key,
     create_session,
 )
-from endorlabs.workflows.callgraph.sweep import run_callgraph_sweep
+from endorlabs.workflows.callgraph.export import run_callgraph_export
 from endorlabs.workflows.projects.discovery import resolve_project_candidate
 
 LOGGER = get_resource_logger(__name__)
@@ -59,10 +59,10 @@ def build_context_manifest(
     warnings: list[str],
     project_result: ProjectResult,
     out_dir: Path,
-    callgraph_sweep: dict[str, Any] | None,
-    inventory: dict[str, Any] | None,
-    selection: dict[str, Any] | None,
-    hydration: dict[str, Any] | None,
+    callgraph_export: dict[str, Any] | None = None,
+    inventory: dict[str, Any] | None = None,
+    selection: dict[str, Any] | None = None,
+    hydration: dict[str, Any] | None = None,
     session_artifacts: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Assemble the context manifest dict (for JSON serialization)."""
@@ -93,7 +93,7 @@ def build_context_manifest(
         "dep_metadata_row_count": project_result.dep_metadata_count,
         "dep_metadata_truncated": project_result.dep_metadata_truncated,
     }
-    artifacts["callgraph_sweep"] = callgraph_sweep
+    artifacts["callgraph_export"] = callgraph_export
     if session_artifacts is not None:
         artifacts["session_summaries"] = session_artifacts
 
@@ -225,7 +225,7 @@ def parse_args() -> argparse.Namespace:
         help="When resolving selected UUIDs: list page size. Default: 200",
     )
     p.add_argument(
-        "--callgraph-sweep",
+        "--callgraph-export",
         action="store_true",
         help="Pass 3: list package versions and export call graph payloads.",
     )
@@ -239,13 +239,14 @@ def parse_args() -> argparse.Namespace:
         "--callgraph-page-size",
         type=int,
         default=200,
-        help="Pass 3: page size for call graph sweep. Default: 200",
+        help="Pass 3: page size for call graph export. Default: 200",
     )
     p.add_argument(
         "--decode-zstd",
         action="store_true",
         help=(
-            "With --callgraph-sweep, decode zstd and emit decoded callables/edges JSON."
+            "With --callgraph-export, decode zstd and emit decoded "
+            "callables/edges JSON."
         ),
     )
     p.add_argument(
@@ -418,37 +419,39 @@ def main() -> int:
 
         manifest_path = bundle / "context_manifest.json"
 
-        sweep_info: dict[str, Any] | None = None
-        if args.callgraph_sweep:
-            sweep_dir = bundle / "callgraph_sweep"
-            sweep_dir.mkdir(parents=True, exist_ok=True)
-            sweep_result = run_callgraph_sweep(
+        export_info: dict[str, Any] | None = None
+        if args.callgraph_export:
+            export_dir = bundle / "callgraph_export"
+            export_dir.mkdir(parents=True, exist_ok=True)
+            export_result = run_callgraph_export(
                 project_uuid=proj.uuid,
-                out_dir=sweep_dir,
+                out_dir=export_dir,
                 list_namespace=project_ns,
                 max_pages=args.callgraph_max_pages,
                 page_size=args.callgraph_page_size,
                 decode_zstd=bool(args.decode_zstd),
                 client=client,
             )
-            if sweep_result.get("call_graph_exports_total") == 0:
+            if export_result.get("call_graph_exports_total") == 0:
                 warnings.append(
-                    "callgraph_sweep (Pass 3) completed with zero call graph exports "
+                    "callgraph_export (Pass 3) completed with zero call graph exports "
                     "(no CallGraphData for listed package versions)."
                 )
             cap_cg = args.callgraph_max_pages * args.callgraph_page_size
-            if sweep_result.get("package_versions_total", 0) >= cap_cg:
-                pv_total = sweep_result.get("package_versions_total")
+            if export_result.get("package_versions_total", 0) >= cap_cg:
+                pv_total = export_result.get("package_versions_total")
                 warnings.append(
                     f"Pass 3 listed {pv_total} package versions (capacity {cap_cg}); "
                     "raise --callgraph-max-pages / --callgraph-page-size if more exist."
                 )
-            sweep_info = {
-                "pass": "callgraph_sweep_pass_3",
-                "subdir": "callgraph_sweep",
-                "callgraph_sweep_manifest": sweep_result.get("manifest_path", ""),
-                "package_versions_total": sweep_result.get("package_versions_total", 0),
-                "call_graph_exports_total": sweep_result.get(
+            export_info = {
+                "pass": "callgraph_export_pass_3",
+                "subdir": "callgraph_export",
+                "callgraph_export_manifest": export_result.get("manifest_path", ""),
+                "package_versions_total": export_result.get(
+                    "package_versions_total", 0
+                ),
+                "call_graph_exports_total": export_result.get(
                     "call_graph_exports_total", 0
                 ),
                 "list_max_pages": args.callgraph_max_pages,
@@ -518,7 +521,7 @@ def main() -> int:
             "hydrate_top_n": args.hydrate_top_n or None,
             "pv_list_max_pages": args.pv_list_max_pages,
             "pv_list_page_size": args.pv_list_page_size,
-            "callgraph_sweep": args.callgraph_sweep,
+            "callgraph_export": args.callgraph_export,
             "callgraph_max_pages": args.callgraph_max_pages,
             "callgraph_page_size": args.callgraph_page_size,
             "decode_zstd": args.decode_zstd,
@@ -535,7 +538,7 @@ def main() -> int:
             warnings=warnings,
             project_result=result,
             out_dir=bundle,
-            callgraph_sweep=sweep_info,
+            callgraph_export=export_info,
             inventory=inventory_block,
             selection=selection_block,
             hydration=hydration_block,

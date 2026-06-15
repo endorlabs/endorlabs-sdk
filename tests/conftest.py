@@ -32,7 +32,7 @@ TEST_LOG_DEBUG_MAX_NAMESPACES = 3
 # Tests should use the `namespace` fixture (or this constant) instead of
 # hardcoding a default. See docs/contributing/integration-resource-tests.md
 # and troubleshooting.md.
-TEST_NAMESPACE_DEFAULT = "endor-solutions-tgowan.tgowan-endor"
+TEST_NAMESPACE_DEFAULT = "auri"
 
 # Canonical GitHub remote for this repository (post-move: endorlabs/endorlabs-sdk).
 CANONICAL_SDK_REPO_SLUG = "endorlabs/endorlabs-sdk"

@@ -149,7 +149,7 @@ For symbol search and path extraction from decoded call graph artifacts:
 uv run --env-file .env endor-callgraph-search --help
 ```
 
-For a full project context bundle including call graph sweep:
+For a full project context bundle including call graph export:
 
 ```bash
 uv run --env-file .env endor-agent-context --help

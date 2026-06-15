@@ -96,6 +96,10 @@ Use these headings in `SKILL.md` body (order may vary; omit sections that do not
 - Link to **skills**, not repo paths like `agent-skills/` or `.cursor/skills/`.
 - When you add outbound handoffs from skill A to B, **update B’s Related skills** (reciprocal pointer) in the same PR unless B truly has nothing to send back.
 
+### Supplementary doc filenames
+
+Each skill directory has **`SKILL.md`** (required). Additional reference files use **lowercase kebab-case** (e.g. `call-graph-format-and-search.md`, `policy-validation-api.md`). Avoid ambiguous single-word names like `api.md`. Fixed entrypoint names elsewhere in the repo (`README.md`, `INDEX.md`, `AGENTS.md`) follow their existing conventions.
+
 ### Heuristic and aggregate skills
 
 If output is scored, ranked, or summarized (not authoritative platform state):
@@ -127,7 +131,9 @@ summary: >-
 ---
 ```
 
-Validated by [`rule.schema.json`](rule.schema.json). Every rule `id` **must** use the `endor-*` prefix (same namespace as skills and workflow CLIs). Listed in `MANIFEST.json` → `rules[]` and `bootstrap.rule_ids`; generates `.cursor/rules/<id>.mdc` with tooling-only provenance (`x-endor-generated`, `x-endor-source`, `x-endor-source-sha256`). Stale generated rules are pruned via the `x-endor-generated` marker.
+Validated by [`rule.schema.json`](rule.schema.json). Every rule `id` **must** use the `endor-*` prefix (same namespace as skills and workflow CLIs). Shipped rules are listed in `MANIFEST.json` → `rules[]` and `bootstrap.rule_ids`; generates `.cursor/rules/<id>.mdc` with tooling-only provenance (`x-endor-generated`, `x-endor-source`, `x-endor-source-sha256`). Stale generated rules are pruned via the `x-endor-generated` marker.
+
+**Maintainer-only rules** (`MAINTAINER_ONLY_RULE_IDS` in `devtools/agent_knowledge_catalog.py`, e.g. `endor-changelog`): remain under `agent-knowledge/rules/` and sync to `.cursor/rules/`, but are **not** copied into the wheel bundle.
 
 **Cursor apply mode** (see `CURSOR_ALWAYS_APPLY_RULE_IDS` / `CURSOR_BOOTSTRAP_RULE_GLOBS` in `devtools/sync_agent_knowledge.py`):
 

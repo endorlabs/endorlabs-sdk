@@ -38,6 +38,7 @@ After a workflow run, treat outputs as source of truth:
 - Read `context_manifest.json`, troubleshooting JSON, or step artifacts **before** re-listing the API.
 - Thread `namespace` and UUIDs from artifacts into downstream calls.
 - Do not repeat `Project.list(traverse=True)` when a prior step already wrote project JSON.
+- Separate **evidence-backed** claims (API rows, artifacts, cited contracts) from **Inferred:** conclusions; use skill **endor-troubleshoot-sdk** for SDK/API failure playbooks (maintainers: `docs/contributing/troubleshooting.md`).
 
 ## Supported library imports
 
@@ -52,7 +53,8 @@ Generic entrypoints (no estate literals):
 - `endorlabs.workflows.common.WorkflowResult`
 - `endorlabs.workflows.policies.run_validate_policy`
 - `endorlabs.workflows.estate.export_version_cardinality_for_package_match`
-- `endorlabs.workflows.callgraph.run_callgraph_sweep`
+- `endorlabs.workflows.callgraph.run_callgraph_export`
+- `endorlabs.workflows.callgraph.find_call_graph_path`
 - `endorlabs.workflows.troubleshooting_scans` — workflow CLIs; prefer facade sugar for scan lists and project resolve
 - `endorlabs.workflows.agent_context.hydration` — per-project BOM/CG hydration primitive; not a workflow orchestrator
 
