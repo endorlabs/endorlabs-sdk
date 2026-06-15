@@ -8,9 +8,20 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- **Call-graph export primitives** — `run_callgraph_export`, `find_call_graph_path`, `resolve_package_version_with_callgraph`, and `resolve_callgraph_export_artifact` under `endorlabs.workflows.callgraph`.
+- **CLIs** — `endor-callgraph-path` (live project path search); `endor-callgraph-search` path mode (`--path-from`, `--path-to`, `--max-depth`); `endor-vector-query` (list/probe/query tenant vector stores).
+- **Maintainer note** — agent-kit ↔ SDK workflow map moved to `.tmp/agent-kit-sdk-overlap.md` (maintainer scratch; not tracked in `docs/`).
+
 ### Changed
 
+- **Pass 3 naming** — `endor-agent-context` uses `--callgraph-export`, output subdir `callgraph_export/`, and manifest key `artifacts.callgraph_export`.
+- **Call-graph search** — multi-hop BFS is a first-class library/CLI primitive; skills updated accordingly.
+
 ### Breaking
+
+- Removed **`--callgraph-sweep`** CLI flag — use **`--callgraph-export`**.
+- Removed **`run_callgraph_sweep`** and **`endorlabs.workflows.callgraph.sweep`** — use **`run_callgraph_export`**.
+- Removed **`artifacts.callgraph_sweep`**, **`callgraph_sweep/`**, and **`callgraph_sweep_manifest.json`** — use **`artifacts.callgraph_export`**, **`callgraph_export/`**, and **`callgraph_export_manifest.json`**.
 
 ## 0.3.0
 

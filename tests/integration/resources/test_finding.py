@@ -16,6 +16,7 @@ from endorlabs.resources.finding import (
 )
 from tests.conftest import (
     TEST_MAX_PAGES,
+    TEST_MAX_PAGES_TRAVERSE,
     TEST_PAGE_SIZE,
 )
 
@@ -76,14 +77,21 @@ class TestFinding:
         That behavior is server policy, not something the SDK should paper over in
         ``deserialize_list_row`` or list/update wiring — the client should surface
         the response as returned.
+
+        Uses ``spec.dismiss==false`` with ``traverse=True`` so a single-page sample
+        is not a dismissed outlier at the tenant root.
         """
         from endorlabs.core.exceptions import NotFoundError, ServerError
         from endorlabs.core.types import ListParameters
 
         try:
             results = self.endor_client.Finding.list(
-                list_params=ListParameters(page_size=TEST_PAGE_SIZE),
-                max_pages=TEST_MAX_PAGES,
+                list_params=ListParameters(
+                    filter="spec.dismiss==false",
+                    page_size=TEST_PAGE_SIZE,
+                ),
+                max_pages=TEST_MAX_PAGES_TRAVERSE,
+                traverse=True,
             )
         except NotFoundError:
             pytest.skip(
@@ -95,7 +103,8 @@ class TestFinding:
         if not results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         for item in results:
-            if not (item.spec and getattr(item.spec, "dismiss", False)):
+            dismissed = item.spec.dismiss if item.spec else False
+            if dismissed is not True:
                 return item
         pytest.skip(
             "No non-dismissed finding in scope; tag PATCH is not exercised when "
@@ -232,7 +241,11 @@ class TestFinding:
 
         assert updated_finding is not None, "Finding update should succeed"
 
-        finding_tags_values = updated_finding.spec.finding_tags or []
+        # PATCH responses may omit masked fields; re-get for authoritative state.
+        verified_finding = self.endor_client.Finding.get(finding_uuid, namespace=ns)
+        assert verified_finding is not None
+
+        finding_tags_values = verified_finding.spec.finding_tags or []
         assert (
             FindingTags.UNDER_REVIEW.value in finding_tags_values
             or FindingTags.UNDER_REVIEW.value.replace("FINDING_TAGS_", "")
@@ -244,13 +257,13 @@ class TestFinding:
             in [tag.replace("FINDING_TAGS_", "") for tag in finding_tags_values]
         ), "spec.finding_tags should reflect triage enum PATCH"
 
-        assert "integration-test-label" in (updated_finding.meta.tags or []), (
+        assert "integration-test-label" in (verified_finding.meta.tags or []), (
             "meta.tags should reflect free-form label PATCH (distinct from spec.finding_tags)"
         )
 
-        print(f"[SUCCESS] Finding updated: {updated_finding.uuid}")
-        print(f"Updated meta.tags: {updated_finding.meta.tags}")
-        print(f"Updated spec.finding_tags: {updated_finding.spec.finding_tags}")
+        print(f"[SUCCESS] Finding updated: {verified_finding.uuid}")
+        print(f"Updated meta.tags: {verified_finding.meta.tags}")
+        print(f"Updated spec.finding_tags: {verified_finding.spec.finding_tags}")
 
         restore_payload = UpdateFindingPayload(
             meta=FindingMetaUpdate(tags=original_meta_tags),

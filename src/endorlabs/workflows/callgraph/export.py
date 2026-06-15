@@ -10,6 +10,7 @@ from typing import Any
 from endorlabs.core.exceptions import NotFoundError
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
+from endorlabs.workflows.callgraph.resolve import project_as_list_source
 
 LOGGER = get_resource_logger(__name__)
 
@@ -19,7 +20,7 @@ def _write_json_base(root: Path, path: Path, data: Any) -> None:
     safe_write_text(root, path, text)
 
 
-def run_callgraph_sweep(
+def run_callgraph_export(
     *,
     project_uuid: str,
     out_dir: Path,
@@ -35,12 +36,7 @@ def run_callgraph_sweep(
     namespace). ``client`` is ``endorlabs.Client`` for
     ``PackageVersion.list_by_project``.
     """
-    from types import SimpleNamespace
-
-    source = SimpleNamespace(
-        uuid=project_uuid,
-        tenant_meta=SimpleNamespace(namespace=list_namespace),
-    )
+    source = project_as_list_source(project_uuid, list_namespace)
     route = client.PackageVersion.list_by_project(
         source,
         namespace=list_namespace,
@@ -87,11 +83,18 @@ def run_callgraph_sweep(
 
         exports.append(row)
 
-    return {
+    manifest_body: dict[str, Any] = {
         "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "project_uuid": project_uuid,
         "list_namespace": list_namespace,
         "package_versions_total": len(pvs),
         "call_graph_exports_total": len(exports),
         "exports": exports,
+    }
+    export_manifest = out_dir / "callgraph_export_manifest.json"
+    _write_json_base(out_dir, export_manifest, manifest_body)
+
+    return {
+        **manifest_body,
+        "manifest_path": str(export_manifest),
     }

@@ -7,10 +7,25 @@
     "id": "agent-context",
     "library_entrypoints": [
       "endorlabs.workflows.agent_context.build_context_manifest",
-      "endorlabs.workflows.agent_context.list_package_versions_for_index"
+      "endorlabs.workflows.agent_context.list_package_versions_for_index",
+      "endorlabs.workflows.callgraph.run_callgraph_export"
     ],
     "module": "endorlabs.workflows.agent_context.cli",
     "skill": "endor-project-retrieval-bundle"
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-callgraph-path",
+    "composition": "library_api",
+    "default_output": "stdout or caller path",
+    "id": "callgraph-path",
+    "library_entrypoints": [
+      "endorlabs.workflows.callgraph.run_path_search",
+      "endorlabs.workflows.callgraph.resolve_package_version_with_callgraph",
+      "endorlabs.workflows.callgraph.find_call_graph_path"
+    ],
+    "module": "endorlabs.workflows.callgraph.path_cli",
+    "skill": null
   },
   {
     "agent_visible": true,
@@ -19,7 +34,10 @@
     "default_output": "stdout or caller path",
     "id": "callgraph-search",
     "library_entrypoints": [
-      "endorlabs.workflows.callgraph.run_callgraph_sweep"
+      "endorlabs.workflows.callgraph.run_callgraph_export",
+      "endorlabs.workflows.callgraph.find_call_graph_path",
+      "endorlabs.workflows.callgraph.search_decoded_call_graph",
+      "endorlabs.workflows.callgraph.resolve_package_version_with_callgraph"
     ],
     "module": "endorlabs.workflows.callgraph.search",
     "skill": "endor-fetch-and-search-call-graph"
@@ -80,5 +98,19 @@
     ],
     "module": "endorlabs.workflows.troubleshooting_scans",
     "skill": "endor-troubleshooting-scans"
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-vector-query",
+    "composition": "library_api",
+    "default_output": "stdout or caller path",
+    "id": "vector-query",
+    "library_entrypoints": [
+      "endorlabs.workflows.vector_search.list_tenant_vector_stores",
+      "endorlabs.workflows.vector_search.probe_store_indexed_for_project",
+      "endorlabs.workflows.vector_search.query_vector_store"
+    ],
+    "module": "endorlabs.workflows.vector_search.cli",
+    "skill": null
   }
 ]

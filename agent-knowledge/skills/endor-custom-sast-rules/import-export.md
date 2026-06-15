@@ -53,7 +53,7 @@ opengrep scan --config path/to/rule.yaml target/directory/
 # or: semgrep scan --config path/to/rule.yaml target/directory/
 ```
 
-See [AUTHORING.md](AUTHORING.md) for the full validation loop.
+See [authoring.md](authoring.md) for the full validation loop.
 
 ---
 
@@ -65,7 +65,7 @@ Author YAML --> Validate with opengrep/semgrep --> Import with sast_rule_manager
 
 ### Step 1: Author and validate
 
-Write the rule YAML following [AUTHORING.md](AUTHORING.md). Run it
+Write the rule YAML following [authoring.md](authoring.md). Run it
 through OpenGrep or Semgrep locally and confirm findings match your
 expectations.
 
@@ -73,19 +73,19 @@ expectations.
 
 ```bash
 # Import all rules in a directory (validates each rule first)
-uv run python sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
+uv run python agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
     import --rules-dir opengrep-rules/ --namespace tenant.ns
 
 # Force update existing rules
-uv run python sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
+uv run python agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
     import --rules-dir opengrep-rules/ --namespace tenant.ns --force
 
 # Dry run (parse, validate, and log planned actions without calling the API)
-uv run python sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
+uv run python agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
     import --rules-dir opengrep-rules/ --namespace tenant.ns --dry-run
 
 # Verbose logging
-uv run python sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
+uv run python agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
     import --rules-dir opengrep-rules/ --namespace tenant.ns --verbose
 ```
 
@@ -105,7 +105,7 @@ OpenGrep/Semgrep results.
 
 ## SAST Rule Manager CLI Reference
 
-The script is at `sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py`.
+The script is at `agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py`.
 
 ### Common flags (all subcommands)
 
@@ -449,5 +449,5 @@ After importing, verify end-to-end:
 
 ## References
 
-- [AUTHORING.md](AUTHORING.md) -- authoring guide
-- [SYNTAX_REFERENCE.md](SYNTAX_REFERENCE.md) -- rule syntax card
+- [authoring.md](authoring.md) -- authoring guide
+- [syntax-reference.md](syntax-reference.md) -- rule syntax card

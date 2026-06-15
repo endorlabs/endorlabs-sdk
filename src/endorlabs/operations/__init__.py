@@ -120,10 +120,31 @@ class BaseResourceOperations[T: BaseModel]:
         Single path for model-to-dict so all payloads use mode='json' and
         warnings=False, avoiding Pydantic serializer warnings for nested
         meta/spec/tenant_meta.
+
+        Fields typed ``dict[str, Any] | BaseModel`` serialize as empty dicts
+        unless the runtime value is a ``BaseModel`` instance — those nested
+        models are dumped explicitly (``serialize_as_any`` on the full tree
+        breaks some generated spec types).
         """
-        return model.model_dump(
-            exclude_none=exclude_none, mode="json", warnings=False, by_alias=True
+        result = model.model_dump(
+            exclude_none=exclude_none,
+            mode="json",
+            warnings=False,
+            by_alias=True,
         )
+        dump_kwargs = {
+            "exclude_none": exclude_none,
+            "mode": "json",
+            "warnings": False,
+            "by_alias": True,
+        }
+        for name in model.__class__.model_fields:
+            value = getattr(model, name, None)
+            if isinstance(value, BaseModel):
+                nested = value.model_dump(**dump_kwargs)
+                if nested or not exclude_none:
+                    result[name] = nested
+        return result
 
     def dump_for_api(
         self, model: BaseModel, exclude_none: bool = True

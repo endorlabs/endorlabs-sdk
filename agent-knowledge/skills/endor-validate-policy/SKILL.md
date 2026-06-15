@@ -44,7 +44,7 @@ findings for a **project** — without applying exceptions in production.
 | **SDK — `POST …/policy/validate`** | Automation, JSON in/out, tenant-scoped scripts | **Tenant credentials** for the **customer namespace** in the URL |
 | **endorctl — `validate policy`** | Parity with product CLI, large match sets | Same tenant token; **does not call** `policy/validate` (lists findings + local Rego) |
 
-See [API.md](API.md) for request/response shape and [ENDORCTL.md](ENDORCTL.md) for CLI parity.
+See [policy-validation-api.md](policy-validation-api.md) for request/response shape and [policy-validation-endorctl.md](policy-validation-endorctl.md) for CLI parity.
 
 ## Requirements
 

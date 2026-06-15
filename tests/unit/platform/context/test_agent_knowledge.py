@@ -41,7 +41,7 @@ def test_agent_knowledge_manifest_structure() -> None:
     assert len(rule_ids) == len(set(rule_ids))
     bootstrap_ids = manifest["bootstrap"]["rule_ids"]
     assert bootstrap_ids == sorted(bootstrap_ids)
-    assert "endor-changelog" in rule_ids
+    assert "endor-changelog" not in rule_ids
     assert "endor-changelog" not in bootstrap_ids
     assert set(bootstrap_ids).issubset(set(rule_ids))
     for entry in manifest["rules"]:

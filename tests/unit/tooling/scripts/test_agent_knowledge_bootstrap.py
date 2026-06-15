@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from devtools.agent_knowledge_catalog import (
-    BOOTSTRAP_EXCLUDE_RULE_IDS,
+    MAINTAINER_ONLY_RULE_IDS,
     build_bootstrap_manifest_block,
     build_contract_manifest_entries,
     build_rules_manifest_entries,
@@ -27,10 +27,12 @@ BUNDLE_ROOT = REPO_ROOT / "src" / "endorlabs" / "agent_knowledge"
 def test_rules_manifest_entries() -> None:
     rules_dir = AGENT_ROOT / "rules"
     rules = build_rules_manifest_entries(rules_dir)
-    assert len(rules) == len(list(rules_dir.glob("*.md")))
+    assert len(rules) == len(list(rules_dir.glob("*.md"))) - len(
+        MAINTAINER_ONLY_RULE_IDS
+    )
     ids = {entry["id"] for entry in rules}
     assert "endor-workflow-composition" in ids
-    assert "endor-changelog" in ids
+    assert "endor-changelog" not in ids
     assert all(entry["path"].startswith("rules/") for entry in rules)
     assert all("summary" in entry for entry in rules)
 
@@ -48,9 +50,7 @@ def test_contract_manifest_entries_reference_only() -> None:
 def test_manifest_bootstrap_block_matches_rules() -> None:
     rules = build_rules_manifest_entries(AGENT_ROOT / "rules")
     bootstrap = build_bootstrap_manifest_block(rules)
-    expected_ids = sorted(
-        entry["id"] for entry in rules if entry["id"] not in BOOTSTRAP_EXCLUDE_RULE_IDS
-    )
+    expected_ids = sorted(entry["id"] for entry in rules)
     assert bootstrap == {"index": "INDEX.md", "rule_ids": expected_ids}
     assert "endor-workflow-composition" in bootstrap["rule_ids"]
     assert "endor-changelog" not in bootstrap["rule_ids"]

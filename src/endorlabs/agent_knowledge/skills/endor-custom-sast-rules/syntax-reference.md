@@ -6,7 +6,7 @@ extended with Endor Labs platform metadata fields.
 > **Note:** Both `opengrep` and `semgrep` CLIs accept the same rule YAML
 > format. Commands below use `opengrep`; substitute `semgrep` as needed.
 
-For narrative guidance, see [AUTHORING.md](AUTHORING.md).
+For narrative guidance, see [authoring.md](authoring.md).
 
 ---
 
@@ -405,7 +405,7 @@ opengrep scan --config rule.yaml --validate
 
 ## References
 
-- [AUTHORING.md](AUTHORING.md) -- authoring guide
-- [IMPORT_EXPORT.md](IMPORT_EXPORT.md) -- import/export workflow
+- [authoring.md](authoring.md) -- authoring guide
+- [import-export.md](import-export.md) -- import/export workflow
 - [Semgrep Rule Syntax (official)](https://semgrep.dev/docs/writing-rules/rule-syntax)
 - [Trail of Bits Quick Reference](https://github.com/trailofbits/skills/blob/main/plugins/semgrep-rule-creator/skills/semgrep-rule-creator/references/quick-reference.md)
