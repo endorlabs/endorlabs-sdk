@@ -101,14 +101,14 @@ class TestRedactingFilterQuotingCombinations:
 
     def test_single_key_single_value(self) -> None:
         """'key': 'value' -- standard Python repr."""
-        result = _apply(self.rf, "'token': 'jwt-placeholder-header'")
-        assert "jwt-placeholder-header" not in result
+        result = _apply(self.rf, "'token': 'my-api-secret-value'")
+        assert "my-api-secret-value" not in result
         assert "REDACTED" in result
 
     def test_double_key_double_value(self) -> None:
         """\"key\": \"value\" -- standard JSON."""
-        result = _apply(self.rf, '"token": "jwt-placeholder-header"')
-        assert "jwt-placeholder-header" not in result
+        result = _apply(self.rf, '"token": "my-api-secret-value"')
+        assert "my-api-secret-value" not in result
         assert "REDACTED" in result
 
     # -- Mixed quoting (the cross-quoting gap) ------------------------------
@@ -214,8 +214,8 @@ class TestRedactingFilterReprIntegration:
         The literal below is a synthetic token-like placeholder used only for
         redaction coverage.
         """
-        secret_dict = {"token": "jwt-placeholder-header-full"}
+        secret_dict = {"token": "my-redact-test-value"}
         repr_str = repr(secret_dict)
         result = _apply(self.rf, repr_str)
-        assert "jwt-placeholder-header-full" not in result
+        assert "my-redact-test-value" not in result
         assert "REDACTED" in result

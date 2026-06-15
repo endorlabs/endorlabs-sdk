@@ -61,7 +61,7 @@ def test_build_context_manifest_minimal(tmp_path: Path) -> None:
         warnings=["n1"],
         project_result=pr,
         out_dir=tmp_path,
-        callgraph_sweep=None,
+        callgraph_export=None,
         inventory=None,
         selection=None,
         hydration=None,
@@ -71,7 +71,7 @@ def test_build_context_manifest_minimal(tmp_path: Path) -> None:
     assert m["warnings"] == ["n1"]
     assert m["cli"]["pv_limit"] == 3
     assert m["artifacts"]["package_version_artifacts"][0]["pv_uuid"] == "aa"
-    assert m["artifacts"]["callgraph_sweep"] is None
+    assert m["artifacts"]["callgraph_export"] is None
     assert m["artifacts"]["package_versions_index_json"] is None
     assert "inventory" not in m
 
@@ -110,7 +110,7 @@ def test_build_context_manifest_includes_optional_blocks(tmp_path: Path) -> None
         warnings=[],
         project_result=pr,
         out_dir=tmp_path,
-        callgraph_sweep={"package_versions_total": 5},
+        callgraph_export={"package_versions_total": 5},
         inventory={"enabled": True},
         selection={"mode": "explicit"},
         hydration={"pass_2_dependency_explorer": {"skipped": False}},
@@ -120,7 +120,7 @@ def test_build_context_manifest_includes_optional_blocks(tmp_path: Path) -> None
     assert m["hydration"]["pass_2_dependency_explorer"]["skipped"] is False
     assert m["artifacts"]["dep_metadata_list_namespace"] == "t.ns"
     assert m["artifacts"]["dep_metadata_row_count"] == 4
-    assert m["artifacts"]["callgraph_sweep"]["package_versions_total"] == 5
+    assert m["artifacts"]["callgraph_export"]["package_versions_total"] == 5
 
 
 def test_build_context_manifest_includes_session_summaries(tmp_path: Path) -> None:
@@ -142,7 +142,7 @@ def test_build_context_manifest_includes_session_summaries(tmp_path: Path) -> No
         warnings=[],
         project_result=pr,
         out_dir=tmp_path,
-        callgraph_sweep=None,
+        callgraph_export=None,
         inventory=None,
         selection=None,
         hydration=None,
@@ -263,7 +263,7 @@ def test_parse_args_defaults(monkeypatch) -> None:
     assert isinstance(args, argparse.Namespace)
     assert args.pv_limit == 5
     assert args.pv_index is True
-    assert args.callgraph_sweep is False
+    assert args.callgraph_export is False
     assert args.decode_zstd is False
 
 
@@ -284,7 +284,7 @@ def test_main_rejects_index_only_with_top_n() -> None:
         hydrate_top_n=1,
         pv_list_max_pages=50,
         pv_list_page_size=200,
-        callgraph_sweep=False,
+        callgraph_export=False,
         callgraph_max_pages=50,
         callgraph_page_size=200,
         decode_zstd=False,
@@ -311,7 +311,7 @@ def test_main_rejects_index_only_with_hydrate_uuids() -> None:
         hydrate_top_n=0,
         pv_list_max_pages=50,
         pv_list_page_size=200,
-        callgraph_sweep=False,
+        callgraph_export=False,
         callgraph_max_pages=50,
         callgraph_page_size=200,
         decode_zstd=False,
@@ -338,7 +338,7 @@ def test_main_rejects_top_n_without_index() -> None:
         hydrate_top_n=3,
         pv_list_max_pages=50,
         pv_list_page_size=200,
-        callgraph_sweep=False,
+        callgraph_export=False,
         callgraph_max_pages=50,
         callgraph_page_size=200,
         decode_zstd=False,
@@ -402,7 +402,7 @@ def test_main_index_only_success_flow(tmp_path: Path) -> None:
         hydrate_top_n=0,
         pv_list_max_pages=1,
         pv_list_page_size=1,
-        callgraph_sweep=False,
+        callgraph_export=False,
         callgraph_max_pages=1,
         callgraph_page_size=1,
         decode_zstd=False,
@@ -453,7 +453,7 @@ def test_main_session_summaries_writes_manifest_pointers(tmp_path: Path) -> None
         hydrate_top_n=0,
         pv_list_max_pages=1,
         pv_list_page_size=1,
-        callgraph_sweep=False,
+        callgraph_export=False,
         callgraph_max_pages=1,
         callgraph_page_size=1,
         decode_zstd=False,

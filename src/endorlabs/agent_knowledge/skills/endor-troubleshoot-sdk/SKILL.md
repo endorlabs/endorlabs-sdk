@@ -1,117 +1,91 @@
 ---
 name: endor-troubleshoot-sdk
 description: Debug Endor Labs SDK errors, API failures, and test issues. Use when
-  encountering 404 Not Found after traverse, 500 Server Error on list, "Spec is not
-  full" errors, update_mask validation failures, namespace mismatches, or unexpected
-  test skips. Covers platform-specific gotchas and resolution patterns.
+  validating SDK behavior against endorctl or contracts, 404 after traverse, list
+  ServerError at wrong namespace, update_mask validation failures, namespace mismatches,
+  or unexpected test skips.
 ---
 
 # Troubleshoot SDK Issues
 
-Systematic workflow for diagnosing and resolving Endor Labs SDK and API
-integration failures.
+Systematic workflow for diagnosing whether the SDK, `endorctl`, and documented
+contracts agree — before changing client code.
+
+## Evidence vs inference
+
+When explaining root cause to the user:
+
+- **Evidence-backed** — cite live API rows, `endorctl` output, workflow JSON under `.endorlabs-context/workspace/`, or normative text in `contracts/` / this skill.
+- **Inferred** — heuristic scan pairing, partial hydration, or backend-behavior guesses without a reproducing call. Label **Inferred:** and say what to fetch next.
+
+Deep triangulation playbook: [validation-reference.md](validation-reference.md). Repo clone only: `docs/contributing/troubleshooting.md`.
 
 ## Workflow
 
-1. **Document** -- capture the task, context, approach, and full error (including stack trace and `response.text`). Persist triage notes, repro scripts, and JSON exports under `.endorlabs-context/workspace/sessions/<user>/` (see [workspace-layout](../../rules/endor-workspace-layout.md)); use `scripts/` for ad-hoc probes. For CLI → library → script escalation, see [workflow-composition](../../rules/endor-workflow-composition.md).
-2. **Research** -- search codebase, docs, and API spec. Local spec: `.endorlabs-context/platform/openapi/openapiv2.swagger.json`; local user docs: `.endorlabs-context/platform/user-docs/`. Online fallback: <https://api.endorlabs.com/download/openapiv2.swagger.json>.
-3. **Investigate** -- read SDK code and spec; test with `endorctl`; validate theories with live API calls.
-4. **Resolve** -- implement fix; document signatures and learnings.
+1. **Document** — capture the task, context, approach, and full error (including stack trace and `response.text`). Persist triage notes, repro scripts, and JSON exports under `.endorlabs-context/workspace/sessions/<user>/` (see [workspace-layout](../../rules/endor-workspace-layout.md)); use `scripts/` for ad-hoc probes. For CLI → library → script escalation, see [workflow-composition](../../rules/endor-workflow-composition.md).
+2. **Research** — search codebase, `contracts/`, and API spec. Local spec: `.endorlabs-context/platform/openapi/openapiv2.swagger.json`; local user docs: `.endorlabs-context/platform/user-docs/`. Online fallback: <https://api.endorlabs.com/download/openapiv2.swagger.json>.
+3. **Investigate** — replay the same call with `endorctl` (same resource, namespace, filter, traverse); compare outcomes using [validation-reference.md](validation-reference.md).
+4. **Resolve** — fix usage, scope, model-sync, or SDK bug; document what evidence changed.
 
-## Common Issues and Solutions
+## Common validation traps
 
 ### 404 Not Found after `list(traverse=True)`
 
-**Cause:** When you list with traverse and then call `get`/`update`/`delete` using just the UUID, the SDK uses the client's default namespace. If the resource lives in a child namespace, the path won't match.
+**Validate:** Does `endorctl api get` with the **owning** namespace succeed?
 
-**Fix:** Pass the **resource object** instead of just a UUID:
+**Fix:** Pass the **resource object** instead of UUID-only — the SDK uses `tenant_meta.namespace`:
 
 ```python
-# Correct
-client.Project.delete(target)
-
-# Wrong -- may 404
-client.Project.delete(target.uuid)
+client.Project.delete(target)  # correct
+client.Project.delete(target.uuid)  # may 404
 ```
 
-The SDK extracts the namespace from `resource.tenant_meta.namespace`.
+### List `ServerError` at tenant root
 
-### 500 Server Error: "Spec is not full" / "not fully defined"
+**Validate:** Does `endorctl api list` at the same namespace show the same error?
 
-**Cause:** The backend may return 500 with messages like `FindingSpec is not full` when listing at certain namespaces (e.g., tenant root).
+**If yes:** Scope issue — list from a child namespace or project namespace. Mask alone does not fix backend list failures.
 
-**Resolution:**
-- If the API returns 5xx, the SDK is correct to surface it as `ServerError`
-- Try listing at a child namespace (or different scope) instead
-- Optional: a non-empty list `mask=` reduces payload size; it does not reliably fix backend “spec not full” 5xx by itself
+**If endorctl 200 but SDK parse fails:** **endor-model-sync-drift**.
 
 ### Path namespace vs body UUID mismatch
 
-**Cause:** For endpoints that take a resource UUID in the body and a namespace in the path (e.g., scan-log-request with `scan_result_uuid`), the path namespace must be the **owning** namespace of that resource (`resource.tenant_meta.namespace`). Using a parent namespace can return 500 even with a valid UUID.
-
-**Fix:** Always use the resource's own namespace:
+**Validate:** Path namespace matches the resource's `tenant_meta.namespace`, not a parent.
 
 ```python
-namespace = resource.tenant_meta.namespace  # or resource.namespace
+namespace = resource.tenant_meta.namespace
 ```
 
 ### `update_mask` validation errors
 
-**Cause:** `update(uuid, payload=...)` requires a non-empty `update_mask` (and paths must be mutable). Wrong or empty mask raises `ValidationError` / `ValueError`. When you pass **field kwargs** with a **resource instance**, the facade derives the mask—`update_mask` is not required in that form.
-
-**Fix:** UUID + payload: provide a comma-separated field path list:
+`update(uuid, payload=...)` requires a non-empty `update_mask` with mutable paths. Resource-instance + field kwargs derive the mask automatically:
 
 ```python
 client.Namespace.update(ns.uuid, payload=updated_payload, update_mask="meta.description")
-```
-
-Or pass the resource and kwargs (mask derived automatically):
-
-```python
 client.Namespace.update(ns, meta_description="new description")
 ```
 
 ### List field mask (dict rows) vs partial **model** responses
 
-**Masked list (non-empty `mask`):** `list()` / `list_iter()` return **dict**
-rows (shallow wire JSON), not Pydantic models—no “partial model” validation path.
+**Masked list (non-empty `mask`):** dict wire rows — use `isinstance(row, dict)` or omit `mask` for models.
 
-**Unmasked list:** Rows are models. The API may still omit fields at some
-scopes; the SDK applies leniency when **constructing models** (e.g.
-`Finding.context`, `Project.spec.platform_source`, `BaseMeta.name` may be
-`None` when absent on the wire).
-
-**Callers:** Use `isinstance(row, dict)` after `list(..., mask=...)`; use dict
-keys or omit `mask` for typed resources. Do not pass masked `dict` rows to
-`delete`/`update` expecting a model—`get` by UUID or list without `mask` first.
+**Unmasked list:** typed models; some fields may be `None` when omitted on the wire (`Finding.context`, `Project.spec.platform_source`, `BaseMeta.name`).
 
 ### Tenant-context read-only resources
 
-Resources `authentication_log`, `endor_license`, and `policy_template` are
-tenant-context resources. Use tenant clients and `traverse=True` when broad
-visibility is needed.
+`authentication_log`, `endor_license`, and `policy_template` — `list`/`get` only; no `create`/`update`/`delete` on the Client facade.
 
-The SDK Client exposes `list()` and `get()` for these resources.
-`create`/`update`/`delete` remain unsupported.
+## Test debugging
 
-## Test Debugging
-
-### Common test skips
-
-| Skip reason | Cause | Action |
-|-------------|-------|--------|
-| 403 Forbidden | Insufficient permissions or system resource | Check namespace and resource type |
-| "No resources in scope" | Empty namespace or wrong filter | Run `endorctl api list -r {Resource} -n {namespace} --traverse` to validate |
-| Validation error on update | Immutable field in update_mask | Check `get_mutable_fields_cls()` on the model |
-
-### Verifying with endorctl
+| Skip / symptom | Validate with endorctl | Likely cause |
+|----------------|------------------------|--------------|
+| 403 Forbidden | Same list/get in namespace | Permissions or system resource |
+| "No resources in scope" | `endorctl api list -r <Resource> -n <namespace>` | Empty namespace or wrong scope |
+| Validation error on update | Compare `update_mask` to `get_mutable_fields_cls()` | Immutable field in mask |
 
 ```bash
-# Check if namespace has data
 endorctl api list -r Finding -n <namespace> --traverse
-
-# Check a specific resource
 endorctl api get -r Project -n <namespace> --uuid <project-uuid>
 ```
 
-For test cleanup scripts, endorctl verification commands, and the full known-issues catalog, see [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+Integration-test cleanup and outcome matrix: [validation-reference.md](validation-reference.md).

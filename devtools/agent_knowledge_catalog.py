@@ -337,12 +337,22 @@ def _sorted_tags(frontmatter: dict[str, Any]) -> list[str]:
     return sorted(tag for tag in frontmatter.get("tags", []) if isinstance(tag, str))
 
 
+# Maintainer-only rules: agent-knowledge/rules + .cursor/rules; not copied to wheel.
+MAINTAINER_ONLY_RULE_IDS: frozenset[str] = frozenset({"endor-changelog"})
+
+
+def _is_shipped_rule(rule_id: str) -> bool:
+    return rule_id not in MAINTAINER_ONLY_RULE_IDS
+
+
 def build_rules_manifest_entries(rules_dir: Path) -> list[dict[str, Any]]:
     entries: list[dict[str, Any]] = []
     if not rules_dir.is_dir():
         return entries
     for path in sorted(rules_dir.glob("*.md")):
         parsed = parse_contract_md(path)
+        if not _is_shipped_rule(parsed.contract_id):
+            continue
         summary = parsed.frontmatter.get("summary")
         entry: dict[str, Any] = {
             "id": parsed.contract_id,
@@ -370,19 +380,12 @@ def build_contract_manifest_entries(contracts_dir: Path) -> list[dict[str, Any]]
     return entries
 
 
-# Maintainer-only rules ship in ``rules[]`` but are omitted from harness bootstrap.
-BOOTSTRAP_EXCLUDE_RULE_IDS: frozenset[str] = frozenset({"endor-changelog"})
-
-
+# Maintainer-only rules omitted from harness bootstrap (MAINTAINER_ONLY_RULE_IDS).
 def build_bootstrap_manifest_block(
     rules: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Derive bootstrap rule ids from the rules manifest section."""
-    rule_ids = sorted(
-        entry["id"]
-        for entry in rules
-        if entry["id"] not in BOOTSTRAP_EXCLUDE_RULE_IDS
-    )
+    """Derive bootstrap rule ids from the shipped rules manifest section."""
+    rule_ids = sorted(entry["id"] for entry in rules)
     return {"index": "INDEX.md", "rule_ids": rule_ids}
 
 

@@ -15,7 +15,7 @@ SDK how-to and workflows for **consumers** of the package.
 Author, validate, and import OpenGrep/Semgrep YAML as platform **`SemgrepRule`**
 resources. Canonical playbook:
 [endor-custom-sast-rules](../../agent-knowledge/skills/endor-custom-sast-rules/SKILL.md)
-(`AUTHORING.md`, `SYNTAX_REFERENCE.md`, `SEMGREP_RULE_SHAPE_GUARDRAILS.md`,
-`IMPORT_EXPORT.md`). Optional Cursor mirror: `.cursor/skills/endor-custom-sast-rules/`.
+(`authoring.md`, `syntax-reference.md`, `semgrep-rule-shape-guardrails.md`,
+`import-export.md`). Optional Cursor mirror: `.cursor/skills/endor-custom-sast-rules/`.
 
 Maintainer topics (release CI, estate migration): [contributing/README.md](../contributing/README.md).

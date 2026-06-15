@@ -1,4 +1,0 @@
-# Intentional non-secrets: SDK field description examples and redaction tests.
-# Also annotated with `# endorctl:allow` for Endor admission policy.
-src/endorlabs/resources/authorization_policy.py:generic-api-key:134
-tests/unit/platform/utils/test_logging_config.py:generic-api-key:218

@@ -1,0 +1,44 @@
+{
+  "callables": [
+    {
+      "method_id": 1,
+      "uri": "python://myapp/api_client/APIClient.get(/builtins/str)/builtins/NoneType"
+    },
+    {
+      "method_id": 2,
+      "uri": "python://myapp/api_client/APIClient._request(/builtins/str)/builtins/NoneType"
+    },
+    {
+      "method_id": 3,
+      "uri": "python://myapp/api_client/APIClient._request_with_retry(/builtins/str)/builtins/NoneType"
+    },
+    {
+      "method_id": 4,
+      "uri": "python://httpx/_client/Client.request(/builtins/str)/httpx._models/Response"
+    },
+    {
+      "method_id": 5,
+      "uri": "python://myapp/unrelated/other_helper()/builtins/NoneType"
+    }
+  ],
+  "edges": [
+    {
+      "source_id": 1,
+      "target_id": 2,
+      "call_types": ["direct"],
+      "callsite_count": 1
+    },
+    {
+      "source_id": 2,
+      "target_id": 3,
+      "call_types": ["direct"],
+      "callsite_count": 1
+    },
+    {
+      "source_id": 3,
+      "target_id": 4,
+      "call_types": ["direct"],
+      "callsite_count": 1
+    }
+  ]
+}

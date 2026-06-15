@@ -11,7 +11,7 @@ dedicated ``*.cli`` entry modules).
 Subpackages:
     common: Project lookup, shared result types.
     agent_context: Project context bundles, session markdown artifacts.
-    callgraph: Call graph sweep and local decoded-graph search.
+    callgraph: Call graph export and local decoded-graph search.
     dependencies: Dependency metadata reports and visibility.
     findings: Finding triage and exception policies.
     notifications: Notification targets and policies.

@@ -10,6 +10,7 @@ import endorlabs
 from endorlabs.core.types import ListParameters
 from tests.conftest import (
     TEST_MAX_PAGES,
+    TEST_MAX_PAGES_TRAVERSE,
     TEST_PAGE_SIZE,
 )
 
@@ -43,7 +44,8 @@ class TestInstallation:
         try:
             results = self.endor_root_client.Installation.list(
                 list_params=ListParameters(page_size=TEST_PAGE_SIZE),
-                max_pages=TEST_MAX_PAGES,
+                max_pages=TEST_MAX_PAGES_TRAVERSE,
+                traverse=True,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
@@ -52,21 +54,23 @@ class TestInstallation:
         return results[0]  # Return single item, not list
 
     def test_installation_list(self) -> None:
-        """LIST in namespace."""
-        result = self.endor_client.Installation.list(
-            max_pages=TEST_MAX_PAGES,
+        """LIST in namespace (traverse when child namespaces hold installations)."""
+        result = self.endor_root_client.Installation.list(
+            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            traverse=True,
         )
         assert isinstance(result, list)
 
     def test_installation_get(self) -> None:
         """GET first item from LIST in namespace."""
-        items = self.endor_client.Installation.list(
-            max_pages=TEST_MAX_PAGES,
+        items = self.endor_root_client.Installation.list(
+            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            traverse=True,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        got = self.endor_client.Installation.get(item)
+        got = self.endor_root_client.Installation.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 

@@ -53,7 +53,7 @@ opengrep scan --config path/to/rule.yaml target/directory/
 # or: semgrep scan --config path/to/rule.yaml target/directory/
 ```
 
-See [AUTHORING.md](AUTHORING.md) for the full validation loop.
+See [authoring.md](authoring.md) for the full validation loop.
 
 ---
 
@@ -65,7 +65,7 @@ Author YAML --> Validate with opengrep/semgrep --> Import with sast_rule_manager
 
 ### Step 1: Author and validate
 
-Write the rule YAML following [AUTHORING.md](AUTHORING.md). Run it
+Write the rule YAML following [authoring.md](authoring.md). Run it
 through OpenGrep or Semgrep locally and confirm findings match your
 expectations.
 
@@ -449,5 +449,5 @@ After importing, verify end-to-end:
 
 ## References
 
-- [AUTHORING.md](AUTHORING.md) -- authoring guide
-- [SYNTAX_REFERENCE.md](SYNTAX_REFERENCE.md) -- rule syntax card
+- [authoring.md](authoring.md) -- authoring guide
+- [syntax-reference.md](syntax-reference.md) -- rule syntax card

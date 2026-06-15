@@ -38,9 +38,9 @@ inventory (`endor-semgrep-inventory`).
 
 | Doc | Use for |
 | --- | --- |
-| [AUTHORING.md](AUTHORING.md) | Pattern strategies, pitfalls, Endor metadata |
-| [SYNTAX_REFERENCE.md](SYNTAX_REFERENCE.md) | Operator syntax card |
-| [SEMGREP_RULE_SHAPE_GUARDRAILS.md](SEMGREP_RULE_SHAPE_GUARDRAILS.md) | API-accepted keys, metadata inventory |
+| [authoring.md](authoring.md) | Pattern strategies, pitfalls, Endor metadata |
+| [syntax-reference.md](syntax-reference.md) | Operator syntax card |
+| [semgrep-rule-shape-guardrails.md](semgrep-rule-shape-guardrails.md) | API-accepted keys, metadata inventory |
 
 ## 2. Validate (before import)
 
@@ -90,7 +90,7 @@ uv run python agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_m
 | `configure` | Enable/disable by directory |
 | `sync` | delete → orphans → import → configure |
 
-Platform types, export, and troubleshooting: [IMPORT_EXPORT.md](IMPORT_EXPORT.md).
+Platform types, export, and troubleshooting: [import-export.md](import-export.md).
 
 ## 4. Optional: verify with scan
 
@@ -107,7 +107,7 @@ uv run endor-semgrep-inventory --namespace tenant.namespace
 ```
 
 Lists tenant **`SemgrepRule`** rows and summarizes metadata-key prevalence —
-see [SEMGREP_RULE_SHAPE_GUARDRAILS.md](SEMGREP_RULE_SHAPE_GUARDRAILS.md).
+see [semgrep-rule-shape-guardrails.md](semgrep-rule-shape-guardrails.md).
 
 ## Naming (CLI vs API resource)
 
