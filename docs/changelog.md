@@ -8,9 +8,18 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+### Changed
+
+### Breaking
+
+## 0.4.0
+
+Call-graph export/path workflows, vector-store query CLI, and sweep→export breaking rename. Generated models pinned to **endorctl `v1.7.1002`** (OpenAPI spec SHA-256 `663e91e0…33556`).
+
+### Added
+
 - **Call-graph export primitives** — `run_callgraph_export`, `find_call_graph_path`, `resolve_package_version_with_callgraph`, and `resolve_callgraph_export_artifact` under `endorlabs.workflows.callgraph`.
 - **CLIs** — `endor-callgraph-path` (live project path search); `endor-callgraph-search` path mode (`--path-from`, `--path-to`, `--max-depth`); `endor-vector-query` (list/probe/query tenant vector stores).
-- **Maintainer note** — agent-kit ↔ SDK workflow map moved to `.tmp/agent-kit-sdk-overlap.md` (maintainer scratch; not tracked in `docs/`).
 
 ### Changed
 

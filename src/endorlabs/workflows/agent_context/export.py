@@ -37,7 +37,6 @@ from endorlabs.workflows.agent_context.session_artifacts import (
     build_project_session_key,
     create_session,
 )
-from endorlabs.workflows.callgraph.export import run_callgraph_export
 from endorlabs.workflows.projects.discovery import resolve_project_candidate
 
 LOGGER = get_resource_logger(__name__)
@@ -421,6 +420,8 @@ def main() -> int:
 
         export_info: dict[str, Any] | None = None
         if args.callgraph_export:
+            from endorlabs.workflows.callgraph.export import run_callgraph_export
+
             export_dir = bundle / "callgraph_export"
             export_dir.mkdir(parents=True, exist_ok=True)
             export_result = run_callgraph_export(
