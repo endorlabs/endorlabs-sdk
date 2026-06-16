@@ -39,15 +39,43 @@ Verify: `endorlabs.Client().whoami()`
 2. Read `discover().stub` — flat method signatures on `_XFacade` classes
 3. Shell: `help(client.Project.list)`, `inspect.signature(client.Finding.list_by_project)`
 4. Bounded live probe: `python -m endorlabs.examples.day0`
+5. **Workflows:** `endorlabs.init()` → `.endorlabs-context/sdk/skills/<id>/SKILL.md`
+
+## Workflows (call graph example)
+
+Skills are not on `dir(client)`. After `init()`, read **`skills/endor-fetch-and-search-call-graph/SKILL.md`**.
+
+```python
+from endorlabs.workflows.callgraph import (
+    resolve_package_version_with_callgraph,
+    find_call_graph_path,
+)
+
+pv, decoded = resolve_package_version_with_callgraph(
+    client, project, namespace=project.tenant_meta.namespace
+)
+# decoded.callables / decoded.edges — not CallGraphData.fetch() alone
+
+result = find_call_graph_path(
+    decoded.callables,
+    decoded.edges,
+    from_patterns=["_is_verbose"],
+    to_patterns=["bool"],
+    max_depth=4,
+)
+```
+
+`spec.call_graph_available` indicates capability; the helper above verifies decode succeeds.
 
 ## Common traps
 
 - Filters: `filter=F(...)`, never positional as first arg to `list()`
-- Pagination: `page_size` / `max_pages` on `.list()`; not `limit` (except `ScanResult.list_by_project(limit=)`)
+- Pagination: `page_size`, `limit` (alias), or `max_pages` on `.list()`; `list_by_project(limit=)` unchanged
 - Findings text: `spec.summary`
 - Project-scoped lists: resolve `Project`, then `namespace=project.namespace` or `list_by_project`
 - `QueryVulnerability` / `QueryMalware`: create/query APIs — no `.list()`
 - `endorlabs.query_vulnerability` is a **module**; use `client.QueryVulnerability`
+- Call graph: `decode()` not `fetch()` for search; use `resolve_package_version_with_callgraph`
 
 ## Optional: Pyright in dev deps
 

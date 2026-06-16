@@ -146,8 +146,8 @@ For the latest scan only, use `ScanResult.list_by_project(project, limit=1).valu
 
 | Method | Input | Returns |
 |--------|-------|---------|
-| `CallGraphData.decode(package_version)` | `PackageVersion` or UUID + `namespace=` | `CallGraphDecoded` |
-| `CallGraphData.fetch(package_version)` | same | raw CallGraphData envelope |
+| `CallGraphData.decode(package_version)` | `PackageVersion` or UUID + `namespace=` | `CallGraphDecoded` (searchable callables/edges) |
+| `CallGraphData.fetch(package_version)` | same | raw envelope only — prefer `decode` or `resolve_package_version_with_callgraph` |
 | `ScanResult.get_logs(scan_result, …)` | `ScanResult` or UUID + `namespace=` | `ScanLogRequestLogMessage[]` |
 
 **Call graph path search:** Prefer `endor-agent-context --callgraph-export --decode-zstd` then `endor-callgraph-search` (`--path-from` / `--path-to` for multi-hop BFS) or `endor-callgraph-path` for live probes. Zero direct edges between two symbols often means a **multi-hop** wrapper chain — see shipped skill **endor-fetch-and-search-call-graph** (`call-graph-format-and-search.md` → path search protocol). Semantic function summaries: `endor-vector-query` or `VectorStore.query` (separate from call-graph export). Not for Finding/CVE reachability (use `endor-reachability-context`).
