@@ -59,33 +59,64 @@ def agent_knowledge_rule_ids() -> list[str]:
     ]
 
 
+def agent_knowledge_contract_ids() -> list[str]:
+    """Return bootstrap contract ids from the shipped manifest."""
+    manifest: dict[str, Any] = agent_knowledge_manifest()
+    bootstrap_obj = manifest.get("bootstrap")
+    if not isinstance(bootstrap_obj, dict):
+        return []
+    bootstrap = cast("dict[str, Any]", bootstrap_obj)
+    contract_ids_raw = bootstrap.get("contract_ids")
+    if not isinstance(contract_ids_raw, list):
+        return []
+    return [
+        item for item in cast("list[object]", contract_ids_raw) if isinstance(item, str)
+    ]
+
+
 def agent_knowledge_bootstrap_paths() -> list[Path]:
-    """Return INDEX.md plus bootstrap rule paths for harness injection."""
+    """Return INDEX.md plus bootstrap rule and contract paths for harness injection."""
     bundle = agent_knowledge_dir()
     paths: list[Path] = [agent_knowledge_index_path()]
     manifest: dict[str, Any] = agent_knowledge_manifest()
     rules_raw = manifest.get("rules")
-    if not isinstance(rules_raw, list):
-        return paths
-    bootstrap_ids = set(agent_knowledge_rule_ids())
-    for entry_raw in cast("list[object]", rules_raw):
-        if not isinstance(entry_raw, dict):
-            continue
-        entry = cast("dict[str, Any]", entry_raw)
-        rule_id = entry.get("id")
-        rel_path = entry.get("path")
-        if (
-            not isinstance(rule_id, str)
-            or rule_id not in bootstrap_ids
-            or not isinstance(rel_path, str)
-        ):
-            continue
-        paths.append(bundle / rel_path)
+    if isinstance(rules_raw, list):
+        bootstrap_rule_ids = set(agent_knowledge_rule_ids())
+        for entry_raw in cast("list[object]", rules_raw):
+            if not isinstance(entry_raw, dict):
+                continue
+            entry = cast("dict[str, Any]", entry_raw)
+            rule_id = entry.get("id")
+            rel_path = entry.get("path")
+            if (
+                not isinstance(rule_id, str)
+                or rule_id not in bootstrap_rule_ids
+                or not isinstance(rel_path, str)
+            ):
+                continue
+            paths.append(bundle / rel_path)
+    contracts_raw = manifest.get("contracts")
+    if isinstance(contracts_raw, list):
+        bootstrap_contract_ids = set(agent_knowledge_contract_ids())
+        for entry_raw in cast("list[object]", contracts_raw):
+            if not isinstance(entry_raw, dict):
+                continue
+            entry = cast("dict[str, Any]", entry_raw)
+            contract_id = entry.get("id")
+            rel_path = entry.get("path")
+            if (
+                not isinstance(contract_id, str)
+                or contract_id not in bootstrap_contract_ids
+                or not isinstance(rel_path, str)
+            ):
+                continue
+            paths.append(bundle / rel_path)
     return paths
 
 
 __all__ = [
     "agent_knowledge_bootstrap_paths",
+    "agent_knowledge_contract_ids",
     "agent_knowledge_dir",
     "agent_knowledge_index_path",
     "agent_knowledge_manifest",

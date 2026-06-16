@@ -8,7 +8,16 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- **`endorlabs.discover()`** — programmatic wheel paths for agent onboarding (INDEX, bootstrap, stub, day0 module, entry points).
+- **Wheel `AGENTS.md`** and **`python -m endorlabs.examples.day0`** — consumer agent guide and bounded probe ladder (`--dry-run` for path-only checks).
+- **Bootstrap contracts** — `resource-discovery`, `errors-and-auth`, and `list-parameters` included in `agent_knowledge_bootstrap_paths()`.
+
 ### Changed
+
+- **`client_surface.pyi`** — flat `search_by_*`, `list_by_*`, `get_logs`, and related methods on `_XFacade` classes for agent Read discovery without LSP inheritance.
+- **Auth** — missing-credential `ValidationError` documents `ENDOR_TOKEN`; INFO log when token and API key env vars are both set (token path preferred; MCP/endorctl need single mode).
+- **`Client.__init__`** — runtime docstring for `help()` / inspect.
+- Top-level **`__all__`** — removed `query_vulnerability` and `query_malware` (use `client.QueryVulnerability` / `client.QueryMalware`).
 
 ### Breaking
 

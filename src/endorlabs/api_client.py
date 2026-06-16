@@ -195,6 +195,17 @@ class APIClient:
         self.auth_method = normalized_auth_method
         self._validate_auth_method()
 
+        env_token = os.getenv("ENDOR_TOKEN")
+        env_key = os.getenv("ENDOR_API_CREDENTIALS_KEY")
+        env_secret = os.getenv("ENDOR_API_CREDENTIALS_SECRET")
+        if env_token and env_key and env_secret:
+            self.logger.info(
+                "Both ENDOR_TOKEN and ENDOR_API_CREDENTIALS_KEY/SECRET are set; "
+                "using %s path. MCP and endorctl require a single auth mode — "
+                "see shipped contract errors-and-auth.",
+                self.auth_method,
+            )
+
         # Browser-family flows validate ENDOR_TOKEN first; if invalid, then
         # interactive browser fallback.
         if self.auth_method != "api-key":
@@ -211,6 +222,7 @@ class APIClient:
             if not self.key or not self.secret:
                 error_msg = (
                     "API credentials not found. Please provide credentials via:\n"
+                    "  - Environment variable: ENDOR_TOKEN (bearer token)\n"
                     "  - Constructor: APIClient(key=..., secret=...)\n"
                     "  - Environment variables: ENDOR_API_CREDENTIALS_KEY and "
                     "ENDOR_API_CREDENTIALS_SECRET\n"
