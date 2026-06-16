@@ -16,4 +16,4 @@ uv run python -m endorlabs.examples.agent_bootstrap --dry-run
 |------|----------------|
 | `discover().stub` | `def search_by_name(` inside `class _ProjectFacade` |
 | `discover().bootstrap_paths` | `resource-discovery.md` |
-| `discover().agents_guide` | First steps before `Client()` |
+| `discover().agents_guide` | Thin router → INDEX.md (not duplicate traps) |
