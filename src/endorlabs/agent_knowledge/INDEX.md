@@ -4,6 +4,30 @@ Shipped with `endorlabs` inside the wheel. **`endorlabs.init()` is optional** �
 `agent_knowledge_index_path()` to read this file from site-packages, or materialize under
 `.endorlabs-context/sdk/` when a cwd-relative tree is needed.
 
+## Agents — step zero (required)
+
+Before `endorlabs.Client()` or live API calls:
+
+1. `d = endorlabs.discover()` — or `paths = endorlabs.agent_knowledge_bootstrap_paths()`
+2. **Read every path** in `d.bootstrap_paths` (INDEX, bootstrap rules, and normative contracts).
+3. Read `d.stub` (`client_surface.pyi`) for `list()` kwargs and relationship accessors.
+4. Optional live probe: `python -m endorlabs.examples.day0`
+
+Skipping step 1–2 causes repeatable traps (`filter=`, namespace scoping, mask→dict, auth mode).
+Consumer project guide: **`AGENTS.md`** in this bundle (copy `templates/consumer-AGENTS.md` to your repo).
+
+## Day-0 traps
+
+| Trap | Correct pattern |
+|------|-----------------|
+| `F()` positional | `list(filter=F("spec.level") == "…", traverse=True)` — never `list(F(...) == …, traverse=True)` |
+| `limit` on `.list()` | Use `page_size=` or `max_pages=`. Exception: `ScanResult.list_by_project(..., limit=N)` |
+| Finding text field | `spec.summary`, not `spec.description` |
+| `Metric.list_by_project` | Does not exist — use `Metric.list(...)` with filters |
+| `QueryVulnerability.list` | Query resources are create/query only, not listable CRUD |
+| `endorlabs.query_vulnerability` | Submodule for payload builders — use `client.QueryVulnerability` |
+| MCP + SDK + endorctl auth | **One mode** in `.env`: `ENDOR_TOKEN` **or** key+secret, not both |
+
 ## Quick start
 
 **Wheel-only** (no disk materialization):
@@ -93,7 +117,7 @@ Harnesses should prepend `agent_knowledge_bootstrap_paths()` (or read these rule
 | `endor-local-context` | Check gitignored `.endorlabs-context/` paths explicitly |
 | `endor-portable-examples` | Placeholders only; no committed tenant/project UUID literals |
 
-See `MANIFEST.json` → `bootstrap.rule_ids` for the machine-readable list.
+See `MANIFEST.json` → `bootstrap.rule_ids` and `bootstrap.contract_ids` for the machine-readable lists.
 
 ## Evidence vs inference
 

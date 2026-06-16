@@ -1,5 +1,10 @@
 {
   "bootstrap": {
+    "contract_ids": [
+      "resource-discovery",
+      "errors-and-auth",
+      "list-parameters"
+    ],
     "index": "INDEX.md",
     "rule_ids": [
       "endor-list-query-performance",
@@ -55,7 +60,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-15T19:52:44.712165+00:00",
+  "generated_at": "2026-06-16T20:24:48.893083+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -120,7 +125,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.3.1.dev0",
+  "sdk_version": "0.4.1.dev0",
   "skills": [
     {
       "description": "Author, validate, and import custom OpenGrep/Semgrep rule YAML into Endor Labs SemgrepRule resources. Use when writing or fixing rule syntax, Endor metadata shape, local opengrep/semgrep checks, or importing rules to a namespace \u2014 not for finding triage (hand off to endor-retrieve-scan-results).",

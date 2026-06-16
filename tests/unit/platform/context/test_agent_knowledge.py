@@ -44,6 +44,10 @@ def test_agent_knowledge_manifest_structure() -> None:
     assert "endor-changelog" not in rule_ids
     assert "endor-changelog" not in bootstrap_ids
     assert set(bootstrap_ids).issubset(set(rule_ids))
+    contract_ids = [entry["id"] for entry in manifest["contracts"]]
+    bootstrap_contract_ids = manifest["bootstrap"].get("contract_ids", [])
+    assert set(bootstrap_contract_ids).issubset(set(contract_ids))
+    assert "resource-discovery" in bootstrap_contract_ids
     for entry in manifest["rules"]:
         assert (package_dir / entry["path"]).is_file()
 

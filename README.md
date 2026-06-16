@@ -165,20 +165,34 @@ The SDK uses **environment variables** only (no config file loading). Precedence
 
 Canonical naming is `tenant.namespace.child`; do not use UUIDs in namespace paths. Full semantics: [docs/contracts.md](docs/contracts.md).
 
-Example `.env` for local runs:
+Example `.env` for local runs — use **one** credential mode (not both):
 
 ```bash
+# Option A — bearer token (common for agent sessions)
+ENDOR_TOKEN=your-bearer-token
+ENDOR_NAMESPACE=your-tenant.namespace
+ENDOR_LOG_LEVEL=INFO
+```
+
+```bash
+# Option B — API key (CI)
 ENDOR_API_CREDENTIALS_KEY=your-api-key
 ENDOR_API_CREDENTIALS_SECRET=your-api-secret
 ENDOR_NAMESPACE=your-tenant.namespace
 ENDOR_LOG_LEVEL=INFO
 ```
 
+If both token and API key variables are set, the SDK prefers the token; **MCP and endorctl** typically fail with conflicting auth.
+
+### AI agents
+
+Before `Client()`, call `endorlabs.discover()` and read every path in `bootstrap_paths`. Shipped guide: `discover().agents_guide`. Runnable probe: `python -m endorlabs.examples.day0 --dry-run`.
+
 Browser auth, SSO setup, and skill walkthroughs: [docs/guides/examples.md](docs/guides/examples.md).
 
 ## Try it with skills
 
-Guided tenant sessions use shipped agent skills — start with [docs/guides/examples.md](docs/guides/examples.md) and [AGENTS.md](AGENTS.md). Skills ship in the wheel (`endorlabs.agent_knowledge_index_path()`) or `.endorlabs-context/sdk/skills/` after `init()`.
+Guided tenant sessions use shipped agent skills — start with [docs/guides/examples.md](docs/guides/examples.md). Wheel entry: `endorlabs.discover()` → `agents_guide` and `INDEX.md`; materialize with `init()` to `.endorlabs-context/sdk/`.
 
 ## Further reading
 

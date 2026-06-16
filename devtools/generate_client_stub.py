@@ -197,6 +197,37 @@ def _emit_route_method_stubs(entry: ResourceEntry) -> list[str]:
     return lines
 
 
+def _specialized_facade_public_methods(facade_cls: type[Any]) -> list[str]:
+    """Public callables defined on a specialized facade class body."""
+    names: list[str] = []
+    for name, obj in facade_cls.__dict__.items():
+        if name.startswith("_"):
+            continue
+        if callable(obj):
+            names.append(name)
+    return sorted(names)
+
+
+def _emit_specialized_facade_stubs(entry: ResourceEntry) -> list[str]:
+    """Re-emit specialized facade methods on ``_XFacade`` for agent Read discovery."""
+    facade_cls = FACADE_CLASS_BY_ATTR.get(entry.attr_name)
+    if facade_cls is None:
+        return []
+    model_name = entry.model_class.__name__
+    lines: list[str] = []
+    for name in _specialized_facade_public_methods(facade_cls):
+        lines.append("")
+        lines.extend(
+            _format_method_override(
+                name,
+                model_name,
+                source_class=facade_cls,
+                include_doc=True,
+            )
+        )
+    return lines
+
+
 def _format_annotation(ann: Any, model_name: str) -> str:
     if ann is inspect.Parameter.empty:
         return ""
@@ -642,8 +673,10 @@ def _emit_resource_class(
     extra = _stub_extra_methods(entry)
     route_lines = _emit_route_method_stubs(entry)
     list_lines = _emit_list_override(model_name)
+    specialized_lines = _emit_specialized_facade_stubs(entry)
     lines.append("")
     lines.extend(list_lines)
+    lines.extend(specialized_lines)
     if create_lines:
         lines.append("")
         lines.extend(create_lines)
@@ -681,6 +714,7 @@ def main() -> None:  # noqa: D103
         ".api_client": ["APIClient"],
         ".core.filter": ["FilterExpression"],
         ".core.types": ["ListParameters"],
+        ".operations.routes": ["RouteResult"],
     }
     facade_imports: set[str] = set()
     for entry in RESOURCE_REGISTRY:

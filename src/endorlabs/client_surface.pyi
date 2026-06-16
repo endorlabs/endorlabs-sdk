@@ -19,6 +19,7 @@ from .facade.specialized import (
     VectorStoreFacade,
     VulnerabilityFacade,
 )
+from .operations.routes import RouteResult
 from .resources.api_key import APIKey, CreateAPIKeyPayload
 from .resources.audit_log import AuditLog, CreateAuditLogPayload
 from .resources.authentication_log import AuthenticationLog
@@ -246,6 +247,18 @@ class _AuthorizationPolicyFacade(AuthorizationPolicyFacade):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
+    def search_by_claims(
+        self,
+        query: str,
+        *,
+        namespace: str | None = ...,
+        traverse: bool = ...,
+        warnings_out: list[str] | None = ...,
+        **list_kwargs: Any,
+    ) -> list[Any]:
+        """Search policies by name, clause text, and target namespace fields."""
+        ...
+
     def create(
         self,
         payload: CreateAuthorizationPolicyPayload | None = None,
@@ -426,6 +439,35 @@ class _FindingFacade(FindingFacade):
         **kwargs: Any,
     ) -> list[Finding] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def list_by_project(
+        self,
+        project: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        **kwargs: Any,
+    ) -> RouteResult[Any]:
+        """List findings for a project (generated accessor ``project.findings``)."""
+        ...
+
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> RouteResult[Any]:
+        """List findings in the same scan plane as *source* (``scan.findings``)."""
+        ...
+
+    def to_dependency_metadata(
+        self,
+        finding: Any,
+        **kwargs: Any,
+    ) -> RouteResult[Any]:
+        """Resolve DependencyMetadata for a finding (accessors with fallback)."""
         ...
 
     def create(
@@ -1103,6 +1145,27 @@ class _PackageVersionFacade(PackageVersionFacade):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
+    def list_by_project(
+        self,
+        project: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        **kwargs: Any,
+    ) -> RouteResult[Any]:
+        """List package versions for a project (``project.package_versions``)."""
+        ...
+
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> RouteResult[Any]:
+        """List package versions in the same scan plane as *source*."""
+        ...
+
     def create(
         self,
         payload: CreatePackageVersionPayload | None = None,
@@ -1260,6 +1323,18 @@ class _ProjectFacade(ProjectFacade):
         **kwargs: Any,
     ) -> list[Project] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def search_by_name(
+        self,
+        query: str,
+        *,
+        namespace: str | None = ...,
+        traverse: bool = ...,
+        warnings_out: list[str] | None = ...,
+        **list_kwargs: Any,
+    ) -> list[Any]:
+        """Search projects by case-insensitive substring on ``meta.name`` or UUID."""
         ...
 
     def create(
@@ -1720,6 +1795,32 @@ class _ScanResultFacade(ScanResultFacade):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
+    def get_logs(
+        self,
+        scan_result: Any,
+        *,
+        namespace: str | None = ...,
+        max_entries: int = ...,
+        log_levels: list[Any] | None = ...,
+        start_time: str | None = ...,
+        end_time: str | None = ...,
+        newest_first: bool | None = ...,
+    ) -> list[Any]:
+        """Fetch log messages for a scan (ScanLogRequest API under the hood)."""
+        ...
+
+    def list_by_project(
+        self,
+        project: Any,
+        *,
+        namespace: str | None = ...,
+        limit: int = ...,
+        status_filter: str | None = ...,
+        **kwargs: Any,
+    ) -> RouteResult[Any]:
+        """List scan results for a project (accessor ``project.scan_results``)."""
+        ...
+
     def create(
         self,
         payload: CreateScanResultPayload | None = None,
@@ -1902,6 +2003,18 @@ class _VectorStoreFacade(VectorStoreFacade):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
+    def search_by_name(
+        self,
+        query: str,
+        *,
+        namespace: str | None = ...,
+        traverse: bool = ...,
+        warnings_out: list[str] | None = ...,
+        **list_kwargs: Any,
+    ) -> list[Any]:
+        """Search vector stores by case-insensitive substring on ``meta.name``."""
+        ...
+
 class _VectorStoreQueryFacade(ResourceRuntimeFacade[VectorStoreQuery]):
     """Natural-language query against a vector store (create-only).
 
@@ -2011,6 +2124,18 @@ class _VulnerabilityFacade(VulnerabilityFacade):
         **kwargs: Any,
     ) -> list[Vulnerability] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def search_by_vuln_alias(
+        self,
+        query: str,
+        *,
+        namespace: str | None = ...,
+        traverse: bool = ...,
+        warnings_out: list[str] | None = ...,
+        **list_kwargs: Any,
+    ) -> list[Any]:
+        """Search OSS vulnerabilities by alias or name substring."""
         ...
 
 class Client:

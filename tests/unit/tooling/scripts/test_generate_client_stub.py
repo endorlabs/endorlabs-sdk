@@ -149,3 +149,32 @@ def test_committed_pyi_finding_route_methods_not_untyped() -> None:
     finding_section = content[finding_start:finding_end]
     assert "def list_by_project(self, *args" not in finding_section
     assert "def list_for_context(self, *args" not in finding_section
+
+
+def _facade_section(content: str, class_name: str) -> str:
+    start = content.index(f"class {class_name}")
+    end = content.find("\nclass _", start + 1)
+    if end == -1:
+        end = content.find("\nclass Client:", start + 1)
+    return content[start:end]
+
+
+def test_committed_pyi_project_has_flat_search_by_name() -> None:
+    pyi_path = _REPO_ROOT / "src" / "endorlabs" / "client_surface.pyi"
+    section = _facade_section(pyi_path.read_text(encoding="utf-8"), "_ProjectFacade")
+    assert "def search_by_name(" in section
+
+
+def test_committed_pyi_scan_result_has_flat_specialized_methods() -> None:
+    pyi_path = _REPO_ROOT / "src" / "endorlabs" / "client_surface.pyi"
+    section = _facade_section(pyi_path.read_text(encoding="utf-8"), "_ScanResultFacade")
+    assert "def get_logs(" in section
+    assert "def list_by_project(" in section
+
+
+def test_committed_pyi_finding_has_flat_specialized_methods() -> None:
+    pyi_path = _REPO_ROOT / "src" / "endorlabs" / "client_surface.pyi"
+    section = _facade_section(pyi_path.read_text(encoding="utf-8"), "_FindingFacade")
+    assert "def list_by_project(" in section
+    assert "def list_for_context(" in section
+    assert "def to_dependency_metadata(" in section

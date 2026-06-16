@@ -23,6 +23,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `NotFoundError`
 - `PermissionDeniedError`
 - `RateLimitError`
+- `SdkDiscovery`
 - `ServerError`
 - `UnauthorizedError`
 - `ValidationError`
@@ -32,6 +33,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `agent_knowledge_manifest`
 - `agent_knowledge_rule_ids`
 - `dependency_metadata`
+- `discover`
 - `finding`
 - `init`
 - `installation`
@@ -43,8 +45,6 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `package_version`
 - `policy`
 - `project`
-- `query_malware`
-- `query_vulnerability`
 - `repository`
 - `repository_version`
 - `sync_agent_skills`
