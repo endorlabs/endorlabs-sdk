@@ -35,7 +35,7 @@ Before `endorlabs.Client()` or live API calls:
 4. **Workflows** (call graph, project bundle, scan RCA): `endorlabs.init()` → read `skills/<id>/SKILL.md` (start: **endor-fetch-and-search-call-graph**, **endor-retrieve-scan-results**)
 
 Skipping step 1–2 causes repeatable traps (`filter=`, namespace scoping, mask→dict, auth mode).
-Consumer project guide: **`AGENTS.md`** in this bundle (copy `templates/consumer-AGENTS.md` to your repo).
+Consumer entrypoint: **`AGENTS.md`** (points here). Copy **`templates/consumer-AGENTS.md`** to your project root.
 
 ## Day-0 traps
 

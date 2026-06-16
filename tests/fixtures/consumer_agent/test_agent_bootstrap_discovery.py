@@ -24,11 +24,13 @@ def test_stub_flat_search_by_name_on_project_facade() -> None:
     assert "def search_by_name(" in section
 
 
-def test_discover_agents_guide_exists() -> None:
+def test_discover_agents_guide_points_to_index() -> None:
     d = endorlabs.discover()
     assert d.agents_guide.is_file()
     text = d.agents_guide.read_text(encoding="utf-8")
-    assert "first steps" in text.lower() or "step zero" in text.lower()
+    assert "INDEX.md" in text
+    assert "Day-0 traps" not in text
+    assert "resolve_package_version_with_callgraph" not in text
 
 
 def test_resource_routes_shipped_when_present() -> None:
