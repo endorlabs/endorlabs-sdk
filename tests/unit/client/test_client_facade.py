@@ -1130,7 +1130,7 @@ def test_finding_empty_list_warns_at_default_namespace(
     """Empty project-scoped list at tenant root emits a namespace scoping warning."""
     client = client_with_mock_transport
     client.Finding._ops.list = Mock(return_value=[])
-    with pytest.warns(UserWarning, match="namespace=project.namespace"):
+    with pytest.warns(UserWarning, match="list_by_project"):
         client.Finding.list(max_pages=TEST_MAX_PAGES)
 
 
@@ -1154,7 +1154,7 @@ def test_finding_empty_list_warns_with_project_uuid_filter_at_tenant_root(
     """project_uuid filter does not widen namespace; empty list still warns at tenant root."""
     client = client_with_mock_transport
     client.Finding._ops.list = Mock(return_value=[])
-    with pytest.warns(UserWarning, match="namespace=project.namespace"):
+    with pytest.warns(UserWarning, match="list_by_project"):
         client.Finding.list(
             filter='spec.project_uuid=="proj-1"',
             max_pages=TEST_MAX_PAGES,

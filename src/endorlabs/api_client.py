@@ -18,7 +18,9 @@ import httpx
 
 from .core.exceptions import (
     EndorAPIError,
+    NetworkError,
     ValidationError,
+    append_namespace_scope_hint,
     map_status_code_to_exception,
 )
 from .core.types import ErrorResponse
@@ -34,6 +36,22 @@ from .utils.redaction import (
 # Pre-compiled redaction patterns for _redact_log_data (avoid re.compile per call)
 _REPR_REDACT_RE: re.Pattern[str] = re.compile(redaction_pattern, re.IGNORECASE)
 _JSON_REDACT_RE: re.Pattern[str] = re.compile(json_redaction_pattern, re.IGNORECASE)
+
+_GENERIC_ERROR_MESSAGES = frozenset(
+    {
+        "resource not found",
+        "validation error",
+        "permission denied",
+        "unauthorized",
+        "conflict",
+        "rate limit exceeded",
+        "server error",
+        "method not implemented",
+        "network error",
+        "authentication failed",
+        "unknown error",
+    }
+)
 
 # --- Token lifecycle constants -------------------------------------------
 TOKEN_REFRESH_THRESHOLD_SECONDS: int = 30 * 60  # Proactive refresh 30 min before expiry
@@ -619,6 +637,31 @@ class APIClient:
         # Undocumented gRPC code - return None to trigger fallback
         return (None, "", "")
 
+    @staticmethod
+    def _is_generic_error_message(message: str) -> bool:
+        stripped = message.strip()
+        if not stripped:
+            return True
+        if re.match(r"^HTTP \d+ error$", stripped, re.IGNORECASE):
+            return True
+        return stripped.lower() in _GENERIC_ERROR_MESSAGES
+
+    @staticmethod
+    def _resolve_error_message(
+        grpc_code: int | None,
+        parsed_message: str,
+        *,
+        user_message: str = "",
+    ) -> str:
+        msg = parsed_message.strip()
+        if grpc_code == 4 and user_message and msg and "pagination" not in msg.lower():
+            if not msg or APIClient._is_generic_error_message(msg):
+                return user_message
+            return f"{msg} {user_message}"
+        if user_message and (not msg or APIClient._is_generic_error_message(msg)):
+            return user_message
+        return msg or user_message or parsed_message
+
     def parse_error_response_structured(
         self, response: httpx.Response
     ) -> ErrorResponse | None:
@@ -674,8 +717,10 @@ class APIClient:
         grpc_code, error_message = self._parse_error_response_succinct(response)
 
         # Use gRPC code to determine exception type if available
+        user_message = ""
         if grpc_code is not None:
-            grpc_http_code, _, _ = self._get_grpc_error_context(grpc_code)
+            grpc_http_code, _, user_msg = self._get_grpc_error_context(grpc_code)
+            user_message = user_msg
             if grpc_http_code is not None:
                 # Use HTTP status code derived from gRPC code for precision
                 effective_status_code = grpc_http_code
@@ -694,6 +739,15 @@ class APIClient:
                 )
             else:
                 error_message = response.text or f"HTTP {http_status_code}"
+
+        error_message = self._resolve_error_message(
+            grpc_code,
+            error_message,
+            user_message=user_message,
+        )
+
+        if effective_status_code == 404 and operation in ("get", "list"):
+            error_message = append_namespace_scope_hint(error_message)
 
         # Map to exception using the helper function with effective status code
         return map_status_code_to_exception(
@@ -759,7 +813,11 @@ class APIClient:
                     time.sleep(backoff)
                     continue
                 raise
-            except (httpx.ConnectError, httpx.TimeoutException) as e:
+            except (
+                httpx.ConnectError,
+                httpx.TimeoutException,
+                httpx.RequestError,
+            ) as e:
                 last_exc = e
                 if attempt < self.max_retries:
                     backoff = self.backoff_factor * (2**attempt)
@@ -772,8 +830,18 @@ class APIClient:
                     )
                     time.sleep(backoff)
                     continue
-                raise
+                break
         if last_exc:
+            if isinstance(
+                last_exc,
+                (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError),
+            ):
+                raise NetworkError(
+                    message=(
+                        f"Network error after {self.max_retries + 1} attempt(s): "
+                        f"{last_exc}"
+                    ),
+                ) from last_exc
             raise last_exc
         raise EndorAPIError("Retry loop exited without response or exception")
 
