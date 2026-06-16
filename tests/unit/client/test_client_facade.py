@@ -497,6 +497,18 @@ def test_custom_facade_registry_has_stub_metadata() -> None:
         assert entry.pyi_attr_doc.strip(), f"{entry.attr_name}: pyi_attr_doc"
 
 
+def test_facade_class_by_attr_registry_alignment() -> None:
+    """Every specialized runtime facade must map to a registry attr_name."""
+    from endorlabs.facade.specialized import FACADE_CLASS_BY_ATTR
+    from endorlabs.registry import RESOURCE_REGISTRY
+
+    registry_attrs = {entry.attr_name for entry in RESOURCE_REGISTRY}
+    for attr_name in FACADE_CLASS_BY_ATTR:
+        assert attr_name in registry_attrs, (
+            f"{attr_name} missing from RESOURCE_REGISTRY"
+        )
+
+
 def test_client_namespace_list_uses_session_logging_only(
     client_with_mock_transport: Client,
 ) -> None:

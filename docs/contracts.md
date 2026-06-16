@@ -27,6 +27,11 @@ This document is the in-repo source of truth for shared SDK semantics.
   Each entry carries `pyi_*` metadata for
   `devtools/generate_client_stub.py` (typed `client_surface.pyi`); run
   `uv run python devtools/generate_client_stub.py` after changes.
+  Registry resources with runtime sugar in `FACADE_CLASS_BY_ATTR` (e.g.
+  `ProjectFacade.search_by_name`, `ScanResultFacade.get_logs`) are reflected in
+  the stub by inheriting the specialized facade class on `_ModelFacade` stub types.
+  The wheel ships PEP 561 marker `py.typed` and `client_surface.pyi` alongside
+  `client_surface.py` for IDE consumers.
 - **Template — resource vs helper:** **`ScanLogRequest`** = generated
   `ResourceEntry`, endorctl `--resource` kind. **`ScanResult.get_logs`** = sugar on
   the scan facade (log lines via ScanLogRequest wire API). **`CallGraphData`** =
