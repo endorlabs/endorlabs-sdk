@@ -32,7 +32,8 @@ Verify: `endorlabs.Client().whoami()`
 ## Common traps
 
 - Filters: `filter=F(...)`, never positional
-- Pagination: `page_size` / `max_pages`, not `limit` on `.list()`
+- Pagination: `page_size`, `limit` (alias), or `max_pages` on `.list()`
+- Call graph: read skill after `init()`; use `decode()` and `resolve_package_version_with_callgraph`
 - Findings text: `spec.summary`
 - Project-scoped lists: resolve `Project`, use `namespace=project.namespace` or `list_by_project`
 - Query* resources: create/query APIs, not `.list()`

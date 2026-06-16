@@ -35,7 +35,7 @@ Type-safe, resource-oriented Python client for the Endor Labs REST API. List, ge
 | You want to…                                        | Go to                                                                                          |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | **Use the SDK** (API scripts, CI)                   | [Installation](#installation) → [Quick start](#quick-start) — **no `init()` required**         |
-| **Bootstrap an AI agent** (skills, offline OpenAPI) | [AGENTS.md](AGENTS.md)                                                                         |
+| **Bootstrap an AI agent** (API + skills)            | [Agent bootstrap](#agent-bootstrap-discover-vs-init) — `discover()` then `init()` for workflows |
 | **Try the SDK on a real tenant**                    | [docs/guides/examples.md](docs/guides/examples.md) · [Try it with skills](#try-it-with-skills) |
 | **SDK contracts and deep reference**                | [docs/README.md](docs/README.md)                                                               |
 | **Contribute to this repo**                         | [CONTRIBUTORS.md](CONTRIBUTORS.md)                                                             |
@@ -186,9 +186,21 @@ ENDOR_LOG_LEVEL=INFO
 
 If both token and API key variables are set, the SDK prefers the token; **MCP and endorctl** typically fail with conflicting auth.
 
+### Agent bootstrap: `discover()` vs `init()`
+
+| Need | Approach |
+| ---- | -------- |
+| INDEX, contracts, traps, stub path — **no cwd writes** | `endorlabs.discover()` → read every `bootstrap_paths` entry |
+| Skill playbooks on disk (call graph, scan RCA, bundles) | `endorlabs.init()` → `.endorlabs-context/sdk/skills/<id>/SKILL.md` |
+| Platform OpenAPI / user docs offline | `pip install 'endorlabs[docs]'` then `init(include_openapi=True, include_user_docs=True)` |
+
+Runnable probe (paths only): `python -m endorlabs.examples.day0 --dry-run`. Shipped consumer guide: `discover().agents_guide`.
+
+**Call graphs (agents):** `CallGraphData.fetch()` returns the raw envelope only. For search and path queries, read skill **`endor-fetch-and-search-call-graph`** after `init()` (or from the wheel: `skills/endor-fetch-and-search-call-graph/SKILL.md` via `agent_knowledge_manifest()`). Prefer `endorlabs.workflows.callgraph.resolve_package_version_with_callgraph()` and `CallGraphData.decode()` — `spec.call_graph_available` does not guarantee stored graph data. Pass `namespace=project.tenant_meta.namespace` on PV lists and decode.
+
 ### AI agents
 
-Before `Client()`, call `endorlabs.discover()` and read every path in `bootstrap_paths`. Shipped guide: `discover().agents_guide`. Runnable probe: `python -m endorlabs.examples.day0 --dry-run`.
+Before `Client()`, call `endorlabs.discover()` and read every path in `bootstrap_paths`. Before **workflow** tasks (call graph, project bundle, scan RCA), run `endorlabs.init()` and open the relevant skill under `.endorlabs-context/sdk/skills/`.
 
 Browser auth, SSO setup, and skill walkthroughs: [docs/guides/examples.md](docs/guides/examples.md).
 

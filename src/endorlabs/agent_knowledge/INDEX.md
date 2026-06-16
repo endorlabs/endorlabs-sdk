@@ -12,6 +12,7 @@ Before `endorlabs.Client()` or live API calls:
 2. **Read every path** in `d.bootstrap_paths` (INDEX, bootstrap rules, and normative contracts).
 3. Read `d.stub` (`client_surface.pyi`) for `list()` kwargs and relationship accessors.
 4. Optional live probe: `python -m endorlabs.examples.day0`
+5. **Workflows** (call graph, project bundle, scan RCA): `endorlabs.init()` → read `skills/<id>/SKILL.md` (start: **endor-fetch-and-search-call-graph**, **endor-retrieve-scan-results**)
 
 Skipping step 1–2 causes repeatable traps (`filter=`, namespace scoping, mask→dict, auth mode).
 Consumer project guide: **`AGENTS.md`** in this bundle (copy `templates/consumer-AGENTS.md` to your repo).
@@ -27,6 +28,9 @@ Consumer project guide: **`AGENTS.md`** in this bundle (copy `templates/consumer
 | `QueryVulnerability.list` | Query resources are create/query only, not listable CRUD |
 | `endorlabs.query_vulnerability` | Submodule for payload builders — use `client.QueryVulnerability` |
 | MCP + SDK + endorctl auth | **One mode** in `.env`: `ENDOR_TOKEN` **or** key+secret, not both |
+| Call graph: `fetch()` only | Use `CallGraphData.decode()` for searchable callables/edges; `fetch()` is raw envelope |
+| `call_graph_available=true` | Flag ≠ stored data — use `resolve_package_version_with_callgraph()` |
+| Call graph helpers | Not on `client` — `endorlabs.workflows.callgraph` + skill **endor-fetch-and-search-call-graph** |
 
 ## Quick start
 
