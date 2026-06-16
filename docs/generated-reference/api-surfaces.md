@@ -18,6 +18,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `EndorAPIError`
 - `F`
 - `FilterExpression`
+- `ListParameters`
 - `MethodNotSupportedError`
 - `NotFoundError`
 - `PermissionDeniedError`

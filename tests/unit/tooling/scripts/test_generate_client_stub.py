@@ -94,3 +94,58 @@ def test_validate_model_sync_accepts_alias_entities(
     monkeypatch.setattr(stubgen, "_load_model_sync_entities", lambda: names)
 
     stubgen._validate_descriptions_and_model_sync()
+
+
+def test_committed_pyi_uses_specialized_facade_bases() -> None:
+    """Specialized runtime facades must appear as stub class bases."""
+    pyi_path = _REPO_ROOT / "src" / "endorlabs" / "client_surface.pyi"
+    content = pyi_path.read_text(encoding="utf-8")
+    for base in (
+        "class _ProjectFacade(ProjectFacade)",
+        "class _ScanResultFacade(ScanResultFacade)",
+        "class _FindingFacade(FindingFacade)",
+        "class _PackageVersionFacade(PackageVersionFacade)",
+        "class _VectorStoreFacade(VectorStoreFacade)",
+        "class _AuthorizationPolicyFacade(AuthorizationPolicyFacade)",
+        "class _VulnerabilityFacade(VulnerabilityFacade)",
+    ):
+        assert base in content
+
+
+def test_committed_pyi_has_no_orphan_client_attr_docstrings() -> None:
+    """Client attr lines must not be followed by stray string literals."""
+    pyi_path = _REPO_ROOT / "src" / "endorlabs" / "client_surface.pyi"
+    content = pyi_path.read_text(encoding="utf-8")
+    client_start = content.index("class Client:")
+    attr_region = content[client_start : content.index("    _client:", client_start)]
+    assert 'Facade\n    """' not in attr_region
+    assert 'CallGraphDataFacade\n    """' not in attr_region
+
+
+def test_committed_pyi_project_list_and_init_docs() -> None:
+    """Project.list and Client.__init__ expose IDE-friendly signatures and docs."""
+    pyi_path = _REPO_ROOT / "src" / "endorlabs" / "client_surface.pyi"
+    content = pyi_path.read_text(encoding="utf-8")
+    project_start = content.index("class _ProjectFacade")
+    project_end = content.find("\nclass _", project_start + 1)
+    project_section = content[project_start:project_end]
+    assert "def list(" in project_section
+    assert "traverse:" in project_section
+    assert "list_params:" in project_section
+    assert "filter:" in project_section
+    assert "mask:" in project_section
+    assert "List resources with full pagination" in project_section
+    assert "def __init__(" in content
+    assert "max_retries: int | None" in content
+    assert "Resource-oriented client; holds default namespace" in content
+
+
+def test_committed_pyi_finding_route_methods_not_untyped() -> None:
+    """Route sugar on specialized facades must not be clobbered by *args stubs."""
+    pyi_path = _REPO_ROOT / "src" / "endorlabs" / "client_surface.pyi"
+    content = pyi_path.read_text(encoding="utf-8")
+    finding_start = content.index("class _FindingFacade")
+    finding_end = content.find("\nclass _", finding_start + 1)
+    finding_section = content[finding_start:finding_end]
+    assert "def list_by_project(self, *args" not in finding_section
+    assert "def list_for_context(self, *args" not in finding_section

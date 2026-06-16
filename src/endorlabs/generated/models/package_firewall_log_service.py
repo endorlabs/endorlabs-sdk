@@ -469,6 +469,10 @@ class V1PackageFirewallLogSpec(BaseModel):
     """
     API key ID used for the request (for audit purposes).
     """
+    api_key_name: str | None = Field(
+        None,
+        title='Human-readable name of the API key (APIKey.meta.name) used for the request',
+    )
     block_reason: V1BlockReason | None = 'BLOCK_REASON_UNSPECIFIED'
     """
     Deprecated: use reason instead.

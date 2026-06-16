@@ -289,6 +289,7 @@ PACKAGE_FIREWALL_LOG_SPEC_FIELDS = (
     "action_at",
     "cvss_severity_level",
     "cvss_vuln_uuid",
+    "api_key_name",
 )
 PACKAGE_FIREWALL_LOG_SPEC_REQUIRED = ("ecosystem", "package_name")
 PACKAGE_FIREWALL_LOG_META_FIELDS = ()
