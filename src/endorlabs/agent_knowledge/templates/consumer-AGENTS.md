@@ -2,13 +2,25 @@
 
 Copy this file to your project root as `AGENTS.md` when using the Endor Labs Python SDK with AI agents.
 
-## Step zero — before any API call
+## First steps
 
 ```python
 import endorlabs
 
+# 0. Map (no credentials)
+print(endorlabs.discover())
+# Or: python -m endorlabs.examples.agent_bootstrap --dry-run
+
 d = endorlabs.discover()
-# Read every path in d.bootstrap_paths; then read d.stub (client_surface.pyi).
+# Read every path in d.bootstrap_paths; read d.stub (client_surface.pyi).
+
+# 1. Auth
+client = endorlabs.Client(tenant="your-tenant")  # or ENDOR_NAMESPACE
+print(client.whoami())
+
+# 2. Workflows (call graph, scan RCA) — skills not on dir(client)
+endorlabs.init(include_openapi=False, include_user_docs=False)
+# Read .endorlabs-context/sdk/skills/<id>/SKILL.md
 ```
 
 ## Auth (`.env`)
@@ -20,14 +32,14 @@ Use **one** mode:
 
 Do not set token and API key together — breaks MCP and endorctl.
 
-Verify: `endorlabs.Client().whoami()`
+Verify: `endorlabs.Client().whoami()` (not `Namespace.list()`).
 
 ## Discovery order
 
-1. Shipped knowledge (`discover()` / `agent_knowledge_bootstrap_paths()`)
+1. `print(discover())` or `agent_bootstrap --dry-run` → read every `bootstrap_paths` entry
 2. `discover().stub` — list kwargs + relationship methods
 3. Shell: `help(client.Project.list)`, `inspect.signature(client.Finding.list_by_project)`
-4. Bounded live probe: `python -m endorlabs.examples.day0`
+4. Live smoke test: `python -m endorlabs.examples.agent_bootstrap` (includes auth + bounded list)
 
 ## Common traps
 

@@ -28,7 +28,7 @@ def test_discover_agents_guide_exists() -> None:
     d = endorlabs.discover()
     assert d.agents_guide.is_file()
     text = d.agents_guide.read_text(encoding="utf-8")
-    assert "step zero" in text.lower() or "Step zero" in text
+    assert "first steps" in text.lower() or "step zero" in text.lower()
 
 
 def test_resource_routes_shipped_when_present() -> None:

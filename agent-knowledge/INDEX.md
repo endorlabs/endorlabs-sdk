@@ -4,15 +4,35 @@ Shipped with `endorlabs` inside the wheel. **`endorlabs.init()` is optional** �
 `agent_knowledge_index_path()` to read this file from site-packages, or materialize under
 `.endorlabs-context/sdk/` when a cwd-relative tree is needed.
 
+## First steps (agents and humans)
+
+```python
+import endorlabs
+
+# 0. Map — no credentials (print is human-readable; do not rely on dataclass repr)
+print(endorlabs.discover())
+# Or: python -m endorlabs.examples.agent_bootstrap --dry-run
+
+d = endorlabs.discover()
+# Read every path in d.bootstrap_paths; read d.stub for list() kwargs and accessors.
+
+# 1. Auth — live API
+client = endorlabs.Client(tenant="your-tenant")  # or ENDOR_NAMESPACE
+print(client.whoami())  # None → check .env / single auth mode
+
+# 2. Workflows — call graph, scan RCA, project bundles (not on dir(client))
+status = endorlabs.init(include_openapi=False, include_user_docs=False)
+# Read .endorlabs-context/sdk/skills/<id>/SKILL.md
+```
+
 ## Agents — step zero (required)
 
 Before `endorlabs.Client()` or live API calls:
 
-1. `d = endorlabs.discover()` — or `paths = endorlabs.agent_knowledge_bootstrap_paths()`
-2. **Read every path** in `d.bootstrap_paths` (INDEX, bootstrap rules, and normative contracts).
-3. Read `d.stub` (`client_surface.pyi`) for `list()` kwargs and relationship accessors.
-4. Optional live probe: `python -m endorlabs.examples.day0`
-5. **Workflows** (call graph, project bundle, scan RCA): `endorlabs.init()` → read `skills/<id>/SKILL.md` (start: **endor-fetch-and-search-call-graph**, **endor-retrieve-scan-results**)
+1. `print(endorlabs.discover())` or `python -m endorlabs.examples.agent_bootstrap --dry-run` — then **read every path** in `bootstrap_paths`.
+2. Read `discover().stub` (`client_surface.pyi`) for `list()` kwargs and relationship accessors.
+3. **Auth check:** `Client().whoami()` — do not use `Namespace.list()` as an auth proxy.
+4. **Workflows** (call graph, project bundle, scan RCA): `endorlabs.init()` → read `skills/<id>/SKILL.md` (start: **endor-fetch-and-search-call-graph**, **endor-retrieve-scan-results**)
 
 Skipping step 1–2 causes repeatable traps (`filter=`, namespace scoping, mask→dict, auth mode).
 Consumer project guide: **`AGENTS.md`** in this bundle (copy `templates/consumer-AGENTS.md` to your repo).
@@ -31,6 +51,8 @@ Consumer project guide: **`AGENTS.md`** in this bundle (copy `templates/consumer
 | Call graph: `fetch()` only | Use `CallGraphData.decode()` for searchable callables/edges; `fetch()` is raw envelope |
 | `call_graph_available=true` | Flag ≠ stored data — use `resolve_package_version_with_callgraph()` |
 | Call graph helpers | Not on `client` — `endorlabs.workflows.callgraph` + skill **endor-fetch-and-search-call-graph** |
+| `print(discover())` repr dump | Use `print(discover())` or `agent_bootstrap --dry-run` — `SdkDiscovery` has a readable `__str__` |
+| Auth via `Namespace.list()` | Use `Client().whoami()` after credentials are set |
 
 ## Quick start
 

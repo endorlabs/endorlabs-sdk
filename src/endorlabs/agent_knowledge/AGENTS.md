@@ -2,14 +2,25 @@
 
 > Shipped in the `endorlabs` wheel. Repo-root `AGENTS.md` in the SDK GitHub repo is for **contributors** only.
 
-## Step zero — before any API call
+## First steps
 
 ```python
 import endorlabs
 
+# Map (no credentials)
+print(endorlabs.discover())  # human-readable paths — not the dataclass repr
+# Same output: python -m endorlabs.examples.agent_bootstrap --dry-run
+
 d = endorlabs.discover()
-# Read every path in d.bootstrap_paths (INDEX, rules, contracts).
-# Read d.stub for list() kwargs and relationship accessors (search_by_*, list_by_*).
+# Read every path in d.bootstrap_paths; read d.stub for list() / accessor kwargs.
+
+# Auth
+client = endorlabs.Client(tenant="your-tenant")
+print(client.whoami())
+
+# Workflows (skills not on dir(client))
+endorlabs.init(include_openapi=False, include_user_docs=False)
+# → .endorlabs-context/sdk/skills/<id>/SKILL.md
 ```
 
 Do not grep the SDK source tree or monorepo as primary discovery. Use wheel paths from `discover()`.
@@ -19,7 +30,7 @@ Do not grep the SDK source tree or monorepo as primary discovery. Use wheel path
 | Path | Use when | Primary artifacts |
 |------|----------|-------------------|
 | **IDE** (Pyright/Pylance) | Human coding in VS Code/Cursor with type checking | `client_surface.pyi` + inherited facade types |
-| **Cursor / runtime agent** | No LSP; Read files + shell `help()` / `inspect` | `discover().bootstrap_paths`, `discover().stub`, `python -m endorlabs.examples.day0` |
+| **Cursor / runtime agent** | No LSP; Read files + shell `help()` / `inspect` | `print(discover())` or `agent_bootstrap --dry-run`, then read `bootstrap_paths` + `stub` |
 | **MCP-only** | Narrow reads/scans via platform MCP | Fix auth to **single mode** first; cannot replace SDK traverse/search |
 
 ## Auth (`.env`)
@@ -38,7 +49,7 @@ Verify: `endorlabs.Client().whoami()`
 1. `discover()` / `agent_knowledge_bootstrap_paths()` → read INDEX + contracts
 2. Read `discover().stub` — flat method signatures on `_XFacade` classes
 3. Shell: `help(client.Project.list)`, `inspect.signature(client.Finding.list_by_project)`
-4. Bounded live probe: `python -m endorlabs.examples.day0`
+4. Bounded live smoke test: `python -m endorlabs.examples.agent_bootstrap`
 5. **Workflows:** `endorlabs.init()` → `.endorlabs-context/sdk/skills/<id>/SKILL.md`
 
 ## Workflows (call graph example)

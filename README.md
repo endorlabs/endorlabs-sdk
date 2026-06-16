@@ -190,23 +190,23 @@ If both token and API key variables are set, the SDK prefers the token; **MCP an
 
 | Need | Approach |
 | ---- | -------- |
-| INDEX, contracts, traps, stub path — **no cwd writes** | `endorlabs.discover()` → read every `bootstrap_paths` entry |
+| INDEX, contracts, traps, stub path — **no cwd writes** | `print(endorlabs.discover())` or `python -m endorlabs.examples.agent_bootstrap --dry-run` — then read every `bootstrap_paths` entry |
 | Skill playbooks on disk (call graph, scan RCA, bundles) | `endorlabs.init()` → `.endorlabs-context/sdk/skills/<id>/SKILL.md` |
 | Platform OpenAPI / user docs offline | `pip install 'endorlabs[docs]'` then `init(include_openapi=True, include_user_docs=True)` |
 
-Runnable probe (paths only): `python -m endorlabs.examples.day0 --dry-run`. Shipped consumer guide: `discover().agents_guide`.
+Runnable probe (paths only): `python -m endorlabs.examples.agent_bootstrap --dry-run`. Shipped consumer guide: `discover().agents_guide`.
 
 **Call graphs (agents):** `CallGraphData.fetch()` returns the raw envelope only. For search and path queries, read skill **`endor-fetch-and-search-call-graph`** after `init()` (or from the wheel: `skills/endor-fetch-and-search-call-graph/SKILL.md` via `agent_knowledge_manifest()`). Prefer `endorlabs.workflows.callgraph.resolve_package_version_with_callgraph()` and `CallGraphData.decode()` — `spec.call_graph_available` does not guarantee stored graph data. Pass `namespace=project.tenant_meta.namespace` on PV lists and decode.
 
 ### AI agents
 
-Before `Client()`, call `endorlabs.discover()` and read every path in `bootstrap_paths`. Before **workflow** tasks (call graph, project bundle, scan RCA), run `endorlabs.init()` and open the relevant skill under `.endorlabs-context/sdk/skills/`.
+Before `Client()`, run `print(endorlabs.discover())` (or `agent_bootstrap --dry-run`) and read every path in `bootstrap_paths`. Before **workflow** tasks (call graph, project bundle, scan RCA), run `endorlabs.init()` and open the relevant skill under `.endorlabs-context/sdk/skills/`.
 
 Browser auth, SSO setup, and skill walkthroughs: [docs/guides/examples.md](docs/guides/examples.md).
 
 ## Try it with skills
 
-Guided tenant sessions use shipped agent skills — start with [docs/guides/examples.md](docs/guides/examples.md). Wheel entry: `endorlabs.discover()` → `agents_guide` and `INDEX.md`; materialize with `init()` to `.endorlabs-context/sdk/`.
+Guided tenant sessions use shipped agent skills — start with [docs/guides/examples.md](docs/guides/examples.md). Wheel entry: `print(endorlabs.discover())` or `agent_bootstrap --dry-run`; materialize with `init()` to `.endorlabs-context/sdk/`.
 
 ## Further reading
 
