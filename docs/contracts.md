@@ -139,5 +139,5 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 
 Exported from `endorlabs`: `EndorAPIError`, `UnauthorizedError`, `NotFoundError`,
 `PermissionDeniedError`, `ValidationError`, `ConflictError`, `RateLimitError`,
-`ServerError`, `AmbiguousError`, `MethodNotSupportedError`, and
+`ServerError`, `NetworkError`, `AmbiguousError`, `MethodNotSupportedError`, and
 `map_status_code_to_exception()`.

@@ -20,6 +20,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `FilterExpression`
 - `ListParameters`
 - `MethodNotSupportedError`
+- `NetworkError`
 - `NotFoundError`
 - `PermissionDeniedError`
 - `RateLimitError`

@@ -82,8 +82,9 @@ class ListableFacade[T: BaseModel]:
             f"{self._entry.attr_name}.list() returned no rows at the client default "
             f"namespace ({self._default_namespace!r}) without traverse=True. "
             "Project-scoped resources usually live in child namespaces: resolve "
-            "Project first, then pass namespace=project.namespace (see rule "
-            "endor-namespace-scoping).",
+            "Project first, then pass namespace=project.namespace, or use "
+            "Finding.list_by_project(project) / ScanResult.list_by_project(project) "
+            "(see rule endor-namespace-scoping).",
             UserWarning,
             stacklevel=3,
         )

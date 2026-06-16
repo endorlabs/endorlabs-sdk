@@ -14,6 +14,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- API and validation exceptions now include gRPC remediation hints, payload field paths, namespace-scoping guidance on 404s, structured error details in `str(exc)`, and `NetworkError` for exhausted transport retries.
 - **`client_surface.pyi`** — flat `search_by_*`, `list_by_*`, `get_logs`, and related methods on `_XFacade` classes for agent Read discovery without LSP inheritance.
 - **Auth** — missing-credential `ValidationError` documents `ENDOR_TOKEN`; INFO log when token and API key env vars are both set (token path preferred; MCP/endorctl need single mode).
 - **`Client.__init__`** — runtime docstring for `help()` / inspect.
