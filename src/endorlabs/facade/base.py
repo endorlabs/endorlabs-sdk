@@ -99,6 +99,24 @@ class ListableFacade[T: BaseModel]:
                 "for advanced parameters."
             )
 
+    @staticmethod
+    def _normalize_list_limit_kwarg(
+        *,
+        page_size: int | None,
+        kwargs: dict[str, Any],
+        attr_name: str,
+    ) -> int | None:
+        """Map ``limit`` to ``page_size`` for ``list()`` and ``list_iter()``."""
+        limit = kwargs.pop("limit", None)
+        if limit is None:
+            return page_size
+        if page_size is not None:
+            raise TypeError(
+                f"Cannot pass both limit and page_size to {attr_name}.list(); "
+                "use one (limit is an alias for page_size)."
+            )
+        return limit
+
     def _ns(self, namespace: str | None) -> str:
         ns = namespace if namespace is not None else self._default_namespace
         if ns is None:
@@ -321,6 +339,12 @@ class ListableFacade[T: BaseModel]:
         """
         if "list" not in self._supported_ops:
             raise NotImplementedError("This resource does not support list.") from None
+
+        page_size = self._normalize_list_limit_kwarg(
+            page_size=page_size,
+            kwargs=kwargs,
+            attr_name=self._entry.attr_name,
+        )
 
         if count is True:
             warnings.warn(
@@ -559,6 +583,11 @@ class ListableFacade[T: BaseModel]:
                 "concurrent=True is not supported for list_iter. "
                 "Use list(traverse=True) instead."
             ) from None
+        page_size = self._normalize_list_limit_kwarg(
+            page_size=page_size,
+            kwargs=kwargs,
+            attr_name=self._entry.attr_name,
+        )
         if parent is not None:
             if self._parent_kind is None:
                 raise ValidationError(

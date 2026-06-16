@@ -128,11 +128,13 @@ client.wait_until(
 )
 
 scans = client.ScanResult.list_by_project(project, limit=1)
-latest_scan = scans.values[0] if scans.values else None
+latest_scan = scans.values[0] if scans.values else None  # RouteResult → use .values
 findings = client.Finding.list_for_context(latest_scan, max_pages=1) if latest_scan else None
 ```
 
-**Relationship accessors** — prefer generated helpers over hand-built filters when the edge exists in the contract (`list_by_project`, `list_for_context`, `Finding.to_dependency_metadata`). They return `RouteResult` (use `.values` / `.value`). Catalog: [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md) · guide: [docs/guides/facade-helpers.md](docs/guides/facade-helpers.md).
+**Relationship accessors** (`list_by_project`, `list_for_context`, …) return `RouteResult`, not a plain `list` — use `.values` or `.value`. Prefer them over hand-built filters when the edge exists in the contract. Catalog: [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md) · guide: [docs/guides/facade-helpers.md](docs/guides/facade-helpers.md).
+
+**Pagination on `.list()`:** `limit=N` is an alias for `page_size=N` (same idea as `list_by_project(..., limit=N)`). Use `max_pages` to cap fetch depth.
 
 More patterns (filters, `F()`, masks, namespace scoping): [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md), [docs/guides/retrieving-scan-results.md](docs/guides/retrieving-scan-results.md).
 
