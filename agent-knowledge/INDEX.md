@@ -21,7 +21,7 @@ Consumer project guide: **`AGENTS.md`** in this bundle (copy `templates/consumer
 | Trap | Correct pattern |
 |------|-----------------|
 | `F()` positional | `list(filter=F("spec.level") == "…", traverse=True)` — never `list(F(...) == …, traverse=True)` |
-| `limit` on `.list()` | Use `page_size=` or `max_pages=`. Exception: `ScanResult.list_by_project(..., limit=N)` |
+| `limit` on `.list()` | Use `page_size=` or `limit=` (alias for `page_size`; same as `list_by_project(limit=)`) |
 | Finding text field | `spec.summary`, not `spec.description` |
 | `Metric.list_by_project` | Does not exist — use `Metric.list(...)` with filters |
 | `QueryVulnerability.list` | Query resources are create/query only, not listable CRUD |
