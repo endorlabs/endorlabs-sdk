@@ -60,7 +60,7 @@ project = projects[0] if projects else None
 
 ```python
 scan_result = client.ScanResult.list_by_project(project, limit=1)
-latest_scan = scan_result.values[0] if scan_result.values else None
+latest_scan = scan_result[0] if scan_result else None
 ```
 
 Or pass explicit list kwargs (date window, `max_pages`, `list_params`) without the workflow preset defaults.
@@ -71,17 +71,17 @@ Use **generated accessor helpers** — they derive namespace from the source res
 
 ```python
 # All findings for the project (preferred)
-findings = client.Finding.list_by_project(project, max_pages=5).values or []
+findings = client.Finding.list_by_project(project, max_pages=5)
 
 # One scan plane's findings (preferred when you have a ScanResult row)
-findings = client.Finding.list_for_context(latest_scan, max_pages=5).values or []
+findings = client.Finding.list_for_context(latest_scan, max_pages=5)
 
 # Severity filter — merge with accessor list kwargs
 findings = client.Finding.list_by_project(
     project,
     filter='spec.level==FINDING_LEVEL_CRITICAL',
     max_pages=5,
-).values or []
+)
 ```
 
 **Tenant-wide findings** — only when the user **explicitly** asks for all namespaces / estate-wide reports. Add selective **`filter`**, **`max_pages`**, and prefer **`count=True`** for totals before full pagination:
@@ -152,9 +152,9 @@ When counting severity or unique issues, dedupe by explanation/remediation or fi
 
 | Operation | Example |
 |-----------|---------|
-| Latest scan for a project | `ScanResult.list_by_project(project, limit=1).values[0]` |
-| Findings for a project | `Finding.list_by_project(project, max_pages=…).values` |
-| Findings for one scan plane | `Finding.list_for_context(scan, max_pages=…).values` |
+| Latest scan for a project | `ScanResult.list_by_project(project, limit=1)[0]` |
+| Findings for a project | `Finding.list_by_project(project, max_pages=…)` |
+| Findings for one scan plane | `Finding.list_for_context(scan, max_pages=…)` |
 | Discover project by URL | `Project.search_by_name("github.com/org/repo", traverse=True, max_pages=2)` |
 | Tenant-wide critical (explicit ask) | `Finding.list(filter='spec.level==FINDING_LEVEL_CRITICAL', traverse=True, max_pages=5)` |
 

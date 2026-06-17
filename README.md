@@ -128,11 +128,11 @@ client.wait_until(
 )
 
 scans = client.ScanResult.list_by_project(project, limit=1)
-latest_scan = next(iter(scans), None)  # RouteResult: iterate, or use .values
+latest_scan = scans[0] if scans else None
 findings = client.Finding.list_for_context(latest_scan, max_pages=1) if latest_scan else None
 ```
 
-**Relationship accessors** (`list_by_project`, `list_for_context`, …) return `RouteResult`, not a plain `list` — iterate (`for row in result`) or use `.values` / `.value`. Prefer them over hand-built filters when the edge exists in the contract. Catalog: [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md) · guide: [docs/guides/facade-helpers.md](docs/guides/facade-helpers.md).
+**Relationship accessors:** `list_by_project` / `list_for_context` return **`list[T]`** like `.list()`. Stitch accessors (`to_dependency_metadata`, …) return **`RouteResult`** — use `.value` / `.single` and inspect `.edge_used` / `.warnings`. Prefer list accessors over hand-built filters when the edge exists in the contract. Catalog: [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md) · guide: [docs/guides/facade-helpers.md](docs/guides/facade-helpers.md).
 
 **Pagination on `.list()`:** `limit=N` is an alias for `page_size=N` (same idea as `list_by_project(..., limit=N)`). Use `max_pages` to cap fetch depth.
 

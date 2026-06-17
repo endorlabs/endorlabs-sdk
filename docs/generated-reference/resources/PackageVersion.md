@@ -84,8 +84,8 @@ Present on responses; not accepted as flat create kwargs:
 
 | Method | Edge id | Wire kind | Returns |
 |--------|---------|-----------|---------|
-| `list_by_project(…)` | `project.package_versions` | `list_by_uuid_field` | RouteResult → `.values` |
-| `list_for_context(…)` | `scan.package_versions` | `list_by_context_partition` | RouteResult → `.values` |
+| `list_by_project(…)` | `project.package_versions` | `list_by_uuid_field` | `list[T]` |
+| `list_for_context(…)` | `scan.package_versions` | `list_by_context_partition` | `list[T]` |
 
 See [resource-routes.md](../resource-routes.md) and [facade-helpers.md](../../guides/facade-helpers.md).
 

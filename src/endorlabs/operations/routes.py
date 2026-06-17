@@ -1,4 +1,4 @@
-# ruff: noqa: D102, D105, UP046, SIM108
+# ruff: noqa: D102, D105, UP046, UP047, SIM108
 """Generic route executors for generated relationship accessors."""
 
 from __future__ import annotations
@@ -64,6 +64,13 @@ class RouteResult(Generic[T]):
             "Route returned no value",
             edge_id=self.edge_used,
         )
+
+
+def unwrap_route_list(result: RouteResult[T]) -> list[T]:
+    """Return list rows from a list-edge ``RouteResult`` (facade public boundary)."""
+    if result.values is not None:
+        return list(result.values)
+    return []
 
 
 def resolve_attr_path(

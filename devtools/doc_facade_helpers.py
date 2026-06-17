@@ -56,13 +56,25 @@ def edges_for_attr(attr_name: str) -> list[Any]:
     ]
 
 
+_LIST_EDGE_KINDS = frozenset(
+    {
+        "list_by_parent",
+        "list_by_uuid_field",
+        "list_by_index_field",
+        "list_by_context_partition",
+    }
+)
+
+
 def _route_return_hint(edge: Any) -> str:
     kind = getattr(edge, "edge", "")
     if kind == "get_by_uuid":
-        return "RouteResult → `.value`"
+        return "RouteResult — `.value`; iterable"
     if kind == "list_by_attribute":
-        return "RouteResult → `.value` (fallback path)"
-    return "RouteResult → `.values`"
+        return "RouteResult — `.value` (fallback); iterable"
+    if kind in _LIST_EDGE_KINDS:
+        return "`list[T]`"
+    return "RouteResult — iterable"
 
 
 def render_identity_lane_table() -> str:
@@ -85,7 +97,8 @@ def render_route_accessor_table() -> str:
     lines = [
         "## Relationship accessors (generated)",
         "",
-        "From `route_contract.py`. Return `RouteResult` — use `.values` or `.value`.",
+        "From `route_contract.py`. List accessors return `list[T]`; stitch accessors "
+        "return iterable `RouteResult` — use `.value` / `.single` and inspect `.warnings`.",
         "Full edge inventory: [resource-routes.md](resource-routes.md).",
         "",
         "| Public method | From → To | Edge id | Wire kind | Returns |",
@@ -209,3 +222,108 @@ def render_resource_facade_helpers_section(attr_name: str) -> str | None:
     if not section_lines:
         return None
     return "\n".join(section_lines)
+
+
+_SCAN_STATUS_HINTS: dict[str, str] = {
+    "STATUS_SUCCESS": "Scan completed successfully",
+    "STATUS_PARTIAL_SUCCESS": "Completed with partial results",
+    "STATUS_FAILURE": "Scan failed",
+    "STATUS_RUNNING": "Scan in progress",
+    "STATUS_UNSPECIFIED": "Unset / unknown",
+}
+
+
+def _enum_member_rows(enum_cls: type) -> list[tuple[str, str]]:
+    """Return (value, hint) rows for a StrEnum class."""
+    rows: list[tuple[str, str]] = []
+    for member in enum_cls:
+        value = str(member.value)
+        hint = _SCAN_STATUS_HINTS.get(value, "")
+        rows.append((value, hint))
+    return rows
+
+
+def render_filter_enum_snippets_md() -> str:
+    """Generate filter enum reference from model-sync StrEnum classes."""
+    from endorlabs.generated.models.finding_service import SpecFindingLevel
+    from endorlabs.generated.models.scan_result_service import ScanResultSpecStatus
+
+    scan_rows = _enum_member_rows(ScanResultSpecStatus)
+    finding_rows = [(value, "") for value, _ in _enum_member_rows(SpecFindingLevel)]
+
+    lines = [
+        "# Filter enum snippets (generated)",
+        "",
+        "Illustrative wire enum strings for **`filter=`** on list and accessor calls.",
+        "Regenerate with `uv run python devtools/generate_filter_enum_reference.py`.",
+        "Values are sourced from generated model-sync enums — not hand-maintained.",
+        "",
+        "## ScanResult status (`spec.status`)",
+        "",
+        f"From `{ScanResultSpecStatus.__module__}.{ScanResultSpecStatus.__name__}`:",
+        "",
+        "| Value | Typical meaning |",
+        "|-------|-----------------|",
+    ]
+    for value, hint in scan_rows:
+        lines.append(f"| `{value}` | {hint or '—'} |")
+    lines.extend(
+        [
+            "",
+            "Example:",
+            "",
+            "```python",
+            "scans = client.ScanResult.list_by_project(",
+            "    project,",
+            '    filter=\'spec.status=="STATUS_SUCCESS"\',',
+            "    max_pages=5,",
+            ")",
+            "```",
+            "",
+            "`ScanResult.list_by_project(..., status_filter=\"STATUS_SUCCESS\")` applies the",
+            "same value client-side after the route list.",
+            "",
+            "## Finding level (`spec.level`)",
+            "",
+            f"From `{SpecFindingLevel.__module__}.{SpecFindingLevel.__name__}`:",
+            "",
+            "| Value |",
+            "|-------|",
+        ]
+    )
+    for value, _ in finding_rows:
+        lines.append(f"| `{value}` |")
+    lines.extend(
+        [
+            "",
+            "Example:",
+            "",
+            "```python",
+            "findings = client.Finding.list_by_project(",
+            "    project,",
+            '    filter=\'spec.level=="FINDING_LEVEL_CRITICAL"\',',
+            "    max_pages=5,",
+            ")",
+            "```",
+            "",
+            "Or with `F()`:",
+            "",
+            "```python",
+            "from endorlabs import F",
+            "",
+            "findings = client.Finding.list_by_project(",
+            "    project,",
+            '    filter=F("spec.level") == "FINDING_LEVEL_CRITICAL",',
+            "    max_pages=5,",
+            ")",
+            "```",
+            "",
+            "## Related docs",
+            "",
+            "- [contracts/list-parameters.md](../contracts/list-parameters.md) — pagination, `mask`, `limit` alias",
+            "- [contracts/resource-discovery.md](../contracts/resource-discovery.md) — return types and discovery flow",
+            "- [resource-routes.md](resource-routes.md) — relationship accessor inventory",
+            "",
+        ]
+    )
+    return "\n".join(lines)

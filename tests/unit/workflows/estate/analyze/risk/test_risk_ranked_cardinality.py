@@ -227,18 +227,16 @@ def test_export_risk_ranked_version_cardinality_mocked() -> None:
     client.Project.list.return_value = [
         MagicMock(uuid="proj-1", tenant_meta=MagicMock(namespace="tenant"))
     ]
-    client.Finding.list_by_project.return_value = Mock(
-        values=[
-            {
-                "spec": {
-                    "level": "FINDING_LEVEL_CRITICAL",
-                    "finding_categories": ["FINDING_CATEGORY_SCA"],
-                    "target_dependency_package_name": "pypi://django",
-                    "target_dependency_version": "4.2",
-                }
+    client.Finding.list_by_project.return_value = [
+        {
+            "spec": {
+                "level": "FINDING_LEVEL_CRITICAL",
+                "finding_categories": ["FINDING_CATEGORY_SCA"],
+                "target_dependency_package_name": "pypi://django",
+                "target_dependency_version": "4.2",
             }
-        ]
-    )
+        }
+    ]
 
     from endorlabs.operations.list_response import (
         GroupBucket,

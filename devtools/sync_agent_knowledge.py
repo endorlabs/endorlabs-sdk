@@ -323,15 +323,25 @@ def sync_templates_tree() -> int:
     return copied
 
 
+GENERATED_REFERENCE_SYNC: tuple[str, ...] = (
+    "resource-routes.md",
+    "filter-enum-snippets.md",
+)
+
+
 def sync_reference_docs() -> int:
-    """Copy generated reference docs needed for wheel-only agent discovery."""
-    source = REPO_ROOT / "docs" / "generated-reference" / "resource-routes.md"
-    if not source.is_file():
-        return 0
+    """Copy generated reference docs for wheel-only agent discovery."""
+    copied = 0
     dest_dir = BUNDLE_ROOT / "reference"
     dest_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(source, dest_dir / "resource-routes.md")
-    return 1
+    source_dir = REPO_ROOT / "docs" / "generated-reference"
+    for name in GENERATED_REFERENCE_SYNC:
+        source = source_dir / name
+        if not source.is_file():
+            continue
+        shutil.copy2(source, dest_dir / name)
+        copied += 1
+    return copied
 
 
 def _rule_description(parsed: Any) -> str:

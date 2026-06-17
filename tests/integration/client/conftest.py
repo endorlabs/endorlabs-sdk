@@ -104,10 +104,9 @@ def _context_matches(left: object, right: object) -> bool:
 def _project_scans(client, project: object, *, limit: int = 10) -> list[object]:
     """Bounded scan list for a project (single page — avoids sort/page_id conflict)."""
     try:
-        route = client.ScanResult.list_by_project(project, limit=limit, max_pages=1)
+        return client.ScanResult.list_by_project(project, limit=limit, max_pages=1)
     except ServerError:
         return []
-    return list(route.values or [])
 
 
 def _sample_from_row_context(
@@ -151,7 +150,7 @@ def _sample_from_row_context(
                 result = facade.list_for_context(scan, max_pages=TEST_MAX_PAGES)
             except ServerError:
                 continue
-            if result.edge_used == edge_id and result.values:
+            if result:
                 return project, scan, result
     return None
 
@@ -196,7 +195,7 @@ def require_list_for_context_sample(
     root_client=None,
     oss_client=None,
 ) -> tuple[object, object, object]:
-    """Return (project, scan, route_result) with non-empty list_for_context values.
+    """Return (project, scan, rows) with non-empty list_for_context values.
 
     Skip only when plain LIST is empty across tenant and oss probe clients.
     Fail when rows exist but no scan plane could be resolved.

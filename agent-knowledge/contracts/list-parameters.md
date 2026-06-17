@@ -41,12 +41,15 @@ Common list params are flat kwargs on `client.<ResourceKind>.list(...)`. Use
 ## Pagination and sort
 
 - **page_size**, **page_token**, **page_id**
+- **`limit`** — alias for **`page_size`** on `.list()` / `.list_iter()` (same normalization as `list_by_project(..., limit=)` on `ScanResultFacade`)
 - **sort_by**, **desc**
 - **traverse:** tenant-wide discovery (`list_parameters.traverse=true`)
 
 **Performance:** Do not set **`page_size`** unless explicitly requested. Prefer
 defaults, selective **`filter`**, and **`max_pages`** caps. See bootstrap contract
 `rules/endor-list-query-performance.md`.
+
+Common filter literals (examples, codegen-verified): [reference/filter-enum-snippets.md](../reference/filter-enum-snippets.md).
 
 ## Update vs list mask
 

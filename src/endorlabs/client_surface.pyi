@@ -447,7 +447,7 @@ class _FindingFacade(FindingFacade):
         *,
         filter: str | FilterExpression | None = ...,
         **kwargs: Any,
-    ) -> RouteResult[Any]:
+    ) -> list[Any]:
         """List findings for a project (generated accessor ``project.findings``)."""
         ...
 
@@ -458,7 +458,7 @@ class _FindingFacade(FindingFacade):
         filter: str | FilterExpression | None = ...,
         namespace: str | None = ...,
         **kwargs: Any,
-    ) -> RouteResult[Any]:
+    ) -> list[Any]:
         """List findings in the same scan plane as *source* (``scan.findings``)."""
         ...
 
@@ -1151,7 +1151,7 @@ class _PackageVersionFacade(PackageVersionFacade):
         *,
         filter: str | FilterExpression | None = ...,
         **kwargs: Any,
-    ) -> RouteResult[Any]:
+    ) -> list[Any]:
         """List package versions for a project (``project.package_versions``)."""
         ...
 
@@ -1162,7 +1162,7 @@ class _PackageVersionFacade(PackageVersionFacade):
         filter: str | FilterExpression | None = ...,
         namespace: str | None = ...,
         **kwargs: Any,
-    ) -> RouteResult[Any]:
+    ) -> list[Any]:
         """List package versions in the same scan plane as *source*."""
         ...
 
@@ -1817,7 +1817,7 @@ class _ScanResultFacade(ScanResultFacade):
         limit: int = ...,
         status_filter: str | None = ...,
         **kwargs: Any,
-    ) -> RouteResult[Any]:
+    ) -> list[Any]:
         """List scan results for a project (accessor ``project.scan_results``)."""
         ...
 

@@ -87,8 +87,9 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 ## Generated accessor helpers
 
 - **Contract source:** `devtools/model_sync_profiles/route_contract_overlay.yaml` → generated `src/endorlabs/generated/route_contract.py` and [generated-reference/resource-routes.md](generated-reference/resource-routes.md).
-- **Runtime:** Facades mix in `RouteHostMixin`; public methods are thin wrappers over `_execute_route(edge_id, source=…)`.
-- **Return type:** `RouteResult[T]` from `endorlabs.operations.routes` — use `.values` for list edges, `.value` for GET/stitch; inspect `.edge_used` and `.warnings` (e.g. list-only index fields).
+- **Runtime:** Facades mix in `RouteHostMixin`; list accessors unwrap to **`list[T]`** at the public boundary; stitch accessors return **`RouteResult[T]`**.
+- **Normative semantics (return types, discovery, stitch protocol):** [agent-knowledge/contracts/resource-discovery.md](../agent-knowledge/contracts/resource-discovery.md) (shipped in wheel).
+- **Edge inventory:** [generated-reference/resource-routes.md](generated-reference/resource-routes.md) and [api-surfaces.md](generated-reference/api-surfaces.md).
 - **Namespace:** Derived from the **source resource** (`tenant_meta.namespace`) unless `namespace=` is passed explicitly.
 - **Workflows** SHALL prefer generated accessor helpers over hand-built filter strings for edges declared in the contract. Workflow-specific sort windows, limits, and post-filters belong in `workflows/`, not on the facade.
 - **No parallel discovery API** — no `client.ops` or `queries/` layer; accessors stay on `client.<Kind>`.
@@ -98,11 +99,9 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 
 - **filter**: Which rows match.
 - **mask**: Which fields are returned in list responses.
-- **List return shape:** After merge of `list_params` and flat kwargs (same rules as `list()`), if **mask** is non-empty when stripped, `list()` returns **`list[dict[str, Any]]`** (shallow-copied wire JSON per row) instead of full Pydantic models; `list_iter()` yields **`Iterator[T | dict[str, Any]]`** (each item is either a model or a dict). If **mask** is absent, empty, or whitespace-only, behavior is unchanged: full models only. **`search_by_*`** discovery methods forward list kwargs including **`mask=`** under the same rule. See [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md), [guides/facade-helpers.md](guides/facade-helpers.md), and [agent-knowledge/contracts/resource-discovery.md](../agent-knowledge/contracts/resource-discovery.md).
+- **List return shape:** After merge of `list_params` and flat kwargs (same rules as `list()`), if **mask** is non-empty when stripped, `list()` returns **`list[dict[str, Any]]`** (shallow-copied wire JSON per row) instead of full Pydantic models; `list_iter()` yields **`Iterator[T | dict[str, Any]]`**. If **mask** is absent, empty, or whitespace-only, behavior is unchanged: full models only. **`search_by_*`** discovery methods forward list kwargs including **`mask=`** under the same rule. Details: [agent-knowledge/contracts/list-parameters.md](../agent-knowledge/contracts/list-parameters.md), [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md).
 - **MQL conventions:** `filter` query expressions and list `mask` projections mirror MongoDB-style MQL conventions.
-- **page_size**, **page_token**, **page_id**: Pagination controls.
-- **sort_by**, **desc**: Sorting controls mapped to `list_parameters.sort.path` and `list_parameters.sort.order`.
-- **count**, **from_date**, **to_date**: Supported by `ListParameters`.
+- **Pagination / `limit` alias:** See [agent-knowledge/contracts/list-parameters.md](../agent-knowledge/contracts/list-parameters.md). Filter enum examples: [generated-reference/filter-enum-snippets.md](generated-reference/filter-enum-snippets.md).
 - **PR-scope list filtering:** **`ci_run_uuid`** is the OpenAPI-aligned parameter on `ListParameters` and maps to `list_parameters.ci_run_uuid` on the wire. **`pr_uuid`** is a **deprecated** convenience alias for the same field (see `ListParameters` in `src/endorlabs/core/types.py`).
 - **archive**, **list_all**: SDK-exposed convenience parameters. Treat these as SDK behavior contracts, not guaranteed cross-endpoint OpenAPI fields.
 - **Advanced / grouping:** `ListParameters` also exposes grouping and aggregation knobs (`group_aggregation_paths`, `group_by_time`, `group_by_time_interval`, and related fields) that map to OpenAPI list parameters where the resource supports them. Prefer the model docstrings on `ListParameters` and the local OpenAPI spec over duplicating the full matrix here.

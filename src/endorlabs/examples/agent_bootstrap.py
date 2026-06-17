@@ -31,12 +31,10 @@ def _run_live_smoke() -> int:
     if projects:
         project = projects[0]
         scans = client.ScanResult.list_by_project(project, limit=1)
-        scan_values = scans.values or []
-        print(f"scan_results for first project: {len(scan_values)}")
-        if scan_values:
-            findings = client.Finding.list_for_context(scan_values[0], max_pages=1)
-            finding_values = findings.values or []
-            print(f"findings for latest scan: {len(finding_values)}")
+        print(f"scan_results for first project: {len(scans)}")
+        if scans:
+            findings = client.Finding.list_for_context(scans[0], max_pages=1)
+            print(f"findings for latest scan: {len(findings)}")
     return 0
 
 

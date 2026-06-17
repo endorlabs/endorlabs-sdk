@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import endorlabs
+from endorlabs.operations.routes import RouteResult
 from tests.conftest import TEST_NAMESPACE_DEFAULT
 
 if TYPE_CHECKING:
@@ -24,7 +25,8 @@ def test_finding_list_by_project_delegates_to_execute_route(
         uuid="proj-1",
         tenant_meta=SimpleNamespace(namespace=TEST_NAMESPACE_DEFAULT),
     )
-    route_result = Mock(values=[])
+    rows = [Mock(uuid="f1")]
+    route_result = RouteResult(edge_used="project.findings", values=rows)
     with patch.object(
         client.Finding,
         "_execute_route",
@@ -36,7 +38,7 @@ def test_finding_list_by_project_delegates_to_execute_route(
             source=project,
             filter='spec.level=="X"',
         )
-        assert result is route_result
+        assert result == rows
 
 
 def test_finding_list_for_context_delegates_to_execute_route(
@@ -48,18 +50,18 @@ def test_finding_list_for_context_delegates_to_execute_route(
         tenant_meta=SimpleNamespace(namespace=TEST_NAMESPACE_DEFAULT),
         context=SimpleNamespace(type="CONTEXT_TYPE_MAIN", id="main"),
     )
-    route_result = Mock(values=[])
     with patch.object(
         client.Finding,
         "_execute_route",
-        return_value=route_result,
+        return_value=RouteResult(edge_used="scan.findings", values=[]),
     ) as execute:
-        client.Finding.list_for_context(scan, max_pages=2)
+        result = client.Finding.list_for_context(scan, max_pages=2)
         execute.assert_called_once_with(
             "scan.findings",
             source=scan,
             max_pages=2,
         )
+        assert result == []
 
 
 def test_dependency_metadata_list_for_context_uses_mixin_route(
@@ -72,17 +74,17 @@ def test_dependency_metadata_list_for_context_uses_mixin_route(
         tenant_meta=SimpleNamespace(namespace=TEST_NAMESPACE_DEFAULT),
         context=SimpleNamespace(type="CONTEXT_TYPE_MAIN", id="main"),
     )
-    route_result = Mock(values=[])
     with patch.object(
         client.DependencyMetadata,
         "_execute_route",
-        return_value=route_result,
+        return_value=RouteResult(edge_used="scan.dependency_metadata", values=[]),
     ) as execute:
-        client.DependencyMetadata.list_for_context(scan)
+        result = client.DependencyMetadata.list_for_context(scan)
         execute.assert_called_once_with(
             "scan.dependency_metadata",
             source=scan,
         )
+        assert result == []
 
 
 def test_scan_result_list_by_project_uses_parent_list(
@@ -94,18 +96,18 @@ def test_scan_result_list_by_project_uses_parent_list(
         uuid="proj-1",
         tenant_meta=SimpleNamespace(namespace=TEST_NAMESPACE_DEFAULT),
     )
-    route_result = Mock(values=[], edge_used="project.scan_results", warnings=[])
     with patch.object(
         client.ScanResult,
         "_execute_route",
-        return_value=route_result,
+        return_value=RouteResult(edge_used="project.scan_results", values=[]),
     ) as execute:
-        client.ScanResult.list_by_project(project, limit=5)
+        result = client.ScanResult.list_by_project(project, limit=5)
         execute.assert_called_once()
         call = execute.call_args
         assert call.args[0] == "project.scan_results"
         assert call.kwargs["source"] is project
         assert call.kwargs["page_size"] == 5
+        assert result == []
 
 
 def test_package_version_list_by_project_delegates_to_execute_route(
@@ -117,11 +119,11 @@ def test_package_version_list_by_project_delegates_to_execute_route(
         uuid="proj-1",
         tenant_meta=SimpleNamespace(namespace=TEST_NAMESPACE_DEFAULT),
     )
-    route_result = Mock(values=[])
+    rows = [Mock(uuid="pv1")]
     with patch.object(
         client.PackageVersion,
         "_execute_route",
-        return_value=route_result,
+        return_value=RouteResult(edge_used="project.package_versions", values=rows),
     ) as execute:
         result = client.PackageVersion.list_by_project(project, max_pages=1)
         execute.assert_called_once_with(
@@ -129,4 +131,4 @@ def test_package_version_list_by_project_delegates_to_execute_route(
             source=project,
             max_pages=1,
         )
-        assert result is route_result
+        assert result == rows

@@ -1225,4 +1225,4 @@ def test_scan_result_list_by_project(client_with_mock_transport: Client) -> None
     assert call.kwargs["source"] == "p1"
     assert call.kwargs["namespace"] == "tenant.child"
     assert call.kwargs["page_size"] == 10
-    assert out.values == [sr1]
+    assert out == [sr1]

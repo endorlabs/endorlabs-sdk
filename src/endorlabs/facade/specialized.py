@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast, override
 
 from ..core.exceptions import RouteNotApplicableError
-from ..operations.routes import RouteResult
 from ..utils.namespace import resolve_namespace_for_resource
 from .runtime import ResourceRuntimeFacade
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
     from ..core.filter import FilterExpression
+    from ..operations.routes import RouteResult
 
 
 class ScanResultFacade(ResourceRuntimeFacade[Any]):
@@ -76,7 +76,7 @@ class ScanResultFacade(ResourceRuntimeFacade[Any]):
         limit: int = 0,
         status_filter: str | None = None,
         **kwargs: Any,
-    ) -> RouteResult[Any]:
+    ) -> list[Any]:
         """List scan results for a project (accessor ``project.scan_results``).
 
         Preset for troubleshooting workflows: newest-first, ``max_pages=1`` by
@@ -92,9 +92,10 @@ class ScanResultFacade(ResourceRuntimeFacade[Any]):
         if "max_pages" not in kwargs:
             kwargs = {**kwargs, "max_pages": 1}
         result = self._execute_route("project.scan_results", source=project, **kwargs)
-        if status_filter and result.values:
+        rows = result.values or []
+        if status_filter:
             filtered: list[Any] = []
-            for item in result.values:
+            for item in rows:
                 spec = getattr(item, "spec", None)
                 status = getattr(spec, "status", None) if spec is not None else None
                 if status is None and isinstance(item, dict):
@@ -103,18 +104,10 @@ class ScanResultFacade(ResourceRuntimeFacade[Any]):
                         status = cast("dict[str, Any]", spec_raw).get("status")
                 if str(status) == status_filter:
                     filtered.append(item)
-            return RouteResult(
-                edge_used=result.edge_used,
-                values=filtered[:limit] if limit > 0 else filtered,
-                warnings=result.warnings,
-            )
-        if limit > 0 and result.values:
-            return RouteResult(
-                edge_used=result.edge_used,
-                values=result.values[:limit],
-                warnings=result.warnings,
-            )
-        return result
+            return filtered[:limit] if limit > 0 else filtered
+        if limit > 0:
+            return rows[:limit]
+        return rows
 
 
 class ProjectFacade(ResourceRuntimeFacade[Any]):
@@ -129,7 +122,11 @@ class ProjectFacade(ResourceRuntimeFacade[Any]):
         warnings_out: list[str] | None = None,
         **list_kwargs: Any,
     ) -> list[Any]:
-        """Search projects by case-insensitive substring on ``meta.name`` or UUID."""
+        """Search projects by case-insensitive substring on ``meta.name`` or UUID.
+
+        Returns a bounded ``list`` (not a single object). Use ``get(uuid)`` when
+        the UUID is known; disambiguate when multiple rows match.
+        """
         from .search import search_substring_on_fields
 
         return search_substring_on_fields(
@@ -156,7 +153,11 @@ class VectorStoreFacade(ResourceRuntimeFacade[Any]):
         warnings_out: list[str] | None = None,
         **list_kwargs: Any,
     ) -> list[Any]:
-        """Search vector stores by case-insensitive substring on ``meta.name``."""
+        """Search vector stores by case-insensitive substring on ``meta.name``.
+
+        Returns a bounded ``list`` (not a single object). Use ``get(uuid)`` when
+        the UUID is known; disambiguate when multiple rows match.
+        """
         from .search import search_substring_on_fields
 
         return search_substring_on_fields(
@@ -182,7 +183,11 @@ class AuthorizationPolicyFacade(ResourceRuntimeFacade[Any]):
         warnings_out: list[str] | None = None,
         **list_kwargs: Any,
     ) -> list[Any]:
-        """Search policies by name, clause text, and target namespace fields."""
+        """Search policies by name, clause text, and target namespace fields.
+
+        Returns a bounded ``list`` (not a single object). Use ``get(uuid)`` when
+        the UUID is known; disambiguate when multiple rows match.
+        """
         from .search import search_policy_by_claims
 
         return search_policy_by_claims(
@@ -207,7 +212,11 @@ class VulnerabilityFacade(ResourceRuntimeFacade[Any]):
         warnings_out: list[str] | None = None,
         **list_kwargs: Any,
     ) -> list[Any]:
-        """Search OSS vulnerabilities by alias or name substring."""
+        """Search OSS vulnerabilities by alias or name substring.
+
+        Returns a bounded ``list`` (not a single object). Use ``get(uuid)`` when
+        the UUID is known; disambiguate when multiple rows match.
+        """
         from .search import search_substring_on_fields
 
         return search_substring_on_fields(
@@ -231,11 +240,13 @@ class PackageVersionFacade(ResourceRuntimeFacade[Any]):
         *,
         filter: str | FilterExpression | None = None,
         **kwargs: Any,
-    ) -> RouteResult[Any]:
+    ) -> list[Any]:
         """List package versions for a project (``project.package_versions``)."""
         if filter is not None:
             kwargs = {**kwargs, "filter": filter}
-        return self._execute_route("project.package_versions", source=project, **kwargs)
+        return self._execute_route_list(
+            "project.package_versions", source=project, **kwargs
+        )
 
     @override
     def list_for_context(
@@ -245,13 +256,15 @@ class PackageVersionFacade(ResourceRuntimeFacade[Any]):
         filter: str | FilterExpression | None = None,
         namespace: str | None = None,
         **kwargs: Any,
-    ) -> RouteResult[Any]:
+    ) -> list[Any]:
         """List package versions in the same scan plane as *source*."""
         if filter is not None:
             kwargs = {**kwargs, "filter": filter}
         if namespace is not None:
             kwargs = {**kwargs, "namespace": namespace}
-        return self._execute_route("scan.package_versions", source=source, **kwargs)
+        return self._execute_route_list(
+            "scan.package_versions", source=source, **kwargs
+        )
 
 
 class FindingFacade(ResourceRuntimeFacade[Any]):
@@ -263,11 +276,11 @@ class FindingFacade(ResourceRuntimeFacade[Any]):
         *,
         filter: str | FilterExpression | None = None,
         **kwargs: Any,
-    ) -> RouteResult[Any]:
+    ) -> list[Any]:
         """List findings for a project (generated accessor ``project.findings``)."""
         if filter is not None:
             kwargs = {**kwargs, "filter": filter}
-        return self._execute_route("project.findings", source=project, **kwargs)
+        return self._execute_route_list("project.findings", source=project, **kwargs)
 
     @override
     def list_for_context(
@@ -277,13 +290,13 @@ class FindingFacade(ResourceRuntimeFacade[Any]):
         filter: str | FilterExpression | None = None,
         namespace: str | None = None,
         **kwargs: Any,
-    ) -> RouteResult[Any]:
+    ) -> list[Any]:
         """List findings in the same scan plane as *source* (``scan.findings``)."""
         if filter is not None:
             kwargs = {**kwargs, "filter": filter}
         if namespace is not None:
             kwargs = {**kwargs, "namespace": namespace}
-        return self._execute_route("scan.findings", source=source, **kwargs)
+        return self._execute_route_list("scan.findings", source=source, **kwargs)
 
     def to_dependency_metadata(
         self,

@@ -43,7 +43,8 @@ Consumer entrypoint: **`AGENTS.md`** (points here). Copy **`templates/consumer-A
 |------|-----------------|
 | `F()` positional | `list(filter=F("spec.level") == "…", traverse=True)` — never `list(F(...) == …, traverse=True)` |
 | `F.field` attribute | Use `F("spec.field")` — dotted paths are strings, not attributes on `F` |
-| `list_by_*` return type | `RouteResult` — `for row in result` or `.values` / `.value`; plain `.list()` returns `list` |
+| `list_by_*` / `list_for_context` | `list[T]` | Same as `.list()` — project/scan-plane edges |
+| `to_*` | `RouteResult` | Stitch — `.value` / `.single`; check `.edge_used`, `.warnings` |
 | `limit` on `.list()` | Use `page_size=` or `limit=` (alias for `page_size`; same as `list_by_project(limit=)`) |
 | Finding text field | `spec.summary`, not `spec.description` |
 | `Metric.list_by_project` | Does not exist — use `Metric.list(...)` with filters |
@@ -55,6 +56,9 @@ Consumer entrypoint: **`AGENTS.md`** (points here). Copy **`templates/consumer-A
 | Call graph helpers | Not on `client` — `endorlabs.workflows.callgraph` + skill **endor-fetch-and-search-call-graph** |
 | `print(discover())` repr dump | Use `print(discover())` or `agent_bootstrap --dry-run` — `SdkDiscovery` has a readable `__str__` |
 | Auth via `Namespace.list()` | Use `Client().whoami()` after credentials are set |
+| Filter enum literals | Examples in [reference/filter-enum-snippets.md](reference/filter-enum-snippets.md) |
+
+Return types (normative): [contracts/resource-discovery.md](contracts/resource-discovery.md).
 
 ## Quick start
 
@@ -107,7 +111,7 @@ projects = client.Project.list(traverse=True, max_pages=2)
 
 - Resource facades use **PascalCase**: `client.Project`, `client.Finding`, …
 - Match `endorctl api … --resource <Kind>` vocabulary.
-- `.get()` returns typed models; `.list()` / `search_by_*` return models unless `mask=` is set; `list_by_*` returns `RouteResult` (iterable; `.values` when you need a `list`).
+- Return types: [contracts/resource-discovery.md](contracts/resource-discovery.md) (trap rows above for quick lookup).
 
 ## Critical validation traps
 
