@@ -7,7 +7,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
 from ..operations import BaseResourceOperations
-from ..operations.routes import RouteExecutor, RouteResult
+from ..operations.routes import RouteExecutor, RouteResult, unwrap_route_list
 from ..registry import RESOURCE_REGISTRY
 
 if TYPE_CHECKING:
@@ -86,6 +86,18 @@ class RouteHostMixin:
             )
         return executor.execute(edge, source=source, **list_kwargs)
 
+    def _execute_route_list(
+        self,
+        edge_id: str,
+        *,
+        source: Any,
+        **list_kwargs: Any,
+    ) -> list[Any]:
+        """Execute a list-edge route and return rows (facade public boundary)."""
+        return unwrap_route_list(
+            self._execute_route(edge_id, source=source, **list_kwargs)
+        )
+
     def list_for_context(
         self,
         source: Any,
@@ -93,7 +105,7 @@ class RouteHostMixin:
         filter: str | FilterExpression | None = None,
         namespace: str | None = None,
         **kwargs: Any,
-    ) -> RouteResult[Any]:
+    ) -> list[Any]:
         """List rows in the same scan plane as *source*.
 
         Filters on ``context.type`` and optional ``context.id``.
@@ -119,7 +131,7 @@ class RouteHostMixin:
             kwargs = {**kwargs, "filter": filter}
         if namespace is not None:
             kwargs = {**kwargs, "namespace": namespace}
-        return self._execute_route(matches[0].id, source=source, **kwargs)
+        return self._execute_route_list(matches[0].id, source=source, **kwargs)
 
     def _get_route_executor(self) -> RouteExecutor:
         if self._route_executor is not None:

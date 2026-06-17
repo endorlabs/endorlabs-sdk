@@ -97,7 +97,7 @@ endorctl api create --resource=ScanResult --namespace=<tenant.ns> -f payload.jso
 
 | Method | Edge id | Wire kind | Returns |
 |--------|---------|-----------|---------|
-| `list_by_project(…)` | `project.scan_results` | `list_by_parent` | RouteResult → `.values` |
+| `list_by_project(…)` | `project.scan_results` | `list_by_parent` | `list[T]` |
 
 See [resource-routes.md](../resource-routes.md) and [facade-helpers.md](../../guides/facade-helpers.md).
 

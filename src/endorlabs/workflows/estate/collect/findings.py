@@ -83,7 +83,7 @@ def _fetch_findings_for_shard(
             uuid=shard.key,
             tenant_meta=SimpleNamespace(namespace=shard.namespace),
         )
-        result = client.Finding.list_by_project(
+        rows = client.Finding.list_by_project(
             source,
             filter=findings_filter_for_project(shard.key),
             namespace=shard.namespace,
@@ -91,7 +91,6 @@ def _fetch_findings_for_shard(
             max_pages=max_pages,
             page_size=page_size,
         )
-        rows = result.values or []
     except Exception as exc:
         return [], f"{shard.namespace}/{shard.key}: {exc}"
     normalized = [normalize_finding_record(row) for row in rows]

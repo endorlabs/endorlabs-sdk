@@ -25,8 +25,8 @@ See also [resource-discovery contract](../../agent-knowledge/contracts/resource-
 
 1. **`client.<Kind>`** matches the endorctl resource kind (PascalCase).
 2. **CRUD** (`list`, `get`) return **`<Kind>` models** (or masked `dict` rows).
-3. **Generated accessor helpers** return **`RouteResult`** with `.values` / `.value`, `.edge_used`, `.warnings`. See [resource-routes.md](../generated-reference/resource-routes.md).
-4. **`search_by_*`** return **`list[T]`** (same as `list()` for return shape; forwards `mask`, `filter`, etc.).
+3. **`list_by_*` / `list_for_context`** return **`list[T]`**; **`to_*`** stitch accessors return **`RouteResult`**. Normative map: [resource-discovery contract](../../agent-knowledge/contracts/resource-discovery.md). Inventory: [resource-routes.md](../generated-reference/resource-routes.md), [api-surfaces.md](../generated-reference/api-surfaces.md).
+4. **`search_by_*`** return **`list[T]`** (bounded discovery; forwards `mask`, `filter`, etc.).
 5. **Wire/auxiliary helpers** — custom decode/fetch, log POST (below).
 6. **Custom facades** only when the kind is not yet on `registry_contract` — today: **`CallGraphData`** only.
 
@@ -68,63 +68,15 @@ project = client.Project.get(project_uuid, namespace="tenant.child")
 
 ## Generated accessor helpers (codegen)
 
-From `devtools/model_sync_profiles/route_contract_overlay.yaml` (manual FK/parent edges) plus `route_partition_targets.yaml` (codegen `list_for_context` edges) → `src/endorlabs/generated/route_contract.py` and [resource-routes.md](../generated-reference/resource-routes.md).
+From `route_contract_overlay.yaml` + `route_partition_targets.yaml` → [resource-routes.md](../generated-reference/resource-routes.md) and [api-surfaces.md](../generated-reference/api-surfaces.md).
 
-Regenerate: `uv run python devtools/generate_route_contract.py` (also refreshes `tests/fixtures/routes/golden_edges.json`).
+Regenerate: `uv run python devtools/generate_route_contract.py`.
 
-### `RouteResult`
+**When to use:** Prefer generated accessors over hand-built `spec.project_uuid==…` or `context.scan_uuid==…` filters when the edge exists in the contract. Return-type semantics and stitch `RouteResult` protocol: [resource-discovery contract](../../agent-knowledge/contracts/resource-discovery.md).
 
-List and stitch accessors return **`RouteResult[T]`** (`endorlabs.operations.routes`):
+`ScanResult.list_by_project` adds a workflow preset (newest-first, default `max_pages=1`, optional `limit` → `page_size`, client-side `status_filter`). For the latest scan: `ScanResult.list_by_project(project, limit=1)[0]`.
 
-| Field | Use |
-|-------|-----|
-| `.values` | List edges — finding rows, scans, package versions, … |
-| `.value` | GET/stitch edges — e.g. one `DependencyMetadata` row from `Finding.to_dependency_metadata` |
-| `.edge_used` | Which contract edge ran (tier A/B/C; useful when a method has fallback paths) |
-| `.warnings` | Non-fatal issues (e.g. list-only index fields on GET paths) |
-
-Namespace is taken from the **source resource** unless `namespace=` is passed. Forward `filter`, `mask`, `max_pages`, and other list kwargs like `list()`.
-
-### Project-scoped accessors (`list_by_project`)
-
-| Method | Edge id | Wire kind | Returns |
-|--------|---------|-----------|---------|
-| `Finding.list_by_project(project, …)` | `project.findings` | `list_by_uuid_field` (`spec.project_uuid`) | `.values` → findings |
-| `ScanResult.list_by_project(project, …)` | `project.scan_results` | `list_by_parent` | `.values` → scan results |
-| `PackageVersion.list_by_project(project, …)` | `project.package_versions` | `list_by_uuid_field` | `.values` → package versions |
-
-### Scan-plane accessors (`list_for_context`)
-
-Pass any row with a `.context` (typically a **`ScanResult`**). Each method filters on OpenAPI **`v1Context`** fields (`context.type`, `context.id`) plus contract `also_filter` when present. Do **not** use `context.scan_uuid` — it is not on the wire filter schema.
-
-| Method | Edge id | Target kind |
-|--------|---------|-------------|
-| `Finding.list_for_context(source, …)` | `scan.findings` | Finding |
-| `PackageVersion.list_for_context(source, …)` | `scan.package_versions` | PackageVersion |
-| `DependencyMetadata.list_for_context(source, …)` | `scan.dependency_metadata` | DependencyMetadata |
-| `RepositoryVersion.list_for_context(source, …)` | `scan.repository_versions` | RepositoryVersion |
-| `FindingLog.list_for_context(source, …)` | `scan.finding_logs` | FindingLog |
-| `LinterResult.list_for_context(source, …)` | `scan.linter_results` | LinterResult |
-| `Metric.list_for_context(source, …)` | `scan.metrics` | Metric |
-| `PackageLicense.list_for_context(source, …)` | `scan.package_licenses` | PackageLicense |
-| `ScanWorkflowResult.list_for_context(source, …)` | `scan.scan_workflow_results` | ScanWorkflowResult |
-| `VersionUpgrade.list_for_context(source, …)` | `scan.version_upgrades` | VersionUpgrade |
-
-Any facade whose kind appears in the table above inherits `list_for_context` via `RouteHostMixin` when the edge is in [resource-routes.md](../generated-reference/resource-routes.md). **`Finding`**, **`ScanResult`**, and **`PackageVersion`** also expose dedicated `list_by_project` / `to_dependency_metadata` wrappers in `facade/specialized.py`.
-
-### Stitch accessor
-
-| Method | Edge ids (fallback order) | Returns |
-|--------|---------------------------|---------|
-| `Finding.to_dependency_metadata(finding, …)` | `finding.dependency_metadata.get` → `finding.dependency_metadata.by_package` | `.value` → one `DependencyMetadata` row |
-
-Full edge inventory (tiers, wire kinds, regeneration): [resource-routes.md](../generated-reference/resource-routes.md).
-
-**Removed (0.3.0):** `Finding.list_by_scan`, `Finding.list_for_scan`, `ScanResult.list_for_project`, `Project.resolve()` — use the accessors above or `search_by_*` / `get(uuid)`. See [changelog.md](../changelog.md).
-
-**Prefer these** over hand-built `filter='spec.project_uuid==…'`, `list(parent=project)`, or `filter='context.scan_uuid==…'` when the relationship is in the contract.
-
-For manual composition:
+For manual scan-plane composition:
 
 ```python
 from endorlabs.facade import context_partition_filter
@@ -133,14 +85,12 @@ findings = client.Finding.list_by_project(
     project,
     filter=context_partition_filter(scan.context),
     max_pages=5,
-).values
+)
 ```
 
-For exact finding UUIDs attached to one scan record, hydrate from `ScanResult.spec.findings` via `Finding.get(uuid)` — not a list route.
+For exact finding UUIDs on a scan record, use `ScanResult.spec.findings` + `Finding.get(uuid)`.
 
-`ScanResult.list_by_project` adds a **workflow preset** on top of the generated edge: newest-first, default `max_pages=1`, optional `limit` (→ `page_size`) and client-side `status_filter`. Pass explicit `sort_by`, `max_pages`, `list_params`, or date bounds to override.
-
-For the latest scan only, use `ScanResult.list_by_project(project, limit=1).values[0]`.
+**Removed (0.3.0):** `Finding.list_by_scan`, `Finding.list_for_scan`, `ScanResult.list_for_project`, `Project.resolve()` — see [changelog.md](../changelog.md).
 
 ## Wire helpers
 
@@ -190,18 +140,18 @@ findings = client.Finding.list_by_project(
     project,
     filter='spec.level=="FINDING_LEVEL_CRITICAL"',
     max_pages=5,
-).values
+)
 
 # F() — composable, injection-safe
 findings = client.Finding.list_by_project(
     project,
     filter=F("spec.level") == "FINDING_LEVEL_CRITICAL",
     max_pages=5,
-).values
+)
 
 scans = client.ScanResult.list_by_project(project, limit=5)
-if scans.values:
-    scan_findings = client.Finding.list_for_context(scans.values[0], max_pages=1)
+if scans:
+    scan_findings = client.Finding.list_for_context(scans[0], max_pages=1)
 
 for finding in findings or []:
     dm = client.Finding.to_dependency_metadata(finding)

@@ -38,38 +38,29 @@ class TestRetrievingScanResultsWorkflow:
             pytest.fail(f"No project matched repo URL: {self.repo_url}")
         project = projects[0]
 
-        route = self.endor_client.ScanResult.list_by_project(
+        scans = self.endor_client.ScanResult.list_by_project(
             project,
             limit=1,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
-        scan = route.values[0] if route.values else None
+        scan = scans[0] if scans else None
 
         if scan is None:
-            findings = list(
-                self.endor_client.Finding.list_by_project(
-                    project,
-                    max_pages=TEST_MAX_PAGES_TRAVERSE,
-                ).values
-                or []
+            findings = self.endor_client.Finding.list_by_project(
+                project,
+                max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
         else:
             ctx = getattr(scan, "context", None)
             if ctx is None or not getattr(ctx, "type", None):
-                findings = list(
-                    self.endor_client.Finding.list_by_project(
-                        project,
-                        max_pages=TEST_MAX_PAGES_TRAVERSE,
-                    ).values
-                    or []
+                findings = self.endor_client.Finding.list_by_project(
+                    project,
+                    max_pages=TEST_MAX_PAGES_TRAVERSE,
                 )
             else:
-                findings = list(
-                    self.endor_client.Finding.list_for_context(
-                        scan,
-                        max_pages=TEST_MAX_PAGES_TRAVERSE,
-                    ).values
-                    or []
+                findings = self.endor_client.Finding.list_for_context(
+                    scan,
+                    max_pages=TEST_MAX_PAGES_TRAVERSE,
                 )
 
         assert isinstance(findings, list)

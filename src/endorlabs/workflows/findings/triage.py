@@ -272,14 +272,13 @@ def tag_findings_by_criteria(
     filter_expr = " AND ".join(filter_parts) if filter_parts else None
 
     project = client.Project.get(project_uuid, namespace=namespace)
-    route = client.Finding.list_by_project(
+    findings = client.Finding.list_by_project(
         project,
         namespace=namespace,
         filter=filter_expr,
         sort_by="spec.level",
         desc=True,
     )
-    findings = route.values or []
 
     result = TaggingResult(total=len(findings))
 

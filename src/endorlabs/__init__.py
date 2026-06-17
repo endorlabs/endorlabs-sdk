@@ -16,8 +16,9 @@ Quick start::
             _ = finding.uuid
 
 Filters use string field paths: ``F("spec.level") == "FINDING_LEVEL_CRITICAL"``.
-Relationship accessors (``list_by_project``, ``list_for_context``, …) return
-``RouteResult`` — iterate directly or use ``.values`` / ``.value``.
+``list_by_project`` / ``list_for_context`` return ``list[T]`` like ``.list()``.
+Stitch accessors (``to_dependency_metadata``, …) return ``RouteResult`` — use
+``.value`` / ``.single`` and inspect ``.edge_used`` / ``.warnings``.
 """
 
 from __future__ import annotations

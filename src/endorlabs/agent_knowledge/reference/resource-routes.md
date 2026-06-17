@@ -27,7 +27,7 @@ Partition edges: `devtools/model_sync_profiles/route_partition_targets.yaml`.
 
 ## Usage
 
-Generated accessor helpers return `RouteResult` with `.values` (list accessors) or `.value` (GET/stitch). Namespace is taken from the source resource unless `namespace=` is passed.
+Generated list accessors (`list_by_project`, `list_for_context`, …) return `list[T]` like `.list()`. Stitch accessors (`to_dependency_metadata`, …) return `RouteResult` — use `.value` / `.single` and inspect `.edge_used` / `.warnings`. Namespace is taken from the source resource unless `namespace=` is passed.
 
 ```python
 projects = client.Project.search_by_name('my-repo', namespace=ns, max_pages=2)
@@ -35,8 +35,8 @@ project = projects[0] if projects else None
 findings = client.Finding.list_by_project(project, max_pages=1)
 scans = client.ScanResult.list_by_project(
     project, max_pages=1, sort_by='meta.create_time', desc=True)
-if scans.values:
-    by_context = client.Finding.list_for_context(scans.values[0], max_pages=1)
+if scans:
+    by_context = client.Finding.list_for_context(scans[0], max_pages=1)
 dm = client.Finding.to_dependency_metadata(finding_row)
 ```
 

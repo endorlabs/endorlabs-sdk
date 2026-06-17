@@ -14,7 +14,7 @@ Agent skill (on-demand): [endor-retrieve-scan-results](../../agent-knowledge/ski
 2. **Scan results** — `client.ScanResult.list_by_project(project, max_pages=1, sort_by="meta.create_time", desc=True)` or `ScanResult.list(parent=project, sort_by="meta.create_time", desc=True, max_pages=1)`.
 3. **Findings** — `client.Finding.list_by_project(project, max_pages=…)` or `Finding.list_for_context(scan, max_pages=…)`. **Do not** use `traverse=True` here — wrong namespace causes empty rows, not errors ([contracts.md](../contracts.md) — project-scoped lists).
 
-Generated accessor helpers return `RouteResult`; use `.values` for rows. See [facade-helpers.md](facade-helpers.md) and [resource-routes.md](../generated-reference/resource-routes.md).
+Generated list accessors return **`list[T]`** like `.list()`. Stitch accessors (`to_dependency_metadata`) return **`RouteResult`**. See [facade-helpers.md](facade-helpers.md) and [resource-routes.md](../generated-reference/resource-routes.md).
 
 ```python
 projects = client.Project.search_by_name(repo_url, namespace=ns, max_pages=2)
@@ -23,8 +23,8 @@ findings = client.Finding.list_by_project(project, max_pages=1)
 scans = client.ScanResult.list_by_project(
     project, max_pages=1, sort_by="meta.create_time", desc=True
 )
-if scans.values:
-    scan_findings = client.Finding.list_for_context(scans.values[0], max_pages=1)
+if scans:
+    scan_findings = client.Finding.list_for_context(scans[0], max_pages=1)
 ```
 
 Use **field-mask** (`mask=` / `--field-mask`) for smaller responses; with a **non-empty** mask, `list()` returns **dict** rows, not full resource models.

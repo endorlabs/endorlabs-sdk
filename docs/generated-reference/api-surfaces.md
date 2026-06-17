@@ -177,25 +177,25 @@ Bounded list discovery; returns `list[T]` (not `RouteResult`).
 
 ## Relationship accessors (generated)
 
-From `route_contract.py`. Return `RouteResult` — use `.values` or `.value`.
+From `route_contract.py`. List accessors return `list[T]`; stitch accessors return iterable `RouteResult` — use `.value` / `.single` and inspect `.warnings`.
 Full edge inventory: [resource-routes.md](resource-routes.md).
 
 | Public method | From → To | Edge id | Wire kind | Returns |
 |---------------|-----------|---------|-----------|---------|
-| `DependencyMetadata.list_for_context` | ScanResult → DependencyMetadata | `scan.dependency_metadata` | `list_by_context_partition` | RouteResult → `.values` |
-| `Finding.list_by_project` | Project → Finding | `project.findings` | `list_by_uuid_field` | RouteResult → `.values` |
-| `Finding.list_for_context` | ScanResult → Finding | `scan.findings` | `list_by_context_partition` | RouteResult → `.values` |
-| `Finding.to_dependency_metadata` | Finding → DependencyMetadata | `finding.dependency_metadata.by_package` | `list_by_attribute` | RouteResult → `.value` (fallback path) |
-| `FindingLog.list_for_context` | ScanResult → FindingLog | `scan.finding_logs` | `list_by_context_partition` | RouteResult → `.values` |
-| `LinterResult.list_for_context` | ScanResult → LinterResult | `scan.linter_results` | `list_by_context_partition` | RouteResult → `.values` |
-| `Metric.list_for_context` | ScanResult → Metric | `scan.metrics` | `list_by_context_partition` | RouteResult → `.values` |
-| `PackageLicense.list_for_context` | ScanResult → PackageLicense | `scan.package_licenses` | `list_by_context_partition` | RouteResult → `.values` |
-| `PackageVersion.list_by_project` | Project → PackageVersion | `project.package_versions` | `list_by_uuid_field` | RouteResult → `.values` |
-| `PackageVersion.list_for_context` | ScanResult → PackageVersion | `scan.package_versions` | `list_by_context_partition` | RouteResult → `.values` |
-| `RepositoryVersion.list_for_context` | ScanResult → RepositoryVersion | `scan.repository_versions` | `list_by_context_partition` | RouteResult → `.values` |
-| `ScanResult.list_by_project` | Project → ScanResult | `project.scan_results` | `list_by_parent` | RouteResult → `.values` |
-| `ScanWorkflowResult.list_for_context` | ScanResult → ScanWorkflowResult | `scan.scan_workflow_results` | `list_by_context_partition` | RouteResult → `.values` |
-| `VersionUpgrade.list_for_context` | ScanResult → VersionUpgrade | `scan.version_upgrades` | `list_by_context_partition` | RouteResult → `.values` |
+| `DependencyMetadata.list_for_context` | ScanResult → DependencyMetadata | `scan.dependency_metadata` | `list_by_context_partition` | `list[T]` |
+| `Finding.list_by_project` | Project → Finding | `project.findings` | `list_by_uuid_field` | `list[T]` |
+| `Finding.list_for_context` | ScanResult → Finding | `scan.findings` | `list_by_context_partition` | `list[T]` |
+| `Finding.to_dependency_metadata` | Finding → DependencyMetadata | `finding.dependency_metadata.by_package` | `list_by_attribute` | RouteResult — `.value` (fallback); iterable |
+| `FindingLog.list_for_context` | ScanResult → FindingLog | `scan.finding_logs` | `list_by_context_partition` | `list[T]` |
+| `LinterResult.list_for_context` | ScanResult → LinterResult | `scan.linter_results` | `list_by_context_partition` | `list[T]` |
+| `Metric.list_for_context` | ScanResult → Metric | `scan.metrics` | `list_by_context_partition` | `list[T]` |
+| `PackageLicense.list_for_context` | ScanResult → PackageLicense | `scan.package_licenses` | `list_by_context_partition` | `list[T]` |
+| `PackageVersion.list_by_project` | Project → PackageVersion | `project.package_versions` | `list_by_uuid_field` | `list[T]` |
+| `PackageVersion.list_for_context` | ScanResult → PackageVersion | `scan.package_versions` | `list_by_context_partition` | `list[T]` |
+| `RepositoryVersion.list_for_context` | ScanResult → RepositoryVersion | `scan.repository_versions` | `list_by_context_partition` | `list[T]` |
+| `ScanResult.list_by_project` | Project → ScanResult | `project.scan_results` | `list_by_parent` | `list[T]` |
+| `ScanWorkflowResult.list_for_context` | ScanResult → ScanWorkflowResult | `scan.scan_workflow_results` | `list_by_context_partition` | `list[T]` |
+| `VersionUpgrade.list_for_context` | ScanResult → VersionUpgrade | `scan.version_upgrades` | `list_by_context_partition` | `list[T]` |
 
 ## Custom and wire facades
 

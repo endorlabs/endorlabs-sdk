@@ -74,9 +74,7 @@ def test_resolve_package_version_with_callgraph_skips_not_found() -> None:
         envelope={},
     )
     client = MagicMock()
-    client.PackageVersion.list_by_project.return_value = SimpleNamespace(
-        values=[pv1, pv2]
-    )
+    client.PackageVersion.list_by_project.return_value = [pv1, pv2]
 
     def _decode(pv: object) -> CallGraphDecoded:
         if getattr(pv, "uuid", None) == "pv1":
@@ -97,9 +95,9 @@ def test_resolve_package_version_with_callgraph_skips_not_found() -> None:
 
 def test_resolve_package_version_with_callgraph_no_available_returns_none() -> None:
     client = MagicMock()
-    client.PackageVersion.list_by_project.return_value = SimpleNamespace(
-        values=[_pv("x", ref="main", call_graph_available=False)]
-    )
+    client.PackageVersion.list_by_project.return_value = [
+        _pv("x", ref="main", call_graph_available=False)
+    ]
     project = SimpleNamespace(uuid="proj", meta=SimpleNamespace(name="r"))
     inventory: dict = {}
     out = resolve_package_version_with_callgraph(

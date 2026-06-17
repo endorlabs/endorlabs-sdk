@@ -103,4 +103,5 @@ prefix). Repo clone: [`docs/contributing/troubleshooting.md`](../../../docs/cont
 
 - Skill entrypoint: [SKILL.md](SKILL.md)
 - Contracts: `contracts/list-parameters.md`, `contracts/resource-discovery.md`
+- Reference: `reference/filter-enum-snippets.md` (codegen filter enum literals)
 - Contributor troubleshooting: `docs/contributing/troubleshooting.md` (repo clone only)

@@ -150,8 +150,7 @@ def pull_findings_context(
             "max_pages": max_pages,
             "page_size": 100,
         }
-        findings_result = client.Finding.list_by_project(project, **list_kwargs)
-        findings = findings_result.values or []
+        findings = client.Finding.list_by_project(project, **list_kwargs)
     except Exception as exc:
         logger.warning("Unable to fetch findings: %s", exc)
         ctx.fetch_error = str(exc)

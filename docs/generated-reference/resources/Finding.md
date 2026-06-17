@@ -101,9 +101,9 @@ endorctl api create --resource=Finding --namespace=<tenant.ns> -f payload.json
 
 | Method | Edge id | Wire kind | Returns |
 |--------|---------|-----------|---------|
-| `to_dependency_metadata(…)` | `finding.dependency_metadata.by_package` | `list_by_attribute` | RouteResult → `.value` (fallback path) |
-| `list_by_project(…)` | `project.findings` | `list_by_uuid_field` | RouteResult → `.values` |
-| `list_for_context(…)` | `scan.findings` | `list_by_context_partition` | RouteResult → `.values` |
+| `to_dependency_metadata(…)` | `finding.dependency_metadata.by_package` | `list_by_attribute` | RouteResult — `.value` (fallback); iterable |
+| `list_by_project(…)` | `project.findings` | `list_by_uuid_field` | `list[T]` |
+| `list_for_context(…)` | `scan.findings` | `list_by_context_partition` | `list[T]` |
 
 See [resource-routes.md](../resource-routes.md) and [facade-helpers.md](../../guides/facade-helpers.md).
 
