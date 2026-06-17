@@ -4,6 +4,9 @@ Provides a type-safe, injection-resistant way to build filter expressions
 for the ``list_parameters.filter`` API parameter. All 12 API filter
 operators are supported, with ``&`` (AND) and ``|`` (OR) for composition.
 
+Field paths are **strings**: ``F("spec.level")``, not ``F.level`` or attributes
+on ``F``.
+
 Usage::
 
     from endorlabs import F

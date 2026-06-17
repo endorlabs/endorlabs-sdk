@@ -1,6 +1,23 @@
 """Endor Labs SDK.
 
 A Python SDK for the Endor Labs platform.
+
+Quick start::
+
+    import endorlabs
+    from endorlabs import F
+
+    print(endorlabs.discover())  # wheel paths for agents; read bootstrap_paths first
+
+    with endorlabs.Client(tenant="tenant.namespace") as client:
+        print(client.whoami())
+        projects = client.Project.list(traverse=True, max_pages=1)
+        for finding in client.Finding.list_by_project(projects[0]):
+            _ = finding.uuid
+
+Filters use string field paths: ``F("spec.level") == "FINDING_LEVEL_CRITICAL"``.
+Relationship accessors (``list_by_project``, ``list_for_context``, …) return
+``RouteResult`` — iterate directly or use ``.values`` / ``.value``.
 """
 
 from __future__ import annotations

@@ -42,6 +42,8 @@ Consumer entrypoint: **`AGENTS.md`** (points here). Copy **`templates/consumer-A
 | Trap | Correct pattern |
 |------|-----------------|
 | `F()` positional | `list(filter=F("spec.level") == "…", traverse=True)` — never `list(F(...) == …, traverse=True)` |
+| `F.field` attribute | Use `F("spec.field")` — dotted paths are strings, not attributes on `F` |
+| `list_by_*` return type | `RouteResult` — `for row in result` or `.values` / `.value`; plain `.list()` returns `list` |
 | `limit` on `.list()` | Use `page_size=` or `limit=` (alias for `page_size`; same as `list_by_project(limit=)`) |
 | Finding text field | `spec.summary`, not `spec.description` |
 | `Metric.list_by_project` | Does not exist — use `Metric.list(...)` with filters |
@@ -105,7 +107,7 @@ projects = client.Project.list(traverse=True, max_pages=2)
 
 - Resource facades use **PascalCase**: `client.Project`, `client.Finding`, …
 - Match `endorctl api … --resource <Kind>` vocabulary.
-- `.get()` returns typed models; `.list()` / `search_by_*` return models unless `mask=` is set; `list_by_*` returns `RouteResult`.
+- `.get()` returns typed models; `.list()` / `search_by_*` return models unless `mask=` is set; `list_by_*` returns `RouteResult` (iterable; `.values` when you need a `list`).
 
 ## Critical validation traps
 
