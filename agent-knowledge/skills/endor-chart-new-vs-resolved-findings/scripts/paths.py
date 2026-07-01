@@ -45,11 +45,7 @@ def resolve_canvas_dir(explicit: Path | None = None) -> Path | None:
         return None
 
     candidate = (
-        Path.home()
-        / ".cursor"
-        / "projects"
-        / cursor_project_slug(root)
-        / "canvases"
+        Path.home() / ".cursor" / "projects" / cursor_project_slug(root) / "canvases"
     )
     if candidate.parent.is_dir() or candidate.is_dir():
         candidate.mkdir(parents=True, exist_ok=True)

@@ -74,7 +74,9 @@ def render_summary_rows(rows: list[dict]) -> str:
 def render_canvas(data: dict) -> str:
     tenant = data["tenant"]
     slug = tenant.replace("_", "-")
-    component = "".join(part.capitalize() for part in slug.split("-")) + "PrfApproximationMain"
+    component = (
+        "".join(part.capitalize() for part in slug.split("-")) + "PrfApproximationMain"
+    )
     missing = data["missing_parent_pvs"]
     summary_rows = render_summary_rows(data["summary_rows"])
     ecosystem_errors = render_ecosystem_errors(data["ecosystem_errors"])
@@ -387,7 +389,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Generate Cursor canvas TSX from PRF analysis JSON."
     )
-    parser.add_argument("json_path", type=Path, help="Analysis JSON from run_analysis.py")
+    parser.add_argument(
+        "json_path", type=Path, help="Analysis JSON from run_analysis.py"
+    )
     parser.add_argument(
         "--canvas-dir",
         type=Path,

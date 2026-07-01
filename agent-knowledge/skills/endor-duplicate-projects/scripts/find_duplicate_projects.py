@@ -105,7 +105,9 @@ def find_duplicate_groups(projects: list[dict[str, Any]]) -> list[list[dict[str,
     return merge_clusters(candidate_groups)
 
 
-def write_csv(clusters: list[list[dict[str, Any]]], output: Path) -> list[dict[str, str]]:
+def write_csv(
+    clusters: list[list[dict[str, Any]]], output: Path
+) -> list[dict[str, str]]:
     rows = [row_to_csv(r) for cluster in clusters for r in cluster]
     rows.sort(key=lambda r: (r["project name"].lower(), r["namespace"]))
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -122,7 +124,9 @@ def main() -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path(".endorlabs-context/workspace/sessions/agent/exports/duplicate-projects.csv"),
+        default=Path(
+            ".endorlabs-context/workspace/sessions/agent/exports/duplicate-projects.csv"
+        ),
         help="CSV output path",
     )
     parser.add_argument(
