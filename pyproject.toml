@@ -327,6 +327,7 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 "devtools/refresh_token_to_dotenv.py" = ["T201", "D103", "S105"]  # CLI; env var name strings
 "devtools/run_without_endor_token.py" = ["D103", "S603"]  # maintainer env wrapper
 "main.py" = ["T201"]  # repo-root SDK walkthrough; intentional print() for learners
+"src/endorlabs/examples/agent_bootstrap.py" = ["T201"]  # CLI bootstrap ladder; intentional stdout
 # --- Workflows: library contracts strict; CLI stdout intentional ---
 # Console scripts and argparse mains write paths/JSON to stdout (not library code).
 "src/endorlabs/workflows/**/cli.py" = ["T201"]

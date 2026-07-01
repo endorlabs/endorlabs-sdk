@@ -24,7 +24,7 @@ Result from a scan workflow execution.
 
 | Method | Edge id | Wire kind | Returns |
 |--------|---------|-----------|---------|
-| `list_for_context(…)` | `scan.scan_workflow_results` | `list_by_context_partition` | RouteResult → `.values` |
+| `list_for_context(…)` | `scan.scan_workflow_results` | `list_by_context_partition` | `list[T]` |
 
 See [resource-routes.md](../resource-routes.md) and [facade-helpers.md](../../guides/facade-helpers.md).
 

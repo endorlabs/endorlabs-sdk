@@ -216,21 +216,18 @@ def test_list_package_versions_for_index_truncated_and_sorted() -> None:
         class PackageVersion:
             @staticmethod
             def list_by_project(_project, **_kwargs):
-                route = SimpleNamespace(
-                    values=[
-                        SimpleNamespace(
-                            uuid="2",
-                            meta=SimpleNamespace(name="npm://z@1"),
-                            spec=None,
-                        ),
-                        SimpleNamespace(
-                            uuid="1",
-                            meta=SimpleNamespace(name="npm://a@1"),
-                            spec=None,
-                        ),
-                    ]
-                )
-                return route
+                return [
+                    SimpleNamespace(
+                        uuid="2",
+                        meta=SimpleNamespace(name="npm://z@1"),
+                        spec=None,
+                    ),
+                    SimpleNamespace(
+                        uuid="1",
+                        meta=SimpleNamespace(name="npm://a@1"),
+                        spec=None,
+                    ),
+                ]
 
     with patch("endorlabs.workflows.agent_context.package_versions.LOGGER.warning"):
         pvs, meta = list_package_versions_for_index(

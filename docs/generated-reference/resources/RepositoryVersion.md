@@ -63,7 +63,7 @@ endorctl api create --resource=RepositoryVersion --namespace=<tenant.ns> -f payl
 
 | Method | Edge id | Wire kind | Returns |
 |--------|---------|-----------|---------|
-| `list_for_context(…)` | `scan.repository_versions` | `list_by_context_partition` | RouteResult → `.values` |
+| `list_for_context(…)` | `scan.repository_versions` | `list_by_context_partition` | `list[T]` |
 
 See [resource-routes.md](../resource-routes.md) and [facade-helpers.md](../../guides/facade-helpers.md).
 

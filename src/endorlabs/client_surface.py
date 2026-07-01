@@ -215,3 +215,8 @@ class Client:
         return _wait_until(
             predicate, timeout=timeout, poll_interval_max=poll_interval_max
         )
+
+
+_init_doc = (Client.__doc__ or "").split("\n\n", 1)[0].strip()
+if _init_doc:
+    Client.__init__.__doc__ = _init_doc

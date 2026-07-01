@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from endorlabs.core.exceptions import NotFoundError
 from endorlabs.utils.artifact_io import slugify, write_json
@@ -123,13 +123,12 @@ def process_project(
     logger.info("  Fetching PackageVersions ...")
     missing: list[str] = []
     if pv_uuid_order:
-        route = client.PackageVersion.list_by_project(
+        pvs_full = client.PackageVersion.list_by_project(
             project,
             namespace=project_ns,
             max_pages=pv_list_max_pages,
             page_size=pv_list_page_size,
         )
-        pvs_full = cast("list[Any]", route.values or [])
         listed_cap = pv_list_max_pages * pv_list_page_size
         result.pv_list_truncated = len(pvs_full) >= listed_cap
         by_uuid = {pv.uuid: pv for pv in pvs_full if getattr(pv, "uuid", None)}
@@ -148,13 +147,12 @@ def process_project(
         if pv_limit and pv_limit > 0:
             pvs = pvs[:pv_limit]
     else:
-        route = client.PackageVersion.list_by_project(
+        pvs = client.PackageVersion.list_by_project(
             project,
             namespace=project_ns,
             max_pages=1,
             page_size=pv_limit,
         )
-        pvs = cast("list[Any]", route.values or [])
         pvs = pvs[:pv_limit]
         if deterministic:
             pvs = sorted(pvs, key=lambda pv: str(pv.meta.name if pv.meta else pv.uuid))

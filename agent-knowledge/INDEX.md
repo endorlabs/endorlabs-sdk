@@ -4,6 +4,62 @@ Shipped with `endorlabs` inside the wheel. **`endorlabs.init()` is optional** �
 `agent_knowledge_index_path()` to read this file from site-packages, or materialize under
 `.endorlabs-context/sdk/` when a cwd-relative tree is needed.
 
+## First steps (agents and humans)
+
+```python
+import endorlabs
+
+# 0. Map — no credentials (print is human-readable; do not rely on dataclass repr)
+print(endorlabs.discover())
+# Or: python -m endorlabs.examples.agent_bootstrap --dry-run
+
+d = endorlabs.discover()
+# Read every path in d.bootstrap_paths; read d.stub for list() kwargs and accessors.
+
+# 1. Auth — live API
+client = endorlabs.Client(tenant="your-tenant")  # or ENDOR_NAMESPACE
+print(client.whoami())  # None → check .env / single auth mode
+
+# 2. Workflows — call graph, scan RCA, project bundles (not on dir(client))
+status = endorlabs.init(include_openapi=False, include_user_docs=False)
+# Read .endorlabs-context/sdk/skills/<id>/SKILL.md
+```
+
+## Agents — step zero (required)
+
+Before `endorlabs.Client()` or live API calls:
+
+1. `print(endorlabs.discover())` or `python -m endorlabs.examples.agent_bootstrap --dry-run` — then **read every path** in `bootstrap_paths`.
+2. Read `discover().stub` (`client_surface.pyi`) for `list()` kwargs and relationship accessors.
+3. **Auth check:** `Client().whoami()` — do not use `Namespace.list()` as an auth proxy.
+4. **Workflows** (call graph, project bundle, scan RCA): `endorlabs.init()` → read `skills/<id>/SKILL.md` (start: **endor-fetch-and-search-call-graph**, **endor-retrieve-scan-results**)
+
+Skipping step 1–2 causes repeatable traps (`filter=`, namespace scoping, mask→dict, auth mode).
+Consumer entrypoint: **`AGENTS.md`** (points here). Copy **`templates/consumer-AGENTS.md`** to your project root.
+
+## Day-0 traps
+
+| Trap | Correct pattern |
+|------|-----------------|
+| `F()` positional | `list(filter=F("spec.level") == "…", traverse=True)` — never `list(F(...) == …, traverse=True)` |
+| `F.field` attribute | Use `F("spec.field")` — dotted paths are strings, not attributes on `F` |
+| `list_by_*` / `list_for_context` | `list[T]` | Same as `.list()` — project/scan-plane edges |
+| `to_*` | `RouteResult` | Stitch — `.value` / `.single`; check `.edge_used`, `.warnings` |
+| `limit` on `.list()` | Use `page_size=` or `limit=` (alias for `page_size`; same as `list_by_project(limit=)`) |
+| Finding text field | `spec.summary`, not `spec.description` |
+| `Metric.list_by_project` | Does not exist — use `Metric.list(...)` with filters |
+| `QueryVulnerability.list` | Query resources are create/query only, not listable CRUD |
+| `endorlabs.query_vulnerability` | Submodule for payload builders — use `client.QueryVulnerability` |
+| MCP + SDK + endorctl auth | **One mode** in `.env`: `ENDOR_TOKEN` **or** key+secret, not both |
+| Call graph: `fetch()` only | Use `CallGraphData.decode()` for searchable callables/edges; `fetch()` is raw envelope |
+| `call_graph_available=true` | Flag ≠ stored data — use `resolve_package_version_with_callgraph()` |
+| Call graph helpers | Not on `client` — `endorlabs.workflows.callgraph` + skill **endor-fetch-and-search-call-graph** |
+| `print(discover())` repr dump | Use `print(discover())` or `agent_bootstrap --dry-run` — `SdkDiscovery` has a readable `__str__` |
+| Auth via `Namespace.list()` | Use `Client().whoami()` after credentials are set |
+| Filter enum literals | Examples in [reference/filter-enum-snippets.md](reference/filter-enum-snippets.md) |
+
+Return types (normative): [contracts/resource-discovery.md](contracts/resource-discovery.md).
+
 ## Quick start
 
 **Wheel-only** (no disk materialization):
@@ -55,7 +111,7 @@ projects = client.Project.list(traverse=True, max_pages=2)
 
 - Resource facades use **PascalCase**: `client.Project`, `client.Finding`, …
 - Match `endorctl api … --resource <Kind>` vocabulary.
-- `.get()` returns typed models; `.list()` / `search_by_*` return models unless `mask=` is set; `list_by_*` returns `RouteResult`.
+- Return types: [contracts/resource-discovery.md](contracts/resource-discovery.md) (trap rows above for quick lookup).
 
 ## Critical validation traps
 
@@ -93,7 +149,7 @@ Harnesses should prepend `agent_knowledge_bootstrap_paths()` (or read these rule
 | `endor-local-context` | Check gitignored `.endorlabs-context/` paths explicitly |
 | `endor-portable-examples` | Placeholders only; no committed tenant/project UUID literals |
 
-See `MANIFEST.json` → `bootstrap.rule_ids` for the machine-readable list.
+See `MANIFEST.json` → `bootstrap.rule_ids` and `bootstrap.contract_ids` for the machine-readable lists.
 
 ## Evidence vs inference
 

@@ -3,7 +3,7 @@ description: Resolve Project first; pass namespace=project.namespace on project-
 alwaysApply: true
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-namespace-scoping.md
-x-endor-source-sha256: fe36b3e092afebd2332980b5803663d10a38070fde802733020da860312186a3
+x-endor-source-sha256: e86fee764a4a4fd9a7e01ecbf8454ac6b5728085b9f340d206d8dc82de855eff
 ---
 
 # Namespace scoping

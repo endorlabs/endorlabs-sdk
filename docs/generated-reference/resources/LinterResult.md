@@ -81,7 +81,7 @@ endorctl api create --resource=LinterResult --namespace=<tenant.ns> -f payload.j
 
 | Method | Edge id | Wire kind | Returns |
 |--------|---------|-----------|---------|
-| `list_for_context(…)` | `scan.linter_results` | `list_by_context_partition` | RouteResult → `.values` |
+| `list_for_context(…)` | `scan.linter_results` | `list_by_context_partition` | `list[T]` |
 
 See [resource-routes.md](../resource-routes.md) and [facade-helpers.md](../../guides/facade-helpers.md).
 

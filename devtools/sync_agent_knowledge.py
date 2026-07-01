@@ -287,6 +287,63 @@ def sync_index() -> None:
     )
 
 
+def sync_agents_guide() -> None:
+    """Copy consumer AGENTS.md into the shipped bundle."""
+    source = AGENT_ROOT / "AGENTS.md"
+    if not source.is_file():
+        return
+    (BUNDLE_ROOT / "AGENTS.md").write_text(
+        rewrite_paths(source.read_text(encoding="utf-8")),
+        encoding="utf-8",
+    )
+
+
+def sync_templates_tree() -> int:
+    """Copy templates/ (e.g. consumer-AGENTS.md) into the shipped bundle."""
+    source_dir = AGENT_ROOT / "templates"
+    if not source_dir.is_dir():
+        return 0
+    dest_dir = BUNDLE_ROOT / "templates"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    copied = 0
+    for src_path in sorted(source_dir.rglob("*")):
+        if not src_path.is_file():
+            continue
+        rel = src_path.relative_to(source_dir)
+        dest_path = dest_dir / rel
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        if src_path.suffix == ".md":
+            dest_path.write_text(
+                rewrite_paths(src_path.read_text(encoding="utf-8")),
+                encoding="utf-8",
+            )
+        else:
+            shutil.copy2(src_path, dest_path)
+        copied += 1
+    return copied
+
+
+GENERATED_REFERENCE_SYNC: tuple[str, ...] = (
+    "resource-routes.md",
+    "filter-enum-snippets.md",
+)
+
+
+def sync_reference_docs() -> int:
+    """Copy generated reference docs for wheel-only agent discovery."""
+    copied = 0
+    dest_dir = BUNDLE_ROOT / "reference"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    source_dir = REPO_ROOT / "docs" / "generated-reference"
+    for name in GENERATED_REFERENCE_SYNC:
+        source = source_dir / name
+        if not source.is_file():
+            continue
+        shutil.copy2(source, dest_dir / name)
+        copied += 1
+    return copied
+
+
 def _rule_description(parsed: Any) -> str:
     summary = parsed.frontmatter.get("summary")
 
@@ -611,6 +668,12 @@ def sync_bundle(*, bundle_root: Path | None = None) -> dict[str, Any]:
 
         sync_index()
 
+        sync_agents_guide()
+
+        template_files = sync_templates_tree()
+
+        reference_files = sync_reference_docs()
+
         generated_rules = emit_cursor_rules()
 
         manifest = build_manifest()
@@ -646,6 +709,12 @@ def sync_bundle(*, bundle_root: Path | None = None) -> dict[str, Any]:
     print(f"Synced {rule_files} rule files into {rel_root / 'rules'}")
 
     print(f"Synced {contract_files} contract files into {rel_root / 'contracts'}")
+
+    if template_files:
+        print(f"Synced {template_files} template files into {rel_root / 'templates'}")
+
+    if reference_files:
+        print(f"Synced {reference_files} reference file(s) into {rel_root / 'reference'}")
 
     print(f"Wrote {rel_root / 'MANIFEST.json'} ({len(manifest['skills'])} skills)")
 

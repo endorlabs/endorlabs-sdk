@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from devtools.agent_knowledge_catalog import (
+    BOOTSTRAP_CONTRACT_IDS,
     MAINTAINER_ONLY_RULE_IDS,
     build_bootstrap_manifest_block,
     build_contract_manifest_entries,
@@ -51,9 +52,14 @@ def test_manifest_bootstrap_block_matches_rules() -> None:
     rules = build_rules_manifest_entries(AGENT_ROOT / "rules")
     bootstrap = build_bootstrap_manifest_block(rules)
     expected_ids = sorted(entry["id"] for entry in rules)
-    assert bootstrap == {"index": "INDEX.md", "rule_ids": expected_ids}
+    assert bootstrap == {
+        "index": "INDEX.md",
+        "rule_ids": expected_ids,
+        "contract_ids": list(BOOTSTRAP_CONTRACT_IDS),
+    }
     assert "endor-workflow-composition" in bootstrap["rule_ids"]
     assert "endor-changelog" not in bootstrap["rule_ids"]
+    assert "resource-discovery" in bootstrap["contract_ids"]
 
 
 def test_shipped_manifest_schema_v2() -> None:
@@ -70,20 +76,27 @@ def test_shipped_manifest_schema_v2() -> None:
 def test_agent_knowledge_bootstrap_paths() -> None:
     from endorlabs.agent_knowledge import (
         agent_knowledge_bootstrap_paths,
+        agent_knowledge_contract_ids,
         agent_knowledge_index_path,
         agent_knowledge_rule_ids,
     )
 
     ids = agent_knowledge_rule_ids()
     assert "endor-namespace-scoping" in ids
+    contract_ids = agent_knowledge_contract_ids()
+    assert "resource-discovery" in contract_ids
     paths = agent_knowledge_bootstrap_paths()
     assert agent_knowledge_index_path() in paths
     assert all(path.is_file() for path in paths)
-    assert all(
-        "rules" in path.as_posix()
+    rule_paths = [
+        path
         for path in paths
-        if path != agent_knowledge_index_path()
-    )
+        if path != agent_knowledge_index_path() and "rules" in path.as_posix()
+    ]
+    contract_paths = [path for path in paths if "contracts" in path.as_posix()]
+    assert rule_paths
+    assert contract_paths
+    assert any("resource-discovery" in path.name for path in contract_paths)
 
 
 def _resolve_library_entrypoint(target: str) -> str | None:
