@@ -2124,25 +2124,6 @@ class V1ContainerArchitecture(StrEnum):
     CONTAINER_ARCHITECTURE_WASM = 'CONTAINER_ARCHITECTURE_WASM'
 
 
-class V1ContainerBaseImage(BaseModel):
-    """
-    The base image of a container Image.
-    """
-
-    chain_id: str | None = None
-    """
-    Chain ID for the base image's layers.
-    """
-    digest: str | None = None
-    """
-    The SHA256 digest of the base image.
-    """
-    name: str | None = None
-    """
-    The name of the base image. For example, "debian:bookworm-slim".
-    """
-
-
 class V1ContainerDependencyLayer(BaseModel):
     """
     ContainerDependency is a dependency of a container image.
@@ -2177,6 +2158,10 @@ class V1ContainerImageUpdateOption(BaseModel):
     """
     Full image reference including registry, repository, and tag
     (e.g., "docker.io/library/ubuntu:22.04").
+    """
+    package_version_uuid: str | None = None
+    """
+    UUID of the container PackageVersion produced by scanning this candidate.
     """
 
 
@@ -4953,6 +4938,29 @@ class V1ContainerAsBase(BaseModel):
     """
 
 
+class V1ContainerBaseImage(BaseModel):
+    """
+    The base image of a container Image.
+    """
+
+    chain_id: str | None = None
+    """
+    Chain ID for the base image's layers.
+    """
+    digest: str | None = None
+    """
+    The SHA256 digest of the base image.
+    """
+    name: str | None = None
+    """
+    The name of the base image. For example, "debian:bookworm-slim".
+    """
+    update_options: V1ContainerImageUpdateOptions | None = None
+    """
+    Base image update candidates for this app image.
+    """
+
+
 class V1ContainerCompositionMetadata(BaseModel):
     """
     ContainerCompositionMetadata is the metadata of the composition of a container image.
@@ -5015,6 +5023,11 @@ class V1ContainerMetadata(BaseModel):
     assemble the container image. The layers are the SHA256 digest of the
     container image layers. The list is equivalent to the output of `docker
     inspect --format='{{.RootFS.Layers}}' <image>`.
+    """
+    previous_base_image: V1ContainerBaseImage | None = None
+    """
+    The base image detected on the immediately prior scan of this app image,
+    set only when it differs from the current base_image.
     """
     profile_details: V1ContainerProfileDetails | None = None
     """
