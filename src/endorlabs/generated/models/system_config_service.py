@@ -612,6 +612,29 @@ class V1PackageFirewallAction(StrEnum):
     PACKAGE_FIREWALL_ACTION_WARN = 'PACKAGE_FIREWALL_ACTION_WARN'
 
 
+class V1PackageFirewallReason(StrEnum):
+    """
+    PackageFirewallReason represents the check that triggered the firewall event.
+
+     - PACKAGE_FIREWALL_REASON_MALWARE_DETECTED: Malware was detected in the requested package version.
+     - PACKAGE_FIREWALL_REASON_MIN_AGE_NOT_MET: The requested package version does not meet the configured minimum age.
+     - PACKAGE_FIREWALL_REASON_RESTRICTED_LICENSE: The requested package version has a license that is on the restricted list.
+     - PACKAGE_FIREWALL_REASON_CVSS_SEVERITY_DETECTED: The requested package version has a CVSS vulnerability meeting or exceeding the configured severity threshold.
+    """
+
+    PACKAGE_FIREWALL_REASON_UNSPECIFIED = 'PACKAGE_FIREWALL_REASON_UNSPECIFIED'
+    PACKAGE_FIREWALL_REASON_MALWARE_DETECTED = (
+        'PACKAGE_FIREWALL_REASON_MALWARE_DETECTED'
+    )
+    PACKAGE_FIREWALL_REASON_MIN_AGE_NOT_MET = 'PACKAGE_FIREWALL_REASON_MIN_AGE_NOT_MET'
+    PACKAGE_FIREWALL_REASON_RESTRICTED_LICENSE = (
+        'PACKAGE_FIREWALL_REASON_RESTRICTED_LICENSE'
+    )
+    PACKAGE_FIREWALL_REASON_CVSS_SEVERITY_DETECTED = (
+        'PACKAGE_FIREWALL_REASON_CVSS_SEVERITY_DETECTED'
+    )
+
+
 class V1PrioritizationFactorConfig(BaseModel):
     category: V1FactorCategory | None = 'FACTOR_CATEGORY_UNSPECIFIED'
     """
@@ -718,6 +741,25 @@ class PackageFirewallConfigException(BaseModel):
     """
 
 
+class PackageFirewallConfigFirewallNotificationRule(BaseModel):
+    """
+    FirewallNotificationRule maps firewall block/warn events to NotificationTarget(s).
+    """
+
+    notification_target_uuids: list[str] | None = None
+    """
+    UUIDs of the NotificationTarget(s) to send to.
+    """
+    on_actions: list[V1PackageFirewallAction] | None = None
+    """
+    Firewall actions that trigger this rule. Empty matches all actions.
+    """
+    reasons: list[V1PackageFirewallReason] | None = None
+    """
+    Firewall reasons that trigger this rule. Empty matches all reasons.
+    """
+
+
 class SystemConfigLoggingConfig(BaseModel):
     enable_remote_logging: bool | None = None
     """
@@ -756,6 +798,25 @@ class Exception(BaseModel):
     """
     Optional version ranges. A package version matches if it falls within any of these ranges.
     If both version_ranges and exact_versions are empty, all versions of the package are excepted.
+    """
+
+
+class NotificationRule(BaseModel):
+    """
+    FirewallNotificationRule maps firewall block/warn events to NotificationTarget(s).
+    """
+
+    notification_target_uuids: list[str] | None = None
+    """
+    UUIDs of the NotificationTarget(s) to send to.
+    """
+    on_actions: list[V1PackageFirewallAction] | None = None
+    """
+    Firewall actions that trigger this rule. Empty matches all actions.
+    """
+    reasons: list[V1PackageFirewallReason] | None = None
+    """
+    Firewall reasons that trigger this rule. Empty matches all reasons.
     """
 
 
@@ -800,6 +861,14 @@ class SystemConfigPackageFirewallConfig(BaseModel):
     min_age_hours: int | None = None
     """
     Minimum age in hours for a package to be allowed (0 = disabled).
+    """
+    notification_rules: list[NotificationRule] | None = None
+    """
+    Notification rules evaluated when the firewall blocks or warns on a request.
+    A rule matches when the event's reason is in reasons (or reasons is empty) and
+    its action is in on_actions (or on_actions is empty). Each matching rule sends
+    a Slack message to every referenced notification target. Only Slack targets
+    are supported for now; other target types are skipped.
     """
     restricted_license_action: V1PackageFirewallAction | None = (
         'PACKAGE_FIREWALL_ACTION_UNSPECIFIED'

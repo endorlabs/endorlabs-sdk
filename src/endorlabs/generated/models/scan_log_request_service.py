@@ -313,6 +313,13 @@ class V1ScanLogRequestSpec(BaseModel):
     """
     admin_filter is an extra filter that is only available for admin users.
     """
+    admin_search: bool | None = None
+    """
+    admin_search enables searching logs across all scans within the requested
+    namespace using only admin_filter (e.g., grep for an error string).
+    Requires admin_filter and start_time to be set.
+    Only available to Endor internal accounts.
+    """
     applied_filter: str | None = None
     """
     applied_filter is the filter that is applied to the logs.
@@ -376,6 +383,11 @@ class V1ScanLogRequestSpec(BaseModel):
     start_time is the time that the log should start from.
     if not defined, the create time of the corresponding scan request
     will be used.
+    """
+    traverse: bool | None = None
+    """
+    traverse includes child namespaces in the search. Only honored when
+    target_uuid = admin_search. Endor-only.
     """
 
 

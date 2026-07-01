@@ -531,6 +531,10 @@ class V1PackageFirewallLogSpec(BaseModel):
     """
     URI of the request that was blocked.
     """
+    user: str | None = None
+    """
+    Client-supplied user attribution decoded from the Basic-auth username (e.g. user/machine); free-form and unverified.
+    """
 
 
 class Object(BaseModel):
