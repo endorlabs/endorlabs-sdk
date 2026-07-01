@@ -47,24 +47,26 @@ For **CLI vs Cloud Scan** on each row, use [endor-cli-vs-cloud-projects](../endo
 
 ## CSV schema (required)
 
-Write CSV with **exactly these four columns**, in this order, on every run:
+Write CSV with **exactly these six columns**, in this order, on every run:
 
 | Column | Source field | Values |
 |--------|--------------|--------|
 | **`project name`** | `Project.meta.name` | Repository / project name string |
 | **`namespace`** | `Project.tenant_meta.namespace` | Full namespace path |
 | **`uuid`** | `Project.uuid` | Project UUID |
-| **`source`** | `Project.spec.git.external_installation_id` | **`CLI`** or **`Cloud Scan`** only |
+| **`source`** | Registration (`external_installation_id`) | **`CLI`** or **`Cloud Scan`** only |
+| **`latest scan execution`** | Newest `ScanResult` `RunBySystem` | **`CLI`**, **`Cloud Scan`**, or **`unknown`** |
+| **`mixed mode`** | Registration vs latest scan | **`true`** / **`false`** |
 
 Header row (literal):
 
 ```text
-project name,namespace,uuid,source
+project name,namespace,uuid,source,latest scan execution,mixed mode
 ```
 
 **Do not** add extra columns (`duplicate_reason`, `group_id`, etc.) unless the user explicitly asks. Grouping belongs in the **canvas**, not the CSV.
 
-**Source mapping:**
+**Registration mapping** (`source`):
 
 ```python
 def project_source(project) -> str:
@@ -73,6 +75,8 @@ def project_source(project) -> str:
         return "Cloud Scan"
     return "CLI"
 ```
+
+**Latest scan execution:** bundled script uses `endorlabs.workflows.projects.inventory.fetch_latest_scan_execution_labels` (parallel `ScanResult.list_by_project` per duplicate row).
 
 ## Workflow
 
@@ -95,10 +99,11 @@ projects = list(
     )
 )
 
-def is_sbom_project(row) -> bool:
-    return (row.get("spec") or {}).get("sbom") is not None
-
-projects = [p for p in projects if not is_sbom_project(p)]
+projects = [
+    p
+    for p in projects
+    if not client.Project.is_sbom(p)
+]
 ```
 
 Use `max_pages` when the user requests a bounded audit; otherwise paginate until exhausted.
@@ -148,7 +153,14 @@ Default path: `.endorlabs-context/workspace/sessions/<user>/exports/duplicate-pr
 output = Path(".endorlabs-context/workspace/sessions/<user>/exports/duplicate-projects.csv")
 output.parent.mkdir(parents=True, exist_ok=True)
 
-fieldnames = ["project name", "namespace", "uuid", "source"]
+fieldnames = [
+    "project name",
+    "namespace",
+    "uuid",
+    "source",
+    "latest scan execution",
+    "mixed mode",
+]
 rows = [row_fields(p) for cluster in merged_clusters for p in cluster]
 rows.sort(key=lambda r: (r["project name"].lower(), r["namespace"]))
 
@@ -171,7 +183,7 @@ uv run python .endorlabs-context/sdk/skills/endor-duplicate-projects/scripts/fin
 When **≥ 1 duplicate cluster** is found, create a Cursor canvas (see [canvas skill](https://docs.cursor.com)) with:
 
 - **Summary:** tenant, total projects scanned, duplicate cluster count, row count.
-- **Grouped sections:** one block per duplicate cluster; table columns match CSV: **project name**, **namespace**, **uuid**, **source**.
+- **Grouped sections:** one block per duplicate cluster; table columns match CSV: **project name**, **namespace**, **uuid**, **source**, **latest scan execution**, **mixed mode**.
 - **No empty canvas:** if there are zero duplicate clusters, skip the canvas and report “no duplicates found” in chat only.
 
 Embed the CSV row data inline in the canvas component (no `fetch()`).
@@ -180,8 +192,9 @@ Embed the CSV row data inline in the canvas component (no `fetch()`).
 
 Before finishing, confirm:
 
-- [ ] CSV exists with header `project name,namespace,uuid,source`
+- [ ] CSV exists with header `project name,namespace,uuid,source,latest scan execution,mixed mode`
 - [ ] Every data row has **`source`** ∈ {`CLI`, `Cloud Scan`}
+- [ ] Report duplicate-row registration vs latest-scan counts in chat summary
 - [ ] SBOM projects (`spec.sbom` set) excluded from scan and output
 - [ ] Only projects in multi-member duplicate groups are included
 - [ ] Canvas groups the same rows visually (when duplicates exist)

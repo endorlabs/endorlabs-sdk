@@ -15,7 +15,10 @@ import endorlabs
 from endorlabs.workflows.projects.inventory import (
     INSTALLATION_LIST_MASK,
     fetch_installation_lookup,
+    fetch_latest_scan_execution_labels,
     installation_display_name,
+    is_mixed_registration_execution,
+    registration_source_label,
 )
 
 CSV_FIELDS = [
@@ -23,6 +26,8 @@ CSV_FIELDS = [
     "namespace",
     "uuid",
     "source",
+    "latest scan execution",
+    "mixed mode",
     "external_installation_id",
     "installation name",
 ]
@@ -41,10 +46,6 @@ def project_namespace(row: dict[str, Any]) -> str:
     return (row.get("tenant_meta") or {}).get("namespace") or ""
 
 
-def project_source_label(client: endorlabs.Client, row: dict[str, Any]) -> str:
-    return "Cloud Scan" if client.Project.is_app(row) else "CLI"
-
-
 def external_installation_id(row: dict[str, Any]) -> str:
     value = (row.get("spec") or {}).get("git", {}).get("external_installation_id")
     return str(value) if value else ""
@@ -58,14 +59,20 @@ def row_to_csv(
     client: endorlabs.Client,
     row: dict[str, Any],
     installation_lookup: dict[str, dict[str, Any]],
+    *,
+    scan_execution: str,
 ) -> dict[str, str]:
     inst_id = external_installation_id(row)
     installation = installation_lookup.get(inst_id) if inst_id else None
+    registration = registration_source_label(client, row)
+    mixed = is_mixed_registration_execution(registration, scan_execution)
     return {
         "project name": project_name(row),
         "namespace": project_namespace(row),
         "uuid": row.get("uuid") or "",
-        "source": project_source_label(client, row),
+        "source": registration,
+        "latest scan execution": scan_execution,
+        "mixed mode": "true" if mixed else "false",
         "external_installation_id": inst_id,
         "installation name": installation_display_name(installation),
     }
@@ -77,7 +84,8 @@ def build_summary(
     tenant: str,
     sbom_excluded: int,
 ) -> dict[str, Any]:
-    mode_counts = Counter(r["source"] for r in rows)
+    registration_counts = Counter(r["source"] for r in rows)
+    execution_counts = Counter(r["latest scan execution"] for r in rows)
     install_counts: Counter[str] = Counter()
     install_names: dict[str, str] = {}
     for row in rows:
@@ -90,6 +98,8 @@ def build_summary(
         install_names[inst_id] = row["installation name"]
 
     cli_rows = [r for r in rows if r["source"] == "CLI"]
+    cli_execution_rows = [r for r in rows if r["latest scan execution"] == "CLI"]
+    mixed_rows = [r for r in rows if r["mixed mode"] == "true"]
     invalid_cloud = sum(
         1
         for project in rows
@@ -105,7 +115,20 @@ def build_summary(
         "tenant": tenant,
         "total_projects": len(rows),
         "sbom_projects_excluded": sbom_excluded,
-        "source_counts": dict(mode_counts),
+        "registration_source_counts": dict(registration_counts),
+        "source_counts": dict(registration_counts),
+        "latest_scan_execution_counts": dict(execution_counts),
+        "mixed_mode_count": len(mixed_rows),
+        "mixed_mode_projects": [
+            {
+                "project name": r["project name"],
+                "namespace": r["namespace"],
+                "uuid": r["uuid"],
+                "registration": r["source"],
+                "latest scan execution": r["latest scan execution"],
+            }
+            for r in mixed_rows
+        ],
         "cloud_invalid_installation_count": invalid_cloud,
         "installation_counts": [
             {
@@ -123,6 +146,15 @@ def build_summary(
             }
             for r in cli_rows
         ],
+        "cli_latest_scan_projects": [
+            {
+                "project name": r["project name"],
+                "namespace": r["namespace"],
+                "uuid": r["uuid"],
+                "registration": r["source"],
+            }
+            for r in cli_execution_rows
+        ],
         "namespace_breakdown": {
             ns: dict(counts)
             for ns, counts in sorted(
@@ -138,7 +170,13 @@ def write_csv(rows: list[dict[str, str]], output: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     csv_rows = [{field: row[field] for field in CSV_FIELDS} for row in rows]
     csv_rows.sort(
-        key=lambda r: (r["source"], r["namespace"].lower(), r["project name"].lower())
+        key=lambda r: (
+            r["mixed mode"] == "true",
+            r["source"],
+            r["namespace"].lower(),
+            r["project name"].lower(),
+        ),
+        reverse=True,
     )
     with output.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=CSV_FIELDS)
@@ -147,15 +185,23 @@ def write_csv(rows: list[dict[str, str]], output: Path) -> None:
 
 
 def print_summary(summary: dict[str, Any], output: Path) -> None:
-    source_counts = summary.get("source_counts") or {}
-    cloud = source_counts.get("Cloud Scan", 0)
-    cli = source_counts.get("CLI", 0)
+    registration = summary.get("registration_source_counts") or {}
+    execution = summary.get("latest_scan_execution_counts") or {}
+    cloud = registration.get("Cloud Scan", 0)
+    cli = registration.get("CLI", 0)
     print(f"Tenant: {summary['tenant']}")
     print(
         f"Projects classified: {summary['total_projects']} "
         f"({summary['sbom_projects_excluded']} SBOM excluded from scan)"
     )
-    print(f"Source counts: Cloud Scan={cloud}, CLI={cli}")
+    print(f"Registration: Cloud Scan={cloud}, CLI={cli}")
+    print(
+        "Latest scan execution: "
+        + ", ".join(f"{label}={count}" for label, count in sorted(execution.items()))
+    )
+    mixed = summary.get("mixed_mode_count", 0)
+    if mixed:
+        print(f"Mixed mode (registration != latest scan): {mixed}")
     invalid = summary.get("cloud_invalid_installation_count", 0)
     if invalid:
         print(f"Cloud projects with invalid_installation=True: {invalid}")
@@ -170,9 +216,19 @@ def print_summary(summary: dict[str, Any], output: Path) -> None:
             )
     cli_projects = summary.get("cli_projects") or []
     if cli_projects:
-        print("CLI projects:")
+        print("CLI-registered projects:")
         for item in cli_projects:
             print(f"  {item['project name']} [{item['namespace']}] ({item['uuid']})")
+    cli_scan = summary.get("cli_latest_scan_projects") or []
+    if cli_scan:
+        print("Projects whose latest scan ran via CLI:")
+        for item in cli_scan:
+            reg = item.get("registration", "")
+            suffix = f" (registered {reg})" if reg else ""
+            print(
+                f"  {item['project name']} [{item['namespace']}] "
+                f"({item['uuid']}){suffix}"
+            )
     print(f"Wrote {output}")
 
 
@@ -196,6 +252,17 @@ def main() -> int:
         type=int,
         default=None,
         help="Optional cap on list pagination depth",
+    )
+    parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=12,
+        help="Parallel workers for latest ScanResult lookup per project",
+    )
+    parser.add_argument(
+        "--skip-scan-enrichment",
+        action="store_true",
+        help="Skip latest ScanResult RunBySystem lookup (registration only)",
     )
     parser.add_argument(
         "--summary-json",
@@ -235,9 +302,24 @@ def main() -> int:
     sbom_count = sum(1 for row in projects if client.Project.is_sbom(row))
     eligible = [row for row in projects if not client.Project.is_sbom(row)]
 
+    scan_labels: dict[str, str] = {}
+    if not args.skip_scan_enrichment:
+        scan_labels = fetch_latest_scan_execution_labels(
+            client,
+            eligible,
+            max_workers=args.max_workers,
+        )
+
     rows: list[dict[str, str]] = []
     for project in eligible:
-        csv_row = row_to_csv(client, project, installation_lookup)
+        uuid = project.get("uuid") or ""
+        execution = scan_labels.get(uuid, "unknown")
+        csv_row = row_to_csv(
+            client,
+            project,
+            installation_lookup,
+            scan_execution=execution,
+        )
         csv_row["_invalid_installation"] = str(invalid_installation(project))
         rows.append(csv_row)
 

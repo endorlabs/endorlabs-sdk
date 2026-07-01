@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
+
+from endorlabs.tools.list_sharding import (
+    ParentShard,
+    parallel_map_shards,
+    project_dict_to_shard,
+    project_model_to_shard,
+)
 
 if TYPE_CHECKING:
     from endorlabs import Client
@@ -11,6 +19,14 @@ INSTALLATION_LIST_MASK = (
     "meta.name,tenant_meta.namespace,uuid,"
     "spec.external_id,spec.external_name,spec.login"
 )
+
+PROJECT_SHARD_MASK = "meta.name,tenant_meta.namespace,uuid,spec.sbom"
+
+SCAN_EXECUTION_MASK = "spec.environment.config.RunBySystem,meta.create_time"
+
+REGISTRATION_SOURCE_CLOUD = "Cloud Scan"
+REGISTRATION_SOURCE_CLI = "CLI"
+SCAN_EXECUTION_UNKNOWN = "unknown"
 
 
 def build_installation_lookup(
@@ -53,3 +69,136 @@ def fetch_installation_lookup(
         kwargs["max_pages"] = max_pages
     rows = list(client.Installation.list_iter(**kwargs))
     return build_installation_lookup(rows)
+
+
+def _project_uuid(row: Any) -> str:
+    if isinstance(row, dict):
+        return str(row.get("uuid") or "")
+    return str(getattr(row, "uuid", None) or "")
+
+
+def discover_tenant_project_shards(
+    client: Client,
+    tenant: str,
+    *,
+    max_pages: int | None = None,
+    exclude_sbom: bool = True,
+) -> list[ParentShard]:
+    """Discover non-SBOM projects for parallel tenant-wide list shards.
+
+    Each shard uses ``ParentShard.key`` (project UUID) for ``spec.project_uuid``
+    filters; ``namespace`` is the project's ``tenant_meta.namespace`` list path
+    (often shared by many projects under one child namespace).
+    """
+    kwargs: dict[str, Any] = {
+        "traverse": True,
+        "mask": PROJECT_SHARD_MASK,
+    }
+    if max_pages is not None:
+        kwargs["max_pages"] = max_pages
+
+    seen: set[str] = set()
+    shards: list[ParentShard] = []
+    for row in client.Project.list_iter(**kwargs):
+        if exclude_sbom and client.Project.is_sbom(row):
+            continue
+        uuid = _project_uuid(row)
+        if not uuid or uuid in seen:
+            continue
+        seen.add(uuid)
+        if isinstance(row, dict):
+            shards.append(project_dict_to_shard(row, tenant))
+        else:
+            shards.append(project_model_to_shard(row, tenant))
+    return shards
+
+
+def registration_source_label(client: Client, row: Any) -> str:
+    """Classify project registration: SCM app installation vs CLI."""
+    if client.Project.is_app(row):
+        return REGISTRATION_SOURCE_CLOUD
+    return REGISTRATION_SOURCE_CLI
+
+
+def extract_run_by_system(scan_row: Any) -> bool | None:
+    """Read ``ScanResult.spec.environment.config.RunBySystem`` when present."""
+    if isinstance(scan_row, dict):
+        spec = scan_row.get("spec") or {}
+        environment = spec.get("environment") if isinstance(spec, dict) else None
+        if not isinstance(environment, dict):
+            return None
+        config = environment.get("config")
+        if not isinstance(config, dict):
+            return None
+        value = config.get("RunBySystem")
+        if value is None:
+            return None
+        return bool(value)
+
+    spec = getattr(scan_row, "spec", None)
+    environment = getattr(spec, "environment", None) if spec is not None else None
+    config = getattr(environment, "config", None) if environment is not None else None
+    if config is None:
+        return None
+    if isinstance(config, dict):
+        value = config.get("RunBySystem")
+    else:
+        value = getattr(config, "RunBySystem", None)
+    if value is None:
+        return None
+    return bool(value)
+
+
+def scan_execution_label(run_by_system: bool | None) -> str:
+    """Map ``RunBySystem`` to a CLI vs Cloud Scan execution label."""
+    if run_by_system is True:
+        return REGISTRATION_SOURCE_CLOUD
+    if run_by_system is False:
+        return REGISTRATION_SOURCE_CLI
+    return SCAN_EXECUTION_UNKNOWN
+
+
+def latest_scan_execution_label(client: Client, project_row: Any) -> str:
+    """Return latest scan execution label for *project_row* (one newest ScanResult)."""
+    scans = client.ScanResult.list_by_project(
+        project_row,
+        mask=SCAN_EXECUTION_MASK,
+        limit=1,
+    )
+    if not scans:
+        return SCAN_EXECUTION_UNKNOWN
+    return scan_execution_label(extract_run_by_system(scans[0]))
+
+
+def fetch_latest_scan_execution_labels(
+    client: Client,
+    projects: Sequence[Any],
+    *,
+    max_workers: int = 12,
+) -> dict[str, str]:
+    """Parallel lookup of latest scan execution labels keyed by project UUID."""
+    by_uuid = {_project_uuid(row): row for row in projects if _project_uuid(row)}
+    if not by_uuid:
+        return {}
+
+    shards = [ParentShard(key=uuid, namespace="", label=None) for uuid in by_uuid]
+
+    def _worker(shard: ParentShard) -> tuple[str, str]:
+        row = by_uuid[shard.key]
+        return shard.key, latest_scan_execution_label(client, row)
+
+    return dict(
+        parallel_map_shards(
+            shards,
+            _worker,
+            max_workers=max_workers,
+            progress_label="latest scan execution",
+        )
+    )
+
+
+def is_mixed_registration_execution(registration: str, execution: str) -> bool:
+    """True when registration and latest scan execution disagree (both known)."""
+    if execution == SCAN_EXECUTION_UNKNOWN:
+        return False
+    return registration != execution

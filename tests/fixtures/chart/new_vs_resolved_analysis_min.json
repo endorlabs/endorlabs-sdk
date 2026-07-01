@@ -1,0 +1,46 @@
+{
+  "namespace": "tenant_acme",
+  "window_start": "2026-01-04T00:00:00Z",
+  "window_end": "2026-01-18T00:00:00Z",
+  "last_complete_week": "2026-01-11T00:00:00Z",
+  "interval": "week",
+  "lookback": 2,
+  "lookback_days": 14,
+  "context_type": "CONTEXT_TYPE_MAIN",
+  "finding_criteria": "Critical/High severity · reachable & potentially reachable · main context",
+  "severity_split": false,
+  "categories": ["01/04", "01/11"],
+  "weekly_new": [2, 1],
+  "weekly_resolved": [1, 0],
+  "cumulative_new": [2, 3],
+  "cumulative_resolved": [1, 1],
+  "gaps": [1, 2],
+  "gap_start": 1,
+  "gap_mid": 2,
+  "gap_end": 2,
+  "gap_mid_label": "01/11",
+  "gap_end_label": "01/11",
+  "gap_trend": "widening",
+  "period_caption": "Jan 4, 2026 – Jan 17, 2026",
+  "generated_at": "2026-01-12T00:00:00Z",
+  "weeks": [
+    {
+      "week_start": "2026-01-04T00:00:00Z",
+      "label": "01/04",
+      "weekly_new": 2,
+      "weekly_resolved": 1,
+      "cumulative_new": 2,
+      "cumulative_resolved": 1,
+      "gap": 1
+    },
+    {
+      "week_start": "2026-01-11T00:00:00Z",
+      "label": "01/11",
+      "weekly_new": 1,
+      "weekly_resolved": 0,
+      "cumulative_new": 3,
+      "cumulative_resolved": 1,
+      "gap": 2
+    }
+  ]
+}

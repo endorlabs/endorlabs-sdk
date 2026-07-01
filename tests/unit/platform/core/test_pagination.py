@@ -145,20 +145,26 @@ class TestListParametersSerialization:
         assert params.get("list_parameters.ci_run_uuid") == "primary"
 
     def test_group_params_serialize(self) -> None:
-        """group_aggregation_paths and group_* serialize to list_parameters.*."""
+        """group_by_time uses nested list_parameters.group_by_time.* wire keys."""
         client = Mock()
         ops = BaseResourceOperations(client, "test-resources", Mock)
         list_params = ListParameters(
             group_aggregation_paths=["meta.name", "spec.level"],
             group_by_time=True,
+            group_by_time_interval="week",
             group_unique_count_paths=["x"],
         )
         params = ops._build_params(list_params)
-        assert params.get("list_parameters.group.aggregation_paths") == (
+        assert params.get("list_parameters.group_by_time.aggregation_paths") == (
             "meta.name,spec.level"
         )
-        assert params.get("list_parameters.group_by_time") == "true"
+        assert (
+            params.get("list_parameters.group_by_time.interval")
+            == "GROUP_BY_TIME_INTERVAL_WEEK"
+        )
         assert params.get("list_parameters.group.unique_count_paths") == "x"
+        assert "list_parameters.group.aggregation_paths" not in params
+        assert "list_parameters.group_by_time_interval" not in params
 
 
 class TestGetAllPageIdPagination:

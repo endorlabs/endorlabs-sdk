@@ -96,6 +96,20 @@ def resolve_attr_path(
     return current
 
 
+def resolve_source_uuid(source: Any) -> str | None:
+    """Extract a resource UUID from a model, masked dict row, or raw string."""
+    if source is None:
+        return None
+    if isinstance(source, str):
+        cleaned = source.strip()
+        return cleaned or None
+    value = resolve_attr_path(source, "uuid")
+    if value is None:
+        return None
+    cleaned = str(value).strip()
+    return cleaned or None
+
+
 def format_filter_template(
     template: str, source: Any, context: dict[str, Any] | None = None
 ) -> str:
@@ -290,7 +304,12 @@ class RouteExecutor:
                 truncated=max_pages is not None
                 and len(rows) >= (list_kwargs.get("page_size") or 0),
             )
-        parent_uuid = getattr(source, "uuid", None) or source
+        parent_uuid = resolve_source_uuid(source)
+        if not parent_uuid:
+            raise RouteNotApplicableError(
+                "Missing parent UUID on source resource.",
+                edge_id=edge.id,
+            )
         clause = str(F("meta.parent_uuid") == parent_uuid)
         merged = f"{filter} AND {clause}" if filter else clause
         lp = ListParameters(filter=merged) if merged else None  # pyright: ignore[reportCallIssue]

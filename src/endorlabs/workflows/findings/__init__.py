@@ -13,7 +13,6 @@ from .filters import (
 from .finding_log_trends import (
     FINDING_CRITERIA,
     build_finding_log_new_vs_resolved_analysis,
-    build_weekly_finding_log_analysis,
 )
 from .triage import (
     ExceptionPolicyResult,
@@ -30,7 +29,6 @@ __all__ = [
     "TaggingResult",
     "build_exception_rego_rule",
     "build_finding_log_new_vs_resolved_analysis",
-    "build_weekly_finding_log_analysis",
     "create_exception_policy",
     "finding_log_time_window_filter",
     "main_context_vulnerability_filter",

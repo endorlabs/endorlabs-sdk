@@ -13,7 +13,7 @@ description: >-
 
 Produce the **PRF vulnerability & PV resolution errors — main context** report:
 
-1. Query Finding + PackageVersion APIs via SDK facades (`Finding.count`, `Finding.list_iter`, `PackageVersion.list_iter`). Default: tenant root with `traverse=true` — **prefer a child namespace when known**; use `--max-pages` to bound list depth.
+1. Query Finding + PackageVersion APIs via SDK facades (`Finding.list_iter`, `PackageVersion.list_iter`). Default: tenant-wide traverse list with project-shard fallback — **prefer a child namespace when known**; use `--max-pages` to bound list depth per shard.
 2. Write analysis JSON.
 3. Render an interactive **Cursor canvas** (`.canvas.tsx`).
 4. Render matching **HTML + PDF** (headless Chrome).
@@ -155,8 +155,10 @@ Internal consistency checks in `run_analysis.py` assert breakdown row counts sum
 
 ## Bounds
 
-- Lists **all** PRF findings for parent UUID collection (can be thousands). Expect several minutes on large tenants.
-- PackageVersion fetch is batched (50 UUIDs per request).
+- Project-sharded parallel `Finding.list_iter` scoped by **`spec.project_uuid`** (shard key) at each project's `tenant_meta.namespace`. When all projects share one namespace path, a single `traverse=True` query is used instead.
+- **`--max-pages`** caps pagination **per project shard**, not globally across the tenant (smoke bounds differ from a single traverse query).
+- **`--max-project-pages`** caps project discovery only; truncated discovery omits findings in undiscovered namespaces.
+- PackageVersion hydration uses **`traverse=False`** in the project namespace from finding rows; orphan parents fall back to tenant `traverse=True`.
 - PDF requires headless Chrome/Chromium (`CHROME_PATH` on Linux).
 
 ## When to use this skill vs others

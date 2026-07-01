@@ -19,7 +19,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - **Agent skill `endor-cli-vs-cloud-projects`** — classify Project as CLI-scanned vs Cloud/agentless SCM integration using `spec.git.external_installation_id`.
 - **Agent skill `endor-duplicate-projects`** — tenant-wide duplicate Project detection with CSV columns `project name`, `namespace`, `uuid`, `source` (`CLI` / `Cloud Scan`).
 - **Agent skill `endor-potentially-reachable-analysis`** — tenant-wide PRF approximation and PackageVersion resolution error report (JSON, canvas, HTML/PDF) for main-context NuGet, NPM, Maven, and PyPI findings.
-- **Agent skill `endor-chart-new-vs-resolved-findings`** — cumulative weekly new vs resolved Critical/High reachable vulnerability trends from FindingLog CREATE/DELETE events (past 90 days, complete weeks; endorctl group-by-time + Cursor canvas).
+- **Agent skill `endor-chart-new-vs-resolved-findings`** — cumulative weekly new vs resolved Critical/High reachable vulnerability trends from FindingLog CREATE/DELETE events (past 90 days, complete weeks; SDK `finding_log_trends` + Cursor canvas).
 
 ### Changed
 
