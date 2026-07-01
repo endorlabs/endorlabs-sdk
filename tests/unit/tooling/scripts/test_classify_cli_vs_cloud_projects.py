@@ -49,14 +49,15 @@ def _mock_client() -> MagicMock:
 
 
 def test_project_source_cloud_and_cli() -> None:
-    module = _load_module()
+    from endorlabs.workflows.projects.inventory import registration_source_label
+
     client = _mock_client()
 
     cloud = {"spec": {"git": {"external_installation_id": "123"}}}
     cli = {"spec": {"git": {}}}
 
-    assert module.project_source_label(client, cloud) == "Cloud Scan"
-    assert module.project_source_label(client, cli) == "CLI"
+    assert registration_source_label(client, cloud) == "Cloud Scan"
+    assert registration_source_label(client, cli) == "CLI"
 
 
 def test_installation_name_prefers_external_name() -> None:
@@ -101,8 +102,28 @@ def test_row_to_csv_resolves_installation_name() -> None:
         }
     }
 
-    row = module.row_to_csv(client, project, lookup)
+    row = module.row_to_csv(client, project, lookup, scan_execution="Cloud Scan")
 
     assert row["source"] == "Cloud Scan"
+    assert row["latest scan execution"] == "Cloud Scan"
+    assert row["mixed mode"] == "false"
     assert row["external_installation_id"] == "140464674"
     assert row["installation name"] == "GitHub Endor Pro App - tenant.team (team)"
+
+
+def test_row_to_csv_mixed_mode_when_registration_differs_from_scan() -> None:
+    module = _load_module()
+    client = _mock_client()
+
+    project = {
+        "meta": {"name": "github.com/org/repo"},
+        "tenant_meta": {"namespace": "tenant.team"},
+        "uuid": "proj-1",
+        "spec": {"git": {"external_installation_id": "140464674"}},
+    }
+
+    row = module.row_to_csv(client, project, {}, scan_execution="CLI")
+
+    assert row["source"] == "Cloud Scan"
+    assert row["latest scan execution"] == "CLI"
+    assert row["mixed mode"] == "true"

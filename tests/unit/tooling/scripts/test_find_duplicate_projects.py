@@ -124,4 +124,13 @@ def test_find_duplicate_groups_exact_name_across_namespaces() -> None:
 
     assert len(clusters) == 1
     assert {row["uuid"] for row in clusters[0]} == {"a", "b"}
-    assert module.row_to_csv(client, projects[1])["source"] == "Cloud Scan"
+    assert (
+        module.row_to_csv(client, projects[1], scan_execution="CLI")["source"]
+        == "Cloud Scan"
+    )
+    assert (
+        module.row_to_csv(client, projects[1], scan_execution="CLI")[
+            "latest scan execution"
+        ]
+        == "CLI"
+    )

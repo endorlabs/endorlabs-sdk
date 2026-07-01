@@ -32,10 +32,21 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Directory for analysis JSON.",
     )
     parser.add_argument(
-        "--lookback-days",
+        "--interval",
+        default="week",
+        help=(
+            "group_by_time interval alias (default: week). "
+            "Same values as endorctl / ListParameters.group_by_time_interval."
+        ),
+    )
+    parser.add_argument(
+        "--lookback",
         type=int,
-        default=90,
-        help="Rolling lookback in calendar days (default: 90).",
+        default=13,
+        help=(
+            "Number of complete interval buckets before the current bucket "
+            "(default: 13 weeks ≈ past quarter)."
+        ),
     )
     parser.add_argument(
         "--no-traverse",
@@ -47,6 +58,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=float,
         default=120.0,
         help="SDK read timeout in seconds per request (default: 120).",
+    )
+    parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=12,
+        help="Parallel workers when aggregate query falls back to project shards.",
     )
     return parser.parse_args(argv)
 
@@ -60,8 +77,10 @@ def main(argv: list[str] | None = None) -> int:
         analysis = build_finding_log_new_vs_resolved_analysis(
             client,
             args.namespace,
-            lookback_days=args.lookback_days,
+            interval=args.interval,
+            lookback=args.lookback,
             traverse=traverse,
+            max_workers=args.max_workers,
         )
     finally:
         client.close()
@@ -72,7 +91,8 @@ def main(argv: list[str] | None = None) -> int:
     out_path.write_text(json.dumps(analysis, indent=2) + "\n", encoding="utf-8")
     print(f"Wrote {out_path}")
     print(
-        f"Weeks: {len(analysis['weeks'])} "
+        f"Buckets: {len(analysis['weeks'])} "
+        f"interval={analysis['interval']} lookback={analysis['lookback']} "
         f"({analysis['window_start']} .. {analysis['last_complete_week']}) "
         f"severity_split={analysis['severity_split']}"
     )
