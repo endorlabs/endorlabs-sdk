@@ -12,6 +12,11 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
+from endorlabs.workflows.projects.inventory import (
+    INSTALLATION_LIST_MASK,
+    fetch_installation_lookup,
+    installation_display_name,
+)
 
 CSV_FIELDS = [
     "project name",
@@ -26,7 +31,6 @@ PROJECT_MASK = (
     "meta.name,tenant_meta.namespace,uuid,"
     "spec.git.external_installation_id,spec.git.invalid_installation,spec.sbom"
 )
-INSTALLATION_MASK = "meta.name,tenant_meta.namespace,uuid,spec.external_id,spec.external_name,spec.login"
 
 
 def project_name(row: dict[str, Any]) -> str:
@@ -37,9 +41,8 @@ def project_namespace(row: dict[str, Any]) -> str:
     return (row.get("tenant_meta") or {}).get("namespace") or ""
 
 
-def project_source(row: dict[str, Any]) -> str:
-    inst = (row.get("spec") or {}).get("git", {}).get("external_installation_id")
-    return "Cloud Scan" if inst else "CLI"
+def project_source_label(client: endorlabs.Client, row: dict[str, Any]) -> str:
+    return "Cloud Scan" if client.Project.is_app(row) else "CLI"
 
 
 def external_installation_id(row: dict[str, Any]) -> str:
@@ -51,36 +54,8 @@ def invalid_installation(row: dict[str, Any]) -> bool:
     return bool((row.get("spec") or {}).get("git", {}).get("invalid_installation"))
 
 
-def is_sbom_project(row: dict[str, Any]) -> bool:
-    return (row.get("spec") or {}).get("sbom") is not None
-
-
-def build_installation_lookup(
-    installations: list[dict[str, Any]],
-) -> dict[str, dict[str, Any]]:
-    lookup: dict[str, dict[str, Any]] = {}
-    for row in installations:
-        ext_id = (row.get("spec") or {}).get("external_id")
-        if ext_id:
-            lookup[str(ext_id)] = row
-    return lookup
-
-
-def installation_name(installation: dict[str, Any] | None) -> str:
-    if not installation:
-        return ""
-    spec = installation.get("spec") or {}
-    meta_name = (installation.get("meta") or {}).get("name") or ""
-    external_name = spec.get("external_name") or ""
-    login = spec.get("login") or ""
-    if external_name:
-        return external_name
-    if meta_name and login:
-        return f"{meta_name} ({login})"
-    return meta_name or login
-
-
 def row_to_csv(
+    client: endorlabs.Client,
     row: dict[str, Any],
     installation_lookup: dict[str, dict[str, Any]],
 ) -> dict[str, str]:
@@ -90,9 +65,9 @@ def row_to_csv(
         "project name": project_name(row),
         "namespace": project_namespace(row),
         "uuid": row.get("uuid") or "",
-        "source": project_source(row),
+        "source": project_source_label(client, row),
         "external_installation_id": inst_id,
-        "installation name": installation_name(installation),
+        "installation name": installation_display_name(installation),
     }
 
 
@@ -237,32 +212,32 @@ def main() -> int:
 
     client = endorlabs.Client(tenant=args.tenant)
 
-    installation_kwargs: dict[str, Any] = {
-        "traverse": True,
-        "mask": INSTALLATION_MASK,
-    }
+    list_kwargs: dict[str, Any] = {}
+    if args.max_pages is not None:
+        list_kwargs["max_pages"] = args.max_pages
+
+    installation_lookup = fetch_installation_lookup(
+        client,
+        mask=INSTALLATION_LIST_MASK,
+        **list_kwargs,
+    )
+
     project_kwargs: dict[str, Any] = {
         "traverse": True,
         "mask": PROJECT_MASK,
+        **list_kwargs,
     }
-    if args.max_pages is not None:
-        installation_kwargs["max_pages"] = args.max_pages
-        project_kwargs["max_pages"] = args.max_pages
-
-    installations = list(client.Installation.list_iter(**installation_kwargs))
-    installation_lookup = build_installation_lookup(installations)
-
     projects = list(client.Project.list_iter(**project_kwargs))
     if args.project_uuid:
         wanted = set(args.project_uuid)
         projects = [row for row in projects if row.get("uuid") in wanted]
 
-    sbom_count = sum(1 for row in projects if is_sbom_project(row))
-    eligible = [row for row in projects if not is_sbom_project(row)]
+    sbom_count = sum(1 for row in projects if client.Project.is_sbom(row))
+    eligible = [row for row in projects if not client.Project.is_sbom(row)]
 
     rows: list[dict[str, str]] = []
     for project in eligible:
-        csv_row = row_to_csv(project, installation_lookup)
+        csv_row = row_to_csv(client, project, installation_lookup)
         csv_row["_invalid_installation"] = str(invalid_installation(project))
         rows.append(csv_row)
 

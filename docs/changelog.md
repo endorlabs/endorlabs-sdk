@@ -8,7 +8,10 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
-- **`endorlabs.discover()`** — programmatic wheel paths for agent onboarding (INDEX, bootstrap, stub, `agent_bootstrap` module, entry points).
+- **`ProjectFacade.is_app` / `is_cli` / `is_sbom`** — project registration inventory helpers for masked dict rows and models.
+- **`endorlabs.workflows.findings.filters`** and **`finding_log_trends.build_finding_log_new_vs_resolved_analysis`** — shared MQL fragments and online FindingLog weekly chart aggregation.
+- **`endorlabs.workflows.logs.group_by_time`** — generic `list_groups` + `group_by_time` bucket helpers for log resources.
+- **`endorlabs.workflows.projects.inventory`** — installation lookup helpers for CLI vs app classification skills.
 - **Wheel `AGENTS.md`** and **`python -m endorlabs.examples.agent_bootstrap`** — consumer agent guide and bounded smoke-test ladder (`--dry-run` for path-only checks).
 - **Bootstrap contracts** — `resource-discovery`, `errors-and-auth`, and `list-parameters` included in `agent_knowledge_bootstrap_paths()`.
 - **Shipped reference** — `reference/filter-enum-snippets.md` (codegen filter enum literals from model-sync enums).
@@ -20,6 +23,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- **Skill script refactor** — `ProjectFacade.is_app` / `is_cli` / `is_sbom`; shared `workflows/findings/filters.py`; chart skill uses SDK `FindingLog.list_groups` via `finding_log_trends` + `workflows/logs/group_by_time` (replaces endorctl subprocess); PRF skill uses facade `count`/`list_iter`; duplicate-projects defaults to exact-name only with opt-in `--name-strip-tokens`.
 - **`SdkDiscovery.__str__`** — `print(discover())` and `agent_bootstrap --dry-run` emit a human-readable path map (relative bootstrap labels, `endor-*` entry points only); agent INDEX/AGENTS frontmatter documents the three-step ladder (map → auth → workflows).
 - Renamed **`endorlabs.examples.day0`** → **`endorlabs.examples.agent_bootstrap`**; `SdkDiscovery.day0_module` → **`agent_bootstrap_module`**.
 - **`list_by_*` / `list_for_context`** — return **`list[T]`** at the facade (same as `.list()` / `search_by_*`). **`to_*`** stitch accessors still return **`RouteResult`** — use `.value` / `.single` and inspect `.edge_used` / `.warnings`.

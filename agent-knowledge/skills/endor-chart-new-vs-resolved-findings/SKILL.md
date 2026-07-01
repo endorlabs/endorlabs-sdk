@@ -2,12 +2,22 @@
 name: endor-chart-new-vs-resolved-findings
 description: >-
   Generates cumulative weekly new vs resolved Critical/High reachable vulnerability
-  trend charts from FindingLog group-by-time queries (CREATE/DELETE events via
-  endorctl). Default window is the past 90 days with complete weeks only. Produces
-  one Cursor canvas per namespace root with optional child traverse. Use when the
+  trend charts from FindingLog group-by-time queries (CREATE/DELETE events via SDK
+  FindingLog.list_groups). Default window is the past 90 days with complete weeks only.
+  Produces one Cursor canvas per namespace root with optional child traverse. Use when the
   user asks for a resolved vs new findings trend chart, FindingLog analytics, or
   executive vulnerability burndown for main-context findings—not for open Finding
   snapshots, PRF/PV resolution reports, or scan pipeline RCA.
+endorlabs:
+  catalog:
+    workflow_id: finding-log-weekly-trends
+    module: endorlabs.workflows.findings.finding_log_trends
+    agent_visible: true
+    library_entrypoints:
+      - endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis
+      - endorlabs.workflows.logs.group_by_time.group_by_time_counts
+      - endorlabs.workflows.findings.filters.reachable_vuln_log_base_filter
+      - endorlabs.workflows.findings.filters.prf_vuln_filter
 ---
 
 # Chart new vs resolved findings
@@ -53,7 +63,11 @@ the Endor UI analytics **snapshot** card, which counts open `Finding` records fo
 | Reachability | `spec.finding_tags contains [FINDING_TAGS_REACHABLE_FUNCTION, FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION]` |
 | New | `spec.operation==OPERATION_CREATE` |
 | Resolved | `spec.operation==OPERATION_DELETE` |
-| Scope | `--traverse` on the namespace root |
+| Scope | Tenant root + traverse by default; prefer a **child namespace** when known (high cost at tenant root) |
+
+**Online aggregated queries:** Use server-side `group_by_time` (~4 grouped queries). Do **not** paginate all FindingLog rows or run `endor-estate pull` for this chart.
+
+**Artifact-first:** If `{namespace-slug}-new-vs-resolved-analysis.json` already exists, run `generate_canvas.py` / `run_report.py` to refresh the canvas without re-querying the API unless filters or window changed.
 | Context | **`context.type==CONTEXT_TYPE_MAIN`** (default). Omit or broaden only when the user explicitly asks to include REF, CI, or all context types. |
 | Interval | **`week`** — always use `--group-by-time-interval week`; do not use `month` |
 | Window | **Past 90 days, complete weeks only** (see [Default date window](#default-date-window)) |
@@ -101,33 +115,41 @@ When the user specifies a different range, still **exclude partial weeks** unles
 they explicitly ask to include the current or edge partial week. Recompute
 `windowStart` / `windowEnd` so every bucket in the chart is a full UTC week.
 
-## Query pattern (endorctl)
+## Query pattern (SDK)
 
-Always use **`--group-by-time-interval week`**. Do not use `month`.
+Library: `endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis`.
+Generic aggregation primitive: `endorlabs.workflows.logs.group_by_time.group_by_time_counts`.
+Filters: `endorlabs.workflows.findings.filters.reachable_vuln_log_base_filter()`.
 
-Use **separate** group-by-time flags (not the legacy single-string form):
+Bundled script (preferred for agents):
 
 ```bash
-BASE='meta.create_time>=date(<windowStart>) and meta.create_time<date(<windowEnd>) and context.type==CONTEXT_TYPE_MAIN and spec.finding_categories contains FINDING_CATEGORY_VULNERABILITY and spec.finding_tags contains [FINDING_TAGS_REACHABLE_FUNCTION, FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION]'
-
-endorctl api list -r FindingLog -n <namespace> --traverse \
-  -f "${BASE} and spec.level in [FINDING_LEVEL_CRITICAL, FINDING_LEVEL_HIGH] and spec.operation==OPERATION_CREATE" \
-  --group-by-time \
-  --group-aggregation-paths meta.create_time \
-  --group-by-time-interval week \
-  --group-by-time-mode count \
-  --timeout=120s -o json --log-level error
+uv run python agent-knowledge/skills/endor-chart-new-vs-resolved-findings/scripts/run_analysis.py <namespace>
 ```
 
-Repeat for `OPERATION_DELETE`.
+Uses `client.FindingLog.list_groups(..., list_params=ListParameters(group_by_time=True, ...))`
+with **weekly** buckets. Pass `--no-traverse` to scope a single namespace path.
+Default SDK read timeout: `--timeout 120` (seconds). On 504/deadline, the library
+splits Critical+High into separate queries and merges client-side.
 
-Replace `<namespace>` with the tenant root or child namespace. Use ISO-8601 literals
-inside `date(...)` (for example `2026-03-23T00:00:00Z`).
+Replace `<namespace>` with the tenant root or child namespace.
+
+**Manual SDK example:**
+
+```python
+import endorlabs
+from endorlabs.workflows.findings.finding_log_trends import (
+    build_finding_log_new_vs_resolved_analysis,
+)
+
+client = endorlabs.Client(tenant="<namespace>", timeout=120.0)
+analysis = build_finding_log_new_vs_resolved_analysis(client, "<namespace>", traverse=True)
+```
 
 **Other context types:** When the user asks to include REF, CI, or all contexts,
-remove `context.type==CONTEXT_TYPE_MAIN` from `BASE` or replace it with an explicit
-`context.type in [...]` clause. State the chosen context scope in the chart subtitle
-and footnote.
+adjust the base filter (see `workflows/findings/filters.py`) or replace
+`context.type==CONTEXT_TYPE_MAIN` with an explicit `context.type in [...]` clause.
+State the chosen context scope in the chart subtitle and footnote.
 
 ### Custom date windows
 
@@ -141,21 +163,10 @@ Bucket field: `meta.create_time` (skill default). UI time chart uses
 
 ## Timeout fallback
 
-If combined Critical+High query times out (~90–120s), **split by severity** and
-sum client-side (four queries: CRITICAL/HIGH × CREATE/DELETE):
-
-```bash
-for op in CREATE DELETE; do for lvl in CRITICAL HIGH; do
-  endorctl api list -r FindingLog -n <namespace> --traverse \
-    -f "${BASE} and spec.level==FINDING_LEVEL_${lvl} and spec.operation==OPERATION_${op}" \
-    --group-by-time --group-aggregation-paths meta.create_time \
-    --group-by-time-interval week --group-by-time-mode count \
-    --timeout=120s -o json --log-level error
-done; done
-```
-
-Do not set a small `page_size` on log-style lists; cap cost with `--timeout` and
-severity split instead. See shipped rule `endor-list-query-performance`.
+If combined Critical+High query times out, the library **splits by severity** and
+sums client-side (four queries: CRITICAL/HIGH × CREATE/DELETE). Do not set a small
+`page_size` on log-style lists; cap cost with `--timeout` and severity split instead.
+See shipped rule `endor-list-query-performance`.
 
 ## Parse API response
 

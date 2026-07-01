@@ -60,7 +60,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-16T20:24:48.893083+00:00",
+  "generated_at": "2026-07-01T19:57:29.532934+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -125,7 +125,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.4.1.dev0",
+  "sdk_version": "0.4.1.dev13",
   "skills": [
     {
       "description": "Author or update a shipped agent skill under agent-knowledge/skills/: portable frontmatter, optional endorlabs.catalog workflow linkage, composition handoffs, sync, and drift verification. Use when adding skills, fixing sync validation errors, or migrating workflow catalog metadata\u2014not for extending SDK resources (endor-implement-sdk-resource) or runtime API troubleshooting.",
@@ -135,7 +135,7 @@
       "refs": []
     },
     {
-      "description": "Generates cumulative weekly new vs resolved Critical/High reachable vulnerability trend charts from FindingLog group-by-time queries (CREATE/DELETE events via endorctl). Default window is the past 90 days with complete weeks only. Produces one Cursor canvas per namespace root with optional child traverse. Use when the user asks for a resolved vs new findings trend chart, FindingLog analytics, or executive vulnerability burndown for main-context findings\u2014not for open Finding snapshots, PRF/PV resolution reports, or scan pipeline RCA.",
+      "description": "Generates cumulative weekly new vs resolved Critical/High reachable vulnerability trend charts from FindingLog group-by-time queries (CREATE/DELETE events via SDK FindingLog.list_groups). Default window is the past 90 days with complete weeks only. Produces one Cursor canvas per namespace root with optional child traverse. Use when the user asks for a resolved vs new findings trend chart, FindingLog analytics, or executive vulnerability burndown for main-context findings\u2014not for open Finding snapshots, PRF/PV resolution reports, or scan pipeline RCA.",
       "id": "endor-chart-new-vs-resolved-findings",
       "name": "endor-chart-new-vs-resolved-findings",
       "path": "skills/endor-chart-new-vs-resolved-findings/SKILL.md",
@@ -183,7 +183,7 @@
       "refs": []
     },
     {
-      "description": "Find potential duplicate Projects across a tenant and all child namespaces: identical meta.name across namespaces, or names differing only by mirror/shadow/clone tokens. Excludes SBOM projects (spec.sbom). Emit a flat CSV (project name, namespace, uuid, source) and a grouped canvas. Use when auditing project inventory or deduplicating registrations\u2014not for findings, scan RCA, or single-project classification alone.",
+      "description": "Find potential duplicate Projects across a tenant and all child namespaces: identical meta.name across namespaces, or names differing only when the user passes --name-strip-tokens (no default). Excludes SBOM projects (spec.sbom). Emit a flat CSV (project name, namespace, uuid, source) and a grouped canvas. Use when auditing project inventory or deduplicating registrations\u2014not for findings, scan RCA, or single-project classification alone.",
       "id": "endor-duplicate-projects",
       "name": "endor-duplicate-projects",
       "path": "skills/endor-duplicate-projects/SKILL.md",
@@ -378,6 +378,20 @@
       ],
       "module": "endorlabs.workflows.estate.cli.main",
       "skill": null
+    },
+    {
+      "agent_visible": true,
+      "cli": null,
+      "default_output": null,
+      "id": "finding-log-weekly-trends",
+      "library_entrypoints": [
+        "endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis",
+        "endorlabs.workflows.logs.group_by_time.group_by_time_counts",
+        "endorlabs.workflows.findings.filters.reachable_vuln_log_base_filter",
+        "endorlabs.workflows.findings.filters.prf_vuln_filter"
+      ],
+      "module": "endorlabs.workflows.findings.finding_log_trends",
+      "skill": "endor-chart-new-vs-resolved-findings"
     },
     {
       "agent_visible": true,

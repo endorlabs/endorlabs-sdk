@@ -45,6 +45,54 @@ def is_hex_project_id(value: str) -> bool:
     return len(value) == 24 and all(c in "0123456789abcdef" for c in value.lower())
 
 
+def _project_git_dict(project: Any) -> dict[str, Any]:
+    """Return ``spec.git`` as a plain dict from a Project model or masked row."""
+    if isinstance(project, dict):
+        git = (project.get("spec") or {}).get("git")
+        return dict(git) if isinstance(git, dict) else {}
+    spec = getattr(project, "spec", None)
+    if spec is None:
+        return {}
+    git = getattr(spec, "git", None)
+    if git is None:
+        return {}
+    if hasattr(git, "model_dump"):
+        dumped = git.model_dump(mode="json", warnings=False)
+        return dict(dumped) if isinstance(dumped, dict) else {}
+    if isinstance(git, dict):
+        return git
+    return {}
+
+
+def is_sbom_project_row(project: Any) -> bool:
+    """Return whether the project row represents an SBOM import (``spec.sbom`` set)."""
+    if isinstance(project, dict):
+        return (project.get("spec") or {}).get("sbom") is not None
+    spec = getattr(project, "spec", None)
+    if spec is None:
+        return False
+    return getattr(spec, "sbom", None) is not None
+
+
+def is_app_project_row(project: Any) -> bool:
+    """Return whether the project was registered via an SCM app installation.
+
+    True when ``spec.git.external_installation_id`` is present (app-based / cloud
+    registration). For per-scan CLI vs cloud execution, use ScanResult
+    ``spec.environment.config.RunBySystem`` instead.
+    """
+    inst = _project_git_dict(project).get("external_installation_id")
+    return bool(inst)
+
+
+def is_cli_project_row(project: Any) -> bool:
+    """Return whether the project was registered for CLI scanning (no SCM app id).
+
+    Exclude SBOM rows before using this for inventory classification.
+    """
+    return not is_app_project_row(project)
+
+
 def associate_scan_profile_with_project(
     client: APIClient,
     tenant_meta_namespace: str,

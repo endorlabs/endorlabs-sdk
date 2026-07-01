@@ -53,6 +53,20 @@
   {
     "agent_visible": true,
     "cli": null,
+    "default_output": null,
+    "id": "finding-log-weekly-trends",
+    "library_entrypoints": [
+      "endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis",
+      "endorlabs.workflows.logs.group_by_time.group_by_time_counts",
+      "endorlabs.workflows.findings.filters.reachable_vuln_log_base_filter",
+      "endorlabs.workflows.findings.filters.prf_vuln_filter"
+    ],
+    "module": "endorlabs.workflows.findings.finding_log_trends",
+    "skill": "endor-chart-new-vs-resolved-findings"
+  },
+  {
+    "agent_visible": true,
+    "cli": null,
     "composition": "library_api",
     "default_output": "stdout or --output-json",
     "id": "policies-validate",

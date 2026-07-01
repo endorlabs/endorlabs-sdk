@@ -92,6 +92,62 @@ For exact finding UUIDs on a scan record, use `ScanResult.spec.findings` + `Find
 
 **Removed (0.3.0):** `Finding.list_by_scan`, `Finding.list_for_scan`, `ScanResult.list_for_project`, `Project.resolve()` — see [changelog.md](../changelog.md).
 
+## Project inventory (`ProjectFacade`)
+
+| Method | Purpose |
+|--------|---------|
+| `is_sbom(project)` | `spec.sbom` set (SBOM import row) |
+| `is_app(project)` | SCM app registration (`spec.git.external_installation_id` present) |
+| `is_cli(project)` | CLI registration (no app installation id; exclude SBOM first) |
+
+Accepts a `Project` model or masked `dict` row from `list(mask=...)`.
+
+```python
+for row in client.Project.list_iter(traverse=True, mask="meta.name,spec.git.external_installation_id,spec.sbom"):
+    if client.Project.is_sbom(row):
+        continue
+    label = "Cloud Scan" if client.Project.is_app(row) else "CLI"
+```
+
+Installation lookup: `endorlabs.workflows.projects.inventory.fetch_installation_lookup`.
+
+Per-**scan** CLI vs cloud execution uses `ScanResult.spec.environment.config.RunBySystem` (see product KB) — not the same as project registration above.
+
+## FindingLog new-vs-resolved trends
+
+```python
+import endorlabs
+from endorlabs.workflows.findings.finding_log_trends import (
+    build_finding_log_new_vs_resolved_analysis,
+)
+
+client = endorlabs.Client(tenant="tenant.root", timeout=120.0)
+analysis = build_finding_log_new_vs_resolved_analysis(client, "tenant.root", traverse=True)
+```
+
+Shared filters: `endorlabs.workflows.findings.filters` (`reachable_vuln_log_base_filter`, `prf_vuln_filter`, …).
+
+Generic log aggregation: `endorlabs.workflows.logs.group_by_time.group_by_time_counts` (any listable log facade).
+
+### Example: `FindingLog.list_groups` + `group_by_time`
+
+```python
+from endorlabs.core.types import ListParameters
+
+for bucket in client.FindingLog.list_groups(
+    namespace="tenant.root",
+    traverse=True,
+    filter="spec.operation==OPERATION_CREATE and ...",
+    list_params=ListParameters(
+        group_by_time=True,
+        group_aggregation_paths=["meta.create_time"],
+        group_by_time_interval="week",
+        group_by_time_mode="count",
+    ),
+):
+    print(bucket.parsed, bucket.count)
+```
+
 ## Wire helpers
 
 | Method | Input | Returns |

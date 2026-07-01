@@ -12,10 +12,14 @@ description: Generates a tenant-wide PRF (potentially reachable function) vulner
 
 Produce the **PRF vulnerability & PV resolution errors — main context** report:
 
-1. Query Finding + PackageVersion APIs (tenant root, `traverse=true`).
+1. Query Finding + PackageVersion APIs via SDK facades (`Finding.count`, `Finding.list_iter`, `PackageVersion.list_iter`). Default: tenant root with `traverse=true` — **prefer a child namespace when known**; use `--max-pages` to bound list depth.
 2. Write analysis JSON.
 3. Render an interactive **Cursor canvas** (`.canvas.tsx`).
 4. Render matching **HTML + PDF** (headless Chrome).
+
+**Artifact-first:** If `{tenant}-prf-analysis.json` exists and only canvas/PDF refresh is needed, skip `run_analysis.py` and run `generate_canvas.py` / `generate_report_pdf.py` on the saved JSON.
+
+**Not estate pull:** Do not run `endor-estate pull` for this report — it is live API analytics, not workspace-first estate analysis.
 
 ## Scope
 

@@ -48,6 +48,10 @@ Match `external_installation_id` to **`Installation.spec.external_id`** (tenant-
 
 Do **not** infer Cloud vs CLI from repository URL alone — the same repo URL can exist as separate Project rows (different namespaces or registration paths).
 
+**SDK helpers:** `client.Project.is_app(project)`, `is_cli(project)`, and `is_sbom(project)` accept a `Project` model or masked dict row. Map to CSV labels: `is_app` → `Cloud Scan`, else `CLI` (skip SBOM rows with `is_sbom`).
+
+**Per-scan execution (different question):** To isolate individual **ScanResult** rows as CLI-run vs Endor-cloud-run, filter `spec.environment.config.RunBySystem` on `ScanResult` ([KB: CLI vs app-based scans](https://kb.endorlabs.com/articles/1109372975-faq-how-to-isolate-cli-based-scans-vs-app-based-scans-executed-in-endor-s-cloud)). This skill classifies **Project registration**, not per-scan environment.
+
 ## CSV schema (required)
 
 Write CSV with **exactly these six columns**, in this order, on every run:
