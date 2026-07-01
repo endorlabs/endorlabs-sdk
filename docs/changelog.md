@@ -8,7 +8,18 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- **Agent skill `endor-author-agent-skill`** — maintainer playbook for authoring shipped skills under `agent-knowledge/skills/` (frontmatter, sync, composition handoffs).
+- **Agent skill `endor-cli-vs-cloud-projects`** — classify Project as CLI-scanned vs Cloud/agentless SCM integration using `spec.git.external_installation_id`.
+- **Agent skill `endor-duplicate-projects`** — tenant-wide duplicate Project detection with CSV columns `project name`, `namespace`, `uuid`, `source` (`CLI` / `Cloud Scan`).
+- **Agent skill `endor-potentially-reachable-analysis`** — tenant-wide PRF approximation and PackageVersion resolution error report (JSON, canvas, HTML/PDF) for main-context NuGet, NPM, Maven, and PyPI findings.
+- **Agent skill `endor-chart-new-vs-resolved-findings`** — cumulative weekly new vs resolved Critical/High reachable vulnerability trends from FindingLog CREATE/DELETE events (past 90 days, complete weeks; endorctl group-by-time + Cursor canvas).
+
 ### Changed
+
+- **`endor-cli-vs-cloud-projects`** — tenant-wide runs use bundled `classify_cli_vs_cloud_projects.py`; always emit CSV with `installation name` resolved from `Installation.spec.external_id`, plus a chat summary.
+- **`endor-chart-new-vs-resolved-findings`** — default output is a cumulative weekly trend for the past 90 days (complete weeks only, `--group-by-time-interval week`).
+- **`endor-chart-new-vs-resolved-findings`** — default FindingLog queries restrict to `context.type==CONTEXT_TYPE_MAIN`; include REF/CI or all contexts only when explicitly requested.
+- **`endor-duplicate-projects`** — exclude SBOM projects (`spec.sbom` set) from duplicate detection and CSV/canvas output.
 
 ### Breaking
 

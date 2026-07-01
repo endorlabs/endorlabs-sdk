@@ -16,6 +16,7 @@
 | Bootstrap depth (SDK-only vs `init()`) | [Bootstrap](#bootstrap) below · [CONTRIBUTORS.md — Optional: sync external docs](CONTRIBUTORS.md#optional-sync-external-docs) |
 | Repo regions and gitignored paths | [docs/contributing/repository-layout.md](docs/contributing/repository-layout.md) |
 | Extend the SDK surface | [docs/contributing/architecture.md](docs/contributing/architecture.md) · skill **endor-implement-sdk-resource** |
+| Author or update agent skills | [agent-knowledge/schema/README.md](agent-knowledge/schema/README.md) · skill **endor-author-agent-skill** |
 
 ## Consuming the SDK
 

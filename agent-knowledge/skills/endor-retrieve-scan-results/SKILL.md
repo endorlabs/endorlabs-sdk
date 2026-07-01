@@ -162,8 +162,11 @@ When counting severity or unique issues, dedupe by explanation/remediation or fi
 
 | Need | Skill |
 | ---- | ----- |
+| CLI vs Cloud (agentless SCM) project classification | [endor-cli-vs-cloud-projects](../endor-cli-vs-cloud-projects/SKILL.md) |
 | Scan failed, metrics spiked, logs between runs | [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) |
 | Policy / exception matches a finding | [endor-validate-policy](../endor-validate-policy/SKILL.md) |
 | Reachability conflicts on a finding | [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) |
+| Tenant-wide PRF approximation + PV resolution errors | [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md) |
+| New vs resolved FindingLog trend charts | [endor-chart-new-vs-resolved-findings](../endor-chart-new-vs-resolved-findings/SKILL.md) |
 | Fixed vs present, SBOM vs API | [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) |
 | Package paths/versions across manifests | [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md) |

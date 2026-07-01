@@ -1,0 +1,100 @@
+"""Unit tests for CLI vs Cloud project classification helpers."""
+
+from __future__ import annotations
+
+import sys
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
+from types import ModuleType
+
+
+def _load_module() -> ModuleType:
+    repo_root = Path(__file__).resolve().parents[4]
+    candidate_paths = (
+        repo_root
+        / "agent-knowledge"
+        / "skills"
+        / "endor-cli-vs-cloud-projects"
+        / "scripts"
+        / "classify_cli_vs_cloud_projects.py",
+        repo_root
+        / "src"
+        / "endorlabs"
+        / "agent_knowledge"
+        / "skills"
+        / "endor-cli-vs-cloud-projects"
+        / "scripts"
+        / "classify_cli_vs_cloud_projects.py",
+    )
+    script_path = next(path for path in candidate_paths if path.is_file())
+    spec = spec_from_file_location("classify_cli_vs_cloud_projects", script_path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_project_source_cloud_and_cli() -> None:
+    module = _load_module()
+
+    cloud = {"spec": {"git": {"external_installation_id": "123"}}}
+    cli = {"spec": {"git": {}}}
+
+    assert module.project_source(cloud) == "Cloud Scan"
+    assert module.project_source(cli) == "CLI"
+
+
+def test_installation_name_prefers_external_name() -> None:
+    module = _load_module()
+
+    row = {
+        "meta": {"name": "Installation - tenant"},
+        "spec": {
+            "external_name": "Acme GitHub Org",
+            "login": "acme",
+        },
+    }
+
+    assert module.installation_name(row) == "Acme GitHub Org"
+
+
+def test_installation_name_includes_login_for_disambiguation() -> None:
+    module = _load_module()
+
+    row = {
+        "meta": {"name": "Installation - tenant"},
+        "spec": {"login": "dev.azure.com/org"},
+    }
+
+    assert (
+        module.installation_name(row)
+        == "Installation - tenant (dev.azure.com/org)"
+    )
+
+
+def test_row_to_csv_resolves_installation_name() -> None:
+    module = _load_module()
+
+    project = {
+        "meta": {"name": "github.com/org/repo"},
+        "tenant_meta": {"namespace": "tenant.team"},
+        "uuid": "proj-1",
+        "spec": {"git": {"external_installation_id": "140464674"}},
+    }
+    lookup = {
+        "140464674": {
+            "meta": {"name": "GitHub Endor Pro App - tenant.team"},
+            "spec": {"login": "team"},
+        }
+    }
+
+    row = module.row_to_csv(project, lookup)
+
+    assert row["source"] == "Cloud Scan"
+    assert row["external_installation_id"] == "140464674"
+    assert (
+        row["installation name"]
+        == "GitHub Endor Pro App - tenant.team (team)"
+    )
