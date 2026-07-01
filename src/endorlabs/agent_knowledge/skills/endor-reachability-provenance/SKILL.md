@@ -161,6 +161,8 @@ overloaded_edge_check:
 | Need | Skill |
 | ---- | ----- |
 | Finding UUID, project namespace, branch filters | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) |
+| Tenant-wide PRF approximation + PV resolution errors | [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md) |
+| Per-project call graph path search | [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md) |
 | Fixed vs present, dependency graph, SBOM | [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) |
 | Scan aggregate metrics regressed | [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) |
 
