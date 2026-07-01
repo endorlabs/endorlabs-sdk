@@ -90,13 +90,12 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             page_size=args.page_size,
         )
         list_max_pages = resolve_max_pages(args.max_pages)
-        scan_result = client.ScanResult.list_by_project(
+        scans = client.ScanResult.list_by_project(
             project,
             namespace=list_ns,
             list_params=lp,
             max_pages=list_max_pages,
         )
-        scans = scan_result.values or []
     finally:
         client.close()
 

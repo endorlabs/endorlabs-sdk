@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: 9565572f57e44119be9c018d5862091bb06bf76c867737e42910c2b8c9065014
+x-endor-source-sha256: 6df0c08f4b22bf57e58f990ea00b2500b819adc19011d4e8f4a3662279316c04
 ---
 
 # Workflow composition
@@ -52,7 +52,8 @@ After a workflow run, treat outputs as source of truth:
 Generic entrypoints (no estate literals):
 
 - `client.Project.search_by_name()` — bounded project discovery by repo URL substring or partial UUID
-- `client.CallGraphData.decode()` / `.fetch()` — call graph fetch + decode
+- `client.CallGraphData.decode()` — searchable callables/edges (`CallGraphDecoded`)
+- `client.CallGraphData.fetch()` — raw envelope only (workflows use this internally; agents prefer `decode` + skills)
 - `client.ScanResult.get_logs()` — scan log lines (ScanLogRequest wire API)
 - `client.Finding.list_by_project()` / `list_for_context()` — generated relationship accessors
 - `client.ScanResult.list_by_project()` — scan results for a project

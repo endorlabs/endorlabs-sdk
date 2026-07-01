@@ -566,3 +566,34 @@ class TestReauthRetryGuard:
 
             # authenticate should be called exactly once (not repeatedly)
             client.authenticate.assert_called_once()
+
+
+class TestDualAuthEnv:
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_TOKEN": "env-token-789",
+            "ENDOR_API_CREDENTIALS_KEY": "key",
+            "ENDOR_API_CREDENTIALS_SECRET": "secret",
+        },
+        clear=True,
+    )
+    def test_dual_auth_logs_info_and_prefers_token(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        with caplog.at_level("INFO", logger="endorlabs.api_client"):
+            with _patch_httpx_client(get_return=_auth_get_response()):
+                client = APIClient()
+        assert client.auth_method == "browser-auth"
+        assert client._auth_type == "browser"
+        messages = " ".join(record.message for record in caplog.records)
+        assert "ENDOR_TOKEN" in messages
+        assert "ENDOR_API_CREDENTIALS_KEY" in messages
+        assert "errors-and-auth" in messages
+
+    @patch.dict(
+        os.environ, {"ENDOR_TOKEN": "", "ENDOR_API_CREDENTIALS_KEY": ""}, clear=True
+    )
+    def test_missing_credentials_mentions_endor_token(self) -> None:
+        with pytest.raises(ValidationError, match="ENDOR_TOKEN"):
+            APIClient()

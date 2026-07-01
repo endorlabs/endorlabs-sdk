@@ -380,13 +380,25 @@ def build_contract_manifest_entries(contracts_dir: Path) -> list[dict[str, Any]]
     return entries
 
 
+# Normative contracts always included in harness bootstrap (Tier 0).
+BOOTSTRAP_CONTRACT_IDS: tuple[str, ...] = (
+    "resource-discovery",
+    "errors-and-auth",
+    "list-parameters",
+)
+
+
 # Maintainer-only rules omitted from harness bootstrap (MAINTAINER_ONLY_RULE_IDS).
 def build_bootstrap_manifest_block(
     rules: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Derive bootstrap rule ids from the shipped rules manifest section."""
+    """Derive bootstrap rule and contract ids from the shipped manifest sections."""
     rule_ids = sorted(entry["id"] for entry in rules)
-    return {"index": "INDEX.md", "rule_ids": rule_ids}
+    return {
+        "index": "INDEX.md",
+        "rule_ids": rule_ids,
+        "contract_ids": list(BOOTSTRAP_CONTRACT_IDS),
+    }
 
 
 def list_skill_refs(skill_dir: Path, *, bundle_skill_prefix: str) -> list[str]:

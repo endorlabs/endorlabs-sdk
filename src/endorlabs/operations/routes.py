@@ -1,9 +1,10 @@
-# ruff: noqa: D102, UP046, SIM108
+# ruff: noqa: D102, D105, UP046, UP047, SIM108
 """Generic route executors for generated relationship accessors."""
 
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, cast
 
@@ -24,13 +25,34 @@ T = TypeVar("T", bound=BaseModel)
 
 @dataclass
 class RouteResult(Generic[T]):
-    """Outcome of a stitched route execution."""
+    """Outcome of a stitched route execution.
+
+    List accessors populate ``values``; single-row accessors populate ``value``.
+    The result is iterable (``for row in result``) and supports ``len(result)``.
+    """
 
     edge_used: str
     value: T | None = None
     values: list[T] | None = None
     truncated: bool = False
     warnings: list[str] = field(default_factory=list)
+
+    def __iter__(self) -> Iterator[T]:
+        if self.values is not None:
+            return iter(self.values)
+        if self.value is not None:
+            return iter([self.value])
+        return iter([])
+
+    def __len__(self) -> int:
+        if self.values is not None:
+            return len(self.values)
+        if self.value is not None:
+            return 1
+        return 0
+
+    def __bool__(self) -> bool:
+        return self.value is not None or bool(self.values)
 
     @property
     def single(self) -> T:
@@ -42,6 +64,13 @@ class RouteResult(Generic[T]):
             "Route returned no value",
             edge_id=self.edge_used,
         )
+
+
+def unwrap_route_list(result: RouteResult[T]) -> list[T]:
+    """Return list rows from a list-edge ``RouteResult`` (facade public boundary)."""
+    if result.values is not None:
+        return list(result.values)
+    return []
 
 
 def resolve_attr_path(

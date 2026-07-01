@@ -37,13 +37,12 @@ def run_callgraph_export(
     ``PackageVersion.list_by_project``.
     """
     source = project_as_list_source(project_uuid, list_namespace)
-    route = client.PackageVersion.list_by_project(
+    pvs = client.PackageVersion.list_by_project(
         source,
         namespace=list_namespace,
         max_pages=max_pages,
         page_size=page_size,
     )
-    pvs = route.values or []
 
     exports: list[dict[str, Any]] = []
     for idx, pv in enumerate(pvs, start=1):

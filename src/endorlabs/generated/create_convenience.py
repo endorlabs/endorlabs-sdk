@@ -289,6 +289,8 @@ PACKAGE_FIREWALL_LOG_SPEC_FIELDS = (
     "action_at",
     "cvss_severity_level",
     "cvss_vuln_uuid",
+    "api_key_name",
+    "user",
 )
 PACKAGE_FIREWALL_LOG_SPEC_REQUIRED = ("ecosystem", "package_name")
 PACKAGE_FIREWALL_LOG_META_FIELDS = ()
@@ -480,7 +482,9 @@ SCAN_LOG_REQUEST_SPEC_FIELDS = (
     "onprem_scheduler_uuid",
     "scan_result_uuid",
     "execution_id",
+    "admin_search",
     "end_time",
+    "traverse",
 )
 SCAN_LOG_REQUEST_SPEC_REQUIRED = ("max_entries",)
 SCAN_LOG_REQUEST_META_FIELDS = ()
