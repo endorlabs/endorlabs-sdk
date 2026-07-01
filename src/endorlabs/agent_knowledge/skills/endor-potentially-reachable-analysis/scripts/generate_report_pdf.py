@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 
 from paths import resolve_chrome
+
 COLORS = {
     "NuGet": "#2E79B5",
     "NPM": "#1F8A65",
@@ -74,9 +75,7 @@ def render_breakdown_table(rows: list[dict[str, object]]) -> str:
         "<th>explanation</th><th>fixable_notes</th>"
         "<th>PRF vulns</th><th>PRD vulns</th>"
         "<th>Precomputed reachability PVs</th>"
-        "</tr></thead><tbody>"
-        + "".join(body)
-        + "</tbody></table>"
+        "</tr></thead><tbody>" + "".join(body) + "</tbody></table>"
     )
 
 
@@ -116,8 +115,8 @@ def render_pie_chart_svg(summary_rows: list[dict]) -> str:
 <div class="pie-block">
   <div class="pie-title">PRF vulnerabilities by ecosystem</div>
   <div class="pie-row">
-    <svg width="240" height="240" viewBox="0 0 240 240" aria-label="PRF vulnerabilities by ecosystem">{''.join(paths)}</svg>
-    <div class="legend">{''.join(legend)}</div>
+    <svg width="240" height="240" viewBox="0 0 240 240" aria-label="PRF vulnerabilities by ecosystem">{"".join(paths)}</svg>
+    <div class="legend">{"".join(legend)}</div>
   </div>
   <p class="caption">Main-context potentially reachable function vulnerabilities · n={esc(fmt_count(total))} across NuGet, NPM, Maven, PyPI</p>
 </div>
@@ -135,7 +134,7 @@ def render_html(data: dict) -> str:
     for row in summary_rows:
         classes = ["total-row"] if row.get("isTotal") else []
         summary_body.append(
-            f"<tr class=\"{' '.join(classes)}\"><td>{esc(row['ecosystem'])}</td>"
+            f'<tr class="{" ".join(classes)}"><td>{esc(row["ecosystem"])}</td>'
             f"<td class='num'>{esc(fmt_count(row['prfVulnerabilities']))}</td>"
             f"<td class='num'>{esc(fmt_count(row['prdVulnerabilities']))}</td>"
             f"<td class='num'>{esc(fmt_count(row['approximatedVulns']))}</td>"
@@ -156,17 +155,17 @@ def render_html(data: dict) -> str:
 <section class="eco-section">
   <div class="section-header">
     <h2>{esc(eco)}</h2>
-    <span class="badge">{esc(fmt_count(eco_data['dep_resolution_error_pvs']))} dep · {esc(fmt_count(eco_data['call_graph_pvs']))} call graph PVs</span>
+    <span class="badge">{esc(fmt_count(eco_data["dep_resolution_error_pvs"]))} dep · {esc(fmt_count(eco_data["call_graph_pvs"]))} call graph PVs</span>
   </div>
   <div class="subsection">
     <h3>Dependency resolution errors</h3>
-    <p class="caption">Main-context PRF parent PackageVersions with spec.resolution_errors.unresolved or .resolved · n={esc(fmt_count(eco_data['dep_resolution_error_pvs']))} PVs</p>
-    {render_breakdown_table(eco_data['dep_resolution_breakdown'])}
+    <p class="caption">Main-context PRF parent PackageVersions with spec.resolution_errors.unresolved or .resolved · n={esc(fmt_count(eco_data["dep_resolution_error_pvs"]))} PVs</p>
+    {render_breakdown_table(eco_data["dep_resolution_breakdown"])}
   </div>
   <div class="subsection">
     <h3>Call graph errors</h3>
-    <p class="caption">Main-context PRF parent PackageVersions with spec.resolution_errors.call_graph exists · n={esc(fmt_count(eco_data['call_graph_pvs']))} PVs</p>
-    {render_breakdown_table(eco_data['call_graph_breakdown'])}
+    <p class="caption">Main-context PRF parent PackageVersions with spec.resolution_errors.call_graph exists · n={esc(fmt_count(eco_data["call_graph_pvs"]))} PVs</p>
+    {render_breakdown_table(eco_data["call_graph_breakdown"])}
   </div>
 </section>
 """
@@ -254,10 +253,10 @@ def render_html(data: dict) -> str:
   {render_pie_chart_svg(summary_rows)}
 
   <div class="stats">
-    <div class="stat"><div class="label">PRF vulnerabilities</div><div class="value">{esc(fmt_count(total['prfVulnerabilities']))}</div></div>
-    <div class="stat warning"><div class="label">Approximated vulns</div><div class="value">{esc(fmt_count(total['approximatedVulns']))} ({esc(fmt_pct(total['pctApproximatedVulns']))})</div></div>
-    <div class="stat"><div class="label">Unique PVs</div><div class="value">{esc(fmt_count(total['uniquePvs']))}</div></div>
-    <div class="stat info"><div class="label">PVs with Dep Resolution errors</div><div class="value">{esc(fmt_count(total['pvsWithDepResolutionErrors']))} ({esc(fmt_pct(total['pctPvsWithDepResolutionErrors']))})</div></div>
+    <div class="stat"><div class="label">PRF vulnerabilities</div><div class="value">{esc(fmt_count(total["prfVulnerabilities"]))}</div></div>
+    <div class="stat warning"><div class="label">Approximated vulns</div><div class="value">{esc(fmt_count(total["approximatedVulns"]))} ({esc(fmt_pct(total["pctApproximatedVulns"]))})</div></div>
+    <div class="stat"><div class="label">Unique PVs</div><div class="value">{esc(fmt_count(total["uniquePvs"]))}</div></div>
+    <div class="stat info"><div class="label">PVs with Dep Resolution errors</div><div class="value">{esc(fmt_count(total["pvsWithDepResolutionErrors"]))} ({esc(fmt_pct(total["pctPvsWithDepResolutionErrors"]))})</div></div>
   </div>
 
   <div class="table-header-row">
@@ -281,14 +280,14 @@ def render_html(data: dict) -> str:
       </tr>
     </thead>
     <tbody>
-      {''.join(summary_body)}
+      {"".join(summary_body)}
     </tbody>
   </table>
 
-  <p class="footnote">Total unique PVs ({esc(fmt_count(total['uniquePvs']))}) is a union across ecosystems. Error breakdowns count main-context PackageVersions that are parents of PRF findings ({esc(missing)} parent UUIDs not found in main context are excluded). Call graph error analysis below covers PRF parent PVs with spec.resolution_errors.call_graph exists (same count as the summary table's PVs with Call Graph Errors).</p>
+  <p class="footnote">Total unique PVs ({esc(fmt_count(total["uniquePvs"]))}) is a union across ecosystems. Error breakdowns count main-context PackageVersions that are parents of PRF findings ({esc(missing)} parent UUIDs not found in main context are excluded). Call graph error analysis below covers PRF parent PVs with spec.resolution_errors.call_graph exists (same count as the summary table's PVs with Call Graph Errors).</p>
 
   <div class="section-title">Error analysis by ecosystem</div>
-  {''.join(ecosystem_sections)}
+  {"".join(ecosystem_sections)}
 </div>
 </body>
 </html>
@@ -299,7 +298,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Generate HTML + PDF report from PRF analysis JSON."
     )
-    parser.add_argument("json_path", type=Path, help="Analysis JSON from run_analysis.py")
+    parser.add_argument(
+        "json_path", type=Path, help="Analysis JSON from run_analysis.py"
+    )
     parser.add_argument(
         "--output-dir",
         type=Path,

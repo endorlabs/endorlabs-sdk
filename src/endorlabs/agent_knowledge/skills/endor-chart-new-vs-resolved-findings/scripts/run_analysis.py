@@ -141,10 +141,7 @@ def run_group_by_time(
     if level is not None:
         filt += f" and spec.level==FINDING_LEVEL_{level}"
     else:
-        filt += (
-            " and spec.level in "
-            "[FINDING_LEVEL_CRITICAL, FINDING_LEVEL_HIGH]"
-        )
+        filt += " and spec.level in [FINDING_LEVEL_CRITICAL, FINDING_LEVEL_HIGH]"
 
     cmd = [
         endorctl,

@@ -68,10 +68,7 @@ def test_installation_name_includes_login_for_disambiguation() -> None:
         "spec": {"login": "dev.azure.com/org"},
     }
 
-    assert (
-        module.installation_name(row)
-        == "Installation - tenant (dev.azure.com/org)"
-    )
+    assert module.installation_name(row) == "Installation - tenant (dev.azure.com/org)"
 
 
 def test_row_to_csv_resolves_installation_name() -> None:
@@ -94,7 +91,4 @@ def test_row_to_csv_resolves_installation_name() -> None:
 
     assert row["source"] == "Cloud Scan"
     assert row["external_installation_id"] == "140464674"
-    assert (
-        row["installation name"]
-        == "GitHub Endor Pro App - tenant.team (team)"
-    )
+    assert row["installation name"] == "GitHub Endor Pro App - tenant.team (team)"

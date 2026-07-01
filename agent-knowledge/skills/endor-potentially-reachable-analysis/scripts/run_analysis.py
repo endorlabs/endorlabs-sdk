@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
@@ -122,10 +121,9 @@ def has_call_graph_errors(pv: dict[str, Any]) -> bool:
 
 
 def has_precomputed_reachability(pv: dict[str, Any]) -> bool:
-    return (
-        (pv.get("spec") or {}).get("precomputed_call_graph_state")
-        == "PRECOMPUTED_STATE_SUCCESS"
-    )
+    return (pv.get("spec") or {}).get(
+        "precomputed_call_graph_state"
+    ) == "PRECOMPUTED_STATE_SUCCESS"
 
 
 def findings_by_parent(findings: list[dict[str, Any]]) -> Counter[str]:
@@ -385,9 +383,10 @@ def run_analysis(tenant: str, out_path: Path) -> dict[str, Any]:
             label = ECO_LABEL[eco]
             summary = next(row for row in summary_rows if row["ecosystem"] == label)
             errors = ecosystem_errors[label]
-            assert errors["dep_resolution_error_pvs"] == summary[
-                "pvsWithDepResolutionErrors"
-            ]
+            assert (
+                errors["dep_resolution_error_pvs"]
+                == summary["pvsWithDepResolutionErrors"]
+            )
             assert errors["call_graph_pvs"] == summary["pvsWithCallGraphErrors"]
             dep_sum = sum(row["count"] for row in errors["dep_resolution_breakdown"])
             call_sum = sum(row["count"] for row in errors["call_graph_breakdown"])

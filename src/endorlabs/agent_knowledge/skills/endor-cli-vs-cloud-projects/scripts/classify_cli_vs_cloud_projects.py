@@ -26,9 +26,7 @@ PROJECT_MASK = (
     "meta.name,tenant_meta.namespace,uuid,"
     "spec.git.external_installation_id,spec.git.invalid_installation,spec.sbom"
 )
-INSTALLATION_MASK = (
-    "meta.name,tenant_meta.namespace,uuid,spec.external_id,spec.external_name,spec.login"
-)
+INSTALLATION_MASK = "meta.name,tenant_meta.namespace,uuid,spec.external_id,spec.external_name,spec.login"
 
 
 def project_name(row: dict[str, Any]) -> str:

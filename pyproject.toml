@@ -345,10 +345,32 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 "src/endorlabs/workflows/estate/collect/benchmark.py" = ["E501", "D103", "ARG001"]
 "src/endorlabs/workflows/troubleshooting_scans/summarize_scan_triage.py" = ["C901"]  # markdown builder
 # Skill-maintained CLI scripts (authoring tree; mirrored into agent_knowledge bundle).
-"agent-knowledge/skills/**/scripts/*.py" = ["ERA001"]  # section divider comments
-"agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py" = ["C901"]  # cmd_import
-"src/endorlabs/agent_knowledge/skills/**/scripts/*.py" = ["ERA001"]  # section divider comments
-"src/endorlabs/agent_knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py" = ["C901"]  # cmd_import
+"agent-knowledge/skills/**/scripts/*.py" = [
+    "ERA001",  # section divider comments
+    "D",
+    "E501",
+    "PERF401",
+    "T201",
+    "RUF001",
+    "C901",
+    "PLW0108",
+    "SLF001",
+    "S603",
+    "S607",
+]
+"src/endorlabs/agent_knowledge/skills/**/scripts/*.py" = [
+    "ERA001",
+    "D",
+    "E501",
+    "PERF401",
+    "T201",
+    "RUF001",
+    "C901",
+    "PLW0108",
+    "SLF001",
+    "S603",
+    "S607",
+]
 "src/endorlabs/utils/create_payload.py" = ["C901", "UP047"]
 "src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)

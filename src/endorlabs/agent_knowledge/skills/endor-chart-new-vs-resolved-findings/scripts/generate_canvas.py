@@ -230,7 +230,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Generate Cursor canvas TSX from new-vs-resolved analysis JSON."
     )
-    parser.add_argument("json_path", type=Path, help="Analysis JSON from run_analysis.py")
+    parser.add_argument(
+        "json_path", type=Path, help="Analysis JSON from run_analysis.py"
+    )
     parser.add_argument(
         "--canvas-dir",
         type=Path,
