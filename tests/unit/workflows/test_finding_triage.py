@@ -124,9 +124,7 @@ def _make_mock_client(findings: list[Mock] | None = None) -> Mock:
     project = Mock()
     project.uuid = "proj-1"
     client.Project.get.return_value = project
-    route = Mock()
-    route.values = findings or []
-    client.Finding.list_by_project.return_value = route
+    client.Finding.list_by_project.return_value = findings or []
     client.Finding.update.return_value = Mock()
     return client
 

@@ -99,13 +99,12 @@ def list_package_versions_for_index(
         uuid=project_uuid,
         tenant_meta=SimpleNamespace(namespace=namespace),
     )
-    route = client.PackageVersion.list_by_project(
+    pvs = client.PackageVersion.list_by_project(
         source,
         namespace=namespace,
         max_pages=max_pages,
         page_size=page_size,
     )
-    pvs = route.values or []
     cap = max_pages * page_size
     truncated = len(pvs) >= cap
     truncation_reason: str | None = None

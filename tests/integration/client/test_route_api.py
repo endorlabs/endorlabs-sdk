@@ -58,17 +58,16 @@ class TestRouteAPI:
             self.client, "LinterResult", root_client=self.root_client
         ):
             pytest.skip("No LinterResult rows in tenant scope")
-        _project, scan, result = require_list_for_context_sample(
+        _project, scan, rows = require_list_for_context_sample(
             self.client,
             "LinterResult",
             "scan.linter_results",
             root_client=self.root_client,
         )
-        assert result.edge_used == "scan.linter_results"
         project_uuid = nested_attr(scan, "meta.parent_uuid")
         if project_uuid:
             assert_rows_have_field_value(
-                result.values or [],
+                rows,
                 "spec.project_uuid",
                 str(project_uuid),
             )
@@ -85,67 +84,60 @@ class TestRouteAPI:
                 "No PackageLicense rows in tenant or oss scope; "
                 "list_for_context scan-plane test not applicable"
             )
-        _project, scan, result = require_list_for_context_sample(
+        _project, scan, rows = require_list_for_context_sample(
             self.client,
             "PackageLicense",
             "scan.package_licenses",
             root_client=self.root_client,
             oss_client=self.oss_client,
         )
-        assert result.edge_used == "scan.package_licenses"
-        assert result.values
+        assert rows
         project_uuid = nested_attr(scan, "meta.parent_uuid")
         if project_uuid:
             assert_rows_have_field_value(
-                result.values or [],
+                rows,
                 "spec.project_uuid",
                 str(project_uuid),
             )
 
     def test_finding_list_by_project_scoped_to_source(self) -> None:
         project = require_first_project(self.client)
-        result = self.client.Finding.list_by_project(
+        rows = self.client.Finding.list_by_project(
             project,
             max_pages=TEST_MAX_PAGES,
         )
-        assert isinstance(result, RouteResult)
-        assert result.edge_used == "project.findings"
-        assert result.values is not None
-        if result.values:
+        assert isinstance(rows, list)
+        if rows:
             assert_rows_have_field_value(
-                result.values,
+                rows,
                 "spec.project_uuid",
                 project.uuid,
             )
 
     def test_scan_result_list_by_project_scoped_to_source(self) -> None:
         project = require_first_project(self.client)
-        result = self.client.ScanResult.list_by_project(
+        rows = self.client.ScanResult.list_by_project(
             project,
             max_pages=TEST_MAX_PAGES,
         )
-        assert isinstance(result, RouteResult)
-        assert result.edge_used == "project.scan_results"
-        assert result.values is not None
-        if result.values:
+        assert isinstance(rows, list)
+        if rows:
             assert_rows_have_field_value(
-                result.values,
+                rows,
                 "meta.parent_uuid",
                 project.uuid,
             )
 
     def test_package_version_list_by_project_scoped_to_source(self) -> None:
         project = require_first_project(self.client)
-        result = self.client.PackageVersion.list_by_project(
+        rows = self.client.PackageVersion.list_by_project(
             project,
             max_pages=TEST_MAX_PAGES,
         )
-        assert isinstance(result, RouteResult)
-        assert result.edge_used == "project.package_versions"
-        assert result.values is not None
-        if result.values:
+        assert isinstance(rows, list)
+        if rows:
             assert_rows_have_field_value(
-                result.values,
+                rows,
                 "spec.project_uuid",
                 project.uuid,
             )
@@ -155,19 +147,18 @@ class TestRouteAPI:
             self.client, require_first_project(self.client)
         )
         try:
-            result = self.client.Finding.list_for_context(
+            rows = self.client.Finding.list_for_context(
                 scan,
                 max_pages=TEST_MAX_PAGES,
             )
         except ServerError as err:
             pytest.skip(f"Finding list_for_context unavailable: {err}")
-        assert result.edge_used == "scan.findings"
-        if result.values:
-            assert_scan_context_partition(result.values, scan)
+        if rows:
+            assert_scan_context_partition(rows, scan)
             project_uuid = nested_attr(scan, "meta.parent_uuid")
             if project_uuid:
                 assert_rows_have_field_value(
-                    result.values,
+                    rows,
                     "spec.project_uuid",
                     str(project_uuid),
                 )
@@ -177,45 +168,41 @@ class TestRouteAPI:
             self.client, require_first_project(self.client)
         )
         try:
-            accessor = self.client.Finding.list_for_context(
+            accessor_rows = self.client.Finding.list_for_context(
                 scan,
                 max_pages=TEST_MAX_PAGES,
             )
-            manual = self.client.Finding.list_by_project(
+            manual_rows = self.client.Finding.list_by_project(
                 project,
                 filter=context_partition_filter(scan.context),
                 max_pages=TEST_MAX_PAGES,
             )
         except ServerError as err:
             pytest.skip(f"Finding partition list unavailable: {err}")
-        accessor_ids = {nested_attr(r, "uuid") for r in (accessor.values or [])}
-        manual_ids = {nested_attr(r, "uuid") for r in (manual.values or [])}
+        accessor_ids = {nested_attr(r, "uuid") for r in accessor_rows}
+        manual_ids = {nested_attr(r, "uuid") for r in manual_rows}
         assert accessor_ids.issubset(manual_ids)
 
     @pytest.mark.parametrize(("edge_id", "list_method"), SCAN_CONTEXT_LIST_METHODS)
     def test_list_for_context_returns_intended_resources(
         self, edge_id: str, list_method: str
     ) -> None:
-        _project, scan, result = require_list_for_context_sample(
+        _project, scan, rows = require_list_for_context_sample(
             self.client,
             list_method,
             edge_id,
             root_client=self.root_client,
             oss_client=self.oss_client,
         )
-        assert result.edge_used == edge_id
-        assert result.values is not None
-        assert result.values, (
-            f"require_list_for_context_sample returned empty {list_method}"
-        )
+        assert rows, f"require_list_for_context_sample returned empty {list_method}"
         if list_method in CONTEXT_ON_ROW_KINDS:
-            assert_scan_context_partition(result.values, scan)
+            assert_scan_context_partition(rows, scan)
         anchor = CONTEXT_PARTITION_ANCHORS.get(list_method)
         if anchor is not None:
             row_field, scan_field = anchor
             expected = nested_attr(scan, scan_field)
             if expected:
-                assert_rows_have_field_value(result.values, row_field, str(expected))
+                assert_rows_have_field_value(rows, row_field, str(expected))
 
     def test_finding_to_dependency_metadata_matches_target(self) -> None:
         project = require_first_project(self.client)
@@ -223,10 +210,10 @@ class TestRouteAPI:
             project,
             max_pages=TEST_MAX_PAGES,
         )
-        if not findings.values:
+        if not findings:
             pytest.skip("No findings for project")
         target_finding = None
-        for row in findings.values:
+        for row in findings:
             target_uuid = nested_attr(row, "spec.target_uuid")
             if target_uuid:
                 target_finding = row
@@ -238,6 +225,7 @@ class TestRouteAPI:
             result = self.client.Finding.to_dependency_metadata(target_finding)
         except RouteNotApplicableError:
             pytest.skip("DependencyMetadata route not applicable for sample finding")
+        assert isinstance(result, RouteResult)
         assert result.edge_used.startswith("finding.dependency_metadata")
         if result.edge_used == "finding.dependency_metadata.get":
             assert result.value is not None
@@ -250,13 +238,13 @@ class TestRouteAPI:
 
     def test_scan_result_parent_returns_project(self) -> None:
         project = require_first_project(self.client)
-        route = self.client.ScanResult.list_by_project(
+        scans = self.client.ScanResult.list_by_project(
             project,
             max_pages=TEST_MAX_PAGES,
         )
-        if not route.values:
+        if not scans:
             pytest.skip("No scan results for project")
-        scan = route.values[0]
+        scan = scans[0]
         parent_uuid = nested_attr(scan, "meta.parent_uuid")
         if not parent_uuid:
             pytest.skip("Scan result has no meta.parent_uuid")
@@ -269,7 +257,7 @@ class TestRouteAPI:
         if not ns:
             pytest.skip("Project has no namespace for count scope")
         try:
-            route = self.client.Finding.list_by_project(
+            rows = self.client.Finding.list_by_project(
                 project,
                 max_pages=TEST_MAX_PAGES,
             )
@@ -279,5 +267,4 @@ class TestRouteAPI:
             )
         except ServerError as err:
             pytest.skip(f"Finding count unavailable: {err}")
-        listed = len(route.values or [])
-        assert total >= listed
+        assert total >= len(rows)

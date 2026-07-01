@@ -63,7 +63,7 @@ endorctl api create --resource=DependencyMetadata --namespace=<tenant.ns> -f pay
 
 | Method | Edge id | Wire kind | Returns |
 |--------|---------|-----------|---------|
-| `list_for_context(…)` | `scan.dependency_metadata` | `list_by_context_partition` | RouteResult → `.values` |
+| `list_for_context(…)` | `scan.dependency_metadata` | `list_by_context_partition` | `list[T]` |
 
 See [resource-routes.md](../resource-routes.md) and [facade-helpers.md](../../guides/facade-helpers.md).
 

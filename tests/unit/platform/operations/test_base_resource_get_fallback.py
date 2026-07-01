@@ -64,7 +64,7 @@ def test_get_fallback_rejects_sibling_namespace_match(
     ops = BaseResourceOperations(mock_client, "projects", _Project)
     ops.list = MagicMock(return_value=[sibling])
 
-    with pytest.raises(NotFoundError, match="not found"):
+    with pytest.raises(NotFoundError, match="endor-namespace-scoping"):
         ops.get("tenant.root.team", "proj-1")
 
 

@@ -40,6 +40,7 @@ Required:
 Optional:
 
 - `admin_filter`
+- `admin_search`
 - `end_time`
 - `execution_id`
 - `installation_uuid`
@@ -50,6 +51,7 @@ Optional:
 - `scan_request_uuid`
 - `scan_result_uuid`
 - `start_time`
+- `traverse`
 
 Unknown flat kwargs raise `TypeError`. Use `payload=` or nested `spec=` / `meta=` for full control.
 

@@ -5,9 +5,9 @@ Single source of truth: the registry. Run from repo root with:
 Writes src/endorlabs/client_surface.pyi so Pyright types client.Project, etc.
 
 Each resource gets a dedicated stub class (e.g. ``_ProjectFacade``) that
-inherits ``ResourceRuntimeFacade[Project]`` or ``_ListableFacade[Model]`` when
-list-only, with resource-specific docstrings. Method signatures come from the
-PEP 695 generic facade bases (no per-method duplication).
+inherits ``ResourceRuntimeFacade[Project]``, ``ListableFacade[Model]``, or a
+specialized runtime facade from ``FACADE_CLASS_BY_ATTR`` (e.g. ``ProjectFacade``).
+``list()`` and ``Client.__init__`` are emitted explicitly for IDE hovers.
 """
 # ruff: noqa: E402, I001, C901, E501, PERF401, PERF402
 
@@ -33,7 +33,10 @@ devtools_dir = repo_root / "devtools"
 if str(devtools_dir) not in sys.path:
     sys.path.insert(0, str(devtools_dir))
 
-from endorlabs.facade import ResourceRuntimeFacade
+from endorlabs.client_surface import Client as RuntimeClient
+from endorlabs.facade import ListableFacade, ResourceRuntimeFacade
+from endorlabs.facade.route_host import RouteHostMixin
+from endorlabs.facade.specialized import FACADE_CLASS_BY_ATTR
 from endorlabs.registry_overlay import merge_generated_contract_with_overlay
 from endorlabs.registry import (
     CUSTOM_FACADE_REGISTRY,
@@ -98,12 +101,39 @@ def _default_description_from_attr(attr_name: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _specialized_facade_name(entry: ResourceEntry) -> str | None:
+    """Runtime specialized facade class name when ``FACADE_CLASS_BY_ATTR`` applies."""
+    facade_cls = FACADE_CLASS_BY_ATTR.get(entry.attr_name)
+    return facade_cls.__name__ if facade_cls is not None else None
+
+
 def _stub_base_class(entry: ResourceEntry) -> str:
-    """PEP 695 base: full CRUD uses ResourceRuntimeFacade; list/get-only use ListableFacade."""
+    """PEP 695 or specialized base for per-resource stub classes."""
+    specialized = _specialized_facade_name(entry)
+    if specialized:
+        return specialized
     model_name = entry.model_class.__name__
     if any(op in entry.supported_ops for op in ("create", "update", "delete")):
         return f"ResourceRuntimeFacade[{model_name}]"
     return f"ListableFacade[{model_name}]"
+
+
+def _stub_impl_classes(entry: ResourceEntry) -> list[type[Any]]:
+    """Classes consulted for inherited route/sugar method resolution."""
+    classes: list[type[Any]] = []
+    facade_cls = FACADE_CLASS_BY_ATTR.get(entry.attr_name)
+    if facade_cls is not None:
+        classes.append(facade_cls)
+    classes.extend([RouteHostMixin, ResourceRuntimeFacade, ListableFacade])
+    return classes
+
+
+def _method_impl_class(name: str, classes: list[type[Any]]) -> type[Any] | None:
+    """Return the first class in *classes* that defines *name* in its own dict."""
+    for cls in classes:
+        if name in cls.__dict__:
+            return cls
+    return None
 
 
 def _stub_extra_methods(entry: ResourceEntry) -> list[str]:
@@ -135,15 +165,66 @@ def _load_route_public_methods(attr_name: str) -> list[str]:
     return methods
 
 
+def _first_docstring_paragraph(obj: Any) -> str | None:
+    """First paragraph of a docstring for stub hovers."""
+    doc = inspect.getdoc(obj)
+    if not doc:
+        return None
+    paragraph = doc.strip().split("\n\n", maxsplit=1)[0].strip()
+    return paragraph.replace('"""', "'") if paragraph else None
+
+
 def _emit_route_method_stubs(entry: ResourceEntry) -> list[str]:
-    """Emit public generated accessor methods from route contract."""
+    """Emit typed route accessors when not already defined on the stub base chain."""
     methods = _load_route_public_methods(entry.attr_name)
     if not methods:
         return []
+    impl_classes = _stub_impl_classes(entry)
+    model_name = entry.model_class.__name__
     lines: list[str] = []
     for name in methods:
+        impl_cls = _method_impl_class(name, impl_classes)
+        if impl_cls is not None:
+            continue
         lines.append("")
-        lines.append(f"    def {name}(self, *args: Any, **kwargs: Any) -> Any: ...")
+        lines.extend(
+            _format_method_override(
+                name,
+                model_name,
+                source_class=ResourceRuntimeFacade,
+            )
+        )
+    return lines
+
+
+def _specialized_facade_public_methods(facade_cls: type[Any]) -> list[str]:
+    """Public callables defined on a specialized facade class body."""
+    names: list[str] = []
+    for name, obj in facade_cls.__dict__.items():
+        if name.startswith("_"):
+            continue
+        if callable(obj):
+            names.append(name)
+    return sorted(names)
+
+
+def _emit_specialized_facade_stubs(entry: ResourceEntry) -> list[str]:
+    """Re-emit specialized facade methods on ``_XFacade`` for agent Read discovery."""
+    facade_cls = FACADE_CLASS_BY_ATTR.get(entry.attr_name)
+    if facade_cls is None:
+        return []
+    model_name = entry.model_class.__name__
+    lines: list[str] = []
+    for name in _specialized_facade_public_methods(facade_cls):
+        lines.append("")
+        lines.extend(
+            _format_method_override(
+                name,
+                model_name,
+                source_class=facade_cls,
+                include_doc=True,
+            )
+        )
     return lines
 
 
@@ -250,8 +331,16 @@ def _emit_create_override(
     return params
 
 
-def _format_method_override(name: str, model_name: str) -> list[str]:
-    sig = inspect.signature(getattr(ResourceRuntimeFacade, name))
+def _format_method_override(
+    name: str,
+    model_name: str,
+    *,
+    source_class: type[Any] | None = None,
+    include_doc: bool = False,
+) -> list[str]:
+    cls = source_class or ResourceRuntimeFacade
+    method = getattr(cls, name)
+    sig = inspect.signature(method)
     params: list[str] = []
     saw_keyword_only = False
     for pname, param in sig.parameters.items():
@@ -269,12 +358,113 @@ def _format_method_override(name: str, model_name: str) -> list[str]:
         else:
             params.append(f"        {pname}{ann_str}{default},")
     ret = _format_annotation(sig.return_annotation, model_name)
-    return [
+    lines: list[str] = [
         f"    def {name}(",
         *params,
         f"    ) -> {ret}:",
-        "        ...",
     ]
+    if include_doc:
+        doc_para = _first_docstring_paragraph(method)
+        if doc_para:
+            lines.append(f'        """{doc_para}"""')
+    lines.append("        ...")
+    return lines
+
+
+def _emit_list_override(model_name: str) -> list[str]:
+    """Explicit ``list()`` on stub facades for reliable IDE hovers."""
+    return _format_method_override(
+        "list",
+        model_name,
+        source_class=ListableFacade,
+        include_doc=True,
+    )
+
+
+def _format_init_param(param: inspect.Parameter) -> str:
+    ann = param.annotation
+    if ann is inspect.Parameter.empty:
+        ann_str = ""
+    elif isinstance(ann, str):
+        ann_str = f": {ann}"
+    else:
+        ann_str = f": {getattr(ann, '__name__', str(ann))}"
+    default = " = ..." if param.default is not inspect.Parameter.empty else ""
+    if param.kind == inspect.Parameter.VAR_KEYWORD:
+        return f"        **{param.name}{ann_str},"
+    return f"        {param.name}{ann_str}{default},"
+
+
+def _wrap_doc_text(text: str, *, first_line_width: int, body_width: int) -> list[str]:
+    """Wrap docstring text for stub emission under line-length limits."""
+    words = text.split()
+    if not words:
+        return []
+    lines: list[str] = []
+    current = words[0]
+    limit = first_line_width
+    for word in words[1:]:
+        candidate = f"{current} {word}"
+        if len(candidate) <= limit:
+            current = candidate
+            continue
+        lines.append(current)
+        current = word
+        limit = body_width
+    lines.append(current)
+    return lines
+
+
+def _emit_client_init_stub() -> list[str]:
+    """``Client.__init__`` signature and docstring from runtime ``client_surface.Client``."""
+    sig = inspect.signature(RuntimeClient.__init__)
+    doc = inspect.getdoc(RuntimeClient) or ""
+    if doc:
+        doc = doc.strip().split("\n\n", maxsplit=1)[0].strip()
+    lines: list[str] = ["    def __init__("]
+    saw_kwonly = False
+    for param in sig.parameters.values():
+        if param.name == "self":
+            lines.append("        self,")
+            continue
+        if param.kind == inspect.Parameter.KEYWORD_ONLY and not saw_kwonly:
+            lines.append("        *,")
+            saw_kwonly = True
+        lines.append(_format_init_param(param))
+    lines.append("    ) -> None:")
+    if doc:
+        wrapped = _wrap_doc_text(doc, first_line_width=77, body_width=80)
+        if len(wrapped) == 1:
+            lines.append(f'        """{wrapped[0].replace(chr(34), chr(39))}"""')
+        else:
+            lines.append('        """' + wrapped[0])
+            for doc_line in wrapped[1:]:
+                lines.append(f"        {doc_line}")
+            lines.append('        """')
+    lines.append("        ...")
+    return lines
+
+
+def _emit_client_wait_until_stub() -> list[str]:
+    sig = inspect.signature(RuntimeClient.wait_until)
+    lines: list[str] = ["    def wait_until("]
+    saw_kwonly = False
+    for param in sig.parameters.values():
+        if param.name == "self":
+            lines.append("        self,")
+            continue
+        if param.kind == inspect.Parameter.KEYWORD_ONLY and not saw_kwonly:
+            lines.append("        *,")
+            saw_kwonly = True
+        lines.append(_format_init_param(param))
+    ret_ann = sig.return_annotation
+    ret = ret_ann if isinstance(ret_ann, str) else getattr(ret_ann, "__name__", str(ret_ann))
+    doc_para = _first_docstring_paragraph(RuntimeClient.wait_until)
+    lines.append(f"    ) -> {ret}:")
+    if doc_para:
+        lines.append(f'        """{doc_para}"""')
+    lines.append("        ...")
+    return lines
 
 
 def _load_facade_contract_resources() -> dict[str, dict[str, Any]]:
@@ -482,16 +672,18 @@ def _emit_resource_class(
     create_lines = _emit_create_override(entry, contract_row)
     extra = _stub_extra_methods(entry)
     route_lines = _emit_route_method_stubs(entry)
-    if create_lines or extra or route_lines:
-        if create_lines:
-            lines.append("")
-            lines.extend(create_lines)
-        for method_name in extra:
-            lines.append("")
-            lines.extend(_format_method_override(method_name, model_name))
-        lines.extend(route_lines)
-    else:
-        lines.append("    pass")
+    list_lines = _emit_list_override(model_name)
+    specialized_lines = _emit_specialized_facade_stubs(entry)
+    lines.append("")
+    lines.extend(list_lines)
+    lines.extend(specialized_lines)
+    if create_lines:
+        lines.append("")
+        lines.extend(create_lines)
+    for method_name in extra:
+        lines.append("")
+        lines.extend(_format_method_override(method_name, model_name))
+    lines.extend(route_lines)
     return lines
 
 
@@ -507,9 +699,11 @@ def main() -> None:  # noqa: D103
     lines: list[str] = [
         "# Generated by devtools/generate_client_stub.py — do not edit by hand.",
         "# pyright: reportImplicitOverride=false",
+        "# ruff: noqa: D205",
         "# Source of truth: endorlabs.registry.RESOURCE_REGISTRY"
         " and CUSTOM_FACADE_REGISTRY.",
         "",
+        "from collections.abc import Callable",
         "from typing import Any",
         "",
     ]
@@ -518,6 +712,9 @@ def main() -> None:  # noqa: D103
     # isort requires one contiguous first-party block in alpha order.
     relative_imports: dict[str, list[str]] = {
         ".api_client": ["APIClient"],
+        ".core.filter": ["FilterExpression"],
+        ".core.types": ["ListParameters"],
+        ".operations.routes": ["RouteResult"],
     }
     facade_imports: set[str] = set()
     for entry in RESOURCE_REGISTRY:
@@ -535,12 +732,20 @@ def main() -> None:  # noqa: D103
             if payload_name not in relative_imports[mod]:
                 relative_imports[mod].append(payload_name)
         base = _stub_base_class(entry)
+        specialized = _specialized_facade_name(entry)
+        if specialized:
+            specialized_imports = relative_imports.setdefault(".facade.specialized", [])
+            if specialized not in specialized_imports:
+                specialized_imports.append(specialized)
         if base.startswith("ResourceRuntimeFacade"):
             facade_imports.add("ResourceRuntimeFacade")
-        else:
+        elif base.startswith("ListableFacade"):
             facade_imports.add("ListableFacade")
+        else:
+            facade_imports.add("ResourceRuntimeFacade")
         if _stub_extra_methods(entry):
             facade_imports.add("ResourceRuntimeFacade")
+        facade_imports.add("ListableFacade")
 
     if facade_imports:
         relative_imports[".facade"] = sorted(facade_imports)
@@ -603,29 +808,13 @@ def main() -> None:  # noqa: D103
         attr = entry.attr_name
         model_name = entry.model_class.__name__
         class_name = f"_{model_name}Facade"
-        desc = RESOURCE_DESCRIPTIONS.get(attr, "")
         lines.append(f"    {attr}: {class_name}")
-        if desc:
-            lines.append(f'    """{desc}"""')
     for custom in CUSTOM_FACADE_REGISTRY:
         lines.append(f"    {custom.attr_name}: {custom.pyi_facade_class}")
-        if custom.pyi_attr_doc:
-            lines.append(f'    """{custom.pyi_attr_doc}"""')
     lines.append("")
     lines.append("    _client: APIClient | None")
     lines.append("")
-    lines.append("    def __init__(")
-    lines.append("        self,")
-    lines.append("        api_client: APIClient | None = ...,")
-    lines.append("        tenant: str | None = ...,")
-    lines.append("        *,")
-    lines.append("        timeout: float = ...,")
-    lines.append("        content_type: str = ...,")
-    lines.append("        accept_encoding: str | None = ...,")
-    lines.append("        max_retries: int = ...,")
-    lines.append("        base_url: str | None = ...,")
-    lines.append("        **client_kwargs: Any,")
-    lines.append("    ) -> None: ...")
+    lines.extend(_emit_client_init_stub())
     lines.append("    def close(self) -> None: ...")
     lines.append("    def __enter__(self) -> Client: ...")
     lines.append("    def __exit__(")
@@ -637,12 +826,7 @@ def main() -> None:  # noqa: D103
     lines.append("    def whoami(self) -> str | None:")
     lines.append('        """Return the authenticated identity name, or None."""')
     lines.append("        ...")
-    lines.append("    def wait_until(")
-    lines.append("        self,")
-    lines.append("        predicate: Any,")
-    lines.append("        timeout: float = ...,")
-    lines.append("        poll_interval_max: float = ...,")
-    lines.append("    ) -> bool: ...")
+    lines.extend(_emit_client_wait_until_stub())
 
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
     subprocess.run(

@@ -27,6 +27,7 @@ def test_ship_git_paths_includes_core_artifacts() -> None:
     assert "src/endorlabs/client_surface.pyi" in paths
     assert "docs/generated-reference/resources.md" in paths
     assert "docs/generated-reference/resource-routes.md" in paths
+    assert "docs/generated-reference/filter-enum-snippets.md" in paths
 
 
 def test_changelog_has_version_matches_section() -> None:
@@ -101,6 +102,8 @@ def test_run_verify_skip_upstream_skips_upstream_only(tmp_path: Path) -> None:
         if _mentions(cmd, "model_sync.py"):
             return ok
         if _mentions(cmd, "generate_route_contract.py"):
+            return ok
+        if _mentions(cmd, "generate_filter_enum_reference.py"):
             return ok
         if _mentions(cmd, "sync_agent_knowledge.py"):
             return ok

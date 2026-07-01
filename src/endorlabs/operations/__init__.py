@@ -16,8 +16,13 @@ from typing import TYPE_CHECKING, Any, cast
 import httpx
 from pydantic import BaseModel, ValidationError
 
-from ..core.exceptions import EndorAPIError
-from ..core.exceptions import ValidationError as EndorValidationError
+from ..core.exceptions import (
+    NAMESPACE_SCOPE_HINT,
+    EndorAPIError,
+)
+from ..core.exceptions import (
+    ValidationError as EndorValidationError,
+)
 from ..core.types import ListParameters, list_parameters_has_nonempty_field_mask
 from ..utils.logging_config import get_resource_logger
 from ..utils.namespace import resource_in_namespace_tree
@@ -198,9 +203,13 @@ class BaseResourceOperations[T: BaseModel]:
             validated = payload.model_validate(self._dump_for_api(payload))
             return validated
         except ValidationError as e:
-            # Convert Pydantic ValidationError to our ValidationError
+            error_details = "\n".join(
+                f"  {err['loc']}: {err['msg']}" for err in e.errors()
+            )
             raise EndorValidationError(
-                message=f"Invalid payload for {operation} operation",
+                message=(
+                    f"Invalid payload for {operation} operation:\n{error_details}"
+                ),
                 operation=operation,
                 namespace=namespace,
             ) from e
@@ -437,7 +446,8 @@ class BaseResourceOperations[T: BaseModel]:
             raise NotFoundError(
                 message=(
                     f"{self.resource_name} with UUID '{resource_uuid}' "
-                    f"not found in namespace '{tenant_meta_namespace}'"
+                    f"not found in namespace '{tenant_meta_namespace}'. "
+                    f"{NAMESPACE_SCOPE_HINT}"
                 ),
                 operation="get",
                 namespace=tenant_meta_namespace,

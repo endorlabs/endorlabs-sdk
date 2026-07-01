@@ -40,6 +40,7 @@ SHIP_GIT_PATHS: tuple[str, ...] = (
     "docs/generated-reference/create-update-payloads.md",
     "docs/generated-reference/api-surfaces.md",
     "docs/generated-reference/resource-routes.md",
+    "docs/generated-reference/filter-enum-snippets.md",
     "docs/generated-reference/coverage.json",
     "docs/generated-reference/resources",
 )
@@ -181,6 +182,15 @@ def run_verify(
         msg = (route_regen.stdout or route_regen.stderr or "").strip()
         logger.error("Route contract regeneration failed.\n%s", msg)
         return route_regen.returncode
+
+    filter_regen = _run(
+        [sys.executable, "devtools/generate_filter_enum_reference.py"],
+        cwd=base,
+    )
+    if filter_regen.returncode != 0:
+        msg = (filter_regen.stdout or filter_regen.stderr or "").strip()
+        logger.error("Filter enum reference regeneration failed.\n%s", msg)
+        return filter_regen.returncode
 
     for rel in (
         "src/endorlabs/generated/registry_contract.py",

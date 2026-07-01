@@ -469,6 +469,10 @@ class V1PackageFirewallLogSpec(BaseModel):
     """
     API key ID used for the request (for audit purposes).
     """
+    api_key_name: str | None = Field(
+        None,
+        title='Human-readable name of the API key (APIKey.meta.name) used for the request',
+    )
     block_reason: V1BlockReason | None = 'BLOCK_REASON_UNSPECIFIED'
     """
     Deprecated: use reason instead.
@@ -526,6 +530,10 @@ class V1PackageFirewallLogSpec(BaseModel):
     request_uri: str | None = None
     """
     URI of the request that was blocked.
+    """
+    user: str | None = None
+    """
+    Client-supplied user attribution decoded from the Basic-auth username (e.g. user/machine); free-form and unverified.
     """
 
 

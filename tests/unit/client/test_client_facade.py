@@ -497,6 +497,18 @@ def test_custom_facade_registry_has_stub_metadata() -> None:
         assert entry.pyi_attr_doc.strip(), f"{entry.attr_name}: pyi_attr_doc"
 
 
+def test_facade_class_by_attr_registry_alignment() -> None:
+    """Every specialized runtime facade must map to a registry attr_name."""
+    from endorlabs.facade.specialized import FACADE_CLASS_BY_ATTR
+    from endorlabs.registry import RESOURCE_REGISTRY
+
+    registry_attrs = {entry.attr_name for entry in RESOURCE_REGISTRY}
+    for attr_name in FACADE_CLASS_BY_ATTR:
+        assert attr_name in registry_attrs, (
+            f"{attr_name} missing from RESOURCE_REGISTRY"
+        )
+
+
 def test_client_namespace_list_uses_session_logging_only(
     client_with_mock_transport: Client,
 ) -> None:
@@ -1118,7 +1130,7 @@ def test_finding_empty_list_warns_at_default_namespace(
     """Empty project-scoped list at tenant root emits a namespace scoping warning."""
     client = client_with_mock_transport
     client.Finding._ops.list = Mock(return_value=[])
-    with pytest.warns(UserWarning, match="namespace=project.namespace"):
+    with pytest.warns(UserWarning, match="list_by_project"):
         client.Finding.list(max_pages=TEST_MAX_PAGES)
 
 
@@ -1142,7 +1154,7 @@ def test_finding_empty_list_warns_with_project_uuid_filter_at_tenant_root(
     """project_uuid filter does not widen namespace; empty list still warns at tenant root."""
     client = client_with_mock_transport
     client.Finding._ops.list = Mock(return_value=[])
-    with pytest.warns(UserWarning, match="namespace=project.namespace"):
+    with pytest.warns(UserWarning, match="list_by_project"):
         client.Finding.list(
             filter='spec.project_uuid=="proj-1"',
             max_pages=TEST_MAX_PAGES,
@@ -1213,4 +1225,4 @@ def test_scan_result_list_by_project(client_with_mock_transport: Client) -> None
     assert call.kwargs["source"] == "p1"
     assert call.kwargs["namespace"] == "tenant.child"
     assert call.kwargs["page_size"] == 10
-    assert out.values == [sr1]
+    assert out == [sr1]

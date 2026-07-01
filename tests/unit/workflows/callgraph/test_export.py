@@ -28,9 +28,7 @@ def test_run_callgraph_export_writes_manifests(tmp_path: Path) -> None:
         envelope={"uuid": "cg-1", "meta": {"parent_uuid": "pv1"}},
     )
     client = MagicMock()
-    client.PackageVersion.list_by_project.return_value = SimpleNamespace(
-        values=[pv_missing, pv_ok]
-    )
+    client.PackageVersion.list_by_project.return_value = [pv_missing, pv_ok]
 
     def _decode(pv: object) -> CallGraphDecoded:
         if getattr(pv, "uuid", None) == "pv2":

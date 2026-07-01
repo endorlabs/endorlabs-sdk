@@ -1044,6 +1044,10 @@ class V1SemgrepWeb(BaseModel):
 
 
 class V1SourceLocation(BaseModel):
+    description: str | None = None
+    """
+    Human-readable description of what happens at this dataflow step.
+    """
     end_column: int | None = Field(None, title='Ending column number in the file')
     end_line: int | None = Field(None, title='Ending line number in the file')
     function_name: str | None = None
@@ -1101,6 +1105,10 @@ class V1ValidationStatus(StrEnum):
 
 
 class DataflowItem(BaseModel):
+    description: str | None = None
+    """
+    Human-readable description of what happens at this dataflow step.
+    """
     end_column: int | None = Field(None, title='Ending column number in the file')
     end_line: int | None = Field(None, title='Ending line number in the file')
     function_name: str | None = None

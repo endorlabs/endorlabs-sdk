@@ -22,13 +22,13 @@ class TestFacadeWireHelpers:
 
     def test_scan_result_get_logs_for_sample_scan(self) -> None:
         project = require_first_project(self.client)
-        route = self.client.ScanResult.list_by_project(
+        scans = self.client.ScanResult.list_by_project(
             project,
             max_pages=TEST_MAX_PAGES,
         )
-        if not route.values:
+        if not scans:
             pytest.skip("No scan results for project")
-        scan = route.values[0]
+        scan = scans[0]
         try:
             logs = self.client.ScanResult.get_logs(
                 scan,
@@ -44,19 +44,19 @@ class TestFacadeWireHelpers:
     def test_call_graph_data_fetch_and_decode_for_package_version(self) -> None:
         project = require_first_project(self.client)
         try:
-            pv_route = self.client.PackageVersion.list_by_project(
+            pvs = self.client.PackageVersion.list_by_project(
                 project,
                 max_pages=TEST_MAX_PAGES,
             )
         except ServerError as err:
             pytest.skip(f"PackageVersion list unavailable: {err}")
-        if not pv_route.values:
+        if not pvs:
             pytest.skip("No package versions for project")
         decoded_any = False
         ns = project.namespace
         if not ns:
             pytest.skip("Project has no namespace for CallGraphData fetch")
-        for pv in pv_route.values[:5]:
+        for pv in pvs[:5]:
             try:
                 envelope = self.client.CallGraphData.fetch(pv, namespace=ns)
             except NotFoundError:
@@ -76,11 +76,11 @@ class TestFacadeWireHelpers:
 
     def test_scan_result_latest_created_for_project(self) -> None:
         project = require_first_project(self.client)
-        route = self.client.ScanResult.list_by_project(
+        scans = self.client.ScanResult.list_by_project(
             project,
             max_pages=TEST_MAX_PAGES,
         )
-        if not route.values:
+        if not scans:
             pytest.skip("No scan results for project")
         try:
             latest = self.client.ScanResult.latest_created(parent=project)

@@ -8,6 +8,22 @@ from typing import Any, override
 
 from .types import ErrorResponse
 
+_DETAILS_MAX_LEN = 500
+
+NAMESPACE_SCOPE_HINT = (
+    "If the resource exists in a child namespace, resolve Project first and pass "
+    "namespace=project.namespace, or pass the resource object to get/update/delete "
+    "(see rule endor-namespace-scoping)."
+)
+
+
+def append_namespace_scope_hint(message: str) -> str:
+    """Append namespace scoping guidance when not already present."""
+    lower = message.lower()
+    if "endor-namespace-scoping" in lower or "namespace=project.namespace" in lower:
+        return message
+    return f"{message.rstrip()} {NAMESPACE_SCOPE_HINT}"
+
 
 class EndorAPIError(Exception):
     """Base exception for Endor API errors.
@@ -62,6 +78,13 @@ class EndorAPIError(Exception):
             parts.append(f"Resource UUID: {self.resource_uuid}")
         if self.namespace:
             parts.append(f"Namespace: {self.namespace}")
+        if self.error_response:
+            details = self.error_response.get("details")
+            if details:
+                details_str = str(details)
+                if len(details_str) > _DETAILS_MAX_LEN:
+                    details_str = details_str[:_DETAILS_MAX_LEN] + "..."
+                parts.append(f"Details: {details_str}")
         return " | ".join(parts)
 
 

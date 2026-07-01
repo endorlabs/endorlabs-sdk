@@ -18,9 +18,28 @@ Normative guidance for finding resources before relationship accessors (`list_by
 | `search_by_*(query, …)` | `list[T]` or `list[dict]` with `mask=` | Fuzzy human/LLM input; always bounded |
 | `list(**kwargs)` | Same as today | Custom MQL, grouping, masked rows |
 | `get(uuid)` | Single model | Known UUID |
-| `list_by_*` / `to_*` | `RouteResult` | Cross-kind edges from route contract |
+| `list_by_*` / `list_for_context` | `list[T]` or `list[dict]` with `mask=` | Cross-kind list edges from route contract |
+| `to_*` | `RouteResult` | Stitch / GET-with-fallback — `.value`, `.edge_used`, `.warnings`; iterable |
+
+Filter enum literals (examples): [reference/filter-enum-snippets.md](../reference/filter-enum-snippets.md). Relationship edge inventory: [reference/resource-routes.md](../reference/resource-routes.md).
 
 **Removed (breaking):** `lookup()`, `Project.resolve()` — no shims. Use `search_by_*` + explicit disambiguation or `get(uuid)`.
+
+## `RouteResult` (stitch accessors only)
+
+`list_by_*` and `list_for_context` return **`list[T]`** at the facade (same as `.list()`). **`to_*`** stitch accessors return **`RouteResult[T]`** (`endorlabs.operations.routes`).
+
+| Field / protocol | Use |
+| --- | --- |
+| `for row in result` | Iterate `.values` when set; else one item from `.value` |
+| `len(result)` | Row count (0 when empty) |
+| `bool(result)` | False when no `.value` and no `.values` |
+| `.value` / `.single` | Preferred on stitch call sites — one resolved row |
+| `.edge_used` | Which contract edge ran (useful when a method has fallback paths) |
+| `.warnings` | Non-fatal issues (ambiguous attribute match, list-only fields on GET paths) |
+| `.truncated` | Hint when stitch resolution picked one of many rows |
+
+Namespace on list/stitch accessors is taken from the **source resource** unless `namespace=` is passed. Forward `filter`, `mask`, `max_pages`, and other list kwargs like `list()`.
 
 ## `search_by_*` parameters
 
@@ -95,14 +114,14 @@ findings = client.Finding.list_by_project(
     project,
     filter='spec.level=="FINDING_LEVEL_CRITICAL"',
     max_pages=5,
-).values
+)
 
 # F() — composable, injection-safe
 findings = client.Finding.list_by_project(
     project,
     filter=F("spec.level") == "FINDING_LEVEL_CRITICAL",
     max_pages=5,
-).values
+)
 ```
 
 ### Scan-plane partition (same `context.type` + `context.id`)
@@ -111,23 +130,37 @@ findings = client.Finding.list_by_project(
 from endorlabs.facade import context_partition_filter
 
 scans = client.ScanResult.list_by_project(project, limit=1)
-if scans.values:
-    scan = scans.values[0]
-    findings = client.Finding.list_for_context(scan, max_pages=5).values
+if scans:
+    scan = scans[0]
+    findings = client.Finding.list_for_context(scan, max_pages=5)
 
 # Manual composition
 findings = client.Finding.list_by_project(
     project,
     filter=context_partition_filter(scan.context),
     max_pages=5,
-).values
+)
 ```
 
 Do **not** filter on `context.scan_uuid` — OpenAPI `v1Context` exposes `type`, `id`, `tags`, `will_be_deleted_at` only.
 
 For exact finding UUIDs on a scan record, use `ScanResult.spec.findings` + `Finding.get(uuid)`.
 
+### Stitch accessor (`to_*`)
+
+```python
+route = client.Finding.to_dependency_metadata(finding)
+dm = route.value  # or route.single
+# RouteResult is iterable when you need fallback rows:
+for row in route:
+    ...
+```
+
+When `.values` is populated, `for row in route` matches those rows; a single-row GET path iterates one item via `.value`.
+
 ## Disambiguation
+
+`search_by_*` follows the same split as Django ORM **`filter()`** vs **`get()`**: search returns a **bounded candidate list**; `get(uuid)` returns one row or raises. Method names are intentional — do not expect a single object from `search_by_name`.
 
 When `search_by_name` returns multiple projects (same URL in different namespaces), workflows must pick a row, narrow `namespace=`, or fail explicitly — not rely on facade cardinality enforcement.
 
