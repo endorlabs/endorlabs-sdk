@@ -80,7 +80,7 @@ endorctl api create --resource=FindingLog --namespace=<tenant.ns> -f payload.jso
 
 | Method | Edge id | Wire kind | Returns |
 |--------|---------|-----------|---------|
-| `list_for_context(…)` | `scan.finding_logs` | `list_by_context_partition` | RouteResult → `.values` |
+| `list_for_context(…)` | `scan.finding_logs` | `list_by_context_partition` | `list[T]` |
 
 See [resource-routes.md](../resource-routes.md) and [facade-helpers.md](../../guides/facade-helpers.md).
 

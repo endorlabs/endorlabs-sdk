@@ -108,7 +108,7 @@ class TestPullFindingsContext:
     def test_returns_empty_on_no_findings(self) -> None:
         """Returns FindingsContext with total=0 when no findings exist."""
         client = Mock()
-        client.Finding.list_by_project.return_value = Mock(values=[])
+        client.Finding.list_by_project.return_value = []
         project = _make_mock_project()
 
         ctx = pull_findings_context(client, project)
@@ -128,7 +128,7 @@ class TestPullFindingsContext:
             _make_mock_finding("f3", "FINDING_LEVEL_MEDIUM", ["FINDING_CATEGORY_SAST"]),
         ]
         client = Mock()
-        client.Finding.list_by_project.return_value = Mock(values=findings)
+        client.Finding.list_by_project.return_value = findings
         project = _make_mock_project()
 
         ctx = pull_findings_context(client, project)
@@ -145,7 +145,7 @@ class TestPullFindingsContext:
             _make_mock_finding("f2", "FINDING_LEVEL_LOW"),
         ]
         client = Mock()
-        client.Finding.list_by_project.return_value = Mock(values=findings)
+        client.Finding.list_by_project.return_value = findings
         project = _make_mock_project()
 
         ctx = pull_findings_context(client, project)
@@ -390,7 +390,7 @@ class TestCreateSession:
     def test_returns_session_result(self, tmp_path: Path) -> None:
         """create_session returns a SessionResult with status."""
         client = Mock()
-        client.Finding.list_by_project.return_value = Mock(values=[])
+        client.Finding.list_by_project.return_value = []
         client.Policy.list.return_value = []
         client.RepositoryVersion.list.return_value = []
 

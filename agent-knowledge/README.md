@@ -71,10 +71,11 @@ For **Claude API** users: zip each skill directory and upload via the `/v1/skill
 
 - **`docs/`**: Full reference material. Skills condense and link to these; originals are unchanged. Namespace bulk workflows (`endor-estate` pull/analyze) are **not** agent skills — see [`docs/estate/`](../docs/estate/README.md) and `workflows.yaml` (`estate-workspace`, `agent_visible: false`).
 - **Evidence discipline:** Distinguish API/artifact-backed claims from inferred conclusions; see [INDEX.md](INDEX.md#evidence-vs-inference) and skill **endor-troubleshoot-sdk** (maintainers: `docs/contributing/troubleshooting.md`).
+- **`INDEX.md`** — Tier 0 runtime index for agents (shipped; in `agent_knowledge_bootstrap_paths()`). Traps, bootstrap rules, read order.
+- **`AGENTS.md`** — thin consumer entrypoint in the wheel (`discover().agents_guide`); points to INDEX and skills.
 - **`rules/`** — always load via `agent_knowledge_bootstrap_paths()` (namespace, workspace, composition, list performance, local context, portable examples).
 - **`contracts/`** — on-demand SDK reference semantics (list parameters, naming, errors, dependency metadata).
 - **`.cursor/rules/`**: Always-on project rules (apply every session). Skills are on-demand (apply when triggered).
-- **`AGENTS.md`**: Project index for AI agents. Points here for skill discovery.
 
 ## Security
 

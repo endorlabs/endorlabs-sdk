@@ -139,13 +139,12 @@ def list_package_versions_for_project(
     page_size: int = 200,
 ) -> list[Any]:
     """List package versions for *project* in *namespace*."""
-    route = client.PackageVersion.list_by_project(
+    return client.PackageVersion.list_by_project(
         project,
         namespace=namespace,
         max_pages=max_pages,
         page_size=page_size,
     )
-    return route.values or []
 
 
 def resolve_package_version_with_callgraph(

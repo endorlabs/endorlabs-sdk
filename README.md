@@ -35,7 +35,7 @@ Type-safe, resource-oriented Python client for the Endor Labs REST API. List, ge
 | You want to…                                        | Go to                                                                                          |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | **Use the SDK** (API scripts, CI)                   | [Installation](#installation) → [Quick start](#quick-start) — **no `init()` required**         |
-| **Bootstrap an AI agent** (skills, offline OpenAPI) | [AGENTS.md](AGENTS.md)                                                                         |
+| **Bootstrap an AI agent** (API + skills)            | [Agent bootstrap](#agent-bootstrap-discover-vs-init) — `discover()` then `init()` for workflows |
 | **Try the SDK on a real tenant**                    | [docs/guides/examples.md](docs/guides/examples.md) · [Try it with skills](#try-it-with-skills) |
 | **SDK contracts and deep reference**                | [docs/README.md](docs/README.md)                                                               |
 | **Contribute to this repo**                         | [CONTRIBUTORS.md](CONTRIBUTORS.md)                                                             |
@@ -128,11 +128,13 @@ client.wait_until(
 )
 
 scans = client.ScanResult.list_by_project(project, limit=1)
-latest_scan = scans.values[0] if scans.values else None
+latest_scan = scans[0] if scans else None
 findings = client.Finding.list_for_context(latest_scan, max_pages=1) if latest_scan else None
 ```
 
-**Relationship accessors** — prefer generated helpers over hand-built filters when the edge exists in the contract (`list_by_project`, `list_for_context`, `Finding.to_dependency_metadata`). They return `RouteResult` (use `.values` / `.value`). Catalog: [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md) · guide: [docs/guides/facade-helpers.md](docs/guides/facade-helpers.md).
+**Relationship accessors:** `list_by_project` / `list_for_context` return **`list[T]`** like `.list()`. Stitch accessors (`to_dependency_metadata`, …) return **`RouteResult`** — use `.value` / `.single` and inspect `.edge_used` / `.warnings`. Prefer list accessors over hand-built filters when the edge exists in the contract. Catalog: [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md) · guide: [docs/guides/facade-helpers.md](docs/guides/facade-helpers.md).
+
+**Pagination on `.list()`:** `limit=N` is an alias for `page_size=N` (same idea as `list_by_project(..., limit=N)`). Use `max_pages` to cap fetch depth.
 
 More patterns (filters, `F()`, masks, namespace scoping): [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md), [docs/guides/retrieving-scan-results.md](docs/guides/retrieving-scan-results.md).
 
@@ -165,20 +167,46 @@ The SDK uses **environment variables** only (no config file loading). Precedence
 
 Canonical naming is `tenant.namespace.child`; do not use UUIDs in namespace paths. Full semantics: [docs/contracts.md](docs/contracts.md).
 
-Example `.env` for local runs:
+Example `.env` for local runs — use **one** credential mode (not both):
 
 ```bash
+# Option A — bearer token (common for agent sessions)
+ENDOR_TOKEN=your-bearer-token
+ENDOR_NAMESPACE=your-tenant.namespace
+ENDOR_LOG_LEVEL=INFO
+```
+
+```bash
+# Option B — API key (CI)
 ENDOR_API_CREDENTIALS_KEY=your-api-key
 ENDOR_API_CREDENTIALS_SECRET=your-api-secret
 ENDOR_NAMESPACE=your-tenant.namespace
 ENDOR_LOG_LEVEL=INFO
 ```
 
+If both token and API key variables are set, the SDK prefers the token; **MCP and endorctl** typically fail with conflicting auth.
+
+### Agent bootstrap: `discover()` vs `init()`
+
+| Need | Approach |
+| ---- | -------- |
+| INDEX, contracts, traps, stub path — **no cwd writes** | `print(endorlabs.discover())` or `python -m endorlabs.examples.agent_bootstrap --dry-run` — then read every `bootstrap_paths` entry |
+| Skill playbooks on disk (call graph, scan RCA, bundles) | `endorlabs.init()` → `.endorlabs-context/sdk/skills/<id>/SKILL.md` |
+| Platform OpenAPI / user docs offline | `pip install 'endorlabs[docs]'` then `init(include_openapi=True, include_user_docs=True)` |
+
+Runnable probe (paths only): `python -m endorlabs.examples.agent_bootstrap --dry-run`. Shipped consumer guide: `discover().agents_guide`.
+
+**Call graphs (agents):** `CallGraphData.fetch()` returns the raw envelope only. For search and path queries, read skill **`endor-fetch-and-search-call-graph`** after `init()` (or from the wheel: `skills/endor-fetch-and-search-call-graph/SKILL.md` via `agent_knowledge_manifest()`). Prefer `endorlabs.workflows.callgraph.resolve_package_version_with_callgraph()` and `CallGraphData.decode()` — `spec.call_graph_available` does not guarantee stored graph data. Pass `namespace=project.tenant_meta.namespace` on PV lists and decode.
+
+### AI agents
+
+Before `Client()`, run `print(endorlabs.discover())` (or `agent_bootstrap --dry-run`) and read every path in `bootstrap_paths`. Before **workflow** tasks (call graph, project bundle, scan RCA), run `endorlabs.init()` and open the relevant skill under `.endorlabs-context/sdk/skills/`.
+
 Browser auth, SSO setup, and skill walkthroughs: [docs/guides/examples.md](docs/guides/examples.md).
 
 ## Try it with skills
 
-Guided tenant sessions use shipped agent skills — start with [docs/guides/examples.md](docs/guides/examples.md) and [AGENTS.md](AGENTS.md). Skills ship in the wheel (`endorlabs.agent_knowledge_index_path()`) or `.endorlabs-context/sdk/skills/` after `init()`.
+Guided tenant sessions use shipped agent skills — start with [docs/guides/examples.md](docs/guides/examples.md). Wheel entry: `print(endorlabs.discover())` or `agent_bootstrap --dry-run`; materialize with `init()` to `.endorlabs-context/sdk/`.
 
 ## Further reading
 

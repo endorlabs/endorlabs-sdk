@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-changelog.md
-x-endor-source-sha256: 4a624cbdd0073ab9eb26873faa56d06a5b0e02a8c03e98f0b22385c2e764ef8d
+x-endor-source-sha256: b9e088bbff23a187570fdc608384e9ed65c2a51b828e972f409fd7d02754fa63
 ---
 
 # Changelog (maintainer)

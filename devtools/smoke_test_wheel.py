@@ -81,7 +81,15 @@ def main() -> int:
             [
                 str(python),
                 "-c",
-                "import endorlabs; from endorlabs import Client; print(endorlabs.__version__)",
+                (
+                    "import endorlabs; from endorlabs import Client; "
+                    "from importlib.resources import files; "
+                    "pkg = files('endorlabs'); "
+                    "assert (pkg / 'py.typed').is_file(), 'missing py.typed'; "
+                    "assert (pkg / 'client_surface.pyi').is_file(), "
+                    "'missing client_surface.pyi'; "
+                    "print(endorlabs.__version__)"
+                ),
             ]
         )
         version = version_proc.stdout.strip()

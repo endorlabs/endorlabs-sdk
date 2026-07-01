@@ -222,12 +222,11 @@ def _list_package_versions_for_project(
     namespace: str,
     project: Any,
 ) -> list[Any]:
-    route = client.PackageVersion.list_by_project(
+    package_versions = client.PackageVersion.list_by_project(
         project,
         namespace=namespace,
         traverse=False,
     )
-    package_versions = route.values or []
     seen: set[str] = set()
     unique: list[Any] = []
     for pv in package_versions:

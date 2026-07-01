@@ -75,7 +75,7 @@ Maintainers editing authoring: `uv run python devtools/sync_agent_knowledge.py` 
 - **Canonical naming:** `tenant.namespace.child`; no UUIDs in namespace paths.
 - **Environment variables:** only names in [README.md](README.md), [CONTRIBUTORS.md](CONTRIBUTORS.md), product docs, or local OpenAPI.
 - **Client facades:** `client.<Kind>` PascalCase = `endorctl api … --resource <Kind>`. Custom: **`CallGraphData`** (decode/fetch); log lines via **`ScanResult.get_logs`** — [docs/contracts.md](docs/contracts.md), [docs/guides/facade-helpers.md](docs/guides/facade-helpers.md).
-- **Return types:** `.get()` → typed model or raise; `.list()` / `search_by_*` → models unless non-empty `mask=` → `dict` rows; `list_by_*` → `RouteResult`.
+- **Return types:** `.get()` → typed model or raise; `.list()` / `search_by_*` / `list_by_*` / `list_for_context` → models unless non-empty `mask=` → `dict` rows; `to_*` stitch accessors → `RouteResult`.
 - **F():** `matches()` on strings; `contains()` on array fields only.
 
 ## Repository layout (summary)

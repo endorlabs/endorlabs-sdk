@@ -168,6 +168,8 @@ class ScanResultSpecType(StrEnum):
 
      - TYPE_DOCTOR: Deprecated.
      - TYPE_ALERT_POLICIES: Deprecated.
+     - TYPE_FINDING_REFRESH: Lightweight re-evaluation of findings from persisted DependencyMetadata,
+    without a full repository re-scan.
     """
 
     TYPE_UNSPECIFIED = 'TYPE_UNSPECIFIED'
@@ -196,6 +198,7 @@ class ScanResultSpecType(StrEnum):
     TYPE_UIA = 'TYPE_UIA'
     TYPE_ANALYTICS_CHECK = 'TYPE_ANALYTICS_CHECK'
     TYPE_LICENSE_DISCOVERY = 'TYPE_LICENSE_DISCOVERY'
+    TYPE_FINDING_REFRESH = 'TYPE_FINDING_REFRESH'
 
 
 class Tool(BaseModel):
