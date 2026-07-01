@@ -10,6 +10,11 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
+from endorlabs.workflows.findings.filters import (
+    prd_vuln_filter,
+    prf_vuln_filter,
+    pv_main_context_filter,
+)
 
 ECOSYSTEMS = ["NUGET", "NPM", "MAVEN", "PYPI"]
 ECO_ENUM = {
@@ -24,60 +29,67 @@ ECO_LABEL = {
     "MAVEN": "Maven",
     "PYPI": "PyPI",
 }
-PRF_BASE = (
-    "context.type==CONTEXT_TYPE_MAIN "
-    "and spec.finding_categories contains FINDING_CATEGORY_VULNERABILITY "
-    "and spec.finding_tags contains FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION"
-)
-PRD_BASE = (
-    "context.type==CONTEXT_TYPE_MAIN "
-    "and spec.finding_categories contains FINDING_CATEGORY_VULNERABILITY "
-    "and spec.finding_tags contains FINDING_TAGS_POTENTIALLY_REACHABLE_DEPENDENCY"
-)
-PV_MAIN = "context.type==CONTEXT_TYPE_MAIN"
+PRF_BASE = prf_vuln_filter()
+PRD_BASE = prd_vuln_filter()
+PV_MAIN = pv_main_context_filter()
 PV_BATCH = 50
+PRF_LIST_MASK = "meta.parent_uuid,spec.ecosystem"
 
 
-def list_params(**kwargs: object) -> dict[str, str]:
-    out: dict[str, str] = {
-        "list_parameters.traverse": "true",
+def _finding_row_to_dict(finding: Any) -> dict[str, Any]:
+    if isinstance(finding, dict):
+        return finding
+    if hasattr(finding, "model_dump"):
+        return finding.model_dump(mode="json", warnings=False)
+    return dict(finding)
+
+
+def _pv_row_to_dict(pv: Any) -> dict[str, Any]:
+    if isinstance(pv, dict):
+        return pv
+    if hasattr(pv, "model_dump"):
+        return pv.model_dump(mode="json", warnings=False)
+    return dict(pv)
+
+
+def count_findings(client: endorlabs.Client, tenant: str, filt: str) -> int:
+    return client.Finding.count(namespace=tenant, traverse=True, filter=filt)
+
+
+def list_findings(
+    client: endorlabs.Client,
+    tenant: str,
+    filt: str,
+    *,
+    max_pages: int | None = None,
+) -> list[dict[str, Any]]:
+    kwargs: dict[str, Any] = {
+        "namespace": tenant,
+        "traverse": True,
+        "filter": filt,
+        "mask": PRF_LIST_MASK,
     }
-    for key, value in kwargs.items():
-        out[f"list_parameters.{key}"] = (
-            str(value).lower() if isinstance(value, bool) else str(value)
-        )
-    return out
+    if max_pages is not None:
+        kwargs["max_pages"] = max_pages
+    return [_finding_row_to_dict(row) for row in client.Finding.list_iter(**kwargs)]
 
 
-def count_findings(api: Any, tenant: str, filt: str) -> int:
-    resp = api.get(
-        f"v1/namespaces/{tenant}/findings",
-        params=list_params(filter=filt, count=True),
-    )
-    resp.raise_for_status()
-    return int(resp.json().get("count_response", {}).get("count", 0))
-
-
-def list_findings(api: Any, tenant: str, filt: str) -> list[dict[str, Any]]:
-    return list(
-        api.get_all(
-            f"v1/namespaces/{tenant}/findings",
-            params=list_params(filter=filt, page_size=500),
-        )
-    )
-
-
-def get_pvs_batch(api: Any, tenant: str, uuids: list[str]) -> list[dict[str, Any]]:
+def get_pvs_batch(
+    client: endorlabs.Client,
+    tenant: str,
+    uuids: list[str],
+) -> list[dict[str, Any]]:
     if not uuids:
         return []
     quoted = ", ".join(f'"{uuid}"' for uuid in uuids)
     filt = f"{PV_MAIN} and uuid in [{quoted}]"
-    return list(
-        api.get_all(
-            f"v1/namespaces/{tenant}/package-versions",
-            params=list_params(filter=filt, page_size=100),
-        )
+    rows = client.PackageVersion.list_iter(
+        namespace=tenant,
+        traverse=True,
+        filter=filt,
+        page_size=100,
     )
+    return [_pv_row_to_dict(row) for row in rows]
 
 
 def parse_best_match(item: dict[str, Any] | None) -> dict[str, str]:
@@ -222,12 +234,14 @@ def analyze_pv_errors(
     return out
 
 
-def run_analysis(tenant: str, out_path: Path) -> dict[str, Any]:
+def run_analysis(
+    tenant: str,
+    out_path: Path,
+    *,
+    max_pages: int | None = None,
+) -> dict[str, Any]:
     client = endorlabs.Client(tenant=tenant, timeout=600.0)
     try:
-        api = client._client
-        assert api is not None
-
         parent_uuids_by_eco: dict[str, set[str]] = defaultdict(set)
         prf_counts: dict[str, int] = defaultdict(int)
         prd_vuln_counts: dict[str, int] = defaultdict(int)
@@ -236,26 +250,26 @@ def run_analysis(tenant: str, out_path: Path) -> dict[str, Any]:
 
         for eco in ECOSYSTEMS:
             eco_filter = f"{PRF_BASE} and spec.ecosystem=={ECO_ENUM[eco]}"
-            prf_counts[eco] = count_findings(api, tenant, eco_filter)
+            prf_counts[eco] = count_findings(client, tenant, eco_filter)
             prd_vuln_counts[eco] = count_findings(
-                api,
+                client,
                 tenant,
                 f"{eco_filter} and spec.finding_tags contains FINDING_TAGS_POTENTIALLY_REACHABLE_DEPENDENCY",
             )
             approx_counts[eco] = count_findings(
-                api, tenant, f"{eco_filter} and spec.approximation==true"
+                client, tenant, f"{eco_filter} and spec.approximation==true"
             )
             not_approx_counts[eco] = count_findings(
-                api, tenant, f"{eco_filter} and spec.approximation==false"
+                client, tenant, f"{eco_filter} and spec.approximation==false"
             )
 
         print("Listing PRF findings for parent PV collection...")
-        prf_findings = list_findings(api, tenant, PRF_BASE)
+        prf_findings = list_findings(client, tenant, PRF_BASE, max_pages=max_pages)
         print(f"Listed {len(prf_findings)} PRF findings")
         prf_by_parent = findings_by_parent(prf_findings)
 
         print("Listing PRD findings for parent vulnerability counts...")
-        prd_findings = list_findings(api, tenant, PRD_BASE)
+        prd_findings = list_findings(client, tenant, PRD_BASE, max_pages=max_pages)
         print(f"Listed {len(prd_findings)} PRD findings")
         prd_by_parent = findings_by_parent(prd_findings)
 
@@ -278,7 +292,7 @@ def run_analysis(tenant: str, out_path: Path) -> dict[str, Any]:
         pv_by_uuid: dict[str, dict[str, Any]] = {}
         for idx in range(0, len(all_parent_uuids), PV_BATCH):
             batch = all_parent_uuids[idx : idx + PV_BATCH]
-            for pv in get_pvs_batch(api, tenant, batch):
+            for pv in get_pvs_batch(client, tenant, batch):
                 uuid = pv.get("uuid")
                 if uuid:
                     pv_by_uuid[str(uuid)] = pv
@@ -426,13 +440,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "(default: .endorlabs-context/workspace/sessions/agent/exports/prf-analysis)."
         ),
     )
+    parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=None,
+        help="Optional cap on finding list pagination depth (tenant-wide traverse).",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     out_path = args.output_dir / f"{args.tenant}-prf-analysis.json"
-    run_analysis(args.tenant, out_path)
+    run_analysis(args.tenant, out_path, max_pages=args.max_pages)
     return 0
 
 

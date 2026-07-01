@@ -6,6 +6,7 @@ import sys
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from types import ModuleType
+from unittest.mock import MagicMock
 
 
 def _load_module() -> ModuleType:
@@ -36,11 +37,31 @@ def _load_module() -> ModuleType:
     return module
 
 
-def test_canonical_name_strips_mirror_tokens() -> None:
+def _mock_is_sbom(row: dict) -> bool:
+    return (row.get("spec") or {}).get("sbom") is not None
+
+
+def test_canonical_name_strips_mirror_tokens_when_configured() -> None:
+    module = _load_module()
+    tokens = frozenset({"mirror", "shadow", "clone"})
+
+    assert (
+        module.canonical_name("github.com/org/repo-mirror", strip_tokens=tokens)
+        == "github.com/org/repo"
+    )
+    assert (
+        module.canonical_name("github.com/org/SHADOW-clone", strip_tokens=tokens)
+        == "github.com/org"
+    )
+
+
+def test_canonical_name_exact_only_without_tokens() -> None:
     module = _load_module()
 
-    assert module.canonical_name("github.com/org/repo-mirror") == "github.com/org/repo"
-    assert module.canonical_name("github.com/org/SHADOW-clone") == "github.com/org"
+    assert (
+        module.canonical_name("github.com/org/repo-mirror", strip_tokens=None)
+        == "github.com/org/repo-mirror"
+    )
 
 
 def test_is_sbom_project_excluded_from_grouping() -> None:
@@ -60,7 +81,11 @@ def test_is_sbom_project_excluded_from_grouping() -> None:
         "spec": {"git": {}},
     }
 
-    clusters = module.find_duplicate_groups([sbom, regular, duplicate])
+    clusters = module.find_duplicate_groups(
+        [sbom, regular, duplicate],
+        is_sbom=_mock_is_sbom,
+        strip_tokens=None,
+    )
     uuids = {row["uuid"] for cluster in clusters for row in cluster}
 
     assert "sbom-1" not in uuids
@@ -69,6 +94,12 @@ def test_is_sbom_project_excluded_from_grouping() -> None:
 
 def test_find_duplicate_groups_exact_name_across_namespaces() -> None:
     module = _load_module()
+    client = MagicMock()
+    project = MagicMock()
+    project.is_app.side_effect = lambda row: bool(
+        (row.get("spec") or {}).get("git", {}).get("external_installation_id")
+    )
+    client.Project = project
 
     projects = [
         {
@@ -85,8 +116,12 @@ def test_find_duplicate_groups_exact_name_across_namespaces() -> None:
         },
     ]
 
-    clusters = module.find_duplicate_groups(projects)
+    clusters = module.find_duplicate_groups(
+        projects,
+        is_sbom=_mock_is_sbom,
+        strip_tokens=None,
+    )
 
     assert len(clusters) == 1
     assert {row["uuid"] for row in clusters[0]} == {"a", "b"}
-    assert module.row_to_csv(projects[1])["source"] == "Cloud Scan"
+    assert module.row_to_csv(client, projects[1])["source"] == "Cloud Scan"

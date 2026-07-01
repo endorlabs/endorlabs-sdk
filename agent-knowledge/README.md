@@ -31,7 +31,7 @@ Each skill is a directory with `SKILL.md` plus optional reference files. Format:
 | [endor-model-sync-drift](endor-model-sync-drift/) | OpenAPI/provenance drift; regen `registry_contract`, stubs, reference docs; CI/pre-push verify failures | `docs/contributing/docs-drift-workflow.md`, `devtools/sync/` |
 | [endor-duplicate-projects](endor-duplicate-projects/) | Tenant-wide duplicate Project audit (exact name + mirror/shadow/clone); excludes SBOM (`spec.sbom`); CSV + canvas | Skill-owned |
 | [endor-potentially-reachable-analysis](endor-potentially-reachable-analysis/) | Tenant-wide PRF approximation + PackageVersion resolution error report (JSON, canvas, HTML/PDF) | Skill-owned |
-| [endor-chart-new-vs-resolved-findings](endor-chart-new-vs-resolved-findings/) | Cumulative weekly new vs resolved Critical/High reachable vuln trends from FindingLog CREATE/DELETE (past 90 days, complete weeks; endorctl group-by-time + canvas) | Skill-owned |
+| [endor-chart-new-vs-resolved-findings](endor-chart-new-vs-resolved-findings/) | Cumulative weekly new vs resolved Critical/High reachable vuln trends from FindingLog CREATE/DELETE (SDK `finding_log_trends` + canvas) | Skill-owned |
 | [endor-cli-vs-cloud-projects](endor-cli-vs-cloud-projects/) | Classify Project as CLI vs Cloud (agentless SCM) via `spec.git.external_installation_id` | Skill-owned |
 | [endor-retrieve-scan-results](endor-retrieve-scan-results/) | Querying findings, scan results, or projects | `docs/guides/`, `docs/contributing/` |
 | [endor-troubleshooting-scans](endor-troubleshooting-scans/) | Scan pipeline RCA; ScanResults, `ScanResult.get_logs`, scripted diffs | `endorlabs.workflows.troubleshooting_scans`; see `docs/guides/`, `docs/contributing/list-query-performance.md` |
