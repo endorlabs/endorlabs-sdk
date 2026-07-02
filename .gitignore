@@ -70,6 +70,7 @@ src/endorlabs/_version.py
 # Customer / session exports (never commit)
 *findings-export*.csv
 *.gh-endorlabs*.csv
+canvases/
 
 # Context bootstrap (downloaded by SDK or scripts)
 .endorlabs-context/

@@ -33,9 +33,12 @@ Chain CLI steps on JSON artifacts; extend with library imports per [workflow-com
 
 **Out of scope (use another skill):**
 
+- Whether the project is **CLI vs Cloud** (agentless SCM) → [endor-cli-vs-cloud-projects](../endor-cli-vs-cloud-projects/SKILL.md)
 - Listing or triaging individual **Finding** resources → [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md)
 - Policy / exception matching → [endor-validate-policy](../endor-validate-policy/SKILL.md)
 - Reachability signal conflicts on a finding → [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md)
+- Tenant-wide PRF approximation / PV resolution error report → [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md)
+- New vs resolved FindingLog trend charts → [endor-chart-new-vs-resolved-findings](../endor-chart-new-vs-resolved-findings/SKILL.md)
 - Fixed vs present at branch/commit, SBOM reconciliation → [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md)
 - Package introduction paths across manifests/versions → [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md)
 
@@ -50,6 +53,8 @@ Finding counts here come from **`ScanResult.spec.stats` aggregates only** — no
 | Diff flagged `findings_*` counts; need which findings changed | This skill (pair UUIDs from diff) | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) filtered by `context.scan_uuid` |
 | Exception policy matches a finding? | [endor-validate-policy](../endor-validate-policy/SKILL.md) | — |
 | Reachable dep vs unreachable function | [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) | — |
+| Tenant-wide PRF coverage / PV resolution errors | [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md) | — |
+| New vs resolved vuln trend (FindingLog) | [endor-chart-new-vs-resolved-findings](../endor-chart-new-vs-resolved-findings/SKILL.md) | — |
 | Same package, multiple versions/paths | [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md) | — |
 
 ## Optional stops (artifact chain)

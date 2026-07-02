@@ -1325,6 +1325,27 @@ class _ProjectFacade(ProjectFacade):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
+    def is_app(
+        self,
+        project: Any,
+    ) -> bool:
+        """Return whether *project* was registered via an SCM app installation."""
+        ...
+
+    def is_cli(
+        self,
+        project: Any,
+    ) -> bool:
+        """Return whether *project* was registered for CLI scanning (no app id)."""
+        ...
+
+    def is_sbom(
+        self,
+        project: Any,
+    ) -> bool:
+        """Return whether *project* is an SBOM import row (``spec.sbom`` set)."""
+        ...
+
     def search_by_name(
         self,
         query: str,

@@ -83,6 +83,10 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 
 **Project-scoped lists (MUST):** `Client(tenant=<estate_root>)` with default `traverse=False` lists only that namespace path — **not** child namespaces. A filter such as `spec.project_uuid==…` or `spec.importer_data.project_uuid==…` does **not** widen the path. Resolve the `Project` row first, then pass **`namespace=project.namespace`** on downstream lists (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get **empty results with no error** (silent miss). Alternatives: `Client(tenant=project.namespace)` for the rest of the session, **`client.Finding.list_by_project(project)`** / **`client.ScanResult.list_by_project(project)`** (generated accessor helpers), or `traverse=True` only when deliberately searching tenant-wide (higher cost).
 
+**Project registration vs scan execution:** CLI vs Cloud **inventory** classification uses **`Project.spec.git.external_installation_id`** (`client.Project.is_app` / `is_cli` / `is_sbom`). Per-**scan** CLI vs cloud **execution** uses **`ScanResult.spec.environment.config.RunBySystem`** — a different signal. Do not conflate them; see [guides/facade-helpers.md](guides/facade-helpers.md).
+
+**New-vs-resolved chart analysis JSON:** Weekly FindingLog cumulative chart artifacts are produced by `endorlabs.workflows.findings.finding_log_trends.build_analysis` and validated by `validate_chart_analysis` before canvas render. Required canvas keys and filename rules: [endor-chart-new-vs-resolved-findings](../agent-knowledge/skills/endor-chart-new-vs-resolved-findings/SKILL.md#analysis-json-contract-canvas-input) skill section.
+
 <a id="generated-accessor-helpers"></a>
 ## Generated accessor helpers
 

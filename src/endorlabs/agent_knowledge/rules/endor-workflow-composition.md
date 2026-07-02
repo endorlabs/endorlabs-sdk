@@ -53,6 +53,11 @@ Generic entrypoints (no estate literals):
 - `client.Finding.list_by_project()` / `list_for_context()` — generated relationship accessors
 - `client.ScanResult.list_by_project()` — scan results for a project
 - `client.<Resource>.count()` / `.list_groups()` / `.latest_created()` — list helpers (see [facade-helpers.md](../../docs/guides/facade-helpers.md))
+- `client.Project.is_app()` / `.is_cli()` / `.is_sbom()` — project registration inventory (see [facade-helpers.md](../../docs/guides/facade-helpers.md))
+- `endorlabs.workflows.findings.filters` — shared MQL fragments for finding analytics skills
+- `endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis` — FindingLog CREATE/DELETE weekly chart data (online aggregated)
+- `endorlabs.workflows.logs.group_by_time.group_by_time_counts` — generic log `list_groups` + `group_by_time` aggregation
+- `endorlabs.workflows.projects.inventory.fetch_installation_lookup` — Installation external_id lookup for CLI vs app classification
 - `endorlabs.workflows.common.WorkflowResult`
 - `endorlabs.workflows.policies.run_validate_policy`
 - `endorlabs.workflows.estate.export_version_cardinality_for_package_match`
