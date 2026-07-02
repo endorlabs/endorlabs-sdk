@@ -5,79 +5,32 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
 import endorlabs
-
-ECOSYSTEMS = ["NUGET", "NPM", "MAVEN", "PYPI"]
-ECO_ENUM = {
-    "NUGET": "ECOSYSTEM_NUGET",
-    "NPM": "ECOSYSTEM_NPM",
-    "MAVEN": "ECOSYSTEM_MAVEN",
-    "PYPI": "ECOSYSTEM_PYPI",
-}
-ECO_LABEL = {
-    "NUGET": "NuGet",
-    "NPM": "NPM",
-    "MAVEN": "Maven",
-    "PYPI": "PyPI",
-}
-PRF_BASE = (
-    "context.type==CONTEXT_TYPE_MAIN "
-    "and spec.finding_categories contains FINDING_CATEGORY_VULNERABILITY "
-    "and spec.finding_tags contains FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION"
+from endorlabs.workflows.findings.filters import (
+    prd_vuln_filter,
+    prf_vuln_filter,
+    pv_main_context_filter,
 )
-PRD_BASE = (
-    "context.type==CONTEXT_TYPE_MAIN "
-    "and spec.finding_categories contains FINDING_CATEGORY_VULNERABILITY "
-    "and spec.finding_tags contains FINDING_TAGS_POTENTIALLY_REACHABLE_DEPENDENCY"
+from endorlabs.workflows.findings.prf_analysis import (
+    ECO_LABEL,
+    ECOSYSTEMS,
+    PRD_LIST_MASK,
+    PRF_AGG_MASK,
+    aggregate_prf_metrics,
+    fetch_parent_package_versions,
+    findings_by_parent,
+    list_findings_tenant,
+    parent_uuids_by_eco,
 )
-PV_MAIN = "context.type==CONTEXT_TYPE_MAIN"
-PV_BATCH = 50
+from endorlabs.workflows.projects.inventory import discover_tenant_project_shards
 
-
-def list_params(**kwargs: object) -> dict[str, str]:
-    out: dict[str, str] = {
-        "list_parameters.traverse": "true",
-    }
-    for key, value in kwargs.items():
-        out[f"list_parameters.{key}"] = (
-            str(value).lower() if isinstance(value, bool) else str(value)
-        )
-    return out
-
-
-def count_findings(api: Any, tenant: str, filt: str) -> int:
-    resp = api.get(
-        f"v1/namespaces/{tenant}/findings",
-        params=list_params(filter=filt, count=True),
-    )
-    resp.raise_for_status()
-    return int(resp.json().get("count_response", {}).get("count", 0))
-
-
-def list_findings(api: Any, tenant: str, filt: str) -> list[dict[str, Any]]:
-    return list(
-        api.get_all(
-            f"v1/namespaces/{tenant}/findings",
-            params=list_params(filter=filt, page_size=500),
-        )
-    )
-
-
-def get_pvs_batch(api: Any, tenant: str, uuids: list[str]) -> list[dict[str, Any]]:
-    if not uuids:
-        return []
-    quoted = ", ".join(f'"{uuid}"' for uuid in uuids)
-    filt = f"{PV_MAIN} and uuid in [{quoted}]"
-    return list(
-        api.get_all(
-            f"v1/namespaces/{tenant}/package-versions",
-            params=list_params(filter=filt, page_size=100),
-        )
-    )
+PRF_BASE = prf_vuln_filter()
+PRD_BASE = prd_vuln_filter()
+PV_MAIN = pv_main_context_filter()
 
 
 def parse_best_match(item: dict[str, Any] | None) -> dict[str, str]:
@@ -126,15 +79,6 @@ def has_precomputed_reachability(pv: dict[str, Any]) -> bool:
     ) == "PRECOMPUTED_STATE_SUCCESS"
 
 
-def findings_by_parent(findings: list[dict[str, Any]]) -> Counter[str]:
-    counts: Counter[str] = Counter()
-    for finding in findings:
-        parent_uuid = (finding.get("meta") or {}).get("parent_uuid")
-        if parent_uuid:
-            counts[str(parent_uuid)] += 1
-    return counts
-
-
 def match_key(match: dict[str, str]) -> tuple[str, str, str, str]:
     return (
         match["matching_rule"],
@@ -147,8 +91,8 @@ def match_key(match: dict[str, str]) -> tuple[str, str, str, str]:
 def breakdown_rows(
     buckets: dict[tuple[str, str, str, str], set[str]],
     *,
-    prf_by_parent: Counter[str],
-    prd_by_parent: Counter[str],
+    prf_by_parent: Any,
+    prd_by_parent: Any,
     pv_by_uuid: dict[str, dict[str, Any]],
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
@@ -177,8 +121,8 @@ def breakdown_rows(
 def analyze_pv_errors(
     pvs_by_eco: dict[str, list[dict[str, Any]]],
     *,
-    prf_by_parent: Counter[str],
-    prd_by_parent: Counter[str],
+    prf_by_parent: Any,
+    prd_by_parent: Any,
     pv_by_uuid: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     out: dict[str, dict[str, Any]] = {}
@@ -222,73 +166,74 @@ def analyze_pv_errors(
     return out
 
 
-def run_analysis(tenant: str, out_path: Path) -> dict[str, Any]:
+def run_analysis(
+    tenant: str,
+    out_path: Path,
+    *,
+    max_pages: int | None = None,
+    max_workers: int = 12,
+    max_project_pages: int | None = None,
+) -> dict[str, Any]:
     client = endorlabs.Client(tenant=tenant, timeout=600.0)
     try:
-        api = client._client
-        assert api is not None
+        print("Discovering project shards...")
+        shards = discover_tenant_project_shards(
+            client,
+            tenant,
+            max_pages=max_project_pages,
+        )
+        print(f"Project shards: {len(shards)}")
 
-        parent_uuids_by_eco: dict[str, set[str]] = defaultdict(set)
-        prf_counts: dict[str, int] = defaultdict(int)
-        prd_vuln_counts: dict[str, int] = defaultdict(int)
-        approx_counts: dict[str, int] = defaultdict(int)
-        not_approx_counts: dict[str, int] = defaultdict(int)
-
-        for eco in ECOSYSTEMS:
-            eco_filter = f"{PRF_BASE} and spec.ecosystem=={ECO_ENUM[eco]}"
-            prf_counts[eco] = count_findings(api, tenant, eco_filter)
-            prd_vuln_counts[eco] = count_findings(
-                api,
-                tenant,
-                f"{eco_filter} and spec.finding_tags contains FINDING_TAGS_POTENTIALLY_REACHABLE_DEPENDENCY",
-            )
-            approx_counts[eco] = count_findings(
-                api, tenant, f"{eco_filter} and spec.approximation==true"
-            )
-            not_approx_counts[eco] = count_findings(
-                api, tenant, f"{eco_filter} and spec.approximation==false"
-            )
-
-        print("Listing PRF findings for parent PV collection...")
-        prf_findings = list_findings(api, tenant, PRF_BASE)
+        print("Listing PRF findings (counts derived from listed rows)...")
+        prf_findings = list_findings_tenant(
+            client,
+            tenant,
+            PRF_BASE,
+            mask=PRF_AGG_MASK,
+            max_pages=max_pages,
+            max_workers=max_workers,
+            shards=shards,
+        )
         print(f"Listed {len(prf_findings)} PRF findings")
+        prf_counts, approx_counts, not_approx_counts, prd_vuln_counts = (
+            aggregate_prf_metrics(prf_findings)
+        )
         prf_by_parent = findings_by_parent(prf_findings)
+        parent_uuids_by_eco_map = parent_uuids_by_eco(prf_findings)
 
         print("Listing PRD findings for parent vulnerability counts...")
-        prd_findings = list_findings(api, tenant, PRD_BASE)
+        prd_findings = list_findings_tenant(
+            client,
+            tenant,
+            PRD_BASE,
+            mask=PRD_LIST_MASK,
+            max_pages=max_pages,
+            max_workers=max_workers,
+            shards=shards,
+        )
         print(f"Listed {len(prd_findings)} PRD findings")
         prd_by_parent = findings_by_parent(prd_findings)
 
-        for finding in prf_findings:
-            eco = (finding.get("spec") or {}).get("ecosystem", "")
-            if eco not in ECO_ENUM.values():
-                continue
-            parent_uuid = (finding.get("meta") or {}).get("parent_uuid")
-            if parent_uuid:
-                for key, enum in ECO_ENUM.items():
-                    if enum == eco:
-                        parent_uuids_by_eco[key].add(parent_uuid)
-                        break
-
-        all_parent_uuids = sorted(
-            {uuid for uuids in parent_uuids_by_eco.values() for uuid in uuids}
-        )
+        all_parent_uuids = {
+            uuid for uuids in parent_uuids_by_eco_map.values() for uuid in uuids
+        }
         print(f"Unique PRF parent PV UUIDs: {len(all_parent_uuids)}")
 
-        pv_by_uuid: dict[str, dict[str, Any]] = {}
-        for idx in range(0, len(all_parent_uuids), PV_BATCH):
-            batch = all_parent_uuids[idx : idx + PV_BATCH]
-            for pv in get_pvs_batch(api, tenant, batch):
-                uuid = pv.get("uuid")
-                if uuid:
-                    pv_by_uuid[str(uuid)] = pv
+        print("Hydrating parent PackageVersions...")
+        pv_by_uuid = fetch_parent_package_versions(
+            client,
+            tenant,
+            prf_findings,
+            all_parent_uuids,
+            pv_filter=PV_MAIN,
+        )
 
         missing_parent_pvs = len(all_parent_uuids) - len(pv_by_uuid)
         print(f"Resolved {len(pv_by_uuid)} parent PVs ({missing_parent_pvs} missing)")
 
         pvs_by_eco: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for eco in ECOSYSTEMS:
-            for uuid in parent_uuids_by_eco[eco]:
+            for uuid in parent_uuids_by_eco_map.get(eco, set()):
                 pv = pv_by_uuid.get(uuid)
                 if pv is not None:
                     pvs_by_eco[eco].append(pv)
@@ -306,19 +251,23 @@ def run_analysis(tenant: str, out_path: Path) -> dict[str, Any]:
             call_graph_error_pvs = sum(
                 1 for pv in pvs_by_eco[eco] if has_call_graph_errors(pv)
             )
-            total_unique.update(parent_uuids_by_eco[eco] & set(pv_by_uuid))
+            total_unique.update(
+                parent_uuids_by_eco_map.get(eco, set()) & set(pv_by_uuid)
+            )
             total_dep_error += dep_error_pvs
             total_call_graph_error += call_graph_error_pvs
-            prf_total = prf_counts[eco]
+            prf_total = prf_counts.get(eco, 0)
             summary_rows.append(
                 {
                     "ecosystem": ECO_LABEL[eco],
                     "prfVulnerabilities": prf_total,
-                    "prdVulnerabilities": prd_vuln_counts[eco],
-                    "approximatedVulns": approx_counts[eco],
-                    "notApproximatedVulns": not_approx_counts[eco],
+                    "prdVulnerabilities": prd_vuln_counts.get(eco, 0),
+                    "approximatedVulns": approx_counts.get(eco, 0),
+                    "notApproximatedVulns": not_approx_counts.get(eco, 0),
                     "pctApproximatedVulns": round(
-                        100.0 * approx_counts[eco] / prf_total if prf_total else 0.0,
+                        100.0 * approx_counts.get(eco, 0) / prf_total
+                        if prf_total
+                        else 0.0,
                         2,
                     ),
                     "uniquePvs": unique_pvs,
@@ -396,6 +345,9 @@ def run_analysis(tenant: str, out_path: Path) -> dict[str, Any]:
         result = {
             "tenant": tenant,
             "missing_parent_pvs": missing_parent_pvs,
+            "prf_findings_listed": len(prf_findings),
+            "prd_findings_listed": len(prd_findings),
+            "project_shards": len(shards),
             "summary_rows": summary_rows,
             "ecosystem_errors": ecosystem_errors,
         }
@@ -426,13 +378,37 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "(default: .endorlabs-context/workspace/sessions/agent/exports/prf-analysis)."
         ),
     )
+    parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=None,
+        help="Optional cap on finding list pagination depth per project shard.",
+    )
+    parser.add_argument(
+        "--max-project-pages",
+        type=int,
+        default=None,
+        help="Optional cap on Project discovery pagination when building shards.",
+    )
+    parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=12,
+        help="Parallel workers for per-project finding lists.",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     out_path = args.output_dir / f"{args.tenant}-prf-analysis.json"
-    run_analysis(args.tenant, out_path)
+    run_analysis(
+        args.tenant,
+        out_path,
+        max_pages=args.max_pages,
+        max_workers=args.max_workers,
+        max_project_pages=args.max_project_pages,
+    )
     return 0
 
 

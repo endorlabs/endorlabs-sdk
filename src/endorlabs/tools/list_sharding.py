@@ -30,6 +30,23 @@ def project_dict_to_shard(project: dict[str, Any], fallback_ns: str) -> ParentSh
     return ParentShard(key=uuid, namespace=str(ns), label=label)
 
 
+PROJECT_UUID_FILTER_FIELD = "spec.project_uuid"
+
+
+def project_scoped_filter(base_filter: str, project_uuid: str) -> str:
+    """Append a project UUID clause for per-project list shards."""
+    clause = f'{PROJECT_UUID_FILTER_FIELD}=="{project_uuid}"'
+    return f"{base_filter} and {clause}" if base_filter else clause
+
+
+def single_shard_namespace(shards: Sequence[ParentShard]) -> str | None:
+    """Return the sole namespace when every shard shares one path segment."""
+    namespaces = {shard.namespace for shard in shards}
+    if len(namespaces) == 1:
+        return next(iter(namespaces))
+    return None
+
+
 def project_model_to_shard(project: Any, fallback_ns: str) -> ParentShard:
     """Build a shard from an SDK Project model."""
     uuid = str(getattr(project, "uuid", None) or "")
@@ -86,7 +103,9 @@ def list_for_shards(
     """List resources per shard in parallel and return a flat concatenated result.
 
     Each shard calls ``facade.list`` with ``namespace=shard.namespace`` and a
-    per-shard filter from ``filter_fn``.
+    per-shard filter from ``filter_fn``. For project-keyed shards, include
+    ``project_scoped_filter()`` (or ``Finding.list_by_project``) so rows are not
+    duplicated when many projects share one namespace path.
     """
     rows: list[Any] = []
 

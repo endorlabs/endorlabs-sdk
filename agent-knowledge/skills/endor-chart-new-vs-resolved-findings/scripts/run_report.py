@@ -46,10 +46,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Cursor canvases directory (default: auto-detect).",
     )
     parser.add_argument(
-        "--lookback-days",
+        "--interval",
+        default="week",
+        help="group_by_time interval alias (default: week).",
+    )
+    parser.add_argument(
+        "--lookback",
         type=int,
-        default=90,
-        help="Rolling lookback in calendar days (default: 90).",
+        default=13,
+        help="Complete interval buckets to include (default: 13).",
     )
     parser.add_argument(
         "--analysis-only",
@@ -76,8 +81,10 @@ def main(argv: list[str] | None = None) -> int:
         args.namespace,
         "--output-dir",
         str(args.output_dir),
-        "--lookback-days",
-        str(args.lookback_days),
+        "--interval",
+        args.interval,
+        "--lookback",
+        str(args.lookback),
     ]
     code = run_step("FindingLog analysis", analysis_cmd)
     if code != 0:

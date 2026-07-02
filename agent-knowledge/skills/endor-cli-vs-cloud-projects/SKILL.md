@@ -48,23 +48,31 @@ Match `external_installation_id` to **`Installation.spec.external_id`** (tenant-
 
 Do **not** infer Cloud vs CLI from repository URL alone — the same repo URL can exist as separate Project rows (different namespaces or registration paths).
 
+**SDK helpers:** `client.Project.is_app(project)`, `is_cli(project)`, and `is_sbom(project)` accept a `Project` model or masked dict row. Map to CSV **`source`** (registration): `is_app` → `Cloud Scan`, else `CLI` (skip SBOM rows with `is_sbom`).
+
+**Latest scan execution:** The bundled script also looks up the newest `ScanResult` per project (`ScanResult.list_by_project`, `mask=spec.environment.config.RunBySystem`) and maps `RunBySystem` to **`latest scan execution`** (`CLI` / `Cloud Scan` / `unknown`). **`mixed mode`** is `true` when registration and latest scan execution disagree — common when app-registered repos still run `endorctl scan` in CI.
+
+**Per-scan execution (API):** Filter `spec.environment.config.RunBySystem` on `ScanResult` ([KB: CLI vs app-based scans](https://kb.endorlabs.com/articles/1109372975-faq-how-to-isolate-cli-based-scans-vs-app-based-scans-executed-in-endor-s-cloud)).
+
 ## CSV schema (required)
 
-Write CSV with **exactly these six columns**, in this order, on every run:
+Write CSV with **exactly these eight columns**, in this order, on every run:
 
 | Column | Source |
 |--------|--------|
 | **`project name`** | `Project.meta.name` |
 | **`namespace`** | `Project.tenant_meta.namespace` |
 | **`uuid`** | `Project.uuid` |
-| **`source`** | `CLI` or `Cloud Scan` only |
+| **`source`** | Registration: `CLI` or `Cloud Scan` only |
+| **`latest scan execution`** | Newest `ScanResult.spec.environment.config.RunBySystem` → `CLI`, `Cloud Scan`, or `unknown` |
+| **`mixed mode`** | `true` when `source` ≠ `latest scan execution` (both known) |
 | **`external_installation_id`** | `Project.spec.git.external_installation_id` (empty for CLI) |
 | **`installation name`** | Resolved from `Installation` via `spec.external_id`; empty for CLI |
 
 Header row (literal):
 
 ```text
-project name,namespace,uuid,source,external_installation_id,installation name
+project name,namespace,uuid,source,latest scan execution,mixed mode,external_installation_id,installation name
 ```
 
 Exclude **SBOM projects** (`spec.sbom` set) from the scan and CSV.
@@ -85,6 +93,8 @@ Optional flags:
 
 - `--project-uuid <uuid>` — classify one or more projects (repeatable).
 - `--max-pages <n>` — bound list pagination when requested.
+- `--max-workers <n>` — parallel workers for latest `ScanResult` lookup (default 12).
+- `--skip-scan-enrichment` — registration-only (`source` column) without scan execution.
 - `--summary-json <path>` — optional machine-readable summary alongside chat output.
 
 After `endorlabs.init()`, the script path is also available under `agent-knowledge/skills/endor-cli-vs-cloud-projects/scripts/` in this repository.
@@ -94,9 +104,11 @@ After `endorlabs.init()`, the script path is also available under `agent-knowled
 Always report to the user:
 
 - Tenant, total projects classified, SBOM excluded count.
-- **`Cloud Scan` vs `CLI` counts**.
+- **Registration** (`source`): **`Cloud Scan` vs `CLI` counts**.
+- **Latest scan execution** counts (`CLI`, `Cloud Scan`, `unknown`).
+- **Mixed mode** count and examples when registration ≠ latest scan.
 - **Cloud installations** table: `installation name`, `external_installation_id`, project count.
-- **CLI project list** when any exist (project name, namespace, uuid).
+- **CLI-registered** and **CLI-latest-scan** project lists when any exist.
 - Path to the CSV written.
 
 Use the script stdout as the source of truth; do not re-list the API for summary numbers.
@@ -112,8 +124,9 @@ Use the script stdout as the source of truth; do not re-list the API for summary
 
 Before finishing, confirm:
 
-- [ ] CSV exists with header `project name,namespace,uuid,source,external_installation_id,installation name`
+- [ ] CSV exists with header `project name,namespace,uuid,source,latest scan execution,mixed mode,external_installation_id,installation name`
 - [ ] Every data row has **`source`** ∈ {`CLI`, `Cloud Scan`}
+- [ ] **`latest scan execution`** populated unless `--skip-scan-enrichment`
 - [ ] Cloud rows include resolved **`installation name`** when a matching `Installation` exists
 - [ ] SBOM projects excluded
 - [ ] Chat summary covers counts, installations, and any CLI exceptions

@@ -17,6 +17,7 @@ from ..core.exceptions import ValidationError
 from ..core.filter import F, FilterExpression
 from ..core.types import ListParameters
 from ..operations import BaseResourceOperations
+from ..operations.routes import resolve_source_uuid
 from ..utils.namespace import resolve_namespace_for_resource
 
 if TYPE_CHECKING:
@@ -204,7 +205,12 @@ class ListableFacade[T: BaseModel]:
             remaining_kwargs["filter"] = merged_filter
 
         if parent is not None:
-            parent_uuid = getattr(parent, "uuid", None) or parent
+            parent_uuid = resolve_source_uuid(parent)
+            if not parent_uuid:
+                raise ValidationError(
+                    "parent resource is missing uuid",
+                    field="parent",
+                )
             parent_clause = str(F("meta.parent_uuid") == parent_uuid)
             existing = remaining_kwargs.get("filter")
             remaining_kwargs["filter"] = (
