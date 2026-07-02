@@ -11,6 +11,7 @@ from pathlib import Path
 import endorlabs
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.workspace import analyze_workspace
+from endorlabs.workflows.estate.collect.bounds import resolve_collect_max_workers
 from endorlabs.workflows.estate.collect.runner import collect_workspace
 from endorlabs.workflows.estate.contracts.resources import (
     ANALYZE_LOG_FILENAME,
@@ -33,6 +34,7 @@ def _attach_workspace_log(workspace_root: Path, log_filename: str) -> Path:
     ensure_workspace_layout(workspace_root)
     log_path = logs_dir(workspace_root) / log_filename
     handler = logging.FileHandler(log_path, encoding="utf-8", mode="a")
+    handler.setLevel(logging.INFO)
     handler.setFormatter(logging.Formatter("%(levelname)s %(message)s"))
     logging.getLogger().addHandler(handler)
     LOGGER.info("Workspace log: %s", log_path)
@@ -76,6 +78,8 @@ def cmd_pull(args: argparse.Namespace) -> int:
         return 2
     workspace_root = _resolve_workspace(args)
     _attach_workspace_log(workspace_root, PULL_LOG_FILENAME)
+    max_workers = resolve_collect_max_workers(args.max_workers)
+    LOGGER.info("Pull max_workers=%s", max_workers)
     client = endorlabs.Client(tenant=args.namespace)
     try:
         date_suffix = args.date or None
@@ -84,7 +88,7 @@ def cmd_pull(args: argparse.Namespace) -> int:
             namespace=args.namespace,
             workspace=workspace_root,
             date_suffix=date_suffix,
-            max_workers=args.max_workers,
+            max_workers=max_workers,
             max_pages=args.max_pages,
             page_size=args.page_size,
             resume=args.resume,
@@ -199,7 +203,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     pull = sub.add_parser("pull", help="Collect estate resources into workspace")
     _add_common_args(pull)
-    pull.add_argument("--max-workers", type=int, default=16)
+    pull.add_argument(
+        "--max-workers",
+        type=int,
+        default=None,
+        help="Parallel shard workers (default: os.cpu_count(), min 4, max 16)",
+    )
     pull.add_argument("--max-pages", type=int, default=0)
     pull.add_argument("--page-size", type=int, default=500)
     pull.add_argument("--resume", action="store_true")
