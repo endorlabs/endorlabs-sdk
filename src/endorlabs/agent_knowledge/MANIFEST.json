@@ -60,7 +60,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-16T20:24:48.893083+00:00",
+  "generated_at": "2026-07-01T19:57:29.532934+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -125,8 +125,36 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.4.1.dev0",
+  "sdk_version": "0.4.1.dev13",
   "skills": [
+    {
+      "description": "Author or update a shipped agent skill under agent-knowledge/skills/: portable frontmatter, optional endorlabs.catalog workflow linkage, composition handoffs, sync, and drift verification. Use when adding skills, fixing sync validation errors, or migrating workflow catalog metadata\u2014not for extending SDK resources (endor-implement-sdk-resource) or runtime API troubleshooting.",
+      "id": "endor-author-agent-skill",
+      "name": "endor-author-agent-skill",
+      "path": "skills/endor-author-agent-skill/SKILL.md",
+      "refs": []
+    },
+    {
+      "description": "Generates cumulative weekly new vs resolved Critical/High reachable vulnerability trend charts from FindingLog group-by-time queries (CREATE/DELETE events via SDK FindingLog.list_groups). Default window is the past 90 days with complete weeks only. Produces one Cursor canvas per namespace root with optional child traverse. Use when the user asks for a resolved vs new findings trend chart, FindingLog analytics, or executive vulnerability burndown for main-context findings\u2014not for open Finding snapshots, PRF/PV resolution reports, or scan pipeline RCA.",
+      "id": "endor-chart-new-vs-resolved-findings",
+      "name": "endor-chart-new-vs-resolved-findings",
+      "path": "skills/endor-chart-new-vs-resolved-findings/SKILL.md",
+      "refs": [
+        "skills/endor-chart-new-vs-resolved-findings/scripts/generate_canvas.py",
+        "skills/endor-chart-new-vs-resolved-findings/scripts/paths.py",
+        "skills/endor-chart-new-vs-resolved-findings/scripts/run_analysis.py",
+        "skills/endor-chart-new-vs-resolved-findings/scripts/run_report.py"
+      ]
+    },
+    {
+      "description": "Classify Projects as CLI-scanned (local endorctl) vs Cloud-scanned (agentless SCM integrations such as GitHub or Bitbucket apps) using spec.git.external_installation_id. Tenant-wide runs emit a CSV with installation names resolved from Installation rows. Use when scan behavior, automation, or RCA depends on how the project was registered\u2014not for listing findings or scan pipeline diffs (hand off to sibling skills).",
+      "id": "endor-cli-vs-cloud-projects",
+      "name": "endor-cli-vs-cloud-projects",
+      "path": "skills/endor-cli-vs-cloud-projects/SKILL.md",
+      "refs": [
+        "skills/endor-cli-vs-cloud-projects/scripts/classify_cli_vs_cloud_projects.py"
+      ]
+    },
     {
       "description": "Author, validate, and import custom OpenGrep/Semgrep rule YAML into Endor Labs SemgrepRule resources. Use when writing or fixing rule syntax, Endor metadata shape, local opengrep/semgrep checks, or importing rules to a namespace \u2014 not for finding triage (hand off to endor-retrieve-scan-results).",
       "id": "endor-custom-sast-rules",
@@ -153,6 +181,15 @@
       "name": "endor-dependency-provenance",
       "path": "skills/endor-dependency-provenance/SKILL.md",
       "refs": []
+    },
+    {
+      "description": "Find potential duplicate Projects across a tenant and all child namespaces: identical meta.name across namespaces, or names differing only when the user passes --name-strip-tokens (no default). Excludes SBOM projects (spec.sbom). Emit a flat CSV (project name, namespace, uuid, source) and a grouped canvas. Use when auditing project inventory or deduplicating registrations\u2014not for findings, scan RCA, or single-project classification alone.",
+      "id": "endor-duplicate-projects",
+      "name": "endor-duplicate-projects",
+      "path": "skills/endor-duplicate-projects/SKILL.md",
+      "refs": [
+        "skills/endor-duplicate-projects/scripts/find_duplicate_projects.py"
+      ]
     },
     {
       "description": "Fetch project call graph artifacts, decode zstd payloads into searchable node and edge files, and run safe direct-edge or multi-hop path searches on the customer PackageVersion plane. Use for static symbol paths (e.g. app code to a dependency API)\u2014not for Finding/CVE reachability triage (hand off to endor-reachability-provenance), scan finding lists (endor-retrieve-scan-results), or natural-language function summaries (VectorStoreQuery; separate flow).",
@@ -183,6 +220,20 @@
       "name": "endor-namespace-relationship-map",
       "path": "skills/endor-namespace-relationship-map/SKILL.md",
       "refs": []
+    },
+    {
+      "description": "Generates a tenant-wide PRF (potentially reachable function) vulnerability and PackageVersion resolution error report for main-context NuGet, NPM, Maven, and PyPI findings tagged FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION. Outputs analysis JSON, Cursor canvas, and optional HTML/PDF. Use for PRF approximation coverage, dependency resolution error triage, or executive-style reachability summaries\u2014not for per-finding reachability proof or scan pipeline RCA.",
+      "id": "endor-potentially-reachable-analysis",
+      "name": "endor-potentially-reachable-analysis",
+      "path": "skills/endor-potentially-reachable-analysis/SKILL.md",
+      "refs": [
+        "skills/endor-potentially-reachable-analysis/resolution-reference.md",
+        "skills/endor-potentially-reachable-analysis/scripts/generate_canvas.py",
+        "skills/endor-potentially-reachable-analysis/scripts/generate_report_pdf.py",
+        "skills/endor-potentially-reachable-analysis/scripts/paths.py",
+        "skills/endor-potentially-reachable-analysis/scripts/run_analysis.py",
+        "skills/endor-potentially-reachable-analysis/scripts/run_report.py"
+      ]
     },
     {
       "description": "Deterministic single-project retrieval bundle via endor-agent-context: context_manifest.json, dependency explorer artifacts, optional session summaries, PV index + hydration, optional call-graph export. Not namespace topology or breaking-change consumer discovery \u2014 hand off to endor-namespace-relationship-map.",
@@ -327,6 +378,20 @@
       ],
       "module": "endorlabs.workflows.estate.cli.main",
       "skill": null
+    },
+    {
+      "agent_visible": true,
+      "cli": null,
+      "default_output": null,
+      "id": "finding-log-weekly-trends",
+      "library_entrypoints": [
+        "endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis",
+        "endorlabs.workflows.logs.group_by_time.group_by_time_counts",
+        "endorlabs.workflows.findings.filters.reachable_vuln_log_base_filter",
+        "endorlabs.workflows.findings.filters.prf_vuln_filter"
+      ],
+      "module": "endorlabs.workflows.findings.finding_log_trends",
+      "skill": "endor-chart-new-vs-resolved-findings"
     },
     {
       "agent_visible": true,

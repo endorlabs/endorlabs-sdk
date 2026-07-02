@@ -991,10 +991,29 @@ class BaseResourceOperations[T: BaseModel]:
         if wire:
             params["list_parameters.ci_run_uuid"] = wire
 
+    def _add_group_unique_path_params(
+        self, params: dict[str, Any], list_params: ListParameters
+    ) -> None:
+        if list_params.group_unique_count_paths:
+            params["list_parameters.group.unique_count_paths"] = ",".join(
+                list_params.group_unique_count_paths
+            )
+        if list_params.group_unique_value_paths:
+            params["list_parameters.group.unique_value_paths"] = ",".join(
+                list_params.group_unique_value_paths
+            )
+
     def _add_group_params(
         self, params: dict[str, Any], list_params: ListParameters
     ) -> None:
         """Add grouping/aggregation list parameters."""
+        if list_params.group_by_time:
+            from .group_by_time_wire import add_group_by_time_wire_params
+
+            add_group_by_time_wire_params(params, list_params)
+            self._add_group_unique_path_params(params, list_params)
+            return
+
         if list_params.group_aggregation_paths:
             params["list_parameters.group.aggregation_paths"] = ",".join(
                 list_params.group_aggregation_paths
@@ -1023,14 +1042,7 @@ class BaseResourceOperations[T: BaseModel]:
             params["list_parameters.group.show_aggregation_uuids"] = str(
                 list_params.group_show_aggregation_uuids
             ).lower()
-        if list_params.group_unique_count_paths:
-            params["list_parameters.group.unique_count_paths"] = ",".join(
-                list_params.group_unique_count_paths
-            )
-        if list_params.group_unique_value_paths:
-            params["list_parameters.group.unique_value_paths"] = ",".join(
-                list_params.group_unique_value_paths
-            )
+        self._add_group_unique_path_params(params, list_params)
 
     def _add_date_params(
         self, params: dict[str, Any], list_params: ListParameters

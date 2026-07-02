@@ -175,4 +175,4 @@ Validated by [`contract.schema.json`](contract.schema.json). Shipped under `agen
 
 ## Meta-skill
 
-[`SKILL.md`](SKILL.md) in this directory is an optional agent playbook for authoring or updating skills.
+Shipped playbook: [`endor-author-agent-skill`](../skills/endor-author-agent-skill/SKILL.md). [`SKILL.md`](SKILL.md) in this directory is a short pointer for maintainers editing `schema/` directly.

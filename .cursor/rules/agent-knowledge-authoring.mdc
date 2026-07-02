@@ -8,6 +8,7 @@ alwaysApply: false
 
 When editing files under `agent-knowledge/`, follow the canonical authoring spec:
 
+- Shipped playbook: [agent-knowledge/skills/endor-author-agent-skill/SKILL.md](../../agent-knowledge/skills/endor-author-agent-skill/SKILL.md)
 - [agent-knowledge/schema/README.md](../../agent-knowledge/schema/README.md) — portable frontmatter, `endorlabs.catalog` extension, **skill composition and handoffs**, rules, contracts, workflows.yaml
 - [agent-knowledge/schema/skill.schema.json](../../agent-knowledge/schema/skill.schema.json) — machine validation
 

@@ -25,9 +25,14 @@ Each skill is a directory with `SKILL.md` plus optional reference files. Format:
 | [endor-custom-sast-rules](endor-custom-sast-rules/) | SemgrepRule YAML authoring, validation, import | Canonical (skill-owned) |
 | [endor-dependency-provenance](endor-dependency-provenance/) | Resolve exact package lineage by manifest path/ref and direct-vs-transitive introduction routes | Skill-owned |
 | [endor-dependency-finding-provenance](endor-dependency-finding-provenance/) | Trace vulnerability/dependency lineage and commit-scoped presence across findings, package versions, and artifacts | Skill-owned |
+| [endor-author-agent-skill](endor-author-agent-skill/) | Author or update shipped agent skills: frontmatter, sync, composition handoffs | [schema/README.md](schema/README.md), `devtools/sync_agent_knowledge.py` |
 | [endor-fetch-and-search-call-graph](endor-fetch-and-search-call-graph/) | Fetch/decode call graphs; direct-edge and multi-hop path search (customer PV plane) | `endorlabs.workflows.callgraph` |
 | [endor-implement-sdk-resource](endor-implement-sdk-resource/) | Model-sync-first surface extension, overlay, integration tests | `docs/contributing/architecture.md`, `integration-resource-tests.md` |
 | [endor-model-sync-drift](endor-model-sync-drift/) | OpenAPI/provenance drift; regen `registry_contract`, stubs, reference docs; CI/pre-push verify failures | `docs/contributing/docs-drift-workflow.md`, `devtools/sync/` |
+| [endor-duplicate-projects](endor-duplicate-projects/) | Tenant-wide duplicate Project audit (exact name default; opt-in `--name-strip-tokens`); excludes SBOM (`spec.sbom`); CSV + canvas | Skill-owned |
+| [endor-potentially-reachable-analysis](endor-potentially-reachable-analysis/) | Tenant-wide PRF approximation + PackageVersion resolution error report (JSON, canvas, HTML/PDF) | Skill-owned |
+| [endor-chart-new-vs-resolved-findings](endor-chart-new-vs-resolved-findings/) | Cumulative weekly new vs resolved Critical/High reachable vuln trends from FindingLog CREATE/DELETE (SDK `finding_log_trends` + canvas) | Skill-owned |
+| [endor-cli-vs-cloud-projects](endor-cli-vs-cloud-projects/) | Classify Project as CLI vs Cloud (agentless SCM) via `spec.git.external_installation_id` | Skill-owned |
 | [endor-retrieve-scan-results](endor-retrieve-scan-results/) | Querying findings, scan results, or projects | `docs/guides/`, `docs/contributing/` |
 | [endor-troubleshooting-scans](endor-troubleshooting-scans/) | Scan pipeline RCA; ScanResults, `ScanResult.get_logs`, scripted diffs | `endorlabs.workflows.troubleshooting_scans`; see `docs/guides/`, `docs/contributing/list-query-performance.md` |
 | [endor-troubleshoot-sdk](endor-troubleshoot-sdk/) | Debugging SDK errors, 404s, 500s, or test failures | `docs/contributing/` |

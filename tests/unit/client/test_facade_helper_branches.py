@@ -54,6 +54,29 @@ def test_build_list_kwargs_merges_parent_clause_with_existing_filter() -> None:
     assert str(F("meta.parent_uuid") == "parent-123") in kwargs["filter"]
 
 
+def test_build_list_kwargs_parent_masked_dict_row() -> None:
+    parent = {"uuid": "parent-123", "tenant_meta": {"namespace": "tenant.ns"}}
+    facade = _ListableFacade(Mock(), "tenant.ns", _entry())
+    kwargs = facade._build_list_kwargs(
+        parent=parent,
+        filter=None,
+        mask=None,
+        page_size=None,
+        page_token=None,
+        page_id=None,
+        sort_by=None,
+        desc=None,
+        count=None,
+        from_date=None,
+        to_date=None,
+        archive=None,
+        pr_uuid=None,
+        ci_run_uuid=None,
+    )
+
+    assert str(F("meta.parent_uuid") == "parent-123") in kwargs["filter"]
+
+
 def test_build_list_kwargs_normalizes_filter_expression_and_identity_kwargs() -> None:
     facade = _ListableFacade(
         Mock(),

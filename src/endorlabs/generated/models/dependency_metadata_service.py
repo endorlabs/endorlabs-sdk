@@ -240,25 +240,6 @@ class GoogleprotobufAny(BaseModel):
     """
 
 
-class V1ContainerBaseImage(BaseModel):
-    """
-    The base image of a container Image.
-    """
-
-    chain_id: str | None = None
-    """
-    Chain ID for the base image's layers.
-    """
-    digest: str | None = None
-    """
-    The SHA256 digest of the base image.
-    """
-    name: str | None = None
-    """
-    The name of the base image. For example, "debian:bookworm-slim".
-    """
-
-
 class Layer(BaseModel):
     base_layer: bool | None = None
     """
@@ -303,6 +284,53 @@ class V1ContainerDependencyMetadata(BaseModel):
     user_application_dependency: bool | None = None
     """
     Set to true if this is a user application dependency.
+    """
+
+
+class V1ContainerImageUpdateOption(BaseModel):
+    """
+    ContainerImageUpdateOption describes a single base image update candidate.
+    """
+
+    chain_id: str | None = None
+    """
+    Chain ID for the candidate image's layers.
+    """
+    digest: str | None = None
+    """
+    The SHA256 digest of the candidate image (e.g., "sha256:...").
+    """
+    name: str | None = None
+    """
+    Full image reference including registry, repository, and tag
+    (e.g., "docker.io/library/ubuntu:22.04").
+    """
+    package_version_uuid: str | None = None
+    """
+    UUID of the container PackageVersion produced by scanning this candidate.
+    """
+
+
+class V1ContainerImageUpdateOptions(BaseModel):
+    """
+    ContainerImageUpdateOptions groups possible base image update candidates.
+    """
+
+    latest_version: V1ContainerImageUpdateOption | None = None
+    """
+    Newest available tag (based on semver or timestamp ordering).
+    """
+    next_version: V1ContainerImageUpdateOption | None = None
+    """
+    Immediately newer tag (based on semver or timestamp ordering).
+    """
+    refreshed: V1ContainerImageUpdateOption | None = None
+    """
+    Same image reference; potentially newer digest.
+    """
+    update_time: AwareDatetime | None = None
+    """
+    Time when these update options were determined.
     """
 
 
@@ -755,6 +783,73 @@ class DependencyMetadataDependencyData(BaseModel):
     """
 
 
+class GroupResponseGroupData(BaseModel):
+    """
+    Information about objects matching the given key.
+    """
+
+    aggregation_count: V1CountResponse | None = None
+    """
+    Number of objects in group.
+    This field is always set.
+    """
+    aggregation_uuids: list[str] | None = None
+    """
+    List of UUIDs of the objects in the group.
+    Only populated if show_aggregation_uuids is set.
+    """
+    aggregation_value: V1GroupAggregationValueResponse | None = None
+    """
+    Value of the aggregation operation as calculated by the query.
+    """
+    unique_counts: dict[str, V1CountResponse] | None = None
+    """
+    Map of counts for the given unique_count_paths fields.
+    Only populated if unique_count_paths is set.
+    """
+    unique_values: dict[str, list[dict[str, Any]]] | None = None
+    """
+    Map of values for the given unique_value_paths fields.
+    Only populated if unique_value_paths is set.
+    """
+
+
+class V1ContainerBaseImage(BaseModel):
+    """
+    The base image of a container Image.
+    """
+
+    chain_id: str | None = None
+    """
+    Chain ID for the base image's layers.
+    """
+    digest: str | None = None
+    """
+    The SHA256 digest of the base image.
+    """
+    name: str | None = None
+    """
+    The name of the base image. For example, "debian:bookworm-slim".
+    """
+    update_options: V1ContainerImageUpdateOptions | None = None
+    """
+    Base image update candidates for this app image.
+    """
+
+
+class V1GroupResponse(BaseModel):
+    """
+    Response to a list group request.
+    """
+
+    groups: dict[str, GroupResponseGroupData] | None = None
+    """
+    Map indexed by values of the fields specified in aggregation_paths,
+    for example, {"[{"key":"meta.kind","value":"Project"}]": {
+    "aggregation_count": { "count": 1649 } } }.
+    """
+
+
 class DependencyMetadataImporterData(BaseModel):
     """
     Information about the root package version (importer),
@@ -810,37 +905,6 @@ class DependencyMetadataImporterData(BaseModel):
     """
 
 
-class GroupResponseGroupData(BaseModel):
-    """
-    Information about objects matching the given key.
-    """
-
-    aggregation_count: V1CountResponse | None = None
-    """
-    Number of objects in group.
-    This field is always set.
-    """
-    aggregation_uuids: list[str] | None = None
-    """
-    List of UUIDs of the objects in the group.
-    Only populated if show_aggregation_uuids is set.
-    """
-    aggregation_value: V1GroupAggregationValueResponse | None = None
-    """
-    Value of the aggregation operation as calculated by the query.
-    """
-    unique_counts: dict[str, V1CountResponse] | None = None
-    """
-    Map of counts for the given unique_count_paths fields.
-    Only populated if unique_count_paths is set.
-    """
-    unique_values: dict[str, list[dict[str, Any]]] | None = None
-    """
-    Map of values for the given unique_value_paths fields.
-    Only populated if unique_value_paths is set.
-    """
-
-
 class V1DependencyMetadataSpec(BaseModel):
     """
     DependencyMetadata specific data.
@@ -855,19 +919,6 @@ class V1DependencyMetadataSpec(BaseModel):
     Information about the root package version (importer),
     that imports the dependency in one or more versions,
     either directly or indirectly.
-    """
-
-
-class V1GroupResponse(BaseModel):
-    """
-    Response to a list group request.
-    """
-
-    groups: dict[str, GroupResponseGroupData] | None = None
-    """
-    Map indexed by values of the fields specified in aggregation_paths,
-    for example, {"[{"key":"meta.kind","value":"Project"}]": {
-    "aggregation_count": { "count": 1649 } } }.
     """
 
 

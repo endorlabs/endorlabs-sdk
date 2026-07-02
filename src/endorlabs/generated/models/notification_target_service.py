@@ -397,6 +397,11 @@ class V1JIRAConfig(BaseModel):
     """
     The issue Type to raise in Jira.
     """
+    jira_child_issue_type: str | None = None
+    """
+    Child issue type used for dependency aggregation. Optional.
+    Defaults to the project's sub-task type when unset.
+    """
     jira_issue_type: str | None = None
     labels: list[str]
     """

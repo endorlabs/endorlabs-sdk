@@ -181,6 +181,7 @@ Use this structure in the final result:
 |-------|------|
 | [endor-project-retrieval-bundle](../endor-project-retrieval-bundle/SKILL.md) | **Required first** for `--callgraph-export` + manifest |
 | [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) | Finding / `oss` vuln function reachability |
+| [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md) | Tenant-wide PRF approximation + PV error summary |
 | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) | Finding rows, scan-scoped lists |
 | [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md) | Manifest path / ref lineage (not call paths) |
 

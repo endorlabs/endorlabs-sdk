@@ -54,10 +54,7 @@ def resolve_namespace_for_resource(resource: Any, fallback: str | None) -> str |
         resource.tenant_meta.namespace if present and non-empty, else fallback.
 
     """
-    tenant_meta = getattr(resource, "tenant_meta", None)
-    if tenant_meta is None:
-        return fallback
-    ns = getattr(tenant_meta, "namespace", None)
-    if ns and isinstance(ns, str) and ns.strip():
+    ns = resource_namespace(resource)
+    if ns:
         return ns
     return fallback

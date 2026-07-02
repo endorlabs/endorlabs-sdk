@@ -6,7 +6,9 @@ from endorlabs.tools.list_sharding import (
     parallel_map_shards,
     project_dict_to_shard,
     project_model_to_shard,
+    project_scoped_filter,
     resolve_worker_count,
+    single_shard_namespace,
 )
 
 __all__ = [
@@ -15,5 +17,7 @@ __all__ = [
     "parallel_map_shards",
     "project_dict_to_shard",
     "project_model_to_shard",
+    "project_scoped_filter",
     "resolve_worker_count",
+    "single_shard_namespace",
 ]
