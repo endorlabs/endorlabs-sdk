@@ -7,8 +7,10 @@ from unittest.mock import Mock
 from endorlabs.workflows.estate.collect.bounds import (
     count_for_progress,
     count_list_delta_check,
+    default_collect_max_workers,
     is_list_truncated,
     list_row_capacity,
+    resolve_collect_max_workers,
     resolve_max_pages,
 )
 
@@ -68,3 +70,24 @@ def test_count_for_progress_failure_returns_none() -> None:
         )
         is None
     )
+
+
+def test_default_collect_max_workers_clamps_cpu(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "endorlabs.workflows.estate.collect.bounds.os.cpu_count",
+        lambda: 32,
+    )
+    assert default_collect_max_workers() == 16
+
+
+def test_default_collect_max_workers_floors_low_cpu(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "endorlabs.workflows.estate.collect.bounds.os.cpu_count",
+        lambda: 2,
+    )
+    assert default_collect_max_workers() == 4
+
+
+def test_resolve_collect_max_workers_explicit() -> None:
+    assert resolve_collect_max_workers(8) == 8
+    assert resolve_collect_max_workers(None) == default_collect_max_workers()

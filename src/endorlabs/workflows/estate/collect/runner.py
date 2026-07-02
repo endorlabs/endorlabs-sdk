@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from endorlabs.tools.list_sharding import (
     ParentShard,
-    parallel_map_shards,
+    parallel_map_shards_iter,
     project_dict_to_shard,
 )
 from endorlabs.utils.logging_config import get_resource_logger
@@ -19,6 +18,7 @@ from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.estate.collect.bounds import (
     count_for_progress,
     count_list_delta_check,
+    resolve_collect_max_workers,
     resolve_max_pages,
 )
 from endorlabs.workflows.estate.collect.dependency_metadata import (
@@ -176,7 +176,7 @@ def _collect_sharded_resource(
             return shard.key, [], f"{shard.key}: {exc}"
 
     with out_path.open("a", encoding="utf-8") as handle:
-        for shard_key, batch, err in parallel_map_shards(
+        for shard_key, batch, err in parallel_map_shards_iter(
             pending_shards,
             _worker,
             max_workers=max_workers,
@@ -213,7 +213,9 @@ def _collect_sharded_resource(
                 LOGGER.warning("Shard validation: %s", detail)
 
     file_lines = sum(
-        1 for line in out_path.read_text(encoding="utf-8").splitlines() if line.strip()
+        shard.line_count
+        for shard in manifest.resources[resource_id].shards.values()
+        if shard.status == "complete"
     )
     status = "complete" if not errors else ("partial" if file_lines else "failed")
     finalize_resource(
@@ -338,11 +340,8 @@ def _collect_dm_and_finding_parallel(
             ],
         )
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        dm_future = pool.submit(_run_dm)
-        finding_future = pool.submit(_run_finding)
-        dm_count = dm_future.result()
-        finding_count = finding_future.result()
+    dm_count = _run_dm()
+    finding_count = _run_finding()
     return dm_count, finding_count
 
 
@@ -352,7 +351,7 @@ def collect_workspace(
     namespace: str,
     workspace: str | Path | None = None,
     date_suffix: str | None = None,
-    max_workers: int = 16,
+    max_workers: int | None = None,
     max_pages: int | None = None,
     page_size: int = 500,
     resume: bool = False,
@@ -367,6 +366,8 @@ def collect_workspace(
         date_suffix=date_suffix,
     )
     ensure_workspace_layout(workspace_root)
+    workers = resolve_collect_max_workers(max_workers)
+    LOGGER.info("Collect max_workers=%s", workers)
 
     if overwrite:
         manifest = reset_manifest_for_overwrite(workspace_root, namespace)
@@ -393,7 +394,7 @@ def collect_workspace(
             workspace_root=workspace_root,
             max_pages=resolved_pages,
             page_size=page_size,
-            max_workers=max_workers,
+            max_workers=workers,
         )
         keys = [str(r["uuid"]) for r in rows if r.get("uuid")]
         finalize_resource(
@@ -417,7 +418,7 @@ def collect_workspace(
             namespace=namespace,
             workspace_root=workspace_root,
             manifest=manifest,
-            max_workers=max_workers,
+            max_workers=workers,
             max_pages=resolved_pages,
             page_size=page_size,
             resume=resume and not overwrite,
@@ -443,7 +444,7 @@ def collect_workspace(
             manifest=manifest,
             max_pages=resolved_pages,
             page_size=page_size,
-            max_workers=max_workers,
+            max_workers=workers,
         )
         outcomes[RESOURCE_PACKAGE_VERSION] = f"{pv_count} package versions"
     else:
