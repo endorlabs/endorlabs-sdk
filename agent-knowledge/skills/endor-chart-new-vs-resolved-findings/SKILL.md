@@ -2,12 +2,22 @@
 name: endor-chart-new-vs-resolved-findings
 description: >-
   Generates cumulative weekly new vs resolved Critical/High reachable vulnerability
-  trend charts from FindingLog group-by-time queries (CREATE/DELETE events via
-  endorctl). Default window is the past 90 days with complete weeks only. Produces
-  one Cursor canvas per namespace root with optional child traverse. Use when the
+  trend charts from FindingLog group-by-time queries (CREATE/DELETE events via SDK
+  FindingLog.list_groups). Default window is the past 90 days with complete weeks only.
+  Produces one Cursor canvas per namespace root with optional child traverse. Use when the
   user asks for a resolved vs new findings trend chart, FindingLog analytics, or
   executive vulnerability burndown for main-context findings—not for open Finding
   snapshots, PRF/PV resolution reports, or scan pipeline RCA.
+endorlabs:
+  catalog:
+    workflow_id: finding-log-weekly-trends
+    module: endorlabs.workflows.findings.finding_log_trends
+    agent_visible: true
+    library_entrypoints:
+      - endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis
+      - endorlabs.workflows.logs.group_by_time.group_by_time_counts
+      - endorlabs.workflows.findings.filters.reachable_vuln_log_base_filter
+      - endorlabs.workflows.findings.filters.prf_vuln_filter
 ---
 
 # Chart new vs resolved findings
@@ -53,10 +63,17 @@ the Endor UI analytics **snapshot** card, which counts open `Finding` records fo
 | Reachability | `spec.finding_tags contains [FINDING_TAGS_REACHABLE_FUNCTION, FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION]` |
 | New | `spec.operation==OPERATION_CREATE` |
 | Resolved | `spec.operation==OPERATION_DELETE` |
-| Scope | `--traverse` on the namespace root |
+| Scope | Tenant root + traverse by default; prefer a **child namespace** when known (high cost at tenant root) |
 | Context | **`context.type==CONTEXT_TYPE_MAIN`** (default). Omit or broaden only when the user explicitly asks to include REF, CI, or all context types. |
-| Interval | **`week`** — always use `--group-by-time-interval week`; do not use `month` |
-| Window | **Past 90 days, complete weeks only** (see [Default date window](#default-date-window)) |
+| Interval | **`week`** — `ListParameters(group_by_time_interval="week")`; chart library uses weekly buckets only |
+| Window | **`--interval week --lookback 13`** (13 complete UTC weeks ≈ past quarter); smoke with `--lookback 1` |
+
+**Online aggregated queries:** Prefer one server-side `group_by_time` traverse query per
+operation (CREATE / DELETE) — the API indexes interval buckets. That is ~2 grouped
+queries for the default path. Fall back to parallel per-project shards only on
+504/deadline. Do **not** paginate all FindingLog rows or run `endor-estate pull` for this chart.
+
+**Artifact-first:** If `{namespace-slug}-new-vs-resolved-analysis.json` already exists, run `generate_canvas.py` / `run_report.py` to refresh the canvas without re-querying the API unless filters or window changed.
 
 ## Credentials
 
@@ -68,66 +85,75 @@ Use the same credential modes as other tenant workflows:
 
 ## Default date window
 
-**Goal:** ~90 days of history using **only full weeks** — no partial week at either edge.
+**Goal:** A fixed number of **complete** interval buckets — no partial bucket at either edge.
 
-Week buckets from `--group-by-time-interval week` align to **UTC week start**
-(Sunday 00:00:00Z). Compute bounds before querying:
+Use endorctl-style aliases for the aggregation interval and a **lookback count** (number of
+complete buckets), not calendar-day integers:
 
-1. **`windowEnd`** — start of the **current** UTC week (Sunday 00:00:00Z). This is
-   the exclusive upper bound; it drops the in-progress week.
-2. **`lookbackStart`** — `windowEnd` minus 90 calendar days.
-3. **`windowStart`** — if `lookbackStart` is not already a UTC Sunday 00:00:00Z,
-   snap **forward** to the next Sunday 00:00:00Z. This drops the partial week at
-   the lookback edge.
+| CLI / SDK | Meaning |
+| --------- | ------- |
+| `--interval week` | `group_by_time_interval="week"` → `GROUP_BY_TIME_INTERVAL_WEEK` on the wire |
+| `--lookback 13` | 13 complete UTC weeks before the current (in-progress) week |
+| `--lookback 1` | Quick smoke: one complete week |
 
-Use explicit `date(...)` literals in the filter (ISO literals without `date()` often
-return empty results):
+Week buckets align to **UTC week start** (Sunday 00:00:00Z). Compute bounds before querying:
+
+1. **`windowEnd`** — start of the **current** UTC week (Sunday 00:00:00Z). Exclusive upper bound.
+2. **`windowStart`** — `windowEnd` minus `lookback` full weeks.
+
+Filter (explicit `date(...)` literals — ISO without `date()` often returns empty rows):
 
 ```text
 meta.create_time>=date(<windowStart>) and meta.create_time<date(<windowEnd>)
 ```
 
-**Example** (today = 2026-06-24, a Wednesday):
+**Example** (today = 2026-06-24, a Wednesday, `--interval week --lookback 13`):
 
 | Bound | Value |
 |-------|-------|
-| `windowEnd` | `2026-06-21T00:00:00Z` (current week start — exclusive) |
-| `lookbackStart` | 2026-03-23 |
-| `windowStart` | `2026-03-23T00:00:00Z` (already Sunday) |
+| `windowEnd` | `2026-06-22T00:00:00Z` (current week start — exclusive) |
+| `windowStart` | `2026-03-23T00:00:00Z` (13 weeks earlier) |
 
-Result: complete weeks from 2026-03-23 through 2026-06-14 (~13 weeks).
+Result: 13 complete weeks ending the week of 2026-06-15.
 
-When the user specifies a different range, still **exclude partial weeks** unless
-they explicitly ask to include the current or edge partial week. Recompute
-`windowStart` / `windowEnd` so every bucket in the chart is a full UTC week.
+## Query pattern (SDK)
 
-## Query pattern (endorctl)
+Library: `endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis`.
+Generic aggregation primitive: `endorlabs.workflows.logs.group_by_time.group_by_time_counts`.
+Filters: `endorlabs.workflows.findings.filters.reachable_vuln_log_base_filter()`.
 
-Always use **`--group-by-time-interval week`**. Do not use `month`.
-
-Use **separate** group-by-time flags (not the legacy single-string form):
+Bundled script (preferred for agents):
 
 ```bash
-BASE='meta.create_time>=date(<windowStart>) and meta.create_time<date(<windowEnd>) and context.type==CONTEXT_TYPE_MAIN and spec.finding_categories contains FINDING_CATEGORY_VULNERABILITY and spec.finding_tags contains [FINDING_TAGS_REACHABLE_FUNCTION, FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION]'
-
-endorctl api list -r FindingLog -n <namespace> --traverse \
-  -f "${BASE} and spec.level in [FINDING_LEVEL_CRITICAL, FINDING_LEVEL_HIGH] and spec.operation==OPERATION_CREATE" \
-  --group-by-time \
-  --group-aggregation-paths meta.create_time \
-  --group-by-time-interval week \
-  --group-by-time-mode count \
-  --timeout=120s -o json --log-level error
+uv run python agent-knowledge/skills/endor-chart-new-vs-resolved-findings/scripts/run_analysis.py <namespace>
 ```
 
-Repeat for `OPERATION_DELETE`.
+Uses `client.FindingLog.list_groups(..., list_params=ListParameters(group_by_time=True, ...))`
+with **weekly** buckets (`group_by_time.interval=GROUP_BY_TIME_INTERVAL_WEEK` on the wire).
+Pass `--no-traverse` to scope a single namespace path. Pass `--interval week --lookback 1` for a
+short validation window (one complete week).
+Default SDK read timeout: `--timeout 120` (seconds). On 504/deadline, the library
+splits Critical+High into separate aggregate queries, then falls back to parallel
+project-namespace shards (`--max-workers`, default 12).
 
-Replace `<namespace>` with the tenant root or child namespace. Use ISO-8601 literals
-inside `date(...)` (for example `2026-03-23T00:00:00Z`).
+Replace `<namespace>` with the tenant root or child namespace.
+
+**Manual SDK example:**
+
+```python
+import endorlabs
+from endorlabs.workflows.findings.finding_log_trends import (
+    build_finding_log_new_vs_resolved_analysis,
+)
+
+client = endorlabs.Client(tenant="<namespace>", timeout=120.0)
+analysis = build_finding_log_new_vs_resolved_analysis(client, "<namespace>", traverse=True)
+```
 
 **Other context types:** When the user asks to include REF, CI, or all contexts,
-remove `context.type==CONTEXT_TYPE_MAIN` from `BASE` or replace it with an explicit
-`context.type in [...]` clause. State the chosen context scope in the chart subtitle
-and footnote.
+adjust the base filter (see `workflows/findings/filters.py`) or replace
+`context.type==CONTEXT_TYPE_MAIN` with an explicit `context.type in [...]` clause.
+State the chosen context scope in the chart subtitle and footnote.
 
 ### Custom date windows
 
@@ -141,21 +167,10 @@ Bucket field: `meta.create_time` (skill default). UI time chart uses
 
 ## Timeout fallback
 
-If combined Critical+High query times out (~90–120s), **split by severity** and
-sum client-side (four queries: CRITICAL/HIGH × CREATE/DELETE):
-
-```bash
-for op in CREATE DELETE; do for lvl in CRITICAL HIGH; do
-  endorctl api list -r FindingLog -n <namespace> --traverse \
-    -f "${BASE} and spec.level==FINDING_LEVEL_${lvl} and spec.operation==OPERATION_${op}" \
-    --group-by-time --group-aggregation-paths meta.create_time \
-    --group-by-time-interval week --group-by-time-mode count \
-    --timeout=120s -o json --log-level error
-done; done
-```
-
-Do not set a small `page_size` on log-style lists; cap cost with `--timeout` and
-severity split instead. See shipped rule `endor-list-query-performance`.
+If combined Critical+High query times out, the library **splits by severity** and
+sums client-side (four queries: CRITICAL/HIGH × CREATE/DELETE). Do not set a small
+`page_size` on log-style lists; cap cost with `--timeout` and severity split instead.
+See shipped rule `endor-list-query-performance`.
 
 ## Parse API response
 
@@ -170,6 +185,37 @@ fallback.
 3. `cumulativeNew[i] = sum(weeklyNew[0..i])`, same for Resolved.
 4. `gap[i] = cumulativeNew[i] - cumulativeResolved[i]` — widening gap means New
    is outpacing Resolved; narrowing means Resolved is catching up.
+
+## Analysis JSON contract (canvas input)
+
+Producer: `endorlabs.workflows.findings.finding_log_trends.build_analysis` (via
+`build_finding_log_new_vs_resolved_analysis`). Consumer:
+`generate_canvas.render_canvas`.
+
+**Artifact file:** `{namespace-slug}-new-vs-resolved-analysis.json`
+
+**Canvas-required keys** (enforced by `validate_chart_analysis`):
+
+| Key | Role |
+|-----|------|
+| `namespace` | Chart title and component name |
+| `categories` | X-axis labels (`MM/DD` per week) |
+| `cumulative_new` / `cumulative_resolved` | Y-axis cumulative series (equal length to `categories`) |
+| `finding_criteria` | Footnote filter summary |
+| `period_caption` | Human-readable inclusive date range |
+| `gap_start`, `gap_mid`, `gap_end` | Cumulative gap callout values |
+| `gap_mid_label`, `gap_end_label` | Week labels for mid/end gap |
+| `gap_trend` | `widening` / `narrowing` / `stable` |
+| `interval` | `group_by_time` alias used for buckets (chart: `week`) |
+| `lookback` | Number of complete interval buckets in the window |
+| `lookback_days` | Derived span in days (informational; legacy JSON may omit `interval`/`lookback`) |
+
+**Metadata** (written by producer; canvas ignores): `window_start`, `window_end`,
+`last_complete_week`, `weekly_new`, `weekly_resolved`, `weeks`, `gaps`,
+`severity_split`, `context_type`, `generated_at`.
+
+**Filename:** `chart_canvas_filename(namespace, interval=…, lookback=…)` →
+`<namespace-slug>-cumulative-<interval>-past-<lookback>.canvas.tsx`
 
 ## Canvas output
 
@@ -201,7 +247,8 @@ change `namespace`, week labels, and count arrays.
 
 `<namespace-slug>-cumulative-weekly-<period>.canvas.tsx`
 
-Example: `<namespace-slug>-cumulative-weekly-past-90d.canvas.tsx`
+Example: `<namespace-slug>-cumulative-weekly-past-90d.canvas.tsx` (90 from
+`lookback_days` in the analysis JSON when using the default window).
 
 ## Workflow checklist
 
@@ -209,10 +256,11 @@ Example: `<namespace-slug>-cumulative-weekly-past-90d.canvas.tsx`
 2. Compute `windowStart` / `windowEnd` on UTC week boundaries — **complete weeks
    only** (default: past 90 days) unless the user specified another range.
 3. Configure credentials; pick token auth if keys fail.
-4. Run CREATE and DELETE queries with `--group-by-time-interval week` (or
-   severity-split fallback, still `week`).
-5. Parse buckets; build cumulative series; verify totals with `--count` if results
-   look empty.
+4. Run `build_finding_log_new_vs_resolved_analysis()` (or `run_analysis.py`) for
+   weekly CREATE/DELETE `FindingLog.list_groups` queries; library applies
+   severity-split fallback on 504/deadline.
+5. Verify bucket keys align with the UTC week grid; re-check namespace scope if
+   results look empty.
 6. Write one cumulative weekly canvas per namespace with identical layout.
 7. Summarize weekly gap trend + canvas link in chat.
 

@@ -14,6 +14,7 @@ Subpackages:
     callgraph: Call graph export and local decoded-graph search.
     dependencies: Dependency metadata reports and visibility.
     findings: Finding triage and exception policies.
+    logs: Log resource group-by-time aggregation helpers.
     notifications: Notification targets and policies.
     platform: Namespaces, installations, scan profiles, auth policies.
     reachability: PV/finding reachability context and stitched evidence helpers.

@@ -10,6 +10,12 @@ from pathlib import Path
 
 from paths import resolve_canvas_dir
 
+from endorlabs.workflows.findings.finding_log_trends import (
+    chart_canvas_filename,
+    chart_window_params,
+    validate_chart_analysis,
+)
+
 
 def js_string(value: str) -> str:
     return json.dumps(value)
@@ -26,6 +32,7 @@ def component_name(namespace: str) -> str:
 
 
 def render_canvas(data: dict) -> str:
+    validate_chart_analysis(data)
     namespace = data["namespace"]
     component = component_name(namespace)
     categories = json.dumps(data["categories"])
@@ -39,7 +46,7 @@ def render_canvas(data: dict) -> str:
     gap_end_label = js_string(data["gap_end_label"])
     finding_criteria = js_string(data["finding_criteria"])
     period_caption = js_string(data["period_caption"])
-    last_complete_week = js_string(data["gap_end_label"])
+    last_complete_week_label = js_string(data["gap_end_label"])
 
     return f"""import {{
   colorPalette,
@@ -198,7 +205,7 @@ export default function {component}() {{
         </Text>
         <Text style={{{{ color: textColor, fontSize: 12, opacity: 0.85 }}}}>
           Source: FindingLog · CREATE &amp; DELETE · {{findingCriteria}} · {period_caption}
-          · weekly cumulative event counts (through week of {last_complete_week}) · complete weeks only
+          · weekly cumulative event counts (through week of {last_complete_week_label}) · complete weeks only
         </Text>
       </Stack>
 
@@ -256,8 +263,13 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     data = json.loads(json_path.read_text(encoding="utf-8"))
-    slug = data["namespace"].replace("_", "-")
-    filename = f"{slug}-cumulative-weekly-past-90d.canvas.tsx"
+    validate_chart_analysis(data)
+    interval, lookback = chart_window_params(data)
+    filename = chart_canvas_filename(
+        data["namespace"],
+        interval=interval,
+        lookback=lookback,
+    )
 
     canvas_dir = resolve_canvas_dir(args.canvas_dir)
     if canvas_dir is not None:

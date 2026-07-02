@@ -113,6 +113,31 @@ class ScanResultFacade(ResourceRuntimeFacade[Any]):
 class ProjectFacade(ResourceRuntimeFacade[Any]):
     """Project facade with search-by-name discovery."""
 
+    def is_sbom(self, project: Any) -> bool:
+        """Return whether *project* is an SBOM import row (``spec.sbom`` set)."""
+        from ..resources.project import is_sbom_project_row
+
+        return is_sbom_project_row(project)
+
+    def is_app(self, project: Any) -> bool:
+        """Return whether *project* was registered via an SCM app installation.
+
+        Uses ``spec.git.external_installation_id``. For per-scan execution
+        environment, see ScanResult ``spec.environment.config.RunBySystem``.
+        """
+        from ..resources.project import is_app_project_row
+
+        return is_app_project_row(project)
+
+    def is_cli(self, project: Any) -> bool:
+        """Return whether *project* was registered for CLI scanning (no app id).
+
+        Exclude SBOM rows with :meth:`is_sbom` before classifying inventory.
+        """
+        from ..resources.project import is_cli_project_row
+
+        return is_cli_project_row(project)
+
     def search_by_name(
         self,
         query: str,

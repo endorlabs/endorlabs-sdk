@@ -179,11 +179,11 @@ def _sample_from_scan_probe(
                 if not _scan_has_context(scan):
                     continue
                 try:
-                    result = facade.list_for_context(scan, max_pages=TEST_MAX_PAGES)
+                    rows = facade.list_for_context(scan, max_pages=TEST_MAX_PAGES)
                 except ServerError:
                     continue
-                if result.edge_used == edge_id and result.values:
-                    return project, scan, result
+                if rows:
+                    return project, scan, rows
     return None
 
 

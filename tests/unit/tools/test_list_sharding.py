@@ -1,54 +1,33 @@
-"""Tests for endorlabs.tools.list_sharding."""
+"""Tests for list sharding helpers."""
 
 from __future__ import annotations
 
-from unittest.mock import Mock
-
 from endorlabs.tools.list_sharding import (
     ParentShard,
-    list_for_shards,
-    parallel_map_shards,
+    project_scoped_filter,
+    single_shard_namespace,
 )
 
 
-def test_parallel_map_shards_invokes_each_shard() -> None:
+def test_project_scoped_filter_appends_uuid_clause() -> None:
+    filt = project_scoped_filter(
+        "context.type==CONTEXT_TYPE_MAIN",
+        "proj-1",
+    )
+    assert filt == ('context.type==CONTEXT_TYPE_MAIN and spec.project_uuid=="proj-1"')
+
+
+def test_single_shard_namespace_detects_shared_path() -> None:
     shards = [
-        ParentShard(key="a", namespace="tenant.a"),
-        ParentShard(key="b", namespace="tenant.b"),
+        ParentShard(key="a", namespace="tenant.child"),
+        ParentShard(key="b", namespace="tenant.child"),
     ]
-    seen: list[str] = []
-
-    def _fn(shard: ParentShard) -> str:
-        seen.append(shard.key)
-        return shard.key
-
-    results = parallel_map_shards(
-        shards,
-        _fn,
-        max_workers=2,
-        progress_label="test",
-    )
-    assert sorted(results) == ["a", "b"]
-    assert sorted(seen) == ["a", "b"]
+    assert single_shard_namespace(shards) == "tenant.child"
 
 
-def test_list_for_shards_passes_namespace_and_filter() -> None:
-    facade = Mock()
-    facade._entry = Mock(attr_name="Finding")
-    facade.list = Mock(return_value=[{"uuid": "1"}])
-    shards = [ParentShard(key="proj-1", namespace="tenant.child")]
-
-    rows = list_for_shards(
-        facade,
-        shards,
-        filter_fn=lambda s: f'spec.project_uuid=="{s.key}"',
-        max_workers=1,
-        max_pages=1,
-    )
-
-    assert rows == [{"uuid": "1"}]
-    facade.list.assert_called_once_with(
-        namespace="tenant.child",
-        filter='spec.project_uuid=="proj-1"',
-        max_pages=1,
-    )
+def test_single_shard_namespace_returns_none_when_paths_differ() -> None:
+    shards = [
+        ParentShard(key="a", namespace="tenant.child-a"),
+        ParentShard(key="b", namespace="tenant.child-b"),
+    ]
+    assert single_shard_namespace(shards) is None

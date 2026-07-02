@@ -57,3 +57,22 @@ Common filter literals (examples, codegen-verified): [reference/filter-enum-snip
 ## Update vs list mask
 
 `update_mask` and list `mask` are separate concepts. Do not confuse them.
+
+## Group by time (`list_groups`)
+
+When **`group_by_time=True`**, the SDK serializes nested OpenAPI keys (not the
+legacy flat `list_parameters.group_by_time_interval` form):
+
+| SDK / `ListParameters` | Wire query param |
+| ---------------------- | ---------------- |
+| `group_aggregation_paths` or `group_by_time_field_value` | `list_parameters.group_by_time.aggregation_paths` (comma-separated) |
+| `group_by_time_interval` (`week`, `day`, …) | `list_parameters.group_by_time.interval` (`GROUP_BY_TIME_INTERVAL_WEEK`, …) |
+| `group_by_time_mode` | `list_parameters.group_by_time.mode` |
+
+**Interval aliases:** `week`, `day`, `month`, `quarter`, `year`, `hour`,
+`minute`, `second` map to `GROUP_BY_TIME_INTERVAL_*` enum values (same aliases
+as endorctl). **Filter bounds** for the window are separate — use
+`meta.create_time>=date(<iso-z>)` on the list `filter`, not the interval name.
+
+**Field grouping without time:** `group_by_time=False` with
+`group_aggregation_paths` uses `list_parameters.group.aggregation_paths`.

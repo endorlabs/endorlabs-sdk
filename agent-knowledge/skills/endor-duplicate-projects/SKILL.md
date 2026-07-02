@@ -2,8 +2,8 @@
 name: endor-duplicate-projects
 description: >-
   Find potential duplicate Projects across a tenant and all child namespaces:
-  identical meta.name across namespaces, or names differing only by mirror/shadow/clone
-  tokens. Excludes SBOM projects (spec.sbom). Emit a flat CSV (project name,
+  identical meta.name across namespaces, or names differing only when the user passes
+  --name-strip-tokens (no default). Excludes SBOM projects (spec.sbom). Emit a flat CSV (project name,
   namespace, uuid, source) and a grouped canvas. Use when auditing project inventory
   or deduplicating registrations—not for findings, scan RCA, or single-project
   classification alone.
@@ -23,7 +23,7 @@ For **CLI vs Cloud Scan** on each row, use [endor-cli-vs-cloud-projects](../endo
 **In scope**
 
 - Tenant-wide `Project.list(traverse=True)` with bounded pagination.
-- Duplicate heuristics: **exact name** and **mirror/shadow/clone** variants.
+- Duplicate heuristics: **exact name** across namespaces (default). Optional **canonical-name** clustering when the user supplies `--name-strip-tokens` (no default tokens).
 - CSV + canvas deliverables with the fixed column schema.
 
 **Out of scope**
@@ -38,34 +38,36 @@ For **CLI vs Cloud Scan** on each row, use [endor-cli-vs-cloud-projects](../endo
 | Rule | Condition | Example |
 |------|-----------|---------|
 | **Exact name** | Same `meta.name` string on **2+** projects in **different** `tenant_meta.namespace` values | `github.com/org/repo` in `tenant.team-a` and `tenant.team-b` |
-| **Mirror / shadow / clone** | Names match after removing whole-word tokens **`mirror`**, **`shadow`**, or **`clone`** (case-insensitive; separators `-`, `_`, `.`, `/` around the token) | `github.com/org/repo` ↔ `github.com/org/repo-mirror` |
+| **Canonical name (opt-in)** | Pass `--name-strip-tokens` with whole-word tokens to strip before comparing names (repeatable or comma-separated). **No default tokens** — without this flag, only exact-name clusters are emitted. | Customer example: `--name-strip-tokens mirror,shadow,clone` |
 
-**Union clusters:** If project A matches B by exact name and B matches C by mirror token, put A, B, C in one duplicate group. Only emit rows for projects that belong to a group with **≥ 2** members.
+**Union clusters:** If project A matches B by exact name and B matches C by an opt-in canonical token, put A, B, C in one duplicate group. Only emit rows for projects that belong to a group with **≥ 2** members.
 
 **SBOM exclusion:** Drop any project with **`spec.sbom`** before grouping or output. Do not include SBOM projects in CSV or canvas.
 
-**Heuristic disclaimer:** Same repo URL registered twice is a strong duplicate signal; mirror/shadow/clone naming is a **naming convention heuristic** — review before merge/delete actions.
+**Heuristic disclaimer:** Same repo URL registered twice is a strong duplicate signal; opt-in token stripping is a **customer naming convention** — review before merge/delete actions.
 
 ## CSV schema (required)
 
-Write CSV with **exactly these four columns**, in this order, on every run:
+Write CSV with **exactly these six columns**, in this order, on every run:
 
 | Column | Source field | Values |
 |--------|--------------|--------|
 | **`project name`** | `Project.meta.name` | Repository / project name string |
 | **`namespace`** | `Project.tenant_meta.namespace` | Full namespace path |
 | **`uuid`** | `Project.uuid` | Project UUID |
-| **`source`** | `Project.spec.git.external_installation_id` | **`CLI`** or **`Cloud Scan`** only |
+| **`source`** | Registration (`external_installation_id`) | **`CLI`** or **`Cloud Scan`** only |
+| **`latest scan execution`** | Newest `ScanResult` `RunBySystem` | **`CLI`**, **`Cloud Scan`**, or **`unknown`** |
+| **`mixed mode`** | Registration vs latest scan | **`true`** / **`false`** |
 
 Header row (literal):
 
 ```text
-project name,namespace,uuid,source
+project name,namespace,uuid,source,latest scan execution,mixed mode
 ```
 
 **Do not** add extra columns (`duplicate_reason`, `group_id`, etc.) unless the user explicitly asks. Grouping belongs in the **canvas**, not the CSV.
 
-**Source mapping:**
+**Registration mapping** (`source`):
 
 ```python
 def project_source(project) -> str:
@@ -74,6 +76,8 @@ def project_source(project) -> str:
         return "Cloud Scan"
     return "CLI"
 ```
+
+**Latest scan execution:** bundled script uses `endorlabs.workflows.projects.inventory.fetch_latest_scan_execution_labels` (parallel `ScanResult.list_by_project` per duplicate row).
 
 ## Workflow
 
@@ -96,10 +100,11 @@ projects = list(
     )
 )
 
-def is_sbom_project(row) -> bool:
-    return (row.get("spec") or {}).get("sbom") is not None
-
-projects = [p for p in projects if not is_sbom_project(p)]
+projects = [
+    p
+    for p in projects
+    if not client.Project.is_sbom(p)
+]
 ```
 
 Use `max_pages` when the user requests a bounded audit; otherwise paginate until exhausted.
@@ -108,34 +113,20 @@ Use `max_pages` when the user requests a bounded audit; otherwise paginate until
 
 ### Step 2: Build duplicate groups
 
+**Default:** exact `meta.name` matches across **≥2** namespaces only.
+
+**Opt-in canonical clustering:** when the user supplies naming tokens (for example
+`mirror`, `shadow`, `clone`), pass them to the bundled script:
+
+```bash
+uv run python agent-knowledge/skills/endor-duplicate-projects/scripts/find_duplicate_projects.py \
+  --tenant <tenant> --name-strip-tokens mirror,shadow,clone
+```
+
+SDK helpers for the `source` column: `client.Project.is_app(row)` → `Cloud Scan`, else `CLI`.
+
 ```python
-MIRROR_TOKEN = re.compile(
-    r"[-_./]?(mirror|shadow|clone)[-_./]?",
-    re.IGNORECASE,
-)
-
-
-def canonical_name(name: str) -> str:
-    return MIRROR_TOKEN.sub("", (name or "").strip().lower())
-
-
-def project_source_from_row(row) -> str:
-    inst = (
-        (row.get("spec") or {})
-        .get("git", {})
-        .get("external_installation_id")
-    )
-    return "Cloud Scan" if inst else "CLI"
-
-
-def row_fields(row) -> dict:
-    return {
-        "project name": (row.get("meta") or {}).get("name") or "",
-        "namespace": (row.get("tenant_meta") or {}).get("namespace") or "",
-        "uuid": row.get("uuid") or "",
-        "source": project_source_from_row(row),
-    }
-
+from collections import defaultdict
 
 # Exact-name groups (different namespaces only)
 by_exact: dict[str, list] = defaultdict(list)
@@ -149,20 +140,8 @@ exact_groups = [
     if len({(r.get("tenant_meta") or {}).get("namespace") for r in group}) >= 2
 ]
 
-# Mirror/shadow/clone groups
-by_canonical: dict[str, list] = defaultdict(list)
-for p in projects:
-    name = (p.get("meta") or {}).get("name") or ""
-    by_canonical[canonical_name(name)].append(p)
-
-mirror_groups = [
-    group
-    for group in by_canonical.values()
-    if len(group) >= 2 and canonical_name((group[0].get("meta") or {}).get("name") or "")
-]
-
-# Union-find or simple uuid merge of group members into clusters
-# (implement merge so overlapping groups become one cluster)
+# Optional: canonical groups only when strip_tokens is provided by the user
+# (bundled script: --name-strip-tokens mirror,shadow,clone)
 ```
 
 Merge overlapping groups (same UUID appearing in multiple candidate groups) before emitting rows.
@@ -175,7 +154,14 @@ Default path: `.endorlabs-context/workspace/sessions/<user>/exports/duplicate-pr
 output = Path(".endorlabs-context/workspace/sessions/<user>/exports/duplicate-projects.csv")
 output.parent.mkdir(parents=True, exist_ok=True)
 
-fieldnames = ["project name", "namespace", "uuid", "source"]
+fieldnames = [
+    "project name",
+    "namespace",
+    "uuid",
+    "source",
+    "latest scan execution",
+    "mixed mode",
+]
 rows = [row_fields(p) for cluster in merged_clusters for p in cluster]
 rows.sort(key=lambda r: (r["project name"].lower(), r["namespace"]))
 
@@ -198,7 +184,7 @@ uv run python .endorlabs-context/sdk/skills/endor-duplicate-projects/scripts/fin
 When **≥ 1 duplicate cluster** is found, create a Cursor canvas (see [canvas skill](https://docs.cursor.com)) with:
 
 - **Summary:** tenant, total projects scanned, duplicate cluster count, row count.
-- **Grouped sections:** one block per duplicate cluster; table columns match CSV: **project name**, **namespace**, **uuid**, **source**.
+- **Grouped sections:** one block per duplicate cluster; table columns match CSV: **project name**, **namespace**, **uuid**, **source**, **latest scan execution**, **mixed mode**.
 - **No empty canvas:** if there are zero duplicate clusters, skip the canvas and report “no duplicates found” in chat only.
 
 Embed the CSV row data inline in the canvas component (no `fetch()`).
@@ -207,8 +193,9 @@ Embed the CSV row data inline in the canvas component (no `fetch()`).
 
 Before finishing, confirm:
 
-- [ ] CSV exists with header `project name,namespace,uuid,source`
+- [ ] CSV exists with header `project name,namespace,uuid,source,latest scan execution,mixed mode`
 - [ ] Every data row has **`source`** ∈ {`CLI`, `Cloud Scan`}
+- [ ] Report duplicate-row registration vs latest-scan counts in chat summary
 - [ ] SBOM projects (`spec.sbom` set) excluded from scan and output
 - [ ] Only projects in multi-member duplicate groups are included
 - [ ] Canvas groups the same rows visually (when duplicates exist)

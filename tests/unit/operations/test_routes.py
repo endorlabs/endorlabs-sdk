@@ -218,6 +218,45 @@ def test_resolve_attr_path_nested() -> None:
     assert resolve_attr_path(obj, "spec.project_uuid") == "abc"
 
 
+def test_resolve_source_uuid_from_dict_model_and_string() -> None:
+    from endorlabs.operations.routes import resolve_source_uuid
+
+    assert resolve_source_uuid({"uuid": "proj-1"}) == "proj-1"
+    assert resolve_source_uuid(_project()) == "proj-uuid-1"
+    assert resolve_source_uuid("proj-raw") == "proj-raw"
+    assert resolve_source_uuid({}) is None
+
+
+def test_list_by_parent_masked_project_dict() -> None:
+    contract = load_golden_contract()
+    edge = contract.edge_by_id("project.scan_results")
+    assert edge is not None
+    mock_ops = Mock()
+    mock_ops.list.return_value = []
+    executor = _executor(ScanResult=mock_ops)
+    project = {
+        "uuid": "proj-uuid-1",
+        "tenant_meta": {"namespace": "tenant.child"},
+        "meta": {"name": "github.com/org/repo"},
+    }
+    executor.execute(edge, source=project)
+    mock_ops.list.assert_called_once()
+    args, _ = mock_ops.list.call_args
+    assert args[0] == "tenant.child"
+    lp = args[1]
+    assert lp is not None
+    assert 'meta.parent_uuid == "proj-uuid-1"' in lp.filter
+
+
+def test_list_by_parent_missing_uuid_raises() -> None:
+    contract = load_golden_contract()
+    edge = contract.edge_by_id("project.scan_results")
+    assert edge is not None
+    executor = _executor(ScanResult=Mock())
+    with pytest.raises(RouteNotApplicableError, match="Missing parent UUID"):
+        executor.execute(edge, source={"meta": {"name": "no-uuid"}})
+
+
 def test_list_by_attribute_package_name() -> None:
     contract = load_golden_contract()
     edge = contract.edge_by_id("finding.dependency_metadata.by_package")
