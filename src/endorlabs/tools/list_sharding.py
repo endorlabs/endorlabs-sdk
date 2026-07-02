@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Any
@@ -64,6 +64,32 @@ def resolve_worker_count(max_workers: int, shard_count: int) -> int:
     return max(1, min(max_workers, shard_count or 1))
 
 
+def parallel_map_shards_iter[T](
+    shards: Sequence[ParentShard],
+    fn: Callable[[ParentShard], T],
+    *,
+    max_workers: int,
+    progress_label: str,
+    progress_every: int = 50,
+    on_progress: Callable[[int, int], None] | None = None,
+) -> Iterator[T]:
+    """Run ``fn`` per shard; yield each result as its worker completes."""
+    if not shards:
+        return
+    workers = resolve_worker_count(max_workers, len(shards))
+    completed = 0
+    total = len(shards)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {pool.submit(fn, shard): shard for shard in shards}
+        for fut in as_completed(futures):
+            yield fut.result()
+            completed += 1
+            if on_progress is not None:
+                on_progress(completed, total)
+            elif completed % progress_every == 0 or completed == total:
+                LOGGER.info("%s: %s/%s", progress_label, completed, total)
+
+
 def parallel_map_shards[T](
     shards: Sequence[ParentShard],
     fn: Callable[[ParentShard], T],
@@ -74,22 +100,16 @@ def parallel_map_shards[T](
     on_progress: Callable[[int, int], None] | None = None,
 ) -> list[T]:
     """Run ``fn`` per shard in a thread pool; results in completion order."""
-    if not shards:
-        return []
-    workers = resolve_worker_count(max_workers, len(shards))
-    results: list[T] = []
-    completed = 0
-    total = len(shards)
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = {pool.submit(fn, shard): shard for shard in shards}
-        for fut in as_completed(futures):
-            results.append(fut.result())
-            completed += 1
-            if on_progress is not None:
-                on_progress(completed, total)
-            elif completed % progress_every == 0 or completed == total:
-                LOGGER.info("%s: %s/%s", progress_label, completed, total)
-    return results
+    return list(
+        parallel_map_shards_iter(
+            shards,
+            fn,
+            max_workers=max_workers,
+            progress_label=progress_label,
+            progress_every=progress_every,
+            on_progress=on_progress,
+        )
+    )
 
 
 def list_for_shards(
