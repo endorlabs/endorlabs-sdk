@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import TYPE_CHECKING, Any
 
 from endorlabs.utils.logging_config import get_resource_logger
@@ -11,6 +12,22 @@ if TYPE_CHECKING:
     from endorlabs.core.types import ListParameters
 
 _LOGGER = get_resource_logger(__name__)
+
+_COLLECT_MAX_WORKERS_CAP = 16
+_COLLECT_MAX_WORKERS_FLOOR = 4
+
+
+def default_collect_max_workers() -> int:
+    """Parallel shard workers from ``os.cpu_count()``, floored at 4 and capped at 16."""
+    cpus = os.cpu_count() or _COLLECT_MAX_WORKERS_FLOOR
+    return max(_COLLECT_MAX_WORKERS_FLOOR, min(_COLLECT_MAX_WORKERS_CAP, cpus))
+
+
+def resolve_collect_max_workers(max_workers: int | None) -> int:
+    """Use explicit *max_workers* or :func:`default_collect_max_workers`."""
+    if max_workers is None:
+        return default_collect_max_workers()
+    return max(1, max_workers)
 
 
 def resolve_max_pages(value: int | None) -> int | None:
