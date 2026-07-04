@@ -162,6 +162,40 @@ class TestRequestTimeout:
         assert client.timeout == 45.0
         assert client._request_headers.get("Request-timeout") == "45"
 
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_API_TIMEOUT": "25",
+            "ENDOR_TOKEN": "",
+        },
+        clear=True,
+    )
+    def test_endor_api_timeout_from_env(self) -> None:
+        """ENDOR_API_TIMEOUT is used when request timeout env is unset."""
+        with _patch_httpx_client_for_auth():
+            client = APIClient()
+        assert client.timeout == 25.0
+        assert client._request_headers.get("Request-timeout") == "25"
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_REQUEST_TIMEOUT": "90",
+            "ENDOR_API_TIMEOUT": "25",
+            "ENDOR_TOKEN": "",
+        },
+        clear=True,
+    )
+    def test_endor_request_timeout_precedes_api_timeout(self) -> None:
+        """ENDOR_REQUEST_TIMEOUT takes precedence over ENDOR_API_TIMEOUT."""
+        with _patch_httpx_client_for_auth():
+            client = APIClient()
+        assert client.timeout == 90.0
+
 
 class TestContentTypeAndAcceptEncoding:
     """Test content_type and accept_encoding (API header options)."""

@@ -714,6 +714,7 @@ def main() -> None:  # noqa: D103
         ".api_client": ["APIClient"],
         ".core.filter": ["FilterExpression"],
         ".core.types": ["ListParameters"],
+        ".core.whoami": ["WhoamiResult"],
         ".operations.routes": ["RouteResult"],
     }
     facade_imports: set[str] = set()
@@ -823,8 +824,10 @@ def main() -> None:  # noqa: D103
     lines.append("        exc_val: BaseException | None,")
     lines.append("        exc_tb: Any,")
     lines.append("    ) -> None: ...")
-    lines.append("    def whoami(self) -> str | None:")
-    lines.append('        """Return the authenticated identity name, or None."""')
+    lines.append("    def whoami(self) -> WhoamiResult:")
+    lines.append(
+        '        """Return identity and optional bearer session metadata."""'
+    )
     lines.append("        ...")
     lines.extend(_emit_client_wait_until_stub())
 
