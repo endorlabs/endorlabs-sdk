@@ -23,6 +23,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- **`APIClient` session hardening** — bearer tokens validate via `GET /v1/auth` (not `meta/version`); proactive API-key refresh and expired-bearer re-auth; `Client.whoami()` returns `WhoamiResult` with expiration metadata.
 - **`Client()` timeout** — `timeout=None` by default so `ENDOR_REQUEST_TIMEOUT` and `ENDOR_API_TIMEOUT` apply; `create()` aligns `Request-timeout` header when `ENDOR_CREATE_TIMEOUT` is set.
 - **Route accessor errors** — `list_by_project` / `list_for_context` raise actionable messages when a UUID string is passed instead of a resource object.
 - **`Client` docstring** — copy-paste examples, route accessor contract, and pagination notes for agent day-1 usage.
