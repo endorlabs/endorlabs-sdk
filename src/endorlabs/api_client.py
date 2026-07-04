@@ -113,8 +113,8 @@ class APIClient:
             If None, uses ENDOR_LOG_LEVEL environment variable.
             Valid values: DEBUG, INFO, WARNING, ERROR, CRITICAL.
         base_url: API base URL. If None, uses ENDOR_API env var or default.
-        timeout: Request timeout in seconds. If None, uses ENDOR_REQUEST_TIMEOUT
-            env var or 60.0. Also sent as Request-timeout header.
+        timeout: Request timeout in seconds. If None, uses ENDOR_REQUEST_TIMEOUT,
+            then ENDOR_API_TIMEOUT, then 60.0. Also sent as Request-timeout header.
         content_type: Content-Type header value. If None, defaults to
             "application/json".
         accept_encoding: Accept-Encoding header value. If None or "", the header
@@ -270,12 +270,9 @@ class APIClient:
         self.backoff_factor = backoff_factor
         self.status_forcelist = status_forcelist
 
-        # Timeout: parameter > ENDOR_REQUEST_TIMEOUT env > default 60.0
-        if timeout is not None:
-            self.timeout = float(timeout)
-        else:
-            env_timeout = os.getenv("ENDOR_REQUEST_TIMEOUT")
-            self.timeout = float(env_timeout) if env_timeout else 60.0
+        from .utils.request_timeout import resolve_request_timeout
+
+        self.timeout = resolve_request_timeout(timeout)
 
         # Content-Type: parameter > default "application/json"
         self.content_type = (

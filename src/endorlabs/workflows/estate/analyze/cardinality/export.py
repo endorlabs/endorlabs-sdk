@@ -68,12 +68,9 @@ _DEFAULT_GROUPED_REQUEST_TIMEOUT = 900.0
 
 
 def _resolve_request_timeout(cli_value: float | None) -> float:
-    if cli_value is not None:
-        return cli_value
-    env_raw = os.environ.get("ENDOR_REQUEST_TIMEOUT")
-    if env_raw:
-        return float(env_raw)
-    return _DEFAULT_GROUPED_REQUEST_TIMEOUT
+    from endorlabs.utils.request_timeout import resolve_request_timeout
+
+    return resolve_request_timeout(cli_value, default=_DEFAULT_GROUPED_REQUEST_TIMEOUT)
 
 
 def _configure_cli_logging() -> None:

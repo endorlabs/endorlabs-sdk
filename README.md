@@ -163,6 +163,9 @@ The SDK uses **environment variables** only (no config file loading). Precedence
 | `ENDOR_NAMESPACE`              | Default tenant namespace (e.g. `tenant.namespace`)        |
 | `ENDOR_LOG_LEVEL`              | Optional: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |
 | `ENDOR_MAX_RETRIES`            | Optional: retry count (default: 5)                        |
+| `ENDOR_REQUEST_TIMEOUT`        | Optional: HTTP read timeout in seconds (default: 60)        |
+| `ENDOR_API_TIMEOUT`            | Optional: endorctl-compatible timeout when request timeout unset |
+| `ENDOR_CREATE_TIMEOUT`         | Optional: override timeout for `create()` POST requests     |
 
 
 Canonical naming is `tenant.namespace.child`; do not use UUIDs in namespace paths. Full semantics: [docs/contracts.md](docs/contracts.md).

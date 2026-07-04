@@ -44,9 +44,9 @@ class Client:
 
     Transport options (when creating APIClient): timeout, content_type,
     accept_encoding, max_retries, base_url. Explicit args take precedence over
-    **client_kwargs. Other APIClient options (auth, logging_level, etc.) go via
-    **client_kwargs. Use content_type="application/json" if compact responses
-    cause validation issues.
+    environment variables (``ENDOR_REQUEST_TIMEOUT``, ``ENDOR_API_TIMEOUT``).
+    Other APIClient options (auth, logging_level, etc.) go via **client_kwargs.
+    Use content_type="application/json" if compact responses cause validation issues.
     """
 
     def __init__(
@@ -54,7 +54,7 @@ class Client:
         api_client: APIClient | None = None,
         tenant: str | None = None,
         *,
-        timeout: float = 60.0,
+        timeout: float | None = None,
         content_type: str = "application/jsoncompact",
         accept_encoding: str | None = "gzip, br, zstd",
         max_retries: int | None = None,
