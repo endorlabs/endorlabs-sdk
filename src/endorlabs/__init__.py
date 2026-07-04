@@ -2,6 +2,9 @@
 
 A Python SDK for the Endor Labs platform.
 
+For agents: ``endorlabs.init()`` materializes skills under
+``.endorlabs-context/sdk/``; read ``INDEX.md`` via ``discover().index`` first.
+
 Quick start::
 
     import endorlabs
@@ -16,9 +19,11 @@ Quick start::
             _ = finding.uuid
 
 Filters use string field paths: ``F("spec.level") == "FINDING_LEVEL_CRITICAL"``.
-``list_by_project`` / ``list_for_context`` return ``list[T]`` like ``.list()``.
-Stitch accessors (``to_dependency_metadata``, …) return ``RouteResult`` — use
-``.value`` / ``.single`` and inspect ``.edge_used`` / ``.warnings``.
+``list_by_project`` / ``list_for_context`` expect resource objects from
+``.get()`` or ``.list()`` — not UUID strings. They return ``list[T]`` like
+``.list()``. Stitch accessors (``to_dependency_metadata``, …) return
+``RouteResult`` — use ``.value`` / ``.single`` and inspect ``.edge_used`` /
+``.warnings``.
 """
 
 from __future__ import annotations
