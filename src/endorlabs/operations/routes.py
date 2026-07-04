@@ -110,6 +110,42 @@ def resolve_source_uuid(source: Any) -> str | None:
     return cleaned or None
 
 
+def _resolve_uuid_from_source(
+    source: Any,
+    uuid_path: str,
+    *,
+    edge_id: str,
+) -> str:
+    """Resolve UUID from a route source; raise actionable errors for common mistakes."""
+    relative = (
+        uuid_path.replace("source.", "", 1)
+        if uuid_path.startswith("source.")
+        else uuid_path
+    )
+    if isinstance(source, str):
+        cleaned = source.strip()
+        if cleaned:
+            raise RouteNotApplicableError(
+                "Route accessor expected a resource object from .get() or .list(), "
+                f"not a UUID string ({cleaned!r}). Resolve the resource first "
+                "(e.g. client.Project.get(uuid)) and pass that object to "
+                "list_by_project / list_for_context.",
+                edge_id=edge_id,
+            )
+        raise RouteNotApplicableError(
+            "Route accessor received an empty source string.",
+            edge_id=edge_id,
+        )
+    uuid_val = resolve_attr_path(source, relative)
+    if not uuid_val:
+        raise RouteNotApplicableError(
+            f"Missing {relative!r} on source resource for route {edge_id!r}. "
+            "Pass a full resource from .get() or .list(), not a bare UUID string.",
+            edge_id=edge_id,
+        )
+    return str(uuid_val)
+
+
 def format_filter_template(
     template: str, source: Any, context: dict[str, Any] | None = None
 ) -> str:
@@ -271,13 +307,8 @@ class RouteExecutor:
         self, edge: RouteEdge, *, source: Any, namespace: str
     ) -> RouteResult[Any]:
         uuid_path = edge.uuid_from or "source.uuid"
-        uuid_val = resolve_attr_path(source, uuid_path.replace("source.", "", 1))
-        if not uuid_val:
-            raise RouteNotApplicableError(
-                f"Missing UUID at {uuid_path!r} for route {edge.id!r}.",
-                edge_id=edge.id,
-            )
-        row = self._ops(edge.to_kind).get(namespace, str(uuid_val))
+        uuid_val = _resolve_uuid_from_source(source, uuid_path, edge_id=edge.id)
+        row = self._ops(edge.to_kind).get(namespace, uuid_val)
         return RouteResult(edge_used=edge.id, value=row)
 
     def _list_by_parent(
@@ -329,17 +360,7 @@ class RouteExecutor:
     ) -> RouteResult[Any]:
         _ = list_kwargs
         uuid_path = edge.uuid_from or "source.uuid"
-        uuid_val = resolve_attr_path(
-            source,
-            uuid_path.replace("source.", "", 1)
-            if uuid_path.startswith("source.")
-            else uuid_path,
-        )
-        if not uuid_val:
-            raise RouteNotApplicableError(
-                f"Missing UUID for filter at {uuid_path!r}.",
-                edge_id=edge.id,
-            )
+        uuid_val = _resolve_uuid_from_source(source, uuid_path, edge_id=edge.id)
         field = edge.filter_field or "spec.project_uuid"
         clause = f'{field}=="{uuid_val}"'
         filter_text = str(filter) if filter is not None else None

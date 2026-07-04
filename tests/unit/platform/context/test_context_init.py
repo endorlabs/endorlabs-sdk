@@ -371,6 +371,7 @@ class TestTopLevelInit:
         import endorlabs
 
         assert "init" in endorlabs.__all__
+        assert "discover" in endorlabs.__all__
 
     def test_sync_agent_skills_exposed_at_top_level(self) -> None:
         """Test skill sync helper is accessible from endorlabs module."""

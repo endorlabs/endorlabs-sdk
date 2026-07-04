@@ -47,6 +47,23 @@ class Client:
     environment variables (``ENDOR_REQUEST_TIMEOUT``, ``ENDOR_API_TIMEOUT``).
     Other APIClient options (auth, logging_level, etc.) go via **client_kwargs.
     Use content_type="application/json" if compact responses cause validation issues.
+
+    Route accessors (``list_by_project``, ``list_for_context``, …) expect **resource
+    objects** from ``.get()`` or ``.list()`` — not UUID strings. They return ``list[T]``
+    like ``.list()``; stitch accessors (``to_*``) return ``RouteResult`` (``.values``).
+
+    Example::
+
+        with endorlabs.Client(tenant="tenant.namespace") as client:
+            print(client.whoami())
+            projects = client.Project.list(traverse=True, max_pages=1)
+            project = projects[0]
+            scans = client.ScanResult.list_by_project(project, limit=1)
+            if scans:
+                findings = client.Finding.list_for_context(scans[0], max_pages=1)
+
+    Pagination: ``.list()`` defaults to server page size (~100). Use ``max_pages`` to
+    cap fetch depth; ``limit=N`` is an alias for ``page_size=N``.
     """
 
     def __init__(
