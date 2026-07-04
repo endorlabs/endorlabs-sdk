@@ -193,6 +193,18 @@ def test_client_explicit_transport_params_forwarded_to_apiclient() -> None:
         assert call_kwargs["base_url"] == "https://custom.example.com"
 
 
+def test_client_default_timeout_defers_to_apiclient_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Client() without timeout passes None so APIClient reads ENDOR_REQUEST_TIMEOUT."""
+    monkeypatch.setenv("ENDOR_REQUEST_TIMEOUT", "120")
+    with patch("endorlabs.client_surface.APIClient") as mock_apiclient_class:
+        mock_apiclient_class.return_value = Mock(spec=APIClient)
+        endorlabs.Client(tenant=TEST_NAMESPACE_DEFAULT)
+        call_kwargs = mock_apiclient_class.call_args[1]
+        assert call_kwargs.get("timeout") is None
+
+
 def test_client_namespace_list_convenience_kwargs(
     client_with_mock_transport: Client,
 ) -> None:
