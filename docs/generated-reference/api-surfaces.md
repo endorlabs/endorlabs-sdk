@@ -28,6 +28,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `ServerError`
 - `UnauthorizedError`
 - `ValidationError`
+- `WhoamiResult`
 - `agent_knowledge_bootstrap_paths`
 - `agent_knowledge_dir`
 - `agent_knowledge_index_path`

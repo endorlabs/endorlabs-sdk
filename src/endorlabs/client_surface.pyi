@@ -9,6 +9,7 @@ from typing import Any
 from .api_client import APIClient
 from .core.filter import FilterExpression
 from .core.types import ListParameters
+from .core.whoami import WhoamiResult
 from .facade import CallGraphDataFacade, ListableFacade, ResourceRuntimeFacade
 from .facade.specialized import (
     AuthorizationPolicyFacade,
@@ -2225,7 +2226,7 @@ class Client:
         api_client: APIClient | None = ...,
         tenant: str | None = ...,
         *,
-        timeout: float = ...,
+        timeout: float | None = ...,
         content_type: str = ...,
         accept_encoding: str | None = ...,
         max_retries: int | None = ...,
@@ -2244,8 +2245,8 @@ class Client:
         exc_val: BaseException | None,
         exc_tb: Any,
     ) -> None: ...
-    def whoami(self) -> str | None:
-        """Return the authenticated identity name, or None."""
+    def whoami(self) -> WhoamiResult:
+        """Return identity and optional bearer session metadata."""
         ...
     def wait_until(
         self,

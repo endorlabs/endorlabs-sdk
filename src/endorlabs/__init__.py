@@ -49,6 +49,7 @@ from .core.exceptions import (
 )
 from .core.filter import F, FilterExpression
 from .core.types import ListParameters
+from .core.whoami import WhoamiResult
 from .resources import (
     dependency_metadata,
     finding,
@@ -214,6 +215,7 @@ __all__ = [
     "ServerError",
     "UnauthorizedError",
     "ValidationError",
+    "WhoamiResult",
     "agent_knowledge_bootstrap_paths",
     "agent_knowledge_dir",
     "agent_knowledge_index_path",

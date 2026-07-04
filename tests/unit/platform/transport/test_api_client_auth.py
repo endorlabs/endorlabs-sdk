@@ -33,16 +33,38 @@ def _auth_post_response(
     return mock
 
 
-def _auth_get_response() -> Mock:
-    """Build mock httpx-like response for meta/version (browser token validation)."""
+def _v1_auth_get_response(
+    expiration_time: str | None = None,
+    *,
+    status_code: int = 200,
+) -> Mock:
+    """Build mock httpx-like response for GET /v1/auth token verification."""
+    future_time = datetime.now(UTC) + timedelta(hours=4)
+    expiration = expiration_time or future_time.strftime("%Y-%m-%dT%H:%M:%SZ")
     mock = Mock()
-    mock.json.return_value = {"version": "1.0.0"}
-    mock.raise_for_status = Mock()
-    mock.status_code = 200
+    mock.json.return_value = {
+        "authentication_source": "test-source",
+        "expiration_time": expiration,
+        "user": {"spec": {"email": "user@example.com"}},
+    }
+    mock.status_code = status_code
     mock.text = ""
-    mock.url = "https://api.endorlabs.com/meta/version"
+    mock.url = "https://api.endorlabs.com/v1/auth"
     mock.headers = {}
+    if status_code >= 400:
+        mock.raise_for_status.side_effect = httpx.HTTPStatusError(
+            f"{status_code}",
+            request=Mock(),
+            response=mock,
+        )
+    else:
+        mock.raise_for_status = Mock()
     return mock
+
+
+def _auth_get_response() -> Mock:
+    """Backward-compatible alias for browser token validation mocks."""
+    return _v1_auth_get_response()
 
 
 def _patch_httpx_client(
@@ -213,6 +235,56 @@ class TestTokenExpirationTracking:
             assert token == "refreshed-token"
             assert client.client.post.call_count == 2
 
+    @patch.dict(
+        os.environ,
+        {"ENDOR_TOKEN": "direct-bearer-token", "ENDOR_API_CREDENTIALS_KEY": ""},
+        clear=True,
+    )
+    def test_bearer_validation_uses_v1_auth_and_stores_expiration(self) -> None:
+        """Provided bearer tokens validate via GET /v1/auth, not meta/version."""
+        future_time = datetime.now(UTC) + timedelta(hours=4)
+        expiration_str = future_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        verify_response = _v1_auth_get_response(expiration_str)
+
+        with _patch_httpx_client(get_return=verify_response):
+            client = APIClient(token="direct-bearer-token")
+
+        assert client._auth_type == "browser"
+        assert client._token == "direct-bearer-token"
+        assert client._token_expires is not None
+        assert client._token_expiration_source == "v1_auth"
+        assert client.client.get.call_count >= 1
+        get_urls = [str(c.args[0]) for c in client.client.get.call_args_list]
+        assert any("v1/auth" in url for url in get_urls)
+        assert not any("meta/version" in url for url in get_urls)
+
+    @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
+    @patch("endorlabs.auth_server.get_token")
+    def test_bearer_expired_triggers_reauthentication(
+        self, mock_get_token: Mock
+    ) -> None:
+        """Expired bearer sessions call authenticate() on token access."""
+        expired = datetime.now(UTC) - timedelta(minutes=5)
+        near_expired = _v1_auth_get_response(expired.strftime("%Y-%m-%dT%H:%M:%SZ"))
+        fresh_exp = (datetime.now(UTC) + timedelta(hours=4)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+        refreshed = _v1_auth_get_response(fresh_exp)
+        mock_get_token.return_value = "fresh-browser-token"
+
+        with _patch_httpx_client(get_return=[near_expired, refreshed]):
+            client = APIClient(auth_method="browser-auth")
+            client._apply_session_token(
+                "stale-token",
+                expiration=expired,
+                expiration_source="v1_auth",
+                browser_validated=True,
+            )
+            token = client.token
+
+        assert token == "fresh-browser-token"
+        assert mock_get_token.call_count == 2
+
 
 @pytest.mark.writes
 class TestBrowserAuthentication:
@@ -284,13 +356,8 @@ class TestBrowserAuthentication:
         self, mock_get_token: Mock
     ) -> None:
         """Invalid provided token should trigger one browser fallback attempt."""
-        invalid_response = _auth_get_response()
-        invalid_response.raise_for_status.side_effect = httpx.HTTPStatusError(
-            "401 unauthorized",
-            request=Mock(),
-            response=Mock(status_code=401),
-        )
-        valid_response = _auth_get_response()
+        invalid_response = _v1_auth_get_response(status_code=401)
+        valid_response = _v1_auth_get_response()
         mock_get_token.return_value = "browser-token-123"
 
         with _patch_httpx_client(get_return=[invalid_response, valid_response]):
@@ -306,13 +373,7 @@ class TestBrowserAuthentication:
         self, mock_get_token: Mock
     ) -> None:
         """Invalid provided token with failed fallback should return no token."""
-        invalid_response = _auth_get_response()
-        invalid_response.raise_for_status.side_effect = httpx.HTTPStatusError(
-            "401 unauthorized",
-            request=Mock(),
-            response=Mock(status_code=401),
-        )
-        mock_get_token.return_value = None
+        invalid_response = _v1_auth_get_response(status_code=401)
 
         with _patch_httpx_client(get_return=invalid_response):
             client = APIClient(token="invalid-token", auth_method="browser")
@@ -354,14 +415,9 @@ class TestBrowserAuthentication:
         self, mock_get_token: Mock
     ) -> None:
         """401 should trigger one browser fallback reauth for browser auth mode."""
-        initial_valid = _auth_get_response()
-        invalid_direct = _auth_get_response()
-        invalid_direct.raise_for_status.side_effect = httpx.HTTPStatusError(
-            "401 unauthorized",
-            request=Mock(),
-            response=Mock(status_code=401),
-        )
-        fallback_valid = _auth_get_response()
+        initial_valid = _v1_auth_get_response()
+        invalid_direct = _v1_auth_get_response(status_code=401)
+        fallback_valid = _v1_auth_get_response()
         mock_get_token.return_value = "browser-token-reauth"
 
         with _patch_httpx_client(

@@ -4,6 +4,7 @@ Verifies identity resolution via AuthorizationPolicy filtering
 by spec.clause containing the API key.
 """
 
+from datetime import UTC, datetime
 from unittest.mock import Mock
 
 import pytest
@@ -52,6 +53,7 @@ class TestWhoAmI:
 
         result = client_with_api_key.whoami()
         assert result == "user@example.com"
+        assert result.identity == "user@example.com"
 
     def test_whoami_returns_none_when_no_match(
         self,
@@ -63,21 +65,66 @@ class TestWhoAmI:
         )
 
         result = client_with_api_key.whoami()
-        assert result is None
+        assert not result
+        assert result.identity is None
 
     def test_whoami_returns_none_for_browser_auth(self) -> None:
-        """whoami returns None when auth type is browser (no key)."""
+        """whoami returns empty result when browser auth has no token metadata."""
         mock = Mock(spec=APIClient)
         mock.auth_type = "browser"
         mock.is_api_key_auth = False
         mock.key = None
+        mock.bearer_token_for_metadata.return_value = None
         mock.get_user_info.return_value = None
         client = endorlabs.Client(
             api_client=mock,
             tenant=TEST_NAMESPACE_DEFAULT,
         )
         result = client.whoami()
-        assert result is None
+        assert not result
+        assert result.identity is None
+
+    def test_whoami_browser_jwt_expiration_fallback(self) -> None:
+        """whoami decodes JWT exp when /v1/auth is unavailable."""
+        import base64
+        import json
+
+        payload = (
+            base64.urlsafe_b64encode(json.dumps({"exp": 1783045085}).encode())
+            .decode()
+            .rstrip("=")
+        )
+        token = f"aaa.{payload}.bbb"
+        mock = Mock(spec=APIClient)
+        mock.auth_type = "browser"
+        mock.is_api_key_auth = False
+        mock.key = None
+        mock.bearer_token_for_metadata.return_value = token
+        mock.get_user_info.return_value = None
+        client = endorlabs.Client(
+            api_client=mock,
+            tenant=TEST_NAMESPACE_DEFAULT,
+        )
+        result = client.whoami()
+        assert result.identity is None
+        assert result.expiration_source == "jwt"
+        assert result.expiration_time == datetime.fromtimestamp(1783045085, tz=UTC)
+        assert result.is_expired is True
+
+    def test_whoami_includes_v1_auth_expiration(
+        self, client_with_api_key: Client
+    ) -> None:
+        """whoami surfaces expiration_time from /v1/auth."""
+        client_with_api_key._client.get_user_info.return_value = {
+            "authentication_source": "api-key",
+            "expiration_time": "2026-12-01T12:00:00Z",
+            "user": {"spec": {"email": "sdk-user@endor.ai"}},
+        }
+        result = client_with_api_key.whoami()
+        assert result.identity == "sdk-user@endor.ai"
+        assert result.expiration_source == "v1_auth"
+        assert result.expiration_time == datetime(2026, 12, 1, 12, 0, tzinfo=UTC)
+        assert result.is_expired is False
 
     def test_whoami_returns_none_when_meta_is_none(
         self,
@@ -92,7 +139,8 @@ class TestWhoAmI:
         )
 
         result = client_with_api_key.whoami()
-        assert result is None
+        assert not result
+        assert result.identity is None
 
     def test_whoami_raises_on_closed_client(self) -> None:
         """whoami raises ValidationError on a closed client."""
@@ -142,7 +190,7 @@ class TestWhoAmI:
             api_client=mock_api_client,
             tenant=TEST_NAMESPACE_DEFAULT,
         )
-        assert client.whoami() is None
+        assert not client.whoami()
 
     def test_whoami_prefers_v1_auth_email(self, client_with_api_key: Client) -> None:
         """whoami returns canonical email from /v1/auth when available."""
@@ -175,4 +223,4 @@ class TestWhoAmI:
         client_with_api_key.AuthorizationPolicy._ops.list = Mock(
             side_effect=RuntimeError("401 Unauthorized")
         )
-        assert client_with_api_key.whoami() is None
+        assert not client_with_api_key.whoami()
