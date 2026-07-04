@@ -257,6 +257,27 @@ def test_list_by_parent_missing_uuid_raises() -> None:
         executor.execute(edge, source={"meta": {"name": "no-uuid"}})
 
 
+def test_list_by_project_uuid_string_raises_actionable_error() -> None:
+    contract = load_golden_contract()
+    edge = contract.edge_by_id("project.findings")
+    assert edge is not None
+    executor = _executor(Finding=Mock())
+    with pytest.raises(
+        RouteNotApplicableError,
+        match=r"resource object from \.get\(\) or \.list\(\)",
+    ):
+        executor.execute(edge, source="proj-uuid-string")
+
+
+def test_list_by_uuid_field_missing_on_model_raises() -> None:
+    contract = load_golden_contract()
+    edge = contract.edge_by_id("project.findings")
+    assert edge is not None
+    executor = _executor(Finding=Mock())
+    with pytest.raises(RouteNotApplicableError, match="Missing 'uuid' on source"):
+        executor.execute(edge, source=SimpleNamespace(meta=SimpleNamespace(name="x")))
+
+
 def test_list_by_attribute_package_name() -> None:
     contract = load_golden_contract()
     edge = contract.edge_by_id("finding.dependency_metadata.by_package")

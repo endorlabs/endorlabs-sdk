@@ -8,7 +8,6 @@ separate from HTTP/transport logic.
 
 import builtins
 import functools
-import os
 import re
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, cast
@@ -511,16 +510,15 @@ class BaseResourceOperations[T: BaseModel]:
             )
 
             # Optional create timeout (e.g. for slow endpoints like scan-log-requests)
-            create_timeout: int | float | None = None
-            env_timeout = os.environ.get("ENDOR_CREATE_TIMEOUT")
-            if env_timeout is not None:
-                try:
-                    create_timeout = int(env_timeout)
-                except ValueError:
-                    create_timeout = None
+            from ..utils.request_timeout import resolve_create_timeout
+
+            create_timeout = resolve_create_timeout()
             post_kwargs: dict[str, Any] = {}
             if create_timeout is not None:
                 post_kwargs["timeout"] = create_timeout
+                post_kwargs["headers"] = {
+                    "Request-timeout": str(int(create_timeout)),
+                }
 
             res = self.client.post(url, json=payload_dict, **post_kwargs)
             data = res.json()

@@ -36,19 +36,37 @@ class _FakeResponse:
 class _StubHttpClient:
     def __init__(
         self,
-        _handler: Callable[[int], _FakeResponse],
+        post_handler: Callable[[int], _FakeResponse],
         *args: object,
+        get_handler: Callable[[], _FakeResponse] | None = None,
         **kwargs: object,
     ) -> None:
         super().__init__()
         del args, kwargs
-        self._handler = _handler
-        self.calls = 0
+        self._post_handler = post_handler
+        self._get_handler = get_handler
+        self.post_calls = 0
+        self.get_calls = 0
+
+    @property
+    def calls(self) -> int:
+        """Backward-compatible POST call count."""
+        return self.post_calls
 
     def post(self, *args: object, **kwargs: object) -> _FakeResponse:
         del args, kwargs
-        self.calls += 1
-        return self._handler(self.calls)
+        self.post_calls += 1
+        return self._post_handler(self.post_calls)
+
+    def get(self, *args: object, **kwargs: object) -> _FakeResponse:
+        del args, kwargs
+        self.get_calls += 1
+        if self._get_handler is not None:
+            return self._get_handler()
+        return _FakeResponse(
+            payload={},
+            request_url="https://api.endorlabs.com/v1/auth",
+        )
 
     def close(self) -> None:
         return
@@ -59,15 +77,22 @@ def test_token_does_not_reauthenticate_when_expiry_is_unknown(
 ) -> None:
     fake_holder: dict[str, _StubHttpClient] = {}
 
-    def _handler(_call_no: int) -> _FakeResponse:
+    def _post_handler(_call_no: int) -> _FakeResponse:
         return _FakeResponse(payload={"token": "token-1"})
 
+    def _get_handler() -> _FakeResponse:
+        return _FakeResponse(
+            payload={"expiration_time": "2099-01-01T00:00:00Z"},
+            request_url="https://api.endorlabs.com/v1/auth",
+        )
+
     def _factory(*args: object, **kwargs: object) -> _StubHttpClient:
-        fake = _StubHttpClient(_handler, *args, **kwargs)
+        fake = _StubHttpClient(_post_handler, *args, get_handler=_get_handler, **kwargs)
         fake_holder["client"] = fake
         return fake
 
     monkeypatch.setattr("endorlabs.api_client.httpx.Client", _factory)
+    monkeypatch.delenv("ENDOR_TOKEN", raising=False)
     client = APIClient(
         key="test-key",
         secret="test-secret",
@@ -76,7 +101,8 @@ def test_token_does_not_reauthenticate_when_expiry_is_unknown(
     try:
         assert client.token == "token-1"
         assert client.token == "token-1"
-        assert fake_holder["client"].calls == 1
+        assert fake_holder["client"].post_calls == 1
+        assert fake_holder["client"].get_calls == 1
     finally:
         client.close()
 
@@ -85,13 +111,13 @@ def test_api_key_auth_retries_transient_connect_error(monkeypatch) -> None:
     request = httpx.Request("POST", "https://api.endorlabs.com/v1/auth/api-key")
     fake_holder: dict[str, _StubHttpClient] = {}
 
-    def _handler(call_no: int) -> _FakeResponse:
+    def _post_handler(call_no: int) -> _FakeResponse:
         if call_no == 2:
             raise httpx.ConnectError("connection dropped", request=request)
         return _FakeResponse(payload={"token": "token-2", "expiresIn": 1200})
 
     def _factory(*args: object, **kwargs: object) -> _StubHttpClient:
-        fake = _StubHttpClient(_handler, *args, **kwargs)
+        fake = _StubHttpClient(_post_handler, *args, **kwargs)
         fake_holder["client"] = fake
         return fake
 
@@ -104,11 +130,11 @@ def test_api_key_auth_retries_transient_connect_error(monkeypatch) -> None:
         base_url="https://api.endorlabs.com",
     )
     try:
-        initial_calls = fake_holder["client"].calls
+        initial_calls = fake_holder["client"].post_calls
         client._token = None
         token = client._authenticate_api_key()
         assert token == "token-2"
-        assert fake_holder["client"].calls - initial_calls == 2
+        assert fake_holder["client"].post_calls - initial_calls == 2
         assert client._token_expires is not None
         assert client._token_expires > datetime.now(UTC)
     finally:

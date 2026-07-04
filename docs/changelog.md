@@ -23,6 +23,10 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- **`APIClient` session hardening** — bearer tokens validate via `GET /v1/auth` (not `meta/version`); proactive API-key refresh and expired-bearer re-auth; `Client.whoami()` returns `WhoamiResult` with expiration metadata.
+- **`Client()` timeout** — `timeout=None` by default so `ENDOR_REQUEST_TIMEOUT` and `ENDOR_API_TIMEOUT` apply; `create()` aligns `Request-timeout` header when `ENDOR_CREATE_TIMEOUT` is set.
+- **Route accessor errors** — `list_by_project` / `list_for_context` raise actionable messages when a UUID string is passed instead of a resource object.
+- **`Client` docstring** — copy-paste examples, route accessor contract, and pagination notes for agent day-1 usage.
 - **Skill script refactor** — `ProjectFacade.is_app` / `is_cli` / `is_sbom`; shared `workflows/findings/filters.py`; chart skill uses SDK `FindingLog.list_groups` via `finding_log_trends` + `workflows/logs/group_by_time` (replaces endorctl subprocess); PRF skill uses facade `count`/`list_iter`; duplicate-projects defaults to exact-name only with opt-in `--name-strip-tokens`.
 - **`SdkDiscovery.__str__`** — `print(discover())` and `agent_bootstrap --dry-run` emit a human-readable path map (relative bootstrap labels, `endor-*` entry points only); agent INDEX/AGENTS frontmatter documents the three-step ladder (map → auth → workflows).
 - Renamed **`endorlabs.examples.day0`** → **`endorlabs.examples.agent_bootstrap`**; `SdkDiscovery.day0_module` → **`agent_bootstrap_module`**.

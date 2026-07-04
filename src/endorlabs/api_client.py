@@ -113,8 +113,8 @@ class APIClient:
             If None, uses ENDOR_LOG_LEVEL environment variable.
             Valid values: DEBUG, INFO, WARNING, ERROR, CRITICAL.
         base_url: API base URL. If None, uses ENDOR_API env var or default.
-        timeout: Request timeout in seconds. If None, uses ENDOR_REQUEST_TIMEOUT
-            env var or 60.0. Also sent as Request-timeout header.
+        timeout: Request timeout in seconds. If None, uses ENDOR_REQUEST_TIMEOUT,
+            then ENDOR_API_TIMEOUT, then 60.0. Also sent as Request-timeout header.
         content_type: Content-Type header value. If None, defaults to
             "application/json".
         accept_encoding: Accept-Encoding header value. If None or "", the header
@@ -256,8 +256,7 @@ class APIClient:
         # Initialize token expiration tracking
         self._token: str | None = None
         self._token_expires: datetime | None = None
-        # Browser auth session flag: once a browser token is validated,
-        # avoid proactive reauth on token property reads.
+        self._token_expiration_source: str | None = None
         self._browser_session_validated = False
 
         # Get max_retries with precedence: explicit parameter > env var > default (5)
@@ -270,12 +269,9 @@ class APIClient:
         self.backoff_factor = backoff_factor
         self.status_forcelist = status_forcelist
 
-        # Timeout: parameter > ENDOR_REQUEST_TIMEOUT env > default 60.0
-        if timeout is not None:
-            self.timeout = float(timeout)
-        else:
-            env_timeout = os.getenv("ENDOR_REQUEST_TIMEOUT")
-            self.timeout = float(env_timeout) if env_timeout else 60.0
+        from .utils.request_timeout import resolve_request_timeout
+
+        self.timeout = resolve_request_timeout(timeout)
 
         # Content-Type: parameter > default "application/json"
         self.content_type = (
@@ -1317,25 +1313,108 @@ class APIClient:
             Current bearer token string, or None if authentication fails.
 
         """
-        # Browser auth is session-like: once validated, keep token until a 401
-        # path triggers explicit reauthentication.
-        if self._auth_type == "browser":
-            if self._token is None or not self._browser_session_validated:
-                _ = self.authenticate()
-            return self._token
+        self._ensure_fresh_token()
+        return self._token
 
-        # If no token, authenticate.
+    def _seconds_until_token_expiry(self) -> float | None:
+        from .utils.bearer_token import expires_in_seconds
+
+        return expires_in_seconds(self._token_expires)
+
+    def _ensure_fresh_token(self) -> None:
+        """Refresh or re-authenticate when the session token is missing or stale."""
         if self._token is None:
             _ = self.authenticate()
-        elif self._token_expires is not None:
-            # Check if token expires within 30 minutes
-            now = datetime.now(UTC)
-            time_until_expiry = (self._token_expires - now).total_seconds()
-            if time_until_expiry <= TOKEN_REFRESH_THRESHOLD_SECONDS:
-                _ = self.authenticate()
-        # Unknown-expiry API-key tokens are treated as session-valid until a 401
-        # triggers explicit reauthentication in _handle_unauthorized.
-        return self._token
+            return
+
+        if self._token_expires is None:
+            _ = self._sync_expiration_from_v1_auth(self._token)
+
+        remaining = self._seconds_until_token_expiry()
+        if remaining is None:
+            return
+
+        if remaining > TOKEN_REFRESH_THRESHOLD_SECONDS:
+            return
+
+        if self._auth_type == "api-key":
+            _ = self.authenticate()
+            return
+
+        # Browser / ENDOR_TOKEN bearer: no silent mint — re-auth when expired.
+        if remaining <= 0:
+            self.logger.info("Bearer token expired; attempting re-authentication.")
+            _ = self.authenticate()
+            return
+
+        _ = self._sync_expiration_from_v1_auth(self._token)
+        remaining = self._seconds_until_token_expiry()
+        if remaining is not None and remaining <= TOKEN_REFRESH_THRESHOLD_SECONDS:
+            self.logger.warning(
+                "Bearer token expires in %.0f minute(s); renew ENDOR_TOKEN or "
+                "run browser auth before expiry.",
+                max(remaining / 60.0, 0.0),
+            )
+
+    def _sync_expiration_from_v1_auth(self, token: str) -> bool:
+        """Update ``_token_expires`` from ``GET /v1/auth`` when the token is valid."""
+        payload = self._verify_bearer_with_v1_auth(token)
+        if payload is None:
+            return False
+        from .utils.bearer_token import expiration_from_auth_payload
+
+        expiration = expiration_from_auth_payload(payload)
+        if expiration is not None:
+            self._token_expires = expiration
+            self._token_expiration_source = "v1_auth"
+        return True
+
+    def _verify_bearer_with_v1_auth(self, token: str) -> dict[str, Any] | None:
+        """Validate bearer token via ``GET /v1/auth`` (server-authoritative)."""
+        assert self.client is not None, "APIClient is closed"
+        try:
+            response = self.client.get(
+                "v1/auth",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/json",
+                },
+                timeout=TOKEN_VALIDATION_TIMEOUT_SECONDS,
+            )
+        except httpx.HTTPError as exc:
+            self.logger.debug("Token verification request failed: %s", exc)
+            return None
+        if response.status_code == 401:
+            return None
+        try:
+            _ = response.raise_for_status()
+            data = response.json()
+        except (httpx.HTTPError, ValueError, TypeError) as exc:
+            self.logger.debug("Token verification response invalid: %s", exc)
+            return None
+        if not isinstance(data, dict):
+            return None
+        return cast("dict[str, Any]", data)
+
+    def _apply_session_token(
+        self,
+        token: str,
+        *,
+        expiration: datetime | None = None,
+        expiration_source: str | None = None,
+        browser_validated: bool | None = None,
+    ) -> None:
+        """Store token, expiry metadata, and Authorization header."""
+        self._token = token
+        if expiration is not None:
+            self._token_expires = expiration
+            self._token_expiration_source = expiration_source
+        self._request_headers["Authorization"] = f"Bearer {token}"
+        self.default_headers = self._headers_copy()
+        if browser_validated is not None:
+            self._browser_session_validated = browser_validated
+        elif self._auth_type == "browser":
+            self._browser_session_validated = True
 
     @property
     def is_expired(self) -> bool:
@@ -1344,13 +1423,26 @@ class APIClient:
         Returns:
             True if token is expired or expires within
             TOKEN_EXPIRY_CHECK_SECONDS, False otherwise.
+            Unknown expiry is treated as expired.
 
         """
-        if self._token_expires is None:
+        remaining = self._seconds_until_token_expiry()
+        if remaining is None:
             return True
-        now = datetime.now(self._token_expires.tzinfo)
-        time_until_expiry = (self._token_expires - now).total_seconds()
-        return time_until_expiry <= TOKEN_EXPIRY_CHECK_SECONDS
+        return remaining <= TOKEN_EXPIRY_CHECK_SECONDS
+
+    def refresh_session(self) -> str | None:
+        """Re-authenticate and return a fresh bearer token when supported.
+
+        API-key auth exchanges credentials for a new token. Bearer/browser auth
+        re-validates via ``GET /v1/auth`` and, when expired, attempts interactive
+        browser OAuth if configured.
+
+        Returns:
+            Current bearer token after refresh attempt, or ``None`` on failure.
+
+        """
+        return self.authenticate()
 
     def authenticate(self) -> str | None:
         """Authenticate and update session headers with bearer token.
@@ -1375,6 +1467,12 @@ class APIClient:
     def is_api_key_auth(self) -> bool:
         """True when API key authentication is active."""
         return self._auth_type == "api-key"
+
+    def bearer_token_for_metadata(self) -> str | None:
+        """Return in-memory or configured bearer token without refresh side effects."""
+        if self._token is not None:
+            return self._token
+        return self._provided_token
 
     def get_user_info(self) -> dict[str, object] | None:
         """Fetch canonical authenticated user info from ``/v1/auth``.
@@ -1417,14 +1515,14 @@ class APIClient:
                     raise ValidationError("Invalid auth response: missing token")
                 token = token_raw
 
-                self._token_expires = self._parse_token_expiration(data)
+                expiration = self._parse_token_expiration(data)
 
-                # Store token
-                self._token = token
-
-                # Update request headers for subsequent requests
-                self._request_headers["Authorization"] = f"Bearer {token}"
-                self.default_headers = self._headers_copy()
+                self._apply_session_token(
+                    token,
+                    expiration=expiration,
+                    expiration_source="api_key_exchange" if expiration else None,
+                    browser_validated=False,
+                )
                 return token
             except ValueError:
                 # Surface malformed auth responses as explicit startup errors.
@@ -1582,69 +1680,38 @@ class APIClient:
             )
 
     def _validate_and_store_token(self, token: str) -> bool:
-        """Validate token and store it.
+        """Validate bearer token via ``GET /v1/auth`` and store session metadata.
 
         Returns:
-            ``True`` when token validation succeeds and token is stored,
-            otherwise ``False``.
+            ``True`` when ``/v1/auth`` accepts the token, otherwise ``False``.
 
         """
-        assert self.client is not None, "APIClient is closed"
-        # Validate token by making a test request to get expiration info
-        # Some endpoints may return token metadata
-        try:
-            test_response = self.client.get(
-                "meta/version",
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=TOKEN_VALIDATION_TIMEOUT_SECONDS,
-            )
-            _ = test_response.raise_for_status()
+        from .utils.bearer_token import (
+            expiration_from_auth_payload,
+            jwt_expiration_unverified,
+        )
 
-            # Try to extract expiration from response if available
-            # (Most endpoints don't return this, but we try)
-            try:
-                data = test_response.json()
-                expires: str | None = None
-                if not isinstance(data, dict):
-                    expires = None
-                else:
-                    data_dict = cast("dict[str, Any]", data)
-                    raw_expiration = data_dict.get("expirationTime") or data_dict.get(
-                        "expiration_time"
-                    )
-                    if isinstance(raw_expiration, str):
-                        expires = raw_expiration
-
-                if expires is not None:
-                    try:
-                        utc_datetime_str = re.sub(
-                            r"\s*Z$",
-                            "+00:00",
-                            expires,
-                        )
-                        self._token_expires = datetime.fromisoformat(utc_datetime_str)
-                    except (TypeError, ValueError):
-                        self._token_expires = None
-                else:
-                    # For browser tokens, we don't know expiration
-                    # Set to None (will be treated as expired when checked)
-                    self._token_expires = None
-            except (TypeError, ValueError):
-                self._token_expires = None
-        except httpx.HTTPError as e:
-            self.logger.debug("Token validation request unsuccessful: %s", e)
+        payload = self._verify_bearer_with_v1_auth(token)
+        if payload is None:
             self._token = None
             self._token_expires = None
+            self._token_expiration_source = None
             self._browser_session_validated = False
             return False
 
-        # Store token after successful validation
-        self._token = token
-        # Update request headers for subsequent requests
-        self._request_headers["Authorization"] = f"Bearer {token}"
-        self.default_headers = self._headers_copy()
-        self._browser_session_validated = self._auth_type == "browser"
-        self.logger.info("Browser authentication successful")
+        expiration = expiration_from_auth_payload(payload)
+        source = "v1_auth" if expiration is not None else None
+        if expiration is None:
+            expiration = jwt_expiration_unverified(token)
+            source = "jwt" if expiration is not None else None
+
+        self._apply_session_token(
+            token,
+            expiration=expiration,
+            expiration_source=source,
+            browser_validated=self._auth_type == "browser",
+        )
+        self.logger.info("Bearer token validated via /v1/auth")
         return True
 
     def _authenticate_browser(self) -> str | None:
