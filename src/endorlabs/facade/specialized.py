@@ -402,3 +402,73 @@ class CallGraphDataFacade:
             namespace=namespace,
             decode=False,
         )
+
+
+class _QueryClientAdapter:
+    """Minimal client shape for ``QueryExecutor`` / ``query_create``."""
+
+    __slots__ = ("Query", "_default_namespace")
+
+    def __init__(self, query: QueryFacade) -> None:
+        super().__init__()
+        self.Query = query
+        self._default_namespace = query.default_namespace
+
+
+class QueryFacade:
+    """Query graph join facade: ``create`` plus dashboard count recipes.
+
+    Replaces the generated ``Query`` facade on ``Client`` with recipe helpers
+    that delegate to ``endorlabs.query``.
+    """
+
+    def __init__(self, client: APIClient, default_namespace: str | None) -> None:
+        super().__init__()
+        from ..registry import RESOURCE_REGISTRY
+
+        entry = next(e for e in RESOURCE_REGISTRY if e.attr_name == "Query")
+        self._inner: ResourceRuntimeFacade[Any] = ResourceRuntimeFacade(
+            client,
+            default_namespace,
+            entry,
+        )
+        self._default_namespace = default_namespace
+
+    @property
+    def default_namespace(self) -> str | None:
+        """Client default namespace when the facade was constructed."""
+        return self._default_namespace
+
+    def create(self, *args: Any, **kwargs: Any) -> Any:
+        """Create a Query resource (payload-only; same as registry facade)."""
+        return self._inner.create(*args, **kwargs)
+
+    def count_pv_by_project(
+        self,
+        projects: list[Any],
+        *,
+        name_prefix: str = "query-pv-counts",
+    ) -> dict[str, int]:
+        """Return main-context PackageVersion counts keyed by project UUID."""
+        from ..query.recipes import count_pv_by_project
+
+        return count_pv_by_project(
+            _QueryClientAdapter(self),
+            projects,
+            name_prefix=name_prefix,
+        )
+
+    def count_findings_by_category(
+        self,
+        projects: list[Any],
+        *,
+        name_prefix: str = "query-finding-counts",
+    ) -> dict[str, dict[str, int]]:
+        """Return finding category counts keyed by project UUID."""
+        from ..query.recipes import count_findings_by_category
+
+        return count_findings_by_category(
+            _QueryClientAdapter(self),
+            projects,
+            name_prefix=name_prefix,
+        )

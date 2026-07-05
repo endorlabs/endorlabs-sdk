@@ -23,6 +23,16 @@ CUSTOM_FACADE_ROWS: tuple[tuple[str, str, str], ...] = (
         "Raw CallGraphData wire envelope",
     ),
     (
+        "Query",
+        "count_pv_by_project(projects, …)",
+        "Main-context PackageVersion counts via graph join",
+    ),
+    (
+        "Query",
+        "count_findings_by_category(projects, …)",
+        "Finding category counts via graph join",
+    ),
+    (
         "ScanResult",
         "get_logs(scan_result, …)",
         "Scan log messages via ScanLogRequest API",

@@ -44,4 +44,10 @@ server-side plan for broad unfiltered queries.
 3. Compare with `endorctl api list` (same resource, namespace, filter, traverse).
 4. Use a shorter read timeout when iterating locally.
 
+## Query graph joins
+
+- **`endorlabs.query`** (and `client.Query.count_*` recipes) POST to each project's **wire namespace** — not tenant root alone.
+- Use for **dashboard counts** across many projects after `validate_sample()` on a small mix of namespaces.
+- Query **does not** replace FindingLog trends, full finding rows, or DM version buckets — see contract `query-vs-list-semantics.md`.
+
 See also `rules/endor-namespace-scoping.md` and `contracts/list-parameters.md`.
