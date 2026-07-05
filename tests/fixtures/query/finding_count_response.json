@@ -1,0 +1,21 @@
+{
+  "uuid": "query-result-uuid",
+  "spec": {
+    "query_response": {
+      "list": {
+        "objects": [
+          {
+            "uuid": "proj-a",
+            "meta": {
+              "references": {
+                "VulnerabilityFindingsCount": {"count_response": {"count": 10}},
+                "SecretsFindingsCount": {"count_response": {"count": 2}},
+                "MalwareFindingsCount": {"count_response": {"count": 0}}
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

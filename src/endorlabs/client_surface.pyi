@@ -10,7 +10,12 @@ from .api_client import APIClient
 from .core.filter import FilterExpression
 from .core.types import ListParameters
 from .core.whoami import WhoamiResult
-from .facade import CallGraphDataFacade, ListableFacade, ResourceRuntimeFacade
+from .facade import (
+    CallGraphDataFacade,
+    ListableFacade,
+    QueryFacade,
+    ResourceRuntimeFacade,
+)
 from .facade.specialized import (
     AuthorizationPolicyFacade,
     FindingFacade,
@@ -2173,7 +2178,7 @@ class Client:
     SavedQuery, ScanLogRequest, ScanProfile, ScanResult, ScanWorkflow,
     ScanWorkflowResult, SemgrepRule, VectorStore, VectorStoreQuery,
     VersionUpgrade, Vulnerability
-    Custom: CallGraphData
+    Custom: CallGraphData, Query
     """
 
     APIKey: _APIKeyFacade
@@ -2200,7 +2205,6 @@ class Client:
     Policy: _PolicyFacade
     PolicyTemplate: _PolicyTemplateFacade
     Project: _ProjectFacade
-    Query: _QueryFacade
     QueryMalware: _QueryMalwareFacade
     QuerySimilarPackages: _QuerySimilarPackagesFacade
     QueryVulnerability: _QueryVulnerabilityFacade
@@ -2218,6 +2222,7 @@ class Client:
     VersionUpgrade: _VersionUpgradeFacade
     Vulnerability: _VulnerabilityFacade
     CallGraphData: CallGraphDataFacade
+    Query: QueryFacade
 
     _client: APIClient | None
 

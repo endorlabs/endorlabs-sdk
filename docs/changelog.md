@@ -8,6 +8,8 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- **`endorlabs.query`** — graph join recipes (`count_pv_by_project`, `count_findings_by_category`), `QuerySpec` / `QueryExecutor`, topology/routing/validation helpers; `client.Query.count_*` facade sugar. Guide: [docs/guides/query-recipes.md](guides/query-recipes.md). Contract: `query-vs-list-semantics`. Skill: `endor-route-estate-queries`.
+- **Agent skill `endor-route-estate-queries`** — route estate-scale counts between Query graph joins and facade list/count/shard patterns after topology discovery.
 - **`ProjectFacade.is_app` / `is_cli` / `is_sbom`** — project registration inventory helpers for masked dict rows and models.
 - **`endorlabs.workflows.findings.filters`** and **`finding_log_trends.build_finding_log_new_vs_resolved_analysis`** — shared MQL fragments and online FindingLog weekly chart aggregation.
 - **`endorlabs.workflows.logs.group_by_time`** — generic `list_groups` + `group_by_time` bucket helpers for log resources.
