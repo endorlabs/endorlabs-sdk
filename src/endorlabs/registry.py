@@ -72,6 +72,13 @@ def _call_graph_data_facade(client: APIClient, default_namespace: str | None) ->
     return CallGraphDataFacade(client, default_namespace)
 
 
+def _query_facade(client: APIClient, default_namespace: str | None) -> Any:
+    """Build QueryFacade for ``client.Query`` (recipes + create)."""
+    from .facade import QueryFacade
+
+    return QueryFacade(client, default_namespace)
+
+
 def _normalize_contract_rows(items: list[Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for entry in items:
@@ -369,6 +376,16 @@ CUSTOM_FACADE_REGISTRY: list[CustomFacadeEntry] = [
         pyi_import_module="facade",
         pyi_attr_doc=(
             "Call graph data facade. Use decode() or fetch() with a PackageVersion."
+        ),
+    ),
+    CustomFacadeEntry(
+        attr_name="Query",
+        factory=_query_facade,
+        pyi_facade_class="QueryFacade",
+        pyi_import_module="facade",
+        pyi_attr_doc=(
+            "Query graph joins. Use count_pv_by_project / count_findings_by_category "
+            "or create(payload=...) for custom joins."
         ),
     ),
 ]

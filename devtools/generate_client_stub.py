@@ -805,8 +805,11 @@ def main() -> None:  # noqa: D103
         lines.append(f"    Custom: {', '.join(custom_names)}")
     lines.append('    """')
     lines.append("")
+    custom_attr_names = {c.attr_name for c in CUSTOM_FACADE_REGISTRY}
     for entry in RESOURCE_REGISTRY:
         attr = entry.attr_name
+        if attr in custom_attr_names:
+            continue
         model_name = entry.model_class.__name__
         class_name = f"_{model_name}Facade"
         lines.append(f"    {attr}: {class_name}")

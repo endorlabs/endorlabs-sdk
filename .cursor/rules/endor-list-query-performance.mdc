@@ -3,7 +3,7 @@ description: Do not set page_size unless explicitly asked; scope and filter befo
 alwaysApply: true
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-list-query-performance.md
-x-endor-source-sha256: 61b57c35e5e7e40fe287395d4c894ba240e1bbc303996b80a363041ab79e44fb
+x-endor-source-sha256: 4fa7cd1174fb3fc2557eed21de1d9545ca1323875681ebd7bf0eb04d72a79162
 ---
 
 # List query performance
@@ -41,5 +41,11 @@ server-side plan for broad unfiltered queries.
 2. Add or tighten **`filter`** when supported.
 3. Compare with `endorctl api list` (same resource, namespace, filter, traverse).
 4. Use a shorter read timeout when iterating locally.
+
+## Query graph joins
+
+- **`endorlabs.query`** (and `client.Query.count_*` recipes) POST to each project's **wire namespace** — not tenant root alone.
+- Use for **dashboard counts** across many projects after `validate_sample()` on a small mix of namespaces.
+- Query **does not** replace FindingLog trends, full finding rows, or DM version buckets — see contract `query-vs-list-semantics.md`.
 
 See also `rules/endor-namespace-scoping.md` and `contracts/list-parameters.md`.

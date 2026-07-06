@@ -13,6 +13,7 @@ from .specialized import (
     CallGraphDataFacade,
     FindingFacade,
     ProjectFacade,
+    QueryFacade,
     ScanResultFacade,
 )
 
@@ -26,6 +27,7 @@ __all__ = [
     "FindingFacade",
     "ListableFacade",
     "ProjectFacade",
+    "QueryFacade",
     "ResourceFacade",
     "ResourceRuntimeFacade",
     "ScanResultFacade",

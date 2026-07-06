@@ -19,6 +19,7 @@ See also [resource-discovery contract](../../agent-knowledge/contracts/resource-
 | `api_client.py` | `get_all` — single low-level pagination loop |
 | `workflows/` | Orchestration — **must not** duplicate list/count/group pagination or hand-built relationship filters when a generated accessor exists |
 | `tools/` | Composition (`list_sharding`) — parallel list over project shards |
+| `query/` | Query graph join recipes and executors — dashboard count joins ([query-recipes.md](query-recipes.md)) |
 | `utils/` | Infra (`parallel`, namespace) — not domain list composition |
 
 ## Facade naming rules
