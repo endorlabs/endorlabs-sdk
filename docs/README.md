@@ -32,6 +32,7 @@ Index for SDK-specific documentation.
 - [guides/README.md](guides/README.md) — List of guides.
 - [guides/examples.md](guides/examples.md) — Skill walkthrough and minimal API snippets for a first tenant session.
 - [guides/facade-helpers.md](guides/facade-helpers.md) — When to use `search_by_*`, relationship accessors, `RouteResult`, wire helpers.
+- [guides/query-recipes.md](guides/query-recipes.md) — Query graph join recipes for dashboard-style project counts.
 - [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; SDK consumer UX.
 - [guides/retrieving-scan-results.md](guides/retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.
 

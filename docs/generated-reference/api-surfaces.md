@@ -204,6 +204,8 @@ Full edge inventory: [resource-routes.md](resource-routes.md).
 |--------|--------|---------|
 | `CallGraphData` | `decode(package_version, …)` | Decoded call graph JSON for a PackageVersion |
 | `CallGraphData` | `fetch(package_version, …)` | Raw CallGraphData wire envelope |
+| `Query` | `count_pv_by_project(projects, …)` | Main-context PackageVersion counts via graph join |
+| `Query` | `count_findings_by_category(projects, …)` | Finding category counts via graph join |
 | `ScanResult` | `get_logs(scan_result, …)` | Scan log messages via ScanLogRequest API |
 
 ## Universal list helpers (`ListableFacade`)

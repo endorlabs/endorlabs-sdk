@@ -1,0 +1,131 @@
+"""Recommend Query vs facade fetch strategies from topology and output shape."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import StrEnum
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    from .topology import TopologySnapshot
+
+PrimaryPath = Literal[
+    "query",
+    "facade_count",
+    "facade_list_groups",
+    "facade_list",
+]
+ShardKey = Literal["project", "leaf_namespace", "tenant"]
+
+
+class OutputShape(StrEnum):
+    """What the caller needs from an estate-scale fetch."""
+
+    COUNT_BY_PROJECT = "count_by_project"
+    FINDING_ROWS = "finding_rows"
+    FINDING_CATEGORY_COUNTS = "finding_category_counts"
+    FINDING_LOG_TRENDS = "finding_log_trends"
+    DM_VERSION_CARDINALITY = "dm_version_cardinality"
+    OSS_COORDINATE_LOOKUP = "oss_coordinate_lookup"
+    TENANT_FINDING_TOTALS = "tenant_finding_totals"
+
+
+@dataclass(frozen=True, slots=True)
+class QueryPlan:
+    """Non-executing routing recommendation."""
+
+    output_shape: OutputShape
+    primary: PrimaryPath
+    shard_key: ShardKey
+    validate_recommended: bool
+    notes: tuple[str, ...] = field(default_factory=tuple)
+
+    def to_dict(self) -> dict[str, str | bool | tuple[str, ...]]:
+        """Serialize the plan for logging or artifacts."""
+        return {
+            "output_shape": self.output_shape.value,
+            "primary": self.primary,
+            "shard_key": self.shard_key,
+            "validate_recommended": self.validate_recommended,
+            "notes": self.notes,
+        }
+
+
+def recommend(
+    output_shape: OutputShape,
+    *,
+    topology: TopologySnapshot | None = None,
+) -> QueryPlan:
+    """Return a fetch plan for ``output_shape`` and optional topology signals."""
+    if output_shape == OutputShape.FINDING_LOG_TRENDS:
+        return QueryPlan(
+            output_shape=output_shape,
+            primary="facade_list_groups",
+            shard_key="tenant",
+            validate_recommended=False,
+            notes=(
+                "No Query mapping; use FindingLog.list_groups with group_by_time.",
+                "Aggregate-first; shard per project on timeout.",
+            ),
+        )
+    if output_shape == OutputShape.DM_VERSION_CARDINALITY:
+        return QueryPlan(
+            output_shape=output_shape,
+            primary="facade_list_groups",
+            shard_key="leaf_namespace",
+            validate_recommended=False,
+            notes=(
+                "Query count joins do not return version buckets.",
+                "Use DependencyMetadata.list_groups per child namespace.",
+            ),
+        )
+    if output_shape == OutputShape.OSS_COORDINATE_LOOKUP:
+        return QueryPlan(
+            output_shape=output_shape,
+            primary="query",
+            shard_key="tenant",
+            validate_recommended=False,
+            notes=("Use QueryVulnerability or QueryMalware (oss scope), not Query.",),
+        )
+    if output_shape in (
+        OutputShape.FINDING_ROWS,
+        OutputShape.TENANT_FINDING_TOTALS,
+    ):
+        return QueryPlan(
+            output_shape=output_shape,
+            primary="facade_list",
+            shard_key="project",
+            validate_recommended=False,
+            notes=(
+                "Full rows need Finding.list_by_project or selective list filters.",
+            ),
+        )
+
+    shard_key: ShardKey = "project"
+    validate = True
+    notes: list[str] = []
+
+    if topology is not None:
+        if topology.archetype == "single_repo":
+            shard_key = "project"
+            notes.append("Single-repo: facade count optional; list_by_project for RCA.")
+        elif topology.archetype == "monorepo_hub":
+            shard_key = "leaf_namespace"
+            notes.append("Monorepo hub: Query per leaf namespace with pagination.")
+        elif topology.archetype in ("managed_platform", "estate_sprawl"):
+            shard_key = "leaf_namespace"
+            notes.append(
+                "Many leaf namespaces: Query reduces round-trips for count-only asks."
+            )
+        if topology.duplicate_name_groups:
+            notes.append(
+                "Duplicate meta.name across namespaces; disambiguate by wire namespace."
+            )
+
+    return QueryPlan(
+        output_shape=output_shape,
+        primary="query",
+        shard_key=shard_key,
+        validate_recommended=validate,
+        notes=tuple(notes),
+    )

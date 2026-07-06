@@ -17,7 +17,7 @@ import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
 from endorlabs.core.exceptions import NotFoundError, ValidationError
-from endorlabs.facade import CallGraphDataFacade
+from endorlabs.facade import CallGraphDataFacade, QueryFacade
 from tests.conftest import (
     TEST_MAX_PAGES,
     TEST_NAMESPACE_DEFAULT,
@@ -250,10 +250,13 @@ def test_client_exposes_all_registry_resources(
 ) -> None:
     """Client exposes exactly the resources defined in RESOURCE_REGISTRY."""
     from endorlabs.facade import ResourceFacade
-    from endorlabs.registry import RESOURCE_REGISTRY
+    from endorlabs.registry import CUSTOM_FACADE_REGISTRY, RESOURCE_REGISTRY
 
+    custom_attrs = {entry.attr_name for entry in CUSTOM_FACADE_REGISTRY}
     client = client_with_mock_transport
     for entry in RESOURCE_REGISTRY:
+        if entry.attr_name in custom_attrs:
+            continue
         assert hasattr(client, entry.attr_name), f"Missing attribute: {entry.attr_name}"
         facade = getattr(client, entry.attr_name)
         assert isinstance(facade, ResourceFacade), (
@@ -271,10 +274,13 @@ def test_registry_supported_ops_not_implemented_contract(
     client_with_mock_transport: Client,
 ) -> None:
     """Unsupported registry operations should raise NotImplementedError."""
-    from endorlabs.registry import RESOURCE_REGISTRY
+    from endorlabs.registry import CUSTOM_FACADE_REGISTRY, RESOURCE_REGISTRY
 
+    custom_attrs = {entry.attr_name for entry in CUSTOM_FACADE_REGISTRY}
     client = client_with_mock_transport
     for entry in RESOURCE_REGISTRY:
+        if entry.attr_name in custom_attrs:
+            continue
         facade = getattr(client, entry.attr_name)
         namespace = "oss" if entry.scope == "oss" else TEST_NAMESPACE_DEFAULT
 
@@ -560,6 +566,17 @@ def test_client_call_graph_data_facade_present(
     client = client_with_mock_transport
     assert hasattr(client, "CallGraphData")
     assert isinstance(client.CallGraphData, CallGraphDataFacade)
+
+
+def test_client_query_facade_present(
+    client_with_mock_transport: Client,
+) -> None:
+    """client.Query is a custom facade for graph join count recipes."""
+    client = client_with_mock_transport
+    assert hasattr(client, "Query")
+    assert isinstance(client.Query, QueryFacade)
+    assert hasattr(client.Query, "count_pv_by_project")
+    assert hasattr(client.Query, "count_findings_by_category")
 
 
 def test_get_with_uuid_string_uses_default_namespace(

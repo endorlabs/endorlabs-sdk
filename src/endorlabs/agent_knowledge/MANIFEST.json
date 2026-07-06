@@ -50,6 +50,16 @@
       ]
     },
     {
+      "id": "query-vs-list-semantics",
+      "path": "contracts/query-vs-list-semantics.md",
+      "tags": [
+        "count",
+        "list",
+        "performance",
+        "query"
+      ]
+    },
+    {
       "id": "resource-discovery",
       "path": "contracts/resource-discovery.md",
       "tags": [
@@ -60,7 +70,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-01T19:57:29.532934+00:00",
+  "generated_at": "2026-07-05T01:28:32.799975+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -125,7 +135,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.4.1.dev13",
+  "sdk_version": "0.4.1.dev21",
   "skills": [
     {
       "description": "Author or update a shipped agent skill under agent-knowledge/skills/: portable frontmatter, optional endorlabs.catalog workflow linkage, composition handoffs, sync, and drift verification. Use when adding skills, fixing sync validation errors, or migrating workflow catalog metadata\u2014not for extending SDK resources (endor-implement-sdk-resource) or runtime API troubleshooting.",
@@ -258,6 +268,13 @@
       "id": "endor-retrieve-scan-results",
       "name": "endor-retrieve-scan-results",
       "path": "skills/endor-retrieve-scan-results/SKILL.md",
+      "refs": []
+    },
+    {
+      "description": "Routes estate-scale data pulls between Query count joins and facade list/count/shard patterns after bounded topology discovery. Use when choosing how to fetch counts or aggregates across many projects or namespaces. Not for single-project RCA or full row exports \u2014 hand off to endor-retrieve-scan-results, endor-project-retrieval-bundle, or estate pull when rows are needed.",
+      "id": "endor-route-estate-queries",
+      "name": "endor-route-estate-queries",
+      "path": "skills/endor-route-estate-queries/SKILL.md",
       "refs": []
     },
     {
