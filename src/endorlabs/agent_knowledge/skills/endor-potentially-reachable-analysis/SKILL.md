@@ -154,7 +154,7 @@ Internal consistency checks in `run_analysis.py` assert breakdown row counts sum
 
 ## Bounds
 
-- Project-sharded parallel `Finding.list_iter` scoped by **`spec.project_uuid`** (shard key) at each project's `tenant_meta.namespace`. When all projects share one namespace path, a single `traverse=True` query is used instead.
+- Project-sharded parallel `Finding.list_iter` scoped by **`spec.project_uuid`** at each project's `tenant_meta.namespace`. Shards from **`topology.project_shards()`** after `client.Query.Project.discover` (or reuse pre-built shards). When all projects share one namespace path, a single `traverse=True` query is used instead.
 - **`--max-pages`** caps pagination **per project shard**, not globally across the tenant (smoke bounds differ from a single traverse query).
 - **`--max-project-pages`** caps project discovery only; truncated discovery omits findings in undiscovered namespaces.
 - PackageVersion hydration uses **`traverse=False`** in the project namespace from finding rows; orphan parents fall back to tenant `traverse=True`.

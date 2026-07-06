@@ -126,7 +126,7 @@ client = endorlabs.Client(tenant="tenant.root", timeout=120.0)
 analysis = build_finding_log_new_vs_resolved_analysis(client, "tenant.root", traverse=True)
 ```
 
-Shared filters: `endorlabs.workflows.findings.filters` (`reachable_vuln_log_base_filter`, `prf_vuln_filter`, …).
+Shared filters: `endorlabs.filters` (`reachable_vuln_log_base_filter`, `prf_vuln_filter`, …).
 
 Generic log aggregation: `endorlabs.workflows.logs.group_by_time.group_by_time_counts` (any listable log facade).
 
@@ -218,4 +218,4 @@ for finding in findings or []:
 
 ## Sharded parallel lists
 
-For tenant-wide collection, use `endorlabs.tools.list_sharding` (`ParentShard`, `parallel_map_shards`, `list_for_shards`) with **`list_by_project`** per shard — see [list-query-performance.md](../contributing/list-query-performance.md) and estate collect workflows.
+For tenant-wide collection, use `endorlabs.tools.list_sharding` (`ProjectShard`, `parallel_map_shards`, `list_for_shards`) with **`list_by_project`** per shard, or **`client.Query.Project.collect_*`** when the join is validated — see [list-query-performance.md](../contributing/list-query-performance.md), [query-recipes.md](query-recipes.md), and estate collect workflows.

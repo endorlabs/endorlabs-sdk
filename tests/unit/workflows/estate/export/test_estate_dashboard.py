@@ -64,6 +64,33 @@ def test_estate_dashboard_includes_risk_and_graph_tabs(tmp_path: Path) -> None:
     assert "Longest chain" not in html_doc
 
 
+def test_estate_dashboard_includes_online_query_tiles(tmp_path: Path) -> None:
+    workspace = tmp_path / "tenant-20260101"
+    _write_min_workspace(workspace)
+    ir_path(workspace, "online_dashboard_counts.json").write_text(
+        json.dumps(
+            {
+                "schema": "endor.online_dashboard_counts.v1",
+                "archetype": "managed_platform",
+                "totals": {
+                    "pv": 42,
+                    "dm": 7,
+                    "findings": {
+                        "VULNERABILITY": 3,
+                        "SECRETS": 1,
+                        "MALWARE": 0,
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    html_doc = render_estate_dashboard_html(workspace, namespace_label="tenant")
+    assert "PV (Query)" in html_doc
+    assert "42" in html_doc
+    assert "managed_platform" in html_doc
+
+
 def test_export_estate_dashboard_writes_viz(tmp_path: Path) -> None:
     workspace = tmp_path / "tenant-20260101"
     _write_min_workspace(workspace)

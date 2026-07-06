@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
+from endorlabs.filters import main_context_filter
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.risk.scoring import dm_package_name_for_key
 from endorlabs.workflows.estate.collect.namespaces import list_estate_namespace_names
-from endorlabs.workflows.estate.filters.main_context import main_context_filter
 
 if TYPE_CHECKING:
     from endorlabs import Client

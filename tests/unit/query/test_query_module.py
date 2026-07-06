@@ -7,18 +7,26 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+from endorlabs.filters import to_query_filter
 from endorlabs.query import (
     QueryExecutor,
     QuerySpec,
     Reference,
-    count_findings_by_category,
-    count_pv_by_project,
+    dm_count_spec,
+    extract_query_objects,
     group_projects_by_namespace,
+    next_page_token,
+    parse_group_bucket_counts,
     parse_project_multi_reference_counts,
     parse_project_reference_counts,
+    parse_project_reference_list_totals,
     project_uuid_in_filter,
     pv_count_spec,
+    query_create_pages,
+    reference_total,
+    scopes_from_projects,
 )
+from endorlabs.query.project_facade import ProjectQueryFacade
 
 _FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "query"
 
@@ -72,6 +80,7 @@ def test_pv_count_spec_wire_shape() -> None:
     wire = pv_count_spec().for_namespace_batch(["proj-1"])
     assert wire["kind"] == "Project"
     assert wire["list_parameters"]["filter"] == 'uuid in ["proj-1"]'
+    assert wire["list_parameters"]["traverse"] is False
     assert wire["references"][0]["query_spec"]["kind"] == "PackageVersion"
     assert wire["references"][0]["query_spec"]["list_parameters"]["count"] is True
 
@@ -89,6 +98,10 @@ def test_query_spec_reference_builder() -> None:
     wire = spec.to_wire()
     ref = wire["references"][0]
     assert ref["query_spec"]["return_as"] == "VulnCount"
+    assert (
+        ref["query_spec"]["list_parameters"]["filter"]
+        == "context.type==CONTEXT_TYPE_MAIN"
+    )
 
 
 class _FakeQueryFacade:
@@ -109,12 +122,22 @@ class _FakeClient:
         self.Query = _FakeQueryFacade()
 
 
-def test_count_pv_by_project_posts_to_leaf_namespace() -> None:
+def test_dm_count_spec_wire_shape() -> None:
+    spec = dm_count_spec()
+    wire = spec.to_wire()
+    assert wire["kind"] == "Project"
+    refs = wire["references"]
+    assert len(refs) == 1
+    assert refs[0]["query_spec"]["kind"] == "DependencyMetadata"
+
+
+def test_count_pv_posts_to_leaf_namespace() -> None:
     client = _FakeClient()
     projects = [
         SimpleNamespace(uuid="p1", namespace="tenant.leaf"),
     ]
-    counts = count_pv_by_project(client, projects)
+    project_query = ProjectQueryFacade(client, client.Query)
+    counts = project_query.count_pv(projects)
     assert counts == {"proj-a": 42, "proj-b": 7}
     assert client.Query.calls[0][0] == "tenant.leaf"
 
@@ -126,10 +149,10 @@ def test_query_executor_merges_multiple_namespaces() -> None:
         SimpleNamespace(uuid="p2", namespace="tenant.ns-b"),
     ]
     executor = QueryExecutor(client, name_prefix="test")
-    merged = executor.run(
+    merged = executor.execute(
         pv_count_spec(),
-        projects=projects,
-        parse_result=lambda r: parse_project_reference_counts(r, "PackageVersion"),
+        scopes=scopes_from_projects(projects),
+        parse_page=lambda r: parse_project_reference_counts(r, "PackageVersion"),
     )
     assert merged == {"proj-a": 42, "proj-b": 7}
     assert len(client.Query.calls) == 2
@@ -147,7 +170,8 @@ def test_count_findings_by_category_relabels_refs() -> None:
 
     client.Query.create = _fake_create
     projects = [SimpleNamespace(uuid="p1", namespace="tenant.leaf")]
-    counts = count_findings_by_category(client, projects)
+    project_query = ProjectQueryFacade(client, client.Query)
+    counts = project_query.count_findings_by_category(projects)
     assert counts == {
         "proj-a": {
             "VULNERABILITY": 10,
@@ -155,3 +179,56 @@ def test_count_findings_by_category_relabels_refs() -> None:
             "MALWARE": 0,
         }
     }
+
+
+def test_to_query_filter_strips_quoted_enums() -> None:
+    assert (
+        to_query_filter('context.type=="CONTEXT_TYPE_MAIN"')
+        == "context.type==CONTEXT_TYPE_MAIN"
+    )
+
+
+def test_parse_group_bucket_counts_from_fixture() -> None:
+    payload = _load_fixture("group_response.json")
+    counts = parse_group_bucket_counts(payload)
+    assert counts["2026-07-01T00:00:00Z"] == 12
+    assert counts["2026-07-02T00:00:00Z"] == 5
+
+
+def test_reference_total_prefers_count_ref() -> None:
+    payload = _load_fixture("finding_list_ref_response.json")
+    objs = extract_query_objects(payload)
+    assert reference_total(objs[0], "Finding") == 796
+    assert parse_project_reference_list_totals(payload, "Finding") == {"proj-a": 796}
+
+
+def test_next_page_token_from_fixture() -> None:
+    payload = _load_fixture("paginated_root_response.json")
+    assert next_page_token(payload) == 100
+
+
+def test_query_create_pages_stops_at_last_token() -> None:
+    calls: list[dict[str, Any]] = []
+
+    class _PagingClient:
+        def __init__(self) -> None:
+            super().__init__()
+            self.Query = self
+
+        def create(self, *, payload: Any, namespace: str) -> dict[str, Any]:
+            _ = namespace
+            spec = payload.spec["query_spec"]
+            calls.append(spec)
+            token = (spec.get("list_parameters") or {}).get("page_token")
+            if token is None:
+                return _load_fixture("paginated_root_response.json")
+            return _load_fixture("pv_count_response.json")
+
+    pages = query_create_pages(
+        _PagingClient(),
+        namespace="tenant.leaf",
+        name="test-pages",
+        query_spec={"kind": "Project", "list_parameters": {}},
+    )
+    assert len(pages) == 2
+    assert calls[1]["list_parameters"]["page_token"] == 100

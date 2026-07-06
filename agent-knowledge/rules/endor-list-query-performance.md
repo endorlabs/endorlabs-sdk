@@ -44,8 +44,10 @@ server-side plan for broad unfiltered queries.
 
 ## Query graph joins
 
-- **`endorlabs.query`** (and `client.Query.count_*` recipes) POST to each project's **wire namespace** — not tenant root alone.
-- Use for **dashboard counts** across many projects after `validate_sample()` on a small mix of namespaces.
-- Query **does not** replace FindingLog trends, full finding rows, or DM version buckets — see contract `query-vs-list-semantics.md`.
+- **`endorlabs.query`** (`client.Query.create`) is the platform **graph join** API — root kind + nested references; each node accepts `list_parameters` (`filter`, `mask`, `count`, `group`, `group_by_time`, pagination).
+- Shipped **count recipes** POST to each project's **wire namespace** — not tenant root alone. Run `validate_sample()` on a small mix of namespaces before estate-wide count joins.
+- **Custom joins** (masked lists, grouped rollups) use `QuerySpec` / `create(payload=...)` after probe parity — see `.tmp/query_workflow_map.md` and `probe_workflows.py`.
+- **Row export** at estate scale (`endor-estate pull`, JSONL) still uses `list_for_shards` until join-based materialization is validated.
+- Classify **`OutputShape`** before estate-scale lists — see `rules/endor-output-shape-routing.md`.
 
 See also `rules/endor-namespace-scoping.md` and `contracts/list-parameters.md`.

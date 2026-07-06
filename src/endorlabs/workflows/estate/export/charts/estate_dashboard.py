@@ -16,6 +16,32 @@ from endorlabs.workflows.estate.workspace.paths import ir_path, viz_path
 ESTATE_DASHBOARD_SCHEMA = "endor.estate_dashboard.v1"
 
 
+def _online_counts_tiles(workspace_root: Path) -> str:
+    from endorlabs.workflows.estate.online.dashboard import load_online_dashboard_counts
+
+    doc = load_online_dashboard_counts(workspace_root)
+    if not doc:
+        return ""
+    totals = doc.get("totals") or {}
+    pv_total = int(totals.get("pv") or 0)
+    dm_total = int(totals.get("dm") or 0)
+    finding_totals = totals.get("findings") or {}
+    vuln = int(finding_totals.get("VULNERABILITY") or 0)
+    secrets = int(finding_totals.get("SECRETS") or 0)
+    malware = int(finding_totals.get("MALWARE") or 0)
+    archetype = html.escape(str(doc.get("archetype") or ""))
+    return f"""
+    <div class="tiles online-tiles">
+      <div class="tile"><strong>{pv_total}</strong><span>PV (Query)</span></div>
+      <div class="tile"><strong>{dm_total}</strong><span>DM (Query)</span></div>
+      <div class="tile"><strong>{vuln}</strong><span>Vuln findings</span></div>
+      <div class="tile"><strong>{secrets}</strong><span>Secrets</span></div>
+      <div class="tile"><strong>{malware}</strong><span>Malware</span></div>
+      <div class="tile"><strong>{archetype}</strong><span>Topology</span></div>
+    </div>
+    """
+
+
 def _utc_now() -> str:
     return datetime.now(UTC).isoformat()
 
@@ -112,9 +138,15 @@ def render_estate_dashboard_html(
     risk_panel = ""
     if risk_path.is_file():
         risk_doc = json.loads(risk_path.read_text(encoding="utf-8"))
-        risk_panel = _risk_panel_from_document(risk_doc)
+        risk_panel = _online_counts_tiles(workspace_root) + _risk_panel_from_document(
+            risk_doc
+        )
     else:
-        risk_panel = '<section id="panel-risk" class="panel active"><p class="hint">Run analyze risk step first.</p></section>'
+        online = _online_counts_tiles(workspace_root)
+        hint = '<p class="hint">Run analyze risk step first.</p>' if not online else ""
+        risk_panel = (
+            f'<section id="panel-risk" class="panel active">{online}{hint}</section>'
+        )
 
     graph_dashboard = ""
     graph_bipartite = ""

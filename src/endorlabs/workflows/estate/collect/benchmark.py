@@ -16,6 +16,7 @@ from typing import Any
 
 import endorlabs
 from endorlabs.context.paths import workflow_sessions_root
+from endorlabs.filters import main_context_filter
 from endorlabs.utils.artifact_io import write_json
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.compile_graph.pipeline import (
@@ -30,7 +31,6 @@ from endorlabs.workflows.estate.collect.bounds import (
     is_list_truncated,
     resolve_max_pages,
 )
-from endorlabs.workflows.estate.filters.main_context import main_context_filter
 from endorlabs.workflows.estate.filters.masks import DEP_METADATA_LIST_MASK
 
 LOGGER = get_resource_logger(__name__)

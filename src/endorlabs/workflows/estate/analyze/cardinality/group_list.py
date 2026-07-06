@@ -51,7 +51,7 @@ def grouped_count_list_parameters_for_package_name(
     """Grouped list for one exact ``package_name``, optionally main-context only."""
     pkg_filter = f'spec.dependency_data.package_name=="{package_name}"'
     if main_context:
-        from endorlabs.workflows.estate.filters.main_context import main_context_filter
+        from endorlabs.filters import main_context_filter
 
         filt = main_context_filter(pkg_filter)
     else:

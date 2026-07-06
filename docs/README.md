@@ -56,6 +56,7 @@ Normative shards for agents and skills (also under `agent-knowledge/contracts/` 
 - [contributing/troubleshooting.md](contributing/troubleshooting.md)
 - [contributing/docs-drift-workflow.md](contributing/docs-drift-workflow.md)
 - [contributing/namespace-traversal.md](contributing/namespace-traversal.md) — Traverse and list parameters; patterns and examples.
+- [contributing/architecture.md](contributing/architecture.md) — SDK layers, registry, facade; Query / estate composition.
 - [contributing/list-query-performance.md](contributing/list-query-performance.md) — List scope, filters, pagination, debugging slow queries.
 
 ## When to update docs

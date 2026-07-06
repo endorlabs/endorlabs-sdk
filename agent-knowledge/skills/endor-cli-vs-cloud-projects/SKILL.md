@@ -147,6 +147,7 @@ Before finishing, confirm:
 | Need | Skill |
 | ---- | ----- |
 | Tenant-wide duplicate project inventory | [endor-duplicate-projects](../endor-duplicate-projects/SKILL.md) |
+| CI endorctl version mix on recent CLI latest scans | [endor-ci-endorctl-version-audit](../endor-ci-endorctl-version-audit/SKILL.md) |
 | Findings and ScanResults for one project | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) |
 | Scan pipeline RCA (pairs, logs, aggregate diffs) | [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) |
 | Customer Cloud connector / SSO validation | [endor-sso-integration-validation-troubleshooting](../endor-sso-integration-validation-troubleshooting/SKILL.md) |

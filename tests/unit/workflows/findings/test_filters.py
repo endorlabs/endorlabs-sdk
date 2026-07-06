@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from endorlabs.workflows.findings.filters import (
+from endorlabs.filters import (
     finding_log_time_window_filter,
     prd_vuln_filter,
     prf_vuln_filter,

@@ -404,22 +404,11 @@ class CallGraphDataFacade:
         )
 
 
-class _QueryClientAdapter:
-    """Minimal client shape for ``QueryExecutor`` / ``query_create``."""
-
-    __slots__ = ("Query", "_default_namespace")
-
-    def __init__(self, query: QueryFacade) -> None:
-        super().__init__()
-        self.Query = query
-        self._default_namespace = query.default_namespace
-
-
 class QueryFacade:
-    """Query graph join facade: ``create`` plus dashboard count recipes.
+    """Kind-agnostic Query graph join facade.
 
-    Replaces the generated ``Query`` facade on ``Client`` with recipe helpers
-    that delegate to ``endorlabs.query``.
+    Generic execution via ``execute`` / ``at_namespace`` / ``create``.
+    Project-scoped recipes live on ``Query.Project``.
     """
 
     def __init__(self, client: APIClient, default_namespace: str | None) -> None:
@@ -432,7 +421,11 @@ class QueryFacade:
             default_namespace,
             entry,
         )
+        self._client = client
         self._default_namespace = default_namespace
+        from ..query.project_facade import ProjectQueryFacade
+
+        self.Project = ProjectQueryFacade(client, self)
 
     @property
     def default_namespace(self) -> str | None:
@@ -443,32 +436,45 @@ class QueryFacade:
         """Create a Query resource (payload-only; same as registry facade)."""
         return self._inner.create(*args, **kwargs)
 
-    def count_pv_by_project(
+    def execute(
         self,
-        projects: list[Any],
+        spec: Any,
+        scopes: list[Any],
         *,
-        name_prefix: str = "query-pv-counts",
-    ) -> dict[str, int]:
-        """Return main-context PackageVersion counts keyed by project UUID."""
-        from ..query.recipes import count_pv_by_project
+        parse: Any,
+        max_root_pages: int | None = None,
+        name_prefix: str = "endor-query",
+    ) -> dict[str, Any]:
+        """Execute a graph join per ``QueryScope`` and merge parsed maps."""
+        from ..query.execute import QueryExecutor
 
-        return count_pv_by_project(
-            _QueryClientAdapter(self),
-            projects,
+        return QueryExecutor(
+            self,
             name_prefix=name_prefix,
-        )
+            max_root_pages=max_root_pages,
+        ).execute(spec, scopes=scopes, parse_page=parse)
 
-    def count_findings_by_category(
+    def at_namespace(
         self,
-        projects: list[Any],
+        spec: Any,
+        namespace: str,
         *,
-        name_prefix: str = "query-finding-counts",
-    ) -> dict[str, dict[str, int]]:
-        """Return finding category counts keyed by project UUID."""
-        from ..query.recipes import count_findings_by_category
+        parse: Any,
+        merge: Any,
+        max_pages: int | None = None,
+        name_prefix: str = "endor-query",
+    ) -> Any:
+        """Execute one graph join at ``namespace`` with root list pagination."""
+        from ..query.execute import QueryExecutor
 
-        return count_findings_by_category(
-            _QueryClientAdapter(self),
-            projects,
+        return QueryExecutor(
+            self,
             name_prefix=name_prefix,
+            max_root_pages=max_pages,
+        ).run_at_namespace(
+            spec,
+            namespace=namespace,
+            parse_page=parse,
+            merge_pages=merge,
+            max_pages=max_pages,
         )
