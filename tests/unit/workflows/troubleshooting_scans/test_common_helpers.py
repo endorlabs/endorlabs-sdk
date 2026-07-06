@@ -19,10 +19,10 @@ def test_parallel_collect_for_projects_flattens() -> None:
     ]
 
     def _fetch(shard: object) -> list[str]:
-        from endorlabs.tools.list_sharding import ParentShard
+        from endorlabs.tools.list_sharding import ProjectShard
 
-        assert isinstance(shard, ParentShard)
-        return [f"{shard.key}-a", f"{shard.key}-b"]
+        assert isinstance(shard, ProjectShard)
+        return [f"{shard.project_uuid}-a", f"{shard.project_uuid}-b"]
 
     out = parallel_collect_for_projects(
         projects,

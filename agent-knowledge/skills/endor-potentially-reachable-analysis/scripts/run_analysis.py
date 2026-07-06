@@ -10,11 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.workflows.findings.filters import (
-    prd_vuln_filter,
-    prf_vuln_filter,
-    pv_main_context_filter,
-)
+from endorlabs.filters import prd_vuln_filter, prf_vuln_filter, pv_main_context_filter
 from endorlabs.workflows.findings.prf_analysis import (
     ECO_LABEL,
     ECOSYSTEMS,
@@ -26,7 +22,6 @@ from endorlabs.workflows.findings.prf_analysis import (
     list_findings_tenant,
     parent_uuids_by_eco,
 )
-from endorlabs.workflows.projects.inventory import discover_tenant_project_shards
 
 PRF_BASE = prf_vuln_filter()
 PRD_BASE = prd_vuln_filter()
@@ -177,11 +172,12 @@ def run_analysis(
     client = endorlabs.Client(tenant=tenant, timeout=600.0)
     try:
         print("Discovering project shards...")
-        shards = discover_tenant_project_shards(
-            client,
+        shards = client.Query.Project.discover(
             tenant,
+            traverse=True,
             max_pages=max_project_pages,
-        )
+            exclude_sbom=True,
+        ).project_shards()
         print(f"Project shards: {len(shards)}")
 
         print("Listing PRF findings (counts derived from listed rows)...")

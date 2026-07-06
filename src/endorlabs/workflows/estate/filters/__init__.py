@@ -1,12 +1,13 @@
-"""Estate list filters."""
+"""Estate list filters and field masks."""
 
 from __future__ import annotations
 
-from .main_context import (
+from endorlabs.filters import (
     MAIN_CONTEXT_LIST_FILTER,
     MAIN_CONTEXT_TYPE,
     main_context_filter,
 )
+
 from .masks import (
     DEP_METADATA_LIST_MASK,
     PROJECT_LIST_MASK,

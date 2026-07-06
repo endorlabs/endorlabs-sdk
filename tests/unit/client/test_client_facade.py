@@ -571,12 +571,14 @@ def test_client_call_graph_data_facade_present(
 def test_client_query_facade_present(
     client_with_mock_transport: Client,
 ) -> None:
-    """client.Query is a custom facade for graph join count recipes."""
+    """client.Query is a custom facade for graph join execution."""
     client = client_with_mock_transport
     assert hasattr(client, "Query")
     assert isinstance(client.Query, QueryFacade)
-    assert hasattr(client.Query, "count_pv_by_project")
-    assert hasattr(client.Query, "count_findings_by_category")
+    assert hasattr(client.Query, "execute")
+    assert hasattr(client.Query, "at_namespace")
+    assert hasattr(client.Query, "Project")
+    assert hasattr(client.Query.Project, "count_pv")
 
 
 def test_get_with_uuid_string_uses_default_namespace(

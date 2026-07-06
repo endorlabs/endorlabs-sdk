@@ -5,12 +5,7 @@ from __future__ import annotations
 import pytest
 
 from endorlabs.core.exceptions import ServerError
-from endorlabs.query import (
-    count_findings_by_category,
-    count_pv_by_project,
-    discover_topology,
-    validate_sample,
-)
+from endorlabs.query import discover_topology, validate_sample
 from tests.conftest import TEST_MAX_PAGES_TRAVERSE
 from tests.integration.client.conftest import require_first_project
 
@@ -45,7 +40,7 @@ class TestQueryRecipes:
     def test_query_facade_count_pv_by_project(self) -> None:
         projects = _sample_projects(self.client)
         try:
-            counts = self.client.Query.count_pv_by_project(projects)
+            counts = self.client.Query.Project.count_pv(projects)
         except ServerError as err:
             pytest.skip(f"Query PV count unavailable: {err}")
         assert isinstance(counts, dict)
@@ -54,10 +49,10 @@ class TestQueryRecipes:
             assert isinstance(value, int)
             assert value >= 0
 
-    def test_query_module_count_findings_by_category(self) -> None:
+    def test_query_facade_count_findings_by_category(self) -> None:
         projects = _sample_projects(self.client)
         try:
-            counts = count_findings_by_category(self.client, projects)
+            counts = self.client.Query.Project.count_findings_by_category(projects)
         except ServerError as err:
             pytest.skip(f"Query finding count unavailable: {err}")
         assert isinstance(counts, dict)
@@ -87,7 +82,29 @@ class TestQueryRecipes:
                 f"Query vs facade PV count mismatch: {result.to_dict()['mismatches']}"
             )
 
-    def test_discover_topology_returns_shards(self, root_namespace: str) -> None:
+    def test_validate_sample_findings_matches_facade_count(self) -> None:
+        projects = _sample_projects(self.client, limit=2)
+        try:
+            result = validate_sample(
+                self.client,
+                projects,
+                recipe="findings",
+                sample_size=2,
+            )
+        except ServerError as err:
+            pytest.skip(f"Query findings validation unavailable: {err}")
+        assert result.recipe == "findings"
+        assert result.sample_size <= 2
+        if not result.matched:
+            mismatches = result.to_dict()["mismatches"]
+            malware_only = all(m.get("category") == "MALWARE" for m in mismatches)
+            if malware_only:
+                pytest.skip(
+                    f"MALWARE category mismatch only (known layout caveat): {mismatches}"
+                )
+            pytest.fail(f"Query vs facade finding count mismatch: {mismatches}")
+
+    def test_discover_topology_returns_geometry(self, root_namespace: str) -> None:
         project = require_first_project(self.client)
         ns = getattr(getattr(project, "tenant_meta", None), "namespace", None)
         if not ns:
@@ -97,14 +114,14 @@ class TestQueryRecipes:
         except ServerError as err:
             pytest.skip(f"Topology discovery unavailable: {err}")
         assert topology.tenant == root_namespace
-        assert topology.namespace_shards
-        shard_ns = {s.namespace for s in topology.namespace_shards}
-        assert ns in shard_ns
+        assert topology.namespace_geometry
+        geometry_ns = {g.namespace for g in topology.namespace_geometry}
+        assert ns in geometry_ns
 
-    def test_count_pv_by_project_module_entry(self) -> None:
+    def test_query_project_count_pv_entry(self) -> None:
         projects = _sample_projects(self.client, limit=1)
         try:
-            counts = count_pv_by_project(self.client, projects)
+            counts = self.client.Query.Project.count_pv(projects)
         except ServerError as err:
-            pytest.skip(f"count_pv_by_project unavailable: {err}")
+            pytest.skip(f"count_pv unavailable: {err}")
         assert isinstance(counts, dict)

@@ -5,20 +5,19 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
+from endorlabs.filters import (
+    finding_log_time_window_filter,
+    reachable_vuln_log_base_filter,
+)
 from endorlabs.operations.group_by_time_wire import (
     GROUP_BY_TIME_INTERVAL_ALIASES,
     normalize_group_by_time_interval,
 )
 from endorlabs.tools.list_sharding import parallel_map_shards, project_scoped_filter
-from endorlabs.workflows.findings.filters import (
-    finding_log_time_window_filter,
-    reachable_vuln_log_base_filter,
-)
 from endorlabs.workflows.logs.group_by_time import (
     group_by_time_counts,
     is_timeout_like,
 )
-from endorlabs.workflows.projects.inventory import discover_tenant_project_shards
 
 if TYPE_CHECKING:
     from endorlabs import Client
@@ -348,11 +347,11 @@ def _query_operation_counts_sharded(
     max_project_pages: int | None,
 ) -> tuple[dict[str, int], bool]:
     """Per-project parallel fallback when aggregate ``group_by_time`` times out."""
-    shards = discover_tenant_project_shards(
-        client,
+    shards = client.Query.Project.discover(
         namespace,
+        traverse=True,
         max_pages=max_project_pages,
-    )
+    ).project_shards()
     if not shards:
         return {}, severity_split
 
@@ -366,7 +365,7 @@ def _query_operation_counts_sharded(
                 level=level,
                 traverse=False,
                 interval=interval,
-                project_uuid=shard.key,
+                project_uuid=shard.project_uuid,
             )
 
         results = parallel_map_shards(

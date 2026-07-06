@@ -5,22 +5,11 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
-import endorlabs
-from endorlabs.tools.list_sharding import (
-    ParentShard,
-    parallel_map_shards,
-    project_model_to_shard,
-)
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.risk.scoring import normalize_finding_record
-from endorlabs.workflows.estate.collect.namespaces import list_estate_namespace_names
-from endorlabs.workflows.estate.filters.main_context import (
-    MAIN_CONTEXT_LIST_FILTER,
-    MAIN_CONTEXT_TYPE,
-)
+from endorlabs.workflows.query_collect import collect_project_findings_via_query
 
 if TYPE_CHECKING:
     from endorlabs import Client
@@ -46,55 +35,18 @@ FINDING_LIST_MASK = (
 )
 
 
+def main_context_label() -> str:
+    """Human-readable main-context filter label for artifacts."""
+    from endorlabs.filters import MAIN_CONTEXT_LIST_FILTER
+
+    return MAIN_CONTEXT_LIST_FILTER
+
+
 def findings_filter_for_project(_project_uuid: str) -> str:
     """Main-context SCA + vulnerability finding filter (no project_uuid clause)."""
-    category = endorlabs.F("spec.finding_categories").contains(
-        FINDING_CATEGORY_SCA
-    ) | endorlabs.F("spec.finding_categories").contains(FINDING_CATEGORY_VULNERABILITY)
-    return str((endorlabs.F("context.type") == MAIN_CONTEXT_TYPE) & category)
+    from endorlabs.filters import estate_findings_filter
 
-
-def discover_project_shards(client: Client, estate_root: str) -> list[ParentShard]:
-    """List project shards across estate counting namespaces."""
-    shards: list[ParentShard] = []
-    seen: set[str] = set()
-    for namespace in list_estate_namespace_names(client, estate_root):
-        projects = client.Project.list(namespace=namespace, traverse=False)
-        for project in projects:
-            project_uuid = getattr(project, "uuid", None)
-            if not isinstance(project_uuid, str) or not project_uuid:
-                continue
-            if project_uuid in seen:
-                continue
-            seen.add(project_uuid)
-            shards.append(project_model_to_shard(project, namespace))
-    return shards
-
-
-def _fetch_findings_for_shard(
-    client: Client,
-    shard: ParentShard,
-    *,
-    max_pages: int | None,
-    page_size: int,
-) -> tuple[list[dict[str, Any]], str | None]:
-    try:
-        source = SimpleNamespace(
-            uuid=shard.key,
-            tenant_meta=SimpleNamespace(namespace=shard.namespace),
-        )
-        rows = client.Finding.list_by_project(
-            source,
-            filter=findings_filter_for_project(shard.key),
-            namespace=shard.namespace,
-            mask=FINDING_LIST_MASK,
-            max_pages=max_pages,
-            page_size=page_size,
-        )
-    except Exception as exc:
-        return [], f"{shard.namespace}/{shard.key}: {exc}"
-    normalized = [normalize_finding_record(row) for row in rows]
-    return normalized, None
+    return estate_findings_filter()
 
 
 @dataclass
@@ -116,43 +68,32 @@ def collect_estate_findings(
     findings_output: Path | None = None,
 ) -> FindingCollectResult:
     """Collect main-context SCA/vulnerability findings for all estate projects."""
-    shards = discover_project_shards(client, estate_root)
-    result = FindingCollectResult(project_count=len(shards))
-    if not shards:
+    _ = max_workers, page_size
+    topology = client.Query.Project.discover(estate_root, traverse=True)
+    projects = topology.projects
+    result = FindingCollectResult(project_count=len(projects))
+    if not projects:
         return result
 
-    handle = None
+    try:
+        rows = collect_project_findings_via_query(
+            client,
+            projects,
+            mask=FINDING_LIST_MASK,
+            max_root_pages=max_pages,
+        )
+        result.findings = [normalize_finding_record(row) for row in rows]
+    except Exception as exc:
+        result.errors.append(str(exc))
+        logger.warning("Finding collect via Query failed: %s", exc)
+        return result
+
     if findings_output is not None:
         findings_output.parent.mkdir(parents=True, exist_ok=True)
-        handle = findings_output.open("w", encoding="utf-8")
-
-    def _worker(shard: ParentShard) -> tuple[list[dict[str, Any]], str | None]:
-        return _fetch_findings_for_shard(
-            client,
-            shard,
-            max_pages=max_pages,
-            page_size=page_size,
-        )
-
-    try:
-        for batch, err in parallel_map_shards(
-            shards,
-            _worker,
-            max_workers=max_workers,
-            progress_label="finding projects",
-        ):
-            if err:
-                result.errors.append(err)
-                logger.warning("Finding collect failed: %s", err)
-                continue
-            result.findings.extend(batch)
-            if handle is not None:
-                for row in batch:
-                    handle.write(json.dumps(row, ensure_ascii=True))
-                    handle.write("\n")
-    finally:
-        if handle is not None:
-            handle.close()
+        with findings_output.open("w", encoding="utf-8") as handle:
+            for row in result.findings:
+                handle.write(json.dumps(row, ensure_ascii=True))
+                handle.write("\n")
 
     logger.info(
         "Collected %s finding records from %s project(s)",
@@ -160,7 +101,3 @@ def collect_estate_findings(
         result.project_count,
     )
     return result
-
-
-def main_context_label() -> str:
-    return MAIN_CONTEXT_LIST_FILTER

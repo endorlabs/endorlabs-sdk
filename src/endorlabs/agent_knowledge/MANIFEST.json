@@ -10,6 +10,7 @@
       "endor-list-query-performance",
       "endor-local-context",
       "endor-namespace-scoping",
+      "endor-output-shape-routing",
       "endor-portable-examples",
       "endor-workflow-composition",
       "endor-workspace-layout"
@@ -70,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-05T01:28:32.799975+00:00",
+  "generated_at": "2026-07-06T21:30:14.376157+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -101,6 +102,17 @@
         "list",
         "namespace",
         "traverse"
+      ]
+    },
+    {
+      "id": "endor-output-shape-routing",
+      "path": "rules/endor-output-shape-routing.md",
+      "summary": "Classify OutputShape and discover topology before estate-scale list or pull; prefer validated Query graph joins; use list sharding for full row export.",
+      "tags": [
+        "estate",
+        "list",
+        "performance",
+        "query"
       ]
     },
     {
@@ -135,7 +147,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.4.1.dev21",
+  "sdk_version": "0.4.1.dev27",
   "skills": [
     {
       "description": "Author or update a shipped agent skill under agent-knowledge/skills/: portable frontmatter, optional endorlabs.catalog workflow linkage, composition handoffs, sync, and drift verification. Use when adding skills, fixing sync validation errors, or migrating workflow catalog metadata\u2014not for extending SDK resources (endor-implement-sdk-resource) or runtime API troubleshooting.",
@@ -154,6 +166,15 @@
         "skills/endor-chart-new-vs-resolved-findings/scripts/paths.py",
         "skills/endor-chart-new-vs-resolved-findings/scripts/run_analysis.py",
         "skills/endor-chart-new-vs-resolved-findings/scripts/run_report.py"
+      ]
+    },
+    {
+      "description": "Tenant-wide audit of projects whose latest scan within a recent window ran via CLI endorctl (not agentless Cloud scans). Aggregates project counts by endorctl version from ScanResult.spec.environment.endorctl_version. Use when checking CI endorctl adoption, stale CLI versions, or version-specific rollout status\u2014not for scan pipeline RCA or Cloud vs CLI registration classification alone.",
+      "id": "endor-ci-endorctl-version-audit",
+      "name": "endor-ci-endorctl-version-audit",
+      "path": "skills/endor-ci-endorctl-version-audit/SKILL.md",
+      "refs": [
+        "skills/endor-ci-endorctl-version-audit/scripts/audit_ci_endorctl_versions.py"
       ]
     },
     {
@@ -271,7 +292,7 @@
       "refs": []
     },
     {
-      "description": "Routes estate-scale data pulls between Query count joins and facade list/count/shard patterns after bounded topology discovery. Use when choosing how to fetch counts or aggregates across many projects or namespaces. Not for single-project RCA or full row exports \u2014 hand off to endor-retrieve-scan-results, endor-project-retrieval-bundle, or estate pull when rows are needed.",
+      "description": "Routes estate-scale data pulls between Query graph joins and facade list/count/shard patterns after bounded topology discovery. Use when choosing how to fetch counts, aggregates, or validated joins across many projects. Not for single-project RCA \u2014 hand off when full row export is needed without a validated Query join.",
       "id": "endor-route-estate-queries",
       "name": "endor-route-estate-queries",
       "path": "skills/endor-route-estate-queries/SKILL.md",
@@ -390,6 +411,7 @@
       "library_entrypoints": [
         "endorlabs.workflows.estate.collect_workspace",
         "endorlabs.workflows.estate.analyze_workspace",
+        "endorlabs.workflows.estate.fetch_online_dashboard_counts",
         "endorlabs.workflows.estate.export_version_cardinality_for_package_match",
         "endorlabs.workflows.estate.export_risk_ranked_version_cardinality"
       ],
@@ -404,8 +426,8 @@
       "library_entrypoints": [
         "endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis",
         "endorlabs.workflows.logs.group_by_time.group_by_time_counts",
-        "endorlabs.workflows.findings.filters.reachable_vuln_log_base_filter",
-        "endorlabs.workflows.findings.filters.prf_vuln_filter"
+        "endorlabs.filters.reachable_vuln_log_base_filter",
+        "endorlabs.filters.prf_vuln_filter"
       ],
       "module": "endorlabs.workflows.findings.finding_log_trends",
       "skill": "endor-chart-new-vs-resolved-findings"
@@ -421,6 +443,25 @@
       ],
       "module": "endorlabs.workflows.policies.validate",
       "skill": "endor-validate-policy"
+    },
+    {
+      "agent_visible": true,
+      "cli": null,
+      "composition": "library_api",
+      "default_output": null,
+      "id": "query-estate-routing",
+      "library_entrypoints": [
+        "endorlabs.query.discover_topology",
+        "endorlabs.query.recommend",
+        "endorlabs.query.validate_sample",
+        "endorlabs.query.preflight_count",
+        "endorlabs.workflows.estate.online.dashboard.fetch_online_dashboard_counts",
+        "endorlabs.workflows.agent_context.dashboard_counts.project_pv_counts",
+        "endorlabs.workflows.agent_context.dashboard_counts.project_category_counts",
+        "endorlabs.workflows.query_collect.collect_project_findings_via_query"
+      ],
+      "module": "endorlabs.query",
+      "skill": "endor-route-estate-queries"
     },
     {
       "agent_visible": true,

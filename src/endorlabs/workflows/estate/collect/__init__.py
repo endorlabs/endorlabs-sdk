@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from endorlabs.tools.list_sharding import (
-    ParentShard,
+    ProjectShard,
     parallel_map_shards,
     project_dict_to_shard,
     project_model_to_shard,
@@ -30,7 +30,7 @@ from .runner import CollectResult, collect_workspace
 
 __all__ = [
     "CollectResult",
-    "ParentShard",
+    "ProjectShard",
     "aggregate_consumers_by_version",
     "aggregate_usage_by_package_version",
     "collect_workspace",

@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from endorlabs.client_surface import Client
-from endorlabs.tools.list_sharding import ParentShard
+from endorlabs.tools.list_sharding import ProjectShard
 
 from .common import (
     default_troubleshooting_output_dir,
@@ -150,12 +150,12 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     hits: list[dict[str, Any]] = []
 
-    def _search_project(shard: ParentShard) -> list[dict[str, Any]]:
+    def _search_project(shard: ProjectShard) -> list[dict[str, Any]]:
         project_hits: list[dict[str, Any]] = []
         scan_results = [
             object_to_dict(item)
             for item in client.ScanResult.list_by_project(
-                shard.key,
+                shard.project_uuid,
                 namespace=shard.namespace,
                 limit=args.limit,
             )
@@ -165,7 +165,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             scan_logs = (scan_result.get("spec") or {}).get("logs") or []
             project_hits.extend(
                 {
-                    "project_uuid": shard.key,
+                    "project_uuid": shard.project_uuid,
                     "project_namespace": shard.namespace,
                     "scan_result_uuid": scan_uuid,
                     "status": (scan_result.get("spec") or {}).get("status"),
@@ -190,7 +190,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             project_ns = (project.get("tenant_meta") or {}).get("namespace") or ns
             if not project_uuid:
                 continue
-            shard = ParentShard(key=str(project_uuid), namespace=str(project_ns))
+            shard = ProjectShard(
+                project_uuid=str(project_uuid), namespace=str(project_ns)
+            )
             hits.extend(_search_project(shard))
 
     scope_uuid = args.project_uuid or selected_projects[0].get("uuid") or "scoped"

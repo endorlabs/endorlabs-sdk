@@ -64,7 +64,8 @@ def recommend(
             shard_key="tenant",
             validate_recommended=False,
             notes=(
-                "No Query mapping; use FindingLog.list_groups with group_by_time.",
+                "No shipped SDK recipe; FindingLog.list_groups is workflow default.",
+                "Query list_parameters support group_by_time — probe before migrating.",
                 "Aggregate-first; shard per project on timeout.",
             ),
         )
@@ -75,17 +76,20 @@ def recommend(
             shard_key="leaf_namespace",
             validate_recommended=False,
             notes=(
-                "Query count joins do not return version buckets.",
-                "Use DependencyMetadata.list_groups per child namespace.",
+                "Per-project DM count joins differ from version-bucket group rollups.",
+                "Use DependencyMetadata.list_groups per child namespace today.",
+                "Query list_parameters support group — probe for join-based rollups.",
             ),
         )
     if output_shape == OutputShape.OSS_COORDINATE_LOOKUP:
         return QueryPlan(
             output_shape=output_shape,
-            primary="query",
+            primary="facade_list",
             shard_key="tenant",
             validate_recommended=False,
-            notes=("Use QueryVulnerability or QueryMalware (oss scope), not Query.",),
+            notes=(
+                "Use QueryVulnerability or QueryMalware (oss scope), not Query.create.",
+            ),
         )
     if output_shape in (
         OutputShape.FINDING_ROWS,
@@ -93,29 +97,62 @@ def recommend(
     ):
         return QueryPlan(
             output_shape=output_shape,
-            primary="facade_list",
+            primary="query",
             shard_key="project",
-            validate_recommended=False,
+            validate_recommended=True,
             notes=(
-                "Full rows need Finding.list_by_project or selective list filters.",
+                "Masked per-project row export: Query.Project.collect with estate "
+                "or PRF list specs after validate_sample.",
+                "Fallback: Finding.list_by_project or list_for_shards.",
             ),
         )
 
+    if output_shape == OutputShape.FINDING_CATEGORY_COUNTS:
+        return _recommend_query_counts(
+            output_shape,
+            topology=topology,
+            notes_prefix=(
+                "Use client.Query.Project.count_findings_by_category "
+                "after validate_sample."
+            ),
+        )
+
+    return _recommend_query_counts(
+        OutputShape.COUNT_BY_PROJECT,
+        topology=topology,
+        notes_prefix="Use client.Query.Project.count_pv after validate_sample.",
+    )
+
+
+def _recommend_query_counts(
+    output_shape: OutputShape,
+    *,
+    topology: TopologySnapshot | None,
+    notes_prefix: str,
+) -> QueryPlan:
     shard_key: ShardKey = "project"
     validate = True
-    notes: list[str] = []
+    notes: list[str] = [notes_prefix]
 
     if topology is not None:
         if topology.archetype == "single_repo":
-            shard_key = "project"
-            notes.append("Single-repo: facade count optional; list_by_project for RCA.")
-        elif topology.archetype == "monorepo_hub":
+            return QueryPlan(
+                output_shape=output_shape,
+                primary="facade_count",
+                shard_key="project",
+                validate_recommended=True,
+                notes=(
+                    notes_prefix,
+                    "Single-repo: facade count is acceptable; Query optional.",
+                ),
+            )
+        if topology.archetype == "monorepo_hub":
             shard_key = "leaf_namespace"
             notes.append("Monorepo hub: Query per leaf namespace with pagination.")
         elif topology.archetype in ("managed_platform", "estate_sprawl"):
             shard_key = "leaf_namespace"
             notes.append(
-                "Many leaf namespaces: Query reduces round-trips for count-only asks."
+                "Many leaf namespaces: Query reduces round-trips for validated joins."
             )
         if topology.duplicate_name_groups:
             notes.append(

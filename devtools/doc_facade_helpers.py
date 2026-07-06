@@ -24,13 +24,48 @@ CUSTOM_FACADE_ROWS: tuple[tuple[str, str, str], ...] = (
     ),
     (
         "Query",
-        "count_pv_by_project(projects, …)",
-        "Main-context PackageVersion counts via graph join",
+        "create(payload=…, namespace=…)",
+        "POST a graph join (root kind + nested references)",
     ),
     (
         "Query",
+        "execute(spec, scopes, parse=…)",
+        "Run a custom join per QueryScope and merge parsed maps",
+    ),
+    (
+        "Query",
+        "at_namespace(spec, namespace, parse=…, merge=…)",
+        "Paginated join at one wire namespace",
+    ),
+    (
+        "Query.Project",
+        "count_pv(projects, …)",
+        "Main-context PackageVersion counts via graph join",
+    ),
+    (
+        "Query.Project",
+        "count_dm(projects, …)",
+        "DependencyMetadata importer counts per project",
+    ),
+    (
+        "Query.Project",
         "count_findings_by_category(projects, …)",
-        "Finding category counts via graph join",
+        "Finding category counts (VULN/SECRETS/MALWARE) via graph join",
+    ),
+    (
+        "Query.Project",
+        "collect_estate_findings(projects, …)",
+        "Masked main-context SCA/vulnerability finding rows",
+    ),
+    (
+        "Query.Project",
+        "discover(namespace, …)",
+        "Bounded topology discovery (projects, shards, query scopes)",
+    ),
+    (
+        "Query.Project",
+        "validate_sample(projects, recipe=…)",
+        "Compare Query recipe output to facade count on a sample",
     ),
     (
         "ScanResult",

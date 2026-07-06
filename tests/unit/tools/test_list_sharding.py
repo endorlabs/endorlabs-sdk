@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from endorlabs.tools.list_sharding import (
-    ParentShard,
+    ProjectShard,
     parallel_map_shards_iter,
     project_scoped_filter,
     single_shard_namespace,
@@ -20,16 +20,16 @@ def test_project_scoped_filter_appends_uuid_clause() -> None:
 
 def test_single_shard_namespace_detects_shared_path() -> None:
     shards = [
-        ParentShard(key="a", namespace="tenant.child"),
-        ParentShard(key="b", namespace="tenant.child"),
+        ProjectShard(project_uuid="a", namespace="tenant.child"),
+        ProjectShard(project_uuid="b", namespace="tenant.child"),
     ]
     assert single_shard_namespace(shards) == "tenant.child"
 
 
 def test_single_shard_namespace_returns_none_when_paths_differ() -> None:
     shards = [
-        ParentShard(key="a", namespace="tenant.child-a"),
-        ParentShard(key="b", namespace="tenant.child-b"),
+        ProjectShard(project_uuid="a", namespace="tenant.child-a"),
+        ProjectShard(project_uuid="b", namespace="tenant.child-b"),
     ]
     assert single_shard_namespace(shards) is None
 
@@ -41,15 +41,15 @@ def test_parallel_map_shards_iter_yields_before_all_complete() -> None:
     yielded_before_slow_done: list[bool] = []
 
     shards = [
-        ParentShard(key="slow", namespace="ns"),
-        ParentShard(key="fast-a", namespace="ns"),
-        ParentShard(key="fast-b", namespace="ns"),
+        ProjectShard(project_uuid="slow", namespace="ns"),
+        ProjectShard(project_uuid="fast-a", namespace="ns"),
+        ProjectShard(project_uuid="fast-b", namespace="ns"),
     ]
 
-    def _worker(shard: ParentShard) -> str:
-        if shard.key == "slow":
+    def _worker(shard: ProjectShard) -> str:
+        if shard.project_uuid == "slow":
             release_slow.wait(timeout=5.0)
-        return shard.key
+        return shard.project_uuid
 
     for result in parallel_map_shards_iter(
         shards,

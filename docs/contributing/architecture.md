@@ -136,8 +136,87 @@ flowchart TB
 **Consumer modules** use thin `V1*` wrappers plus `resources/consumer/` mixins; keep
 `resources/{kind}.py` for payload builders and facade sugar.
 
+## Query and estate composition (Layer 3+)
+
+Workflows orchestrate **either** facade list/count **or** Query graph joins. The Query stack is library code under `src/endorlabs/query/` plus a custom registry facade — not a fourth transport layer.
+
+```mermaid
+flowchart TB
+    subgraph workflows [Workflows]
+        Estate["estate/ online dashboard, collect, compile_graph"]
+        AgentCtx["agent_context/ dashboard_counts"]
+    end
+    subgraph query_plane [query/ library]
+        QF["QueryFacade<br/>execute · at_namespace · create"]
+        PQF["ProjectQueryFacade<br/>count_* · collect_* · discover"]
+        QE["QueryExecutor<br/>POST per QueryScope"]
+        Topo["TopologySnapshot<br/>project_shards · query_scopes"]
+        Val["validate_sample"]
+        Route["recommend · OutputShape"]
+    end
+    subgraph shared [Shared primitives]
+        Filters["filters/<br/>canonical MQL fragments"]
+        Sharding["tools/list_sharding<br/>ProjectShard · parallel_map_shards"]
+        Preflight["query/preflight_count"]
+    end
+    ClientNode["client.Query"]
+    API["APIClient POST Query.create"]
+
+    Estate --> PQF
+    AgentCtx --> PQF
+    PQF --> QF
+    PQF --> QE
+    PQF --> Topo
+    PQF --> Val
+    Estate --> Sharding
+    PQF --> Filters
+    QE --> QF
+    QF --> ClientNode
+    ClientNode --> API
+    Val --> QE
+    Val --> ClientNode
+```
+
+### Surface split
+
+| Entry | Location | Role |
+| ----- | -------- | ---- |
+| **`client.Query`** | `facade/specialized.py` → `QueryFacade` | Generic joins: `create`, `execute(spec, scopes, parse=…)`, `at_namespace` |
+| **`client.Query.Project`** | `query/project_facade.py` | Project-root recipes: `discover`, `count_pv`, `count_dm`, `count_findings_by_category`, `collect_estate_findings`, `validate_sample` |
+| **`endorlabs.query`** | `query/__init__.py` | Library exports: `QuerySpec`, `QueryScope`, `discover_topology`, `validate_sample`, `recommend`, spec builders — **no module-level `count_*` execution** |
+| **`endorlabs.filters`** | `filters/` | Canonical MQL for Query wire specs and facade `filter=` (main context, categories, project scope) |
+
+`QueryExecutor` resolves `Query.create` through **`QueryFacade`** (or `Client.Query`), not bare `APIClient`. `ProjectQueryFacade` builds minimal registry facades when it needs `Project.list` / `PackageVersion.count` for discovery and validation.
+
+### Topology and sharding
+
+One bounded **`Project.list`** discovery produces **`TopologySnapshot`**:
+
+- `topology.projects` — deduped project rows
+- `topology.namespace_geometry` — per-leaf-namespace stats (was `NamespaceShard`)
+- `topology.project_shards()` — `ProjectShard` list for **facade** parallel lists (`tools/list_sharding`)
+- `topology.query_scopes()` — `QueryScope` list for **Query POST** batching (grouped by wire namespace)
+
+List-plane sharding (`list_for_shards`, estate DM collect) and query-plane joins (`count_pv`, `collect_estate_findings`) share discovery but use different execution paths. See [list-query-performance.md](list-query-performance.md) and [guides/query-recipes.md](../guides/query-recipes.md).
+
+### Validation before scale
+
+`validate_sample` compares Query recipe output to facade `count()` on a bounded project sample (`recipe="pv"|"dm"|"findings"`). Estate dashboard and online counts call `client.Query.Project.validate_sample` before full `count_*` runs. Maintainer live checks: `.tmp/query_workflow_probes/validate_query_facade.py`.
+
+### When to use Query vs facade
+
+| Ask | Path |
+| --- | ---- |
+| Dashboard counts across many projects | `client.Query.Project.count_*` after `validate_sample` |
+| Masked finding rows (estate collect) | `client.Query.Project.collect_estate_findings` |
+| One project RCA / full finding rows | `Finding.list_by_project` |
+| FindingLog trends, DM version buckets | Facade `list_groups` today (Query `group` / `group_by_time` = probe) |
+| Custom graph join | `QuerySpec` + `client.Query.execute` |
+
+Normative routing: shipped contract `query-vs-list-semantics.md` (wheel / `agent-knowledge/contracts/`). Agent skill: `endor-route-estate-queries`.
+
 ## When to Use
 
-- Editing `client_surface.py`, `facade.py`, `registry.py`, or `registry_overlay.py`.
+- Editing `client_surface.py`, `facade.py`, `registry.py`, `registry_overlay.py`, **`facade/specialized.py` (QueryFacade)**, or **`query/`** (recipes, executor, topology).
 - Regenerating or overriding the client surface after OpenAPI changes.
 - Adding integration tests or custom workflow facades — not for duplicating generated models in docs.

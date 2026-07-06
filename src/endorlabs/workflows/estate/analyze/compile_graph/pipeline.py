@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
+from endorlabs.filters import main_context_filter
+from endorlabs.query import OutputShape, preflight_count
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.dependencies.coordinates import parse_dep_name
 from endorlabs.workflows.estate.analyze.project_map.core import (
@@ -30,7 +32,6 @@ from endorlabs.workflows.estate.contracts.ir_artifacts import (
     COMPILE_DEPENDENCY_GRAPH_SCHEMA,
     PRODUCER_RANKINGS_SCHEMA,
 )
-from endorlabs.workflows.estate.filters.main_context import main_context_filter
 from endorlabs.workflows.estate.filters.masks import PV_PUBLISHER_LIST_MASK
 
 if TYPE_CHECKING:
@@ -509,14 +510,33 @@ def build_publisher_index(
     int,
 ]:
     pv_filter = main_context_filter()
-    in_scope_count = count_for_progress(
-        client.PackageVersion,
-        namespace,
-        resource_label="PackageVersion",
-        filter_expr=pv_filter,
-        traverse=True,
-        logger=LOGGER,
-    )
+    in_scope_count: int | None = None
+    if project_set:
+        try:
+            topology = client.Query.Project.discover(namespace, traverse=True)
+            scoped = [p for p in topology.projects if p.uuid in project_set]
+            in_scope_count = preflight_count(
+                client,
+                plane="query",
+                projects=scoped,
+                shape=OutputShape.COUNT_BY_PROJECT,
+                namespace=namespace,
+                facade=client.PackageVersion,
+                filter_expr=pv_filter,
+                traverse=True,
+                logger=LOGGER,
+            )
+        except Exception as exc:
+            LOGGER.debug("Query PV preflight unavailable: %s", exc)
+    if in_scope_count is None:
+        in_scope_count = count_for_progress(
+            client.PackageVersion,
+            namespace,
+            resource_label="PackageVersion",
+            filter_expr=pv_filter,
+            traverse=True,
+            logger=LOGGER,
+        )
     pvs = client.PackageVersion.list(
         namespace=namespace,
         traverse=True,

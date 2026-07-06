@@ -8,6 +8,23 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- **`client.Query.Project`** — project-scoped count/collect/validate/discover recipes; generic **`client.Query.execute`** / **`at_namespace`** for scope-driven joins.
+- **`QueryScope`**, **`TopologySnapshot.project_shards()`** / **`query_scopes()`**, **`parallel_over`**, and **`bootstrap_topology`** estate session helper.
+
+### Changed
+
+- **`ParentShard` → `ProjectShard`**; **`NamespaceShard` → `NamespaceGeometry`**; workflows and dashboard use **`client.Query.Project.*`**.
+
+### Breaking
+
+- Removed module-level **`count_*`** from **`endorlabs.query`** and **`discover_topology_shards`** — use **`client.Query.Project.*`** and **`topology.project_shards()`**.
+
+### Added
+
+- **`endorlabs.filters`** — canonical main-context, finding category, and project-scope MQL fragments for Query, facade, and workflows.
+- **`endorlabs.query.discover_topology_shards`** — canonical project shard discovery; `count_dm_by_project` and `count_findings_by_severity` recipes; `query_preflight_count` helper.
+- **`endorlabs.workflows.estate.online`** — `fetch_online_dashboard_counts` and `write_online_dashboard_artifact` for Query-backed estate dashboard tiles.
+- **Agent rule `endor-output-shape-routing`** — classify `OutputShape` before estate-scale list or pull.
 - **`endorlabs.query`** — graph join recipes (`count_pv_by_project`, `count_findings_by_category`), `QuerySpec` / `QueryExecutor`, topology/routing/validation helpers; `client.Query.count_*` facade sugar. Guide: [docs/guides/query-recipes.md](guides/query-recipes.md). Contract: `query-vs-list-semantics`. Skill: `endor-route-estate-queries`.
 - **Agent skill `endor-route-estate-queries`** — route estate-scale counts between Query graph joins and facade list/count/shard patterns after topology discovery.
 - **`ProjectFacade.is_app` / `is_cli` / `is_sbom`** — project registration inventory helpers for masked dict rows and models.
@@ -22,9 +39,12 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - **Agent skill `endor-duplicate-projects`** — tenant-wide duplicate Project detection with CSV columns `project name`, `namespace`, `uuid`, `source` (`CLI` / `Cloud Scan`).
 - **Agent skill `endor-potentially-reachable-analysis`** — tenant-wide PRF approximation and PackageVersion resolution error report (JSON, canvas, HTML/PDF) for main-context NuGet, NPM, Maven, and PyPI findings.
 - **Agent skill `endor-chart-new-vs-resolved-findings`** — cumulative weekly new vs resolved Critical/High reachable vulnerability trends from FindingLog CREATE/DELETE events (past 90 days, complete weeks; SDK `finding_log_trends` + Cursor canvas).
+- **Agent skill `endor-ci-endorctl-version-audit`** — tenant-wide histogram of projects whose latest scan within 7 days ran via CLI `endorctl`, grouped by `endorctl_version`.
 
 ### Changed
 
+- Estate collect uses `discover_topology_shards`, Query PV preflight in compile graph, and manifest `expected_count` on shard preflight.
+- `query-vs-list-semantics` contract promoted with DM recipe row and online dashboard path.
 - **`APIClient` session hardening** — bearer tokens validate via `GET /v1/auth` (not `meta/version`); proactive API-key refresh and expired-bearer re-auth; `Client.whoami()` returns `WhoamiResult` with expiration metadata.
 - **`Client()` timeout** — `timeout=None` by default so `ENDOR_REQUEST_TIMEOUT` and `ENDOR_API_TIMEOUT` apply; `create()` aligns `Request-timeout` header when `ENDOR_CREATE_TIMEOUT` is set.
 - **Route accessor errors** — `list_by_project` / `list_for_context` raise actionable messages when a UUID string is passed instead of a resource object.
@@ -45,6 +65,8 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Breaking
 
+- **`discover_project_shards`** and **`discover_tenant_project_shards`** deprecated — use `endorlabs.query.discover_topology_shards`.
+- **`endorlabs.workflows.findings.filters`** and **`endorlabs.workflows.estate.filters.main_context`** deprecated — use **`endorlabs.filters`**.
 - **`list_by_*` / `list_for_context`** — return **`list[T]`** instead of **`RouteResult`** (use rows directly; no `.values`). **`to_*`** stitch accessors unchanged (`RouteResult`).
 
 ## 0.4.0

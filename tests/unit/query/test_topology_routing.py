@@ -31,6 +31,32 @@ def test_recommend_finding_log_trends() -> None:
     assert plan.validate_recommended is False
 
 
+def test_recommend_finding_category_counts() -> None:
+    plan = recommend(OutputShape.FINDING_CATEGORY_COUNTS)
+    assert plan.primary == "query"
+    assert (
+        "count_findings_by_category" in plan.notes[0]
+        or "Query.Project" in plan.notes[0]
+    )
+
+
+def test_recommend_single_repo_uses_facade_count() -> None:
+    topo = TopologySnapshot(
+        tenant="tenant.root",
+        project_count=1,
+        namespace_count=1,
+        max_projects_per_namespace=1,
+        archetype="single_repo",
+    )
+    plan = recommend(OutputShape.COUNT_BY_PROJECT, topology=topo)
+    assert plan.primary == "facade_count"
+
+
+def test_recommend_oss_coordinate_lookup() -> None:
+    plan = recommend(OutputShape.OSS_COORDINATE_LOOKUP)
+    assert plan.primary == "facade_list"
+
+
 def test_recommend_count_with_topology() -> None:
     topo = TopologySnapshot(
         tenant="tenant.root",

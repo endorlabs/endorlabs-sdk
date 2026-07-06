@@ -39,7 +39,7 @@ Prefer these before assuming full-tenant sweeps or hand-built relationship filte
 - **List deserialization vs API drift:** Pydantic validation failures on `list()` → model-sync / payload tolerance (**endor-troubleshoot-sdk**, `devtools/sync/`), not query-parameter tweaks alone.
 - **List field masks:** non-empty `mask=` → `dict` rows from `list()` / `list_iter()` and from `search_by_*`. See [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md), [docs/contracts.md](docs/contracts.md), shipped `contracts/list-parameters.md`.
 - **Sharded parallel lists:** for large project-scoped resources, prefer per-project parallel `list()` with selective filters — [docs/contributing/list-query-performance.md](docs/contributing/list-query-performance.md#sharded-parallel-lists).
-- **Dashboard counts across projects:** use `endorlabs.query.count_pv_by_project` / `count_findings_by_category` after resolving `Project` rows — POST namespace is grouped per wire path automatically; see [docs/guides/query-recipes.md](docs/guides/query-recipes.md).
+- **Graph joins across projects:** `client.Query.Project.count_*` / `collect_*` and custom `client.Query.execute` joins — POST namespace is grouped per wire path automatically; validate with `validate_sample` before scale; see [docs/guides/query-recipes.md](docs/guides/query-recipes.md).
 - **Evidence vs inference:** Separate API rows, workflow artifacts, and cited spec paths from heuristic or partial conclusions. Mark guesses as **Inferred:**; for SDK/API failure playbooks use skill **endor-troubleshoot-sdk** (maintainers: [docs/contributing/troubleshooting.md](docs/contributing/troubleshooting.md)).
 
 ## Bootstrap
