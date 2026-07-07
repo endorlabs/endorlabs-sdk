@@ -248,7 +248,7 @@ def main() -> int:
         "--output",
         type=Path,
         default=None,
-        help="CSV output path (default: workspace exports/cli-vs-cloud/<tenant>-cli-vs-cloud.csv)",
+        help="CSV output path (default: workspace/runs/cli-vs-cloud-projects/<tenant>-cli-vs-cloud.csv)",
     )
     parser.add_argument(
         "--project-uuid",

@@ -357,7 +357,7 @@ def _build_next_steps(
             )
         steps.append(
             "For interactive browser SSO into .env: "
-            "uv run endor-auth refresh --sso -n <tenant>"
+            "uv run endor-auth refresh --method sso -n <tenant>"
         )
         return tuple(steps)
 
@@ -365,7 +365,7 @@ def _build_next_steps(
         if "401" in error or "Unauthorized" in error:
             steps.append(
                 "Bearer token may be expired — run: "
-                "uv run endor-auth refresh --sso -n <tenant>"
+                "uv run endor-auth refresh --method sso -n <tenant>"
             )
         elif "403" in error or "Forbidden" in error:
             steps.append(
@@ -377,7 +377,8 @@ def _build_next_steps(
                 "Verify credentials with: uv run endor-auth check --tenant <tenant>"
             )
         steps.append(
-            "Or refresh browser token: uv run endor-auth refresh --sso -n <tenant>"
+            "Or refresh browser token: "
+            "uv run endor-auth refresh --method sso -n <tenant>"
         )
     return tuple(steps)
 

@@ -52,7 +52,10 @@ def project_workspace_dir(context_dir: str | Path, project_uuid: str) -> Path:
 
 
 def session_workspace_dir(context_dir: str | Path, user: str) -> Path:
-    """Return workspace directory for an interactive session user."""
+    """Legacy path under ``workspace/sessions/<user>/``.
+
+    Prefer :func:`default_runs_dir` for new workflow output.
+    """
     return workspace_dir(context_dir) / "sessions" / user
 
 

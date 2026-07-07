@@ -297,7 +297,7 @@ def main() -> int:
         type=Path,
         default=None,
         help=(
-            "CSV output path (default: workspace exports/ci-endorctl-version-audit/"
+            "CSV output path (default: workspace/runs/ci-endorctl-version-audit/"
             "<tenant>-ci-endorctl-versions.csv)"
         ),
     )

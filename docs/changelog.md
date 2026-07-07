@@ -17,6 +17,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - Workflow default outputs migrated to three-bucket workspace layout: `workspace/projects/`, `workspace/runs/<run-bucket>/`, `workspace/inventory/` (legacy `workspace/sessions/` and `workspace/artifacts/` deprecated).
 - Agent-knowledge e2e tests split: `tests/unit/platform/context/test_agent_knowledge_init_e2e.py` (init, no API) and `tests/integration/workflows/test_retrieve_scan_results_skill.py` (live API); integration test taxonomy and credential gating refined.
 - CODEOWNERS default review owner → `@endorlabs/solutions` (Customer Solutions).
+- Version cardinality CLI default output → `workspace/runs/version-cardinality/`; `verify_auth` next-steps use `endor-auth refresh --method sso`.
 
 ### Breaking
 

@@ -345,7 +345,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     p.add_argument("--context-dir", default=".endorlabs-context")
     p.add_argument(
-        "--user", default=None, help="Session user slug (default: from whoami)"
+        "--user",
+        default=None,
+        help=(
+            "Deprecated: ignored; spike output is always "
+            "workspace/runs/collect-strategy-spike/."
+        ),
     )
     p.add_argument("--sample-projects", type=int, default=None)
     p.add_argument(
