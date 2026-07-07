@@ -8,44 +8,40 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
-- **`endorlabs.query`** — graph join recipes (`count_pv_by_project`, `count_findings_by_category`), `QuerySpec` / `QueryExecutor`, topology/routing/validation helpers; `client.Query.count_*` facade sugar. Guide: [docs/guides/query-recipes.md](guides/query-recipes.md). Contract: `query-vs-list-semantics`. Skill: `endor-route-estate-queries`.
-- **Agent skill `endor-route-estate-queries`** — route estate-scale counts between Query graph joins and facade list/count/shard patterns after topology discovery.
-- **`ProjectFacade.is_app` / `is_cli` / `is_sbom`** — project registration inventory helpers for masked dict rows and models.
-- **`endorlabs.workflows.findings.filters`** and **`finding_log_trends.build_finding_log_new_vs_resolved_analysis`** — shared MQL fragments and online FindingLog weekly chart aggregation.
-- **`endorlabs.workflows.logs.group_by_time`** — generic `list_groups` + `group_by_time` bucket helpers for log resources.
-- **`endorlabs.workflows.projects.inventory`** — installation lookup helpers for CLI vs app classification skills.
-- **Wheel `AGENTS.md`** and **`python -m endorlabs.examples.agent_bootstrap`** — consumer agent guide and bounded smoke-test ladder (`--dry-run` for path-only checks).
-- **Bootstrap contracts** — `resource-discovery`, `errors-and-auth`, and `list-parameters` included in `agent_knowledge_bootstrap_paths()`.
-- **Shipped reference** — `reference/filter-enum-snippets.md` (codegen filter enum literals from model-sync enums).
-- **Agent skill `endor-author-agent-skill`** — maintainer playbook for authoring shipped skills under `agent-knowledge/skills/` (frontmatter, sync, composition handoffs).
-- **Agent skill `endor-cli-vs-cloud-projects`** — classify Project as CLI-scanned vs Cloud/agentless SCM integration using `spec.git.external_installation_id`.
-- **Agent skill `endor-duplicate-projects`** — tenant-wide duplicate Project detection with CSV columns `project name`, `namespace`, `uuid`, `source` (`CLI` / `Cloud Scan`).
-- **Agent skill `endor-potentially-reachable-analysis`** — tenant-wide PRF approximation and PackageVersion resolution error report (JSON, canvas, HTML/PDF) for main-context NuGet, NPM, Maven, and PyPI findings.
-- **Agent skill `endor-chart-new-vs-resolved-findings`** — cumulative weekly new vs resolved Critical/High reachable vulnerability trends from FindingLog CREATE/DELETE events (past 90 days, complete weeks; SDK `finding_log_trends` + Cursor canvas).
+- **`client.Query` / `client.Query.Project`** — generic graph joins (`execute`, `at_namespace`, `create`) and project-scoped recipes (`count_pv`, `count_dm`, `count_findings_by_category`, `count_findings_by_severity`, `collect_estate_findings`, `discover`, `validate_sample`).
+- **`endorlabs.query`** — `QuerySpec`, `QueryExecutor`, `QueryScope`, `TopologySnapshot`, `discover_topology`, `preflight_count`, routing/validation helpers. Guide: [docs/guides/query-recipes.md](guides/query-recipes.md). Contract: `query-vs-list-semantics`. Skill: `endor-route-estate-queries`.
+- **`endorlabs.filters`** — canonical main-context, finding category/severity, and project-scope MQL fragments.
+- **`endorlabs.tools.list_bounds.count_for_progress`** — shared facade count helper for progress denominators.
+- **`endorlabs.workflows.estate.online`** — Query-backed dashboard tiles (`fetch_online_dashboard_counts`).
+- **`bootstrap_topology`** estate session helper; **`parallel_over`** scope parallelism.
+- **Agent rule `endor-output-shape-routing`** — classify `OutputShape` before estate-scale list or pull.
+- **Agent skill `endor-route-estate-queries`** — route estate-scale counts between Query joins and facade list/shard patterns.
+- **`ProjectFacade.is_app` / `is_cli` / `is_sbom`** — project registration inventory helpers.
+- **`finding_log_trends.build_finding_log_new_vs_resolved_analysis`** and **`workflows/logs/group_by_time`** — FindingLog weekly chart aggregation.
+- **`workflows/projects.inventory`** — installation lookup for CLI vs app classification.
+- **Wheel `AGENTS.md`** and **`python -m endorlabs.examples.agent_bootstrap`** — consumer agent guide and smoke-test ladder.
+- **Bootstrap contracts** — `resource-discovery`, `errors-and-auth`, `list-parameters` in `agent_knowledge_bootstrap_paths()`.
+- **Shipped reference** — `reference/filter-enum-snippets.md`.
+- **Agent skills** — `endor-author-agent-skill`, `endor-cli-vs-cloud-projects`, `endor-duplicate-projects`, `endor-potentially-reachable-analysis`, `endor-chart-new-vs-resolved-findings`, `endor-ci-endorctl-version-audit`.
 
 ### Changed
 
-- **`APIClient` session hardening** — bearer tokens validate via `GET /v1/auth` (not `meta/version`); proactive API-key refresh and expired-bearer re-auth; `Client.whoami()` returns `WhoamiResult` with expiration metadata.
-- **`Client()` timeout** — `timeout=None` by default so `ENDOR_REQUEST_TIMEOUT` and `ENDOR_API_TIMEOUT` apply; `create()` aligns `Request-timeout` header when `ENDOR_CREATE_TIMEOUT` is set.
-- **Route accessor errors** — `list_by_project` / `list_for_context` raise actionable messages when a UUID string is passed instead of a resource object.
-- **`Client` docstring** — copy-paste examples, route accessor contract, and pagination notes for agent day-1 usage.
-- **Skill script refactor** — `ProjectFacade.is_app` / `is_cli` / `is_sbom`; shared `workflows/findings/filters.py`; chart skill uses SDK `FindingLog.list_groups` via `finding_log_trends` + `workflows/logs/group_by_time` (replaces endorctl subprocess); PRF skill uses facade `count`/`list_iter`; duplicate-projects defaults to exact-name only with opt-in `--name-strip-tokens`.
-- **`SdkDiscovery.__str__`** — `print(discover())` and `agent_bootstrap --dry-run` emit a human-readable path map (relative bootstrap labels, `endor-*` entry points only); agent INDEX/AGENTS frontmatter documents the three-step ladder (map → auth → workflows).
-- Renamed **`endorlabs.examples.day0`** → **`endorlabs.examples.agent_bootstrap`**; `SdkDiscovery.day0_module` → **`agent_bootstrap_module`**.
-- **`list_by_*` / `list_for_context`** — return **`list[T]`** at the facade (same as `.list()` / `search_by_*`). **`to_*`** stitch accessors still return **`RouteResult`** — use `.value` / `.single` and inspect `.edge_used` / `.warnings`.
-- **`RouteResult`** — remains iterable for stitch paths and internal route execution; list accessors unwrap at the facade boundary.
-- **Documentation collapse** — single bootstrap return-type contract (`resource-discovery`); contributor docs route instead of duplicate tables; filter enums codegen'd to `filter-enum-snippets.md` (removed hand `common-filter-values.md`).
+- **`ParentShard` → `ProjectShard`**; **`NamespaceShard` → `NamespaceGeometry`**; estate workflows and dashboard use **`client.Query.Project.*`** and **`topology.project_shards()`** / **`query_scopes()`**.
+- Estate collect uses **`discover_topology`** + Query PV preflight in compile graph; manifest `expected_count` on shard preflight.
+- **`APIClient` session hardening** — bearer tokens validate via `GET /v1/auth`; proactive API-key refresh; **`Client.whoami()`** returns **`WhoamiResult`** with expiration metadata.
+- **`Client()` timeout** — `timeout=None` by default so `ENDOR_REQUEST_TIMEOUT` / `ENDOR_API_TIMEOUT` apply; `create()` aligns `Request-timeout` when `ENDOR_CREATE_TIMEOUT` is set.
+- **Route accessor errors** — actionable messages when UUID strings are passed instead of resource objects.
+- **`list_by_*` / `list_for_context`** — return **`list[T]`** at the facade; **`to_*`** stitch accessors still return **`RouteResult`**.
+- Skill scripts use **`endorlabs.filters`**, SDK `FindingLog.list_groups`, facade `count`/`list_iter`.
+- Renamed **`endorlabs.examples.day0`** → **`endorlabs.examples.agent_bootstrap`**.
 - Models aligned to platform OpenAPI snapshot (endorctl v1.7.1037).
-- **Documentation aligned** — `RouteResult` stitch protocol in `resource-discovery`; `search_by_*` bounded-list docstrings; **`limit=`** alias in list-parameters contract.
-- API and validation exceptions now include gRPC remediation hints, payload field paths, namespace-scoping guidance on 404s, structured error details in `str(exc)`, and `NetworkError` for exhausted transport retries.
-- **`client_surface.pyi`** — flat `search_by_*`, `list_by_*`, `get_logs`, and related methods on `_XFacade` classes for agent Read discovery without LSP inheritance.
-- **Auth** — missing-credential `ValidationError` documents `ENDOR_TOKEN`; INFO log when token and API key env vars are both set (token path preferred; MCP/endorctl need single mode).
-- **`Client.__init__`** — runtime docstring for `help()` / inspect.
-- Top-level **`__all__`** — removed `query_vulnerability` and `query_malware` (use `client.QueryVulnerability` / `client.QueryMalware`).
 
 ### Breaking
 
-- **`list_by_*` / `list_for_context`** — return **`list[T]`** instead of **`RouteResult`** (use rows directly; no `.values`). **`to_*`** stitch accessors unchanged (`RouteResult`).
+- Removed **`endorlabs.workflows.findings.filters`** submodule — use **`endorlabs.filters`** or `from endorlabs.workflows.findings import …` (package re-exports).
+- Removed **`endorlabs.workflows.estate.filters.main_context`** — use **`endorlabs.filters`** (masks remain under `workflows.estate.filters.masks`).
+- Removed **`discover_project_shards`** / **`discover_tenant_project_shards`** — use **`endorlabs.query.discover_topology`** and **`topology.project_shards()`**.
+- **`list_by_*` / `list_for_context`** — return **`list[T]`** instead of **`RouteResult`** (use rows directly; no `.values`).
 
 ## 0.4.0
 

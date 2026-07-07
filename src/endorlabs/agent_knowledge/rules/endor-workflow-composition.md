@@ -16,7 +16,7 @@ summary: Prefer workflow CLI, then library imports, then Client; extend artifact
 |-------|----------|----------------|----------|
 | **Primitives** | `Client`, `APIClient` | CRUD/list/get per resource | Orchestration, file I/O, argparse |
 | **Tools** | `endorlabs.tools.*` | Reusable list composition (e.g. `list_sharding` over accessors) | Tenant-wide workflow opinions, CLI mains |
-| **Query** | `endorlabs.query.*` | Graph join count recipes, topology/routing/validation | Full finding rows, FindingLog trends |
+| **Query** | `endorlabs.query.*` | Graph join recipes, topology/routing/validation; custom joins via `QuerySpec` | Unvalidated joins at estate scale |
 | **Utils** | `endorlabs.utils.*` | Transport/concurrency/namespace helpers | Domain list composition |
 | **Workflow libraries** | `endorlabs.workflows.*` (non-`cli`) | `Client` in → typed `WorkflowResult` out | `print()`, argparse, cwd-relative writes |
 | **Workflow CLIs** | `*.cli`, `troubleshooting_scans/*` | Args, artifacts, filenames | Become copy-paste targets for agents |
@@ -54,9 +54,12 @@ Generic entrypoints (no estate literals):
 - `client.Finding.list_by_project()` / `list_for_context()` — generated relationship accessors
 - `client.ScanResult.list_by_project()` — scan results for a project
 - `client.<Resource>.count()` / `.list_groups()` / `.latest_created()` — list helpers (see [facade-helpers.md](../../docs/guides/facade-helpers.md))
-- `client.Query.count_pv_by_project()` / `.count_findings_by_category()` — dashboard count joins (see [query-recipes.md](../../docs/guides/query-recipes.md))
+- `client.Query.Project.count_pv()` / `.count_findings_by_category()` / `.count_dm()` — validated count joins (see [query-recipes.md](../../docs/guides/query-recipes.md))
+- `endorlabs.query.discover_topology` / `TopologySnapshot.project_shards()` / `recommend` / `validate_sample` — estate routing plane
+- `endorlabs.filters` — canonical main-context and finding MQL fragments
+- `endorlabs.workflows.estate.fetch_online_dashboard_counts` — online Query tiles for estate dashboard
 - `client.Project.is_app()` / `.is_cli()` / `.is_sbom()` — project registration inventory (see [facade-helpers.md](../../docs/guides/facade-helpers.md))
-- `endorlabs.workflows.findings.filters` — shared MQL fragments for finding analytics skills
+- `endorlabs.filters` — canonical main-context and finding MQL fragments (replaces removed `workflows.findings.filters` submodule)
 - `endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis` — FindingLog CREATE/DELETE weekly chart data (online aggregated)
 - `endorlabs.workflows.logs.group_by_time.group_by_time_counts` — generic log `list_groups` + `group_by_time` aggregation
 - `endorlabs.workflows.projects.inventory.fetch_installation_lookup` — Installation external_id lookup for CLI vs app classification

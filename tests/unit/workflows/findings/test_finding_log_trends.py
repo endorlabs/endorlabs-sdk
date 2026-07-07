@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from endorlabs.core.exceptions import ServerError
@@ -159,10 +160,8 @@ def test_query_operation_counts_aggregate_first_on_traverse() -> None:
     assert captured == [True]
 
 
-def test_query_operation_counts_falls_back_to_shards_after_aggregate_timeout(
-    monkeypatch,
-) -> None:
-    from endorlabs.tools.list_sharding import ParentShard
+def test_query_operation_counts_falls_back_to_shards_after_aggregate_timeout() -> None:
+    from endorlabs.tools.list_sharding import ProjectShard
 
     client = MagicMock()
     calls = {"aggregate": 0, "shard": 0}
@@ -175,11 +174,10 @@ def test_query_operation_counts_falls_back_to_shards_after_aggregate_timeout(
         return []
 
     client.FindingLog.list_groups = list_groups
-    monkeypatch.setattr(
-        "endorlabs.workflows.findings.finding_log_trends.discover_tenant_project_shards",
-        lambda *_args, **_kwargs: [
-            ParentShard(key="p-1", namespace="tenant.child", label="child"),
-        ],
+    client.Query.Project.discover.return_value = SimpleNamespace(
+        project_shards=lambda: [
+            ProjectShard(project_uuid="p-1", namespace="tenant.child", label="child"),
+        ]
     )
 
     counts, split = query_operation_counts(

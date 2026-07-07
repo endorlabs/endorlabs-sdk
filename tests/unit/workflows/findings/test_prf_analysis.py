@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from endorlabs.tools.list_sharding import ParentShard
+from endorlabs.tools.list_sharding import ProjectShard
 from endorlabs.workflows.findings.prf_analysis import (
     aggregate_prf_metrics,
     fetch_parent_package_versions,
@@ -102,7 +103,9 @@ def test_list_findings_sharded_scopes_by_project_uuid() -> None:
     client.Finding.list_iter.return_value = [
         {"meta": {"parent_uuid": "pv-1"}, "spec": {"ecosystem": "ECOSYSTEM_NPM"}}
     ]
-    shards = [ParentShard(key="proj-1", namespace="tenant.child", label="child")]
+    shards = [
+        ProjectShard(project_uuid="proj-1", namespace="tenant.child", label="child")
+    ]
 
     rows = list_findings_sharded(
         client,
@@ -119,17 +122,16 @@ def test_list_findings_sharded_scopes_by_project_uuid() -> None:
     assert 'spec.project_uuid=="proj-1"' in kwargs["filter"]
 
 
-def test_list_findings_tenant_uses_traverse_when_namespace_shared(monkeypatch) -> None:
+def test_list_findings_tenant_uses_traverse_when_namespace_shared() -> None:
     client = MagicMock()
     client.Finding.list_iter.return_value = [
         {"meta": {"parent_uuid": "pv-1"}, "spec": {"ecosystem": "ECOSYSTEM_NPM"}}
     ]
-    monkeypatch.setattr(
-        "endorlabs.workflows.findings.prf_analysis.discover_tenant_project_shards",
-        lambda *_args, **_kwargs: [
-            ParentShard(key="p-1", namespace="tenant.child", label="a"),
-            ParentShard(key="p-2", namespace="tenant.child", label="b"),
-        ],
+    client.Query.Project.discover.return_value = SimpleNamespace(
+        project_shards=lambda: [
+            ProjectShard(project_uuid="p-1", namespace="tenant.child", label="a"),
+            ProjectShard(project_uuid="p-2", namespace="tenant.child", label="b"),
+        ]
     )
 
     rows = list_findings_tenant(
@@ -147,15 +149,14 @@ def test_list_findings_tenant_uses_traverse_when_namespace_shared(monkeypatch) -
     assert "spec.project_uuid" not in kwargs["filter"]
 
 
-def test_list_findings_tenant_defaults_to_sharded(monkeypatch) -> None:
+def test_list_findings_tenant_defaults_to_sharded() -> None:
     client = MagicMock()
     client.Finding.list_iter.return_value = []
-    monkeypatch.setattr(
-        "endorlabs.workflows.findings.prf_analysis.discover_tenant_project_shards",
-        lambda *_args, **_kwargs: [
-            ParentShard(key="p-1", namespace="tenant.child-a", label="a"),
-            ParentShard(key="p-2", namespace="tenant.child-b", label="b"),
-        ],
+    client.Query.Project.discover.return_value = SimpleNamespace(
+        project_shards=lambda: [
+            ProjectShard(project_uuid="p-1", namespace="tenant.child-a", label="a"),
+            ProjectShard(project_uuid="p-2", namespace="tenant.child-b", label="b"),
+        ]
     )
 
     rows = list_findings_tenant(

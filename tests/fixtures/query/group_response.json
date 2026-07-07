@@ -1,0 +1,17 @@
+{
+  "uuid": "query-group-uuid",
+  "spec": {
+    "query_response": {
+      "group_response": {
+        "groups": {
+          "[{\"key\":\"meta.create_time\",\"value\":\"2026-07-01T00:00:00Z\"}]": {
+            "aggregation_count": {"count": 12}
+          },
+          "[{\"key\":\"meta.create_time\",\"value\":\"2026-07-02T00:00:00Z\"}]": {
+            "count": 5
+          }
+        }
+      }
+    }
+  }
+}

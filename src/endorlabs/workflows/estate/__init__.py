@@ -31,6 +31,10 @@ from endorlabs.workflows.estate.collect.dependency_metadata import (
     load_dependency_metadata_records,
 )
 from endorlabs.workflows.estate.collect.runner import collect_workspace
+from endorlabs.workflows.estate.online.dashboard import (
+    fetch_online_dashboard_counts,
+    write_online_dashboard_artifact,
+)
 from endorlabs.workflows.estate.workspace.paths import workspace_dir_for
 
 __all__ = [
@@ -49,7 +53,9 @@ __all__ = [
     "export_risk_ranked_version_cardinality",
     "export_version_cardinality",
     "export_version_cardinality_for_package_match",
+    "fetch_online_dashboard_counts",
     "load_dependency_metadata_records",
     "resolve_scorer",
     "workspace_dir_for",
+    "write_online_dashboard_artifact",
 ]

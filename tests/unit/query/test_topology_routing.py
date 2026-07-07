@@ -31,6 +31,32 @@ def test_recommend_finding_log_trends() -> None:
     assert plan.validate_recommended is False
 
 
+def test_recommend_finding_category_counts() -> None:
+    plan = recommend(OutputShape.FINDING_CATEGORY_COUNTS)
+    assert plan.primary == "query"
+    assert (
+        "count_findings_by_category" in plan.notes[0]
+        or "Query.Project" in plan.notes[0]
+    )
+
+
+def test_recommend_single_repo_uses_facade_count() -> None:
+    topo = TopologySnapshot(
+        tenant="tenant.root",
+        project_count=1,
+        namespace_count=1,
+        max_projects_per_namespace=1,
+        archetype="single_repo",
+    )
+    plan = recommend(OutputShape.COUNT_BY_PROJECT, topology=topo)
+    assert plan.primary == "facade_count"
+
+
+def test_recommend_oss_coordinate_lookup() -> None:
+    plan = recommend(OutputShape.OSS_COORDINATE_LOOKUP)
+    assert plan.primary == "facade_list"
+
+
 def test_recommend_count_with_topology() -> None:
     topo = TopologySnapshot(
         tenant="tenant.root",
@@ -104,6 +130,48 @@ def test_validate_sample_pv_match() -> None:
         ),
     )
     result = validate_sample(client, projects, recipe="pv", sample_size=1)
+    assert result.matched is True
+
+
+def test_validate_sample_severity_match() -> None:
+    projects = [SimpleNamespace(uuid="p1", namespace="tenant.leaf")]
+
+    class _Query:
+        def create(self, *, payload: Any, namespace: str) -> dict[str, Any]:
+            _ = payload
+            return {
+                "spec": {
+                    "query_response": {
+                        "list": {
+                            "objects": [
+                                {
+                                    "uuid": "p1",
+                                    "meta": {
+                                        "references": {
+                                            "CriticalVulnerabilityFindingsCount": {
+                                                "count_response": {"count": 1}
+                                            },
+                                            "HighVulnerabilityFindingsCount": {
+                                                "count_response": {"count": 2}
+                                            },
+                                        }
+                                    },
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+
+    client = SimpleNamespace(
+        Query=_Query(),
+        Finding=SimpleNamespace(
+            count=lambda *, namespace, filter: (  # noqa: ARG005
+                1 if "FINDING_LEVEL_CRITICAL" in filter else 2
+            )
+        ),
+    )
+    result = validate_sample(client, projects, recipe="severity", sample_size=1)
     assert result.matched is True
 
 

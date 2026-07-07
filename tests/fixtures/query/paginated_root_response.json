@@ -1,0 +1,11 @@
+{
+  "uuid": "query-page-0",
+  "spec": {
+    "query_response": {
+      "list": {
+        "objects": [{"uuid": "proj-a"}],
+        "response": {"next_page_token": 100}
+      }
+    }
+  }
+}

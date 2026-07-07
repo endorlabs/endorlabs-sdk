@@ -30,7 +30,7 @@ class DiscoveredProject:
 
 
 @dataclass
-class NamespaceShard:
+class NamespaceGeometry:
     """Per-leaf-namespace geometry for routing."""
 
     namespace: str
@@ -39,7 +39,7 @@ class NamespaceShard:
     estimated_pages: int
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize shard geometry for artifacts."""
+        """Serialize namespace geometry for artifacts."""
         return {
             "namespace": self.namespace,
             "project_count": self.project_count,
@@ -58,7 +58,9 @@ class TopologySnapshot:
     max_projects_per_namespace: int
     archetype: Archetype
     projects: list[DiscoveredProject] = field(default_factory=list[DiscoveredProject])
-    namespace_shards: list[NamespaceShard] = field(default_factory=list[NamespaceShard])
+    namespace_geometry: list[NamespaceGeometry] = field(
+        default_factory=list[NamespaceGeometry]
+    )
     duplicate_name_groups: list[dict[str, Any]] = field(
         default_factory=list[dict[str, Any]]
     )
@@ -71,9 +73,21 @@ class TopologySnapshot:
             "namespace_count": self.namespace_count,
             "max_projects_per_namespace": self.max_projects_per_namespace,
             "archetype": self.archetype,
-            "namespace_shards": [s.to_dict() for s in self.namespace_shards],
+            "namespace_geometry": [g.to_dict() for g in self.namespace_geometry],
             "duplicate_name_groups": self.duplicate_name_groups,
         }
+
+    def project_shards(self) -> list[Any]:
+        """List-plane parallel shards derived from discovered projects."""
+        from endorlabs.tools.list_sharding import topology_to_project_shards
+
+        return topology_to_project_shards(self, fallback_ns=self.tenant)
+
+    def query_scopes(self) -> list[Any]:
+        """Query-plane POST scopes derived from discovered projects."""
+        from .scope import query_scopes_from_topology
+
+        return query_scopes_from_topology(self)
 
 
 def infer_archetype(
@@ -150,24 +164,24 @@ def _duplicate_name_groups(
     return sorted(dups, key=lambda d: -int(d["namespace_count"]))[:limit]
 
 
-def _namespace_shards(projects: list[DiscoveredProject]) -> list[NamespaceShard]:
+def _namespace_geometry(projects: list[DiscoveredProject]) -> list[NamespaceGeometry]:
     grouped: dict[str, list[DiscoveredProject]] = defaultdict(list)
     for proj in projects:
         grouped[proj.namespace].append(proj)
-    shards: list[NamespaceShard] = []
+    geometry: list[NamespaceGeometry] = []
     for ns, refs in sorted(grouped.items()):
         count = len(refs)
         depth = ns.count(".")
         pages = max(1, (count + PAGINATION_THRESHOLD - 1) // PAGINATION_THRESHOLD)
-        shards.append(
-            NamespaceShard(
+        geometry.append(
+            NamespaceGeometry(
                 namespace=ns,
                 project_count=count,
                 depth=depth,
                 estimated_pages=pages,
             )
         )
-    return shards
+    return geometry
 
 
 def discover_topology(
@@ -176,27 +190,33 @@ def discover_topology(
     *,
     traverse: bool = True,
     max_pages: int | None = None,
+    exclude_sbom: bool = False,
 ) -> TopologySnapshot:
     """Discover project geometry via lean ``Project.list`` (no ProjectSummary)."""
+    mask = PROJECT_DISCOVERY_MASK
+    if exclude_sbom:
+        mask = f"{mask},spec.sbom"
     list_kwargs: dict[str, Any] = {
         "namespace": namespace,
         "traverse": traverse,
-        "mask": PROJECT_DISCOVERY_MASK,
+        "mask": mask,
     }
     if max_pages is not None:
         list_kwargs["max_pages"] = max_pages
     rows = client.Project.list(**list_kwargs)
+    if exclude_sbom:
+        rows = [row for row in rows if not client.Project.is_sbom(row)]
     projects = _dedupe_projects(list(rows), namespace)
-    shards = _namespace_shards(projects)
-    max_ns = max((s.project_count for s in shards), default=0)
-    archetype = infer_archetype(len(projects), len(shards), max_ns)
+    geometry = _namespace_geometry(projects)
+    max_ns = max((g.project_count for g in geometry), default=0)
+    archetype = infer_archetype(len(projects), len(geometry), max_ns)
     return TopologySnapshot(
         tenant=namespace,
         project_count=len(projects),
-        namespace_count=len(shards),
+        namespace_count=len(geometry),
         max_projects_per_namespace=max_ns,
         archetype=archetype,
         projects=projects,
-        namespace_shards=shards,
+        namespace_geometry=geometry,
         duplicate_name_groups=_duplicate_name_groups(projects),
     )

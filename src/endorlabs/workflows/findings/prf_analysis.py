@@ -7,12 +7,11 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 from endorlabs.tools.list_sharding import (
-    ParentShard,
+    ProjectShard,
     parallel_map_shards,
     project_scoped_filter,
     single_shard_namespace,
 )
-from endorlabs.workflows.projects.inventory import discover_tenant_project_shards
 
 if TYPE_CHECKING:
     from endorlabs import Client
@@ -164,7 +163,7 @@ def parent_uuids_by_namespace(
 
 def list_findings_sharded(
     client: Client,
-    shards: Sequence[ParentShard],
+    shards: Sequence[ProjectShard],
     filt: str,
     *,
     mask: str,
@@ -182,11 +181,11 @@ def list_findings_sharded(
     if max_pages is not None:
         list_kwargs["max_pages"] = max_pages
 
-    def _worker(shard: ParentShard) -> list[dict[str, Any]]:
+    def _worker(shard: ProjectShard) -> list[dict[str, Any]]:
         rows = client.Finding.list_iter(
             namespace=shard.namespace,
             traverse=False,
-            filter=project_scoped_filter(filt, shard.key),
+            filter=project_scoped_filter(filt, shard.project_uuid),
             **list_kwargs,
         )
         return [finding_row_to_dict(row) for row in rows]
@@ -234,7 +233,7 @@ def list_findings_tenant(
     max_pages: int | None = None,
     max_workers: int = 12,
     max_project_pages: int | None = None,
-    shards: Sequence[ParentShard] | None = None,
+    shards: Sequence[ProjectShard] | None = None,
 ) -> list[dict[str, Any]]:
     """List findings tenant-wide via per-project parallel queries.
 
@@ -246,11 +245,12 @@ def list_findings_tenant(
     project_shards = (
         list(shards)
         if shards is not None
-        else discover_tenant_project_shards(
-            client,
+        else client.Query.Project.discover(
             tenant,
+            traverse=True,
             max_pages=max_project_pages,
-        )
+            exclude_sbom=True,
+        ).project_shards()
     )
     if not project_shards:
         return []

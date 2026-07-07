@@ -7,18 +7,11 @@ import time
 from unittest.mock import Mock
 
 from endorlabs.tools.list_sharding import (
-    ParentShard,
+    ProjectShard,
     parallel_map_shards,
     project_dict_to_shard,
     project_model_to_shard,
-    resolve_worker_count,
 )
-
-
-def test_resolve_worker_count_caps_to_shards() -> None:
-    assert resolve_worker_count(16, 0) == 1
-    assert resolve_worker_count(16, 5) == 5
-    assert resolve_worker_count(3, 10) == 3
 
 
 def test_project_dict_to_shard_uses_tenant_meta_namespace() -> None:
@@ -30,7 +23,7 @@ def test_project_dict_to_shard_uses_tenant_meta_namespace() -> None:
         },
         "tenant",
     )
-    assert shard.key == "p1"
+    assert shard.project_uuid == "p1"
     assert shard.namespace == "tenant.child"
     assert shard.label == "repo-a"
 
@@ -38,20 +31,23 @@ def test_project_dict_to_shard_uses_tenant_meta_namespace() -> None:
 def test_project_model_to_shard_fallback_namespace() -> None:
     project = Mock(uuid="p2", tenant_meta=None, meta=None)
     shard = project_model_to_shard(project, "tenant.root")
-    assert shard.key == "p2"
+    assert shard.project_uuid == "p2"
     assert shard.namespace == "tenant.root"
 
 
 def test_parallel_map_shards_runs_all_shards() -> None:
-    shards = [ParentShard(key=str(i), namespace="ns", label=f"p{i}") for i in range(4)]
+    shards = [
+        ProjectShard(project_uuid=str(i), namespace="ns", label=f"p{i}")
+        for i in range(4)
+    ]
     seen: list[str] = []
     lock = threading.Lock()
 
-    def _work(shard: ParentShard) -> str:
+    def _work(shard: ProjectShard) -> str:
         time.sleep(0.01)
         with lock:
-            seen.append(shard.key)
-        return shard.key
+            seen.append(shard.project_uuid)
+        return shard.project_uuid
 
     results = parallel_map_shards(
         shards,
@@ -66,6 +62,8 @@ def test_parallel_map_shards_runs_all_shards() -> None:
 
 def test_parallel_map_shards_empty() -> None:
     assert (
-        parallel_map_shards([], lambda s: s.key, max_workers=4, progress_label="x")
+        parallel_map_shards(
+            [], lambda s: s.project_uuid, max_workers=4, progress_label="x"
+        )
         == []
     )

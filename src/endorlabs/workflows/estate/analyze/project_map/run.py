@@ -9,7 +9,7 @@ from typing import Any
 
 from endorlabs import F
 from endorlabs.tools.list_sharding import (
-    ParentShard,
+    ProjectShard,
     parallel_map_shards,
     project_model_to_shard,
 )
@@ -128,11 +128,11 @@ def run_project_relationship_map(
     dm_max_pages = resolve_max_pages(dep_metadata_max_pages)
     dep_shards = [project_model_to_shard(p, namespace) for p in projects if p.uuid]
 
-    def _fetch_dep_metadata(shard: ParentShard) -> tuple[list[Any], int]:
+    def _fetch_dep_metadata(shard: ProjectShard) -> tuple[list[Any], int]:
         drows: list[Any] = []
         try:
             drows = client.DependencyMetadata.list(
-                filter=(F("spec.importer_data.project_uuid") == shard.key),
+                filter=(F("spec.importer_data.project_uuid") == shard.project_uuid),
                 namespace=shard.namespace,
                 max_pages=dm_max_pages,
                 page_size=page_size,
@@ -144,11 +144,11 @@ def run_project_relationship_map(
             ):
                 LOGGER.warning(
                     "DependencyMetadata truncated for project %s (%d rows)",
-                    shard.key,
+                    shard.project_uuid,
                     len(drows),
                 )
         except (ValueError, TypeError, RuntimeError) as exc:
-            LOGGER.debug("dep metadata for project %s: %s", shard.key, exc)
+            LOGGER.debug("dep metadata for project %s: %s", shard.project_uuid, exc)
             drows = []
         support: list[tuple[str, str, SupportingPackage]] = []
         for row in drows or []:

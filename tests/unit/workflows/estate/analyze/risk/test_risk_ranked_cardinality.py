@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock, Mock, patch
 
+from endorlabs.filters import MAIN_CONTEXT_LIST_FILTER
 from endorlabs.workflows.estate.analyze.cardinality.columns import (
     RISK_WEIGHTED_CARDINALITY_SCHEMA,
 )
@@ -28,11 +29,9 @@ from endorlabs.workflows.estate.analyze.risk.scoring import (
     resolve_scorer,
 )
 from endorlabs.workflows.estate.collect.findings import (
-    FINDING_LIST_MASK,
     findings_filter_for_project,
     main_context_label,
 )
-from endorlabs.workflows.estate.filters.main_context import MAIN_CONTEXT_LIST_FILTER
 
 
 def _finding(
@@ -215,6 +214,8 @@ def test_aggregate_family_findings_by_version_across_coordinate_formats() -> Non
 
 
 def test_export_risk_ranked_version_cardinality_mocked() -> None:
+    from types import SimpleNamespace
+
     group_key = json.dumps(
         [
             {"key": "spec.dependency_data.package_name", "value": "pypi://django"},
@@ -222,12 +223,7 @@ def test_export_risk_ranked_version_cardinality_mocked() -> None:
         ]
     )
 
-    client = MagicMock()
-    client.Namespace.list.return_value = []
-    client.Project.list.return_value = [
-        MagicMock(uuid="proj-1", tenant_meta=MagicMock(namespace="tenant"))
-    ]
-    client.Finding.list_by_project.return_value = [
+    finding_rows = [
         {
             "spec": {
                 "level": "FINDING_LEVEL_CRITICAL",
@@ -237,6 +233,13 @@ def test_export_risk_ranked_version_cardinality_mocked() -> None:
             }
         }
     ]
+
+    client = MagicMock()
+    client.Namespace.list.return_value = []
+    client.Project.is_sbom.return_value = False
+    project = MagicMock(uuid="proj-1", tenant_meta=MagicMock(namespace="tenant"))
+    client.Query.Project.discover.return_value = SimpleNamespace(projects=[project])
+    client.Query.Project.collect_estate_findings.return_value = finding_rows
 
     from endorlabs.operations.list_response import (
         GroupBucket,
@@ -256,27 +259,21 @@ def test_export_risk_ranked_version_cardinality_mocked() -> None:
     client.DependencyMetadata.list_groups = Mock(side_effect=_list_groups)
 
     with patch(
-        "endorlabs.workflows.estate.collect.findings.list_estate_namespace_names",
+        "endorlabs.workflows.estate.analyze.risk.cardinality.list_estate_namespace_names",
         return_value=["tenant"],
     ):
-        with patch(
-            "endorlabs.workflows.estate.analyze.risk.cardinality.list_estate_namespace_names",
-            return_value=["tenant"],
-        ):
-            result = export_risk_ranked_version_cardinality(
-                client,
-                "tenant",
-                top_n=1,
-            )
+        result = export_risk_ranked_version_cardinality(
+            client,
+            "tenant",
+            top_n=1,
+        )
 
     assert result.status in {"success", "partial"}
     assert result.document["schema"] == RISK_WEIGHTED_CARDINALITY_SCHEMA
     assert len(result.document["packages"]) == 1
     assert result.document["packages"][0]["package_name"] == "pypi://django"
     assert result.ranking_table.row_count >= 1
-    call_kwargs = client.Finding.list_by_project.call_args.kwargs
-    assert "CONTEXT_TYPE_MAIN" in call_kwargs["filter"]
-    assert call_kwargs["mask"] == FINDING_LIST_MASK
+    client.Query.Project.collect_estate_findings.assert_called_once()
 
 
 def test_export_version_cardinality_for_package_match_mocked() -> None:

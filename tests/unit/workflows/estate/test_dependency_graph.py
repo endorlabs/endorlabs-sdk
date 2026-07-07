@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from endorlabs.filters import (
+    MAIN_CONTEXT_LIST_FILTER,
+    main_context_filter,
+)
 from endorlabs.workflows.estate.analyze.compile_graph.pipeline import (
     COMPILE_DEPENDENCY_GRAPH_SCHEMA,
     REGISTRATION_BINARY,
@@ -22,10 +26,6 @@ from endorlabs.workflows.estate.analyze.project_map.core import (
     SupportingPackage,
     aggregate_package_anchored_edges,
     row_to_supporting_tuples,
-)
-from endorlabs.workflows.estate.filters.main_context import (
-    MAIN_CONTEXT_LIST_FILTER,
-    main_context_filter,
 )
 
 

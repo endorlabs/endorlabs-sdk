@@ -33,6 +33,7 @@ Each skill is a directory with `SKILL.md` plus optional reference files. Format:
 | [endor-potentially-reachable-analysis](endor-potentially-reachable-analysis/) | Tenant-wide PRF approximation + PackageVersion resolution error report (JSON, canvas, HTML/PDF) | Skill-owned |
 | [endor-chart-new-vs-resolved-findings](endor-chart-new-vs-resolved-findings/) | Cumulative weekly new vs resolved Critical/High reachable vuln trends from FindingLog CREATE/DELETE (SDK `finding_log_trends` + canvas) | Skill-owned |
 | [endor-cli-vs-cloud-projects](endor-cli-vs-cloud-projects/) | Classify Project as CLI vs Cloud (agentless SCM) via `spec.git.external_installation_id` | Skill-owned |
+| [endor-ci-endorctl-version-audit](endor-ci-endorctl-version-audit/) | Tenant-wide CLI latest-scan endorctl version histogram (7-day default) | Skill-owned |
 | [endor-retrieve-scan-results](endor-retrieve-scan-results/) | Querying findings, scan results, or projects | `docs/guides/`, `docs/contributing/` |
 | [endor-route-estate-queries](endor-route-estate-queries/) | Estate-scale Query vs facade count routing | `docs/guides/query-recipes.md` |
 | [endor-troubleshooting-scans](endor-troubleshooting-scans/) | Scan pipeline RCA; ScanResults, `ScanResult.get_logs`, scripted diffs | `endorlabs.workflows.troubleshooting_scans`; see `docs/guides/`, `docs/contributing/list-query-performance.md` |

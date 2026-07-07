@@ -10,6 +10,7 @@ Thin index of SDK workflow entry points. See `MANIFEST.json` for machine-readabl
 | context-bootstrap | `endor-context` | `endorlabs.context.cli` | — | .endorlabs-context/ |
 | finding-log-weekly-trends | `—` | `endorlabs.workflows.findings.finding_log_trends` | endor-chart-new-vs-resolved-findings | — |
 | policies-validate | `—` | `endorlabs.workflows.policies.validate` | endor-validate-policy | stdout or --output-json |
+| query-estate-routing | `—` | `endorlabs.query` | endor-route-estate-queries | — |
 | reachability-context | `endor-reachability-context` | `endorlabs.workflows.reachability.cli` | endor-reachability-provenance | .endorlabs-context/workspace/projects/<uuid>/ |
 | relationships-map | `—` | `endorlabs.workflows.estate.analyze.project_map.map` | endor-namespace-relationship-map | .endorlabs-context/workspace/ |
 | semgrep-inventory | `endor-semgrep-inventory` | `endorlabs.workflows.semgrep.inventory` | endor-custom-sast-rules | `.endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json` (`SemgrepRule.list`) |

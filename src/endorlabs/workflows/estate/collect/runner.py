@@ -8,8 +8,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from endorlabs.filters import main_context_filter
 from endorlabs.tools.list_sharding import (
-    ParentShard,
+    ProjectShard,
     parallel_map_shards_iter,
     project_dict_to_shard,
 )
@@ -24,11 +25,7 @@ from endorlabs.workflows.estate.collect.bounds import (
 from endorlabs.workflows.estate.collect.dependency_metadata import (
     dependency_metadata_record_from_row,
 )
-from endorlabs.workflows.estate.collect.findings import (
-    _fetch_findings_for_shard,
-    discover_project_shards,
-    findings_filter_for_project,
-)
+from endorlabs.workflows.estate.collect.findings import findings_filter_for_project
 from endorlabs.workflows.estate.collect.projects import (
     collect_project_resource,
     load_project_records,
@@ -39,7 +36,6 @@ from endorlabs.workflows.estate.contracts import (
     RESOURCE_PACKAGE_VERSION,
     RESOURCE_PROJECT,
 )
-from endorlabs.workflows.estate.filters.main_context import main_context_filter
 from endorlabs.workflows.estate.filters.masks import DEP_METADATA_LIST_MASK
 from endorlabs.workflows.estate.workspace.collect_manifest import (
     CollectManifest,
@@ -57,6 +53,7 @@ from endorlabs.workflows.estate.workspace.paths import (
     resource_path,
     workspace_dir_for,
 )
+from endorlabs.workflows.query_collect import collect_project_findings_via_query
 
 if TYPE_CHECKING:
     from endorlabs import Client
@@ -92,16 +89,16 @@ def _project_shards(
     client: Client,
     namespace: str,
     workspace_root: Path,
-) -> list[ParentShard]:
+) -> list[ProjectShard]:
     rows = load_project_records(workspace_root)
     if rows:
         return [project_dict_to_shard(row, namespace) for row in rows]
-    return discover_project_shards(client, namespace)
+    return client.Query.Project.discover(namespace, traverse=True).project_shards()
 
 
 def _preflight_shard(
     client: Client,
-    shard: ParentShard,
+    shard: ProjectShard,
     *,
     facade_attr: str,
     filter_expr: str,
@@ -129,16 +126,16 @@ def _collect_sharded_resource(
     resume: bool,
     preflight: bool,
     validate_counts: bool,
-    filter_fn: Callable[[ParentShard], str],
+    filter_fn: Callable[[ProjectShard], str],
     facade_attr: str,
-    record_builder: Callable[[list, ParentShard], list[dict]],
+    record_builder: Callable[[list, ProjectShard], list[dict]],
 ) -> int:
     shards = _project_shards(client, namespace, workspace_root)
-    shard_keys = [s.key for s in shards]
+    shard_keys = [s.project_uuid for s in shards]
     init_shards(manifest, resource_id, shard_keys)
 
     pending_keys = pending_shard_keys(manifest, resource_id, resume=resume)
-    pending_shards = [s for s in shards if s.key in pending_keys]
+    pending_shards = [s for s in shards if s.project_uuid in pending_keys]
 
     out_path = resource_path(workspace_root, resource_id)
     if not resume or not out_path.is_file():
@@ -147,22 +144,14 @@ def _collect_sharded_resource(
     total_rows = 0
     errors: list[str] = []
 
-    def _worker(shard: ParentShard) -> tuple[str, list[dict], str | None]:
+    def _worker(shard: ProjectShard) -> tuple[str, list[dict], str | None, int | None]:
         filt = filter_fn(shard)
+        expected: int | None = None
         if preflight:
-            _preflight_shard(client, shard, facade_attr=facade_attr, filter_expr=filt)
+            expected = _preflight_shard(
+                client, shard, facade_attr=facade_attr, filter_expr=filt
+            )
         try:
-            if resource_id == RESOURCE_FINDING:
-                rows, err = _fetch_findings_for_shard(
-                    client,
-                    shard,
-                    max_pages=max_pages,
-                    page_size=page_size,
-                )
-                if err:
-                    return shard.key, [], err
-                records = record_builder(list(rows or []), shard)
-                return shard.key, records, None
             rows = client.DependencyMetadata.list(
                 filter=filt,
                 namespace=shard.namespace,
@@ -171,12 +160,12 @@ def _collect_sharded_resource(
                 page_size=page_size,
             )
             records = record_builder(rows, shard)
-            return shard.key, records, None
+            return shard.project_uuid, records, None, expected
         except Exception as exc:
-            return shard.key, [], f"{shard.key}: {exc}"
+            return shard.project_uuid, [], f"{shard.project_uuid}: {exc}", expected
 
     with out_path.open("a", encoding="utf-8") as handle:
-        for shard_key, batch, err in parallel_map_shards_iter(
+        for shard_key, batch, err, expected_count in parallel_map_shards_iter(
             pending_shards,
             _worker,
             max_workers=max_workers,
@@ -196,6 +185,7 @@ def _collect_sharded_resource(
                 resource_id,
                 shard_key,
                 line_count=len(batch),
+                expected_count=expected_count,
             )
             save_collect_manifest(workspace_root, manifest)
 
@@ -249,8 +239,10 @@ def _collect_package_version(
         if r.get("uuid")
     }
     if not project_set:
-        for shard in discover_project_shards(client, namespace):
-            project_set.add(shard.key)
+        for shard in client.Query.Project.discover(
+            namespace, traverse=True
+        ).project_shards():
+            project_set.add(shard.project_uuid)
 
     _, _, published_by_project, _ = build_publisher_index(
         client,
@@ -311,34 +303,44 @@ def _collect_dm_and_finding_parallel(
             preflight=preflight,
             validate_counts=validate_counts,
             filter_fn=lambda s: main_context_filter(
-                f'spec.importer_data.project_uuid=="{s.key}"'
+                f'spec.importer_data.project_uuid=="{s.project_uuid}"'
             ),
             facade_attr="DependencyMetadata",
             record_builder=lambda rows, shard: [
-                dependency_metadata_record_from_row(r, project_uuid=shard.key)
+                dependency_metadata_record_from_row(r, project_uuid=shard.project_uuid)
                 for r in (rows or [])
             ],
         )
 
     def _run_finding() -> int:
-        return _collect_sharded_resource(
+        topology = client.Query.Project.discover(namespace, traverse=True)
+        projects = topology.projects
+        shard_keys = [p.uuid for p in projects]
+        init_shards(manifest, RESOURCE_FINDING, shard_keys)
+        rows = collect_project_findings_via_query(
             client,
-            namespace=namespace,
-            workspace_root=workspace_root,
-            manifest=manifest,
-            resource_id=RESOURCE_FINDING,
-            max_workers=max_workers,
-            max_pages=max_pages,
-            page_size=page_size,
-            resume=resume,
-            preflight=preflight,
-            validate_counts=validate_counts,
-            filter_fn=lambda s: findings_filter_for_project(s.key),
-            facade_attr="Finding",
-            record_builder=lambda rows, shard: [
-                {**row, "project_uuid": shard.key} for row in (rows or [])
-            ],
+            projects,
+            max_root_pages=max_pages,
         )
+        records = [
+            {**row, "project_uuid": row.get("project_uuid") or ""} for row in rows
+        ]
+        out_path = resource_path(workspace_root, RESOURCE_FINDING)
+        if not resume or not out_path.is_file():
+            safe_write_text(workspace_root, out_path, "")
+        with out_path.open("a", encoding="utf-8") as handle:
+            for record in records:
+                handle.write(json.dumps(record, ensure_ascii=False))
+                handle.write("\n")
+        finalize_resource(
+            manifest,
+            RESOURCE_FINDING,
+            status="complete",
+            line_count=len(records),
+            filter_summary=findings_filter_for_project(""),
+        )
+        save_collect_manifest(workspace_root, manifest)
+        return len(records)
 
     dm_count = _run_dm()
     finding_count = _run_finding()

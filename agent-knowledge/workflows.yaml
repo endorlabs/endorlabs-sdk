@@ -23,8 +23,25 @@ workflows:
     library_entrypoints:
       - endorlabs.workflows.estate.collect_workspace
       - endorlabs.workflows.estate.analyze_workspace
+      - endorlabs.workflows.estate.fetch_online_dashboard_counts
       - endorlabs.workflows.estate.export_version_cardinality_for_package_match
       - endorlabs.workflows.estate.export_risk_ranked_version_cardinality
+  - id: query-estate-routing
+    cli: null
+    module: endorlabs.query
+    skill: endor-route-estate-queries
+    default_output: null
+    agent_visible: true
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.query.discover_topology
+      - endorlabs.query.recommend
+      - endorlabs.query.validate_sample
+      - endorlabs.query.preflight_count
+      - endorlabs.workflows.estate.online.dashboard.fetch_online_dashboard_counts
+      - endorlabs.workflows.agent_context.dashboard_counts.project_pv_counts
+      - endorlabs.workflows.agent_context.dashboard_counts.project_category_counts
+      - endorlabs.workflows.query_collect.collect_project_findings_via_query
   - id: callgraph-path
     cli: endor-callgraph-path
     module: endorlabs.workflows.callgraph.path_cli

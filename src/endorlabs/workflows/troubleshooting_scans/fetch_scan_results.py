@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from endorlabs.tools.list_sharding import ParentShard
+    from endorlabs.tools.list_sharding import ProjectShard
 
 from endorlabs.client_surface import Client
 
@@ -100,11 +100,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     all_results: list[dict[str, Any]] = []
     summaries: list[dict[str, Any]] = []
 
-    def _fetch_scan_results(shard: ParentShard) -> list[dict[str, Any]]:
+    def _fetch_scan_results(shard: ProjectShard) -> list[dict[str, Any]]:
         return _list_scan_dicts(
             client,
             namespace=shard.namespace,
-            project_uuid=shard.key,
+            project_uuid=shard.project_uuid,
             limit=effective_limit,
             status_filter=args.status_filter,
         )
