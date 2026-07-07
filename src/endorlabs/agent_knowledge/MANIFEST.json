@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-07T00:51:39.851415+00:00",
+  "generated_at": "2026-07-07T17:07:54.279177+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -147,7 +147,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.4.1.dev27",
+  "sdk_version": "0.5.1.dev1",
   "skills": [
     {
       "description": "Author or update a shipped agent skill under agent-knowledge/skills/: portable frontmatter, optional endorlabs.catalog workflow linkage, composition handoffs, sync, and drift verification. Use when adding skills, fixing sync validation errors, or migrating workflow catalog metadata\u2014not for extending SDK resources (endor-implement-sdk-resource) or runtime API troubleshooting.",
@@ -325,7 +325,7 @@
       ]
     },
     {
-      "description": "Scan pipeline RCA: resolve a project, fetch a bounded scan window, heuristically rank suspicious scan pairs, pull scan logs via ScanResult.get_logs for selected metrics/logs. Not for individual Finding rows or policy validation \u2014 hand off to other skills when deeper analysis is needed.",
+      "description": "Scan pipeline RCA: resolve a project (including app scan-history URLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs for errors, diff aggregate metrics, and probe PackageVersion resolution_errors. Not for individual Finding rows or policy validation \u2014 hand off to sibling skills when deeper analysis is needed.",
       "id": "endor-troubleshooting-scans",
       "name": "endor-troubleshooting-scans",
       "path": "skills/endor-troubleshooting-scans/SKILL.md",
@@ -495,7 +495,9 @@
       "id": "troubleshooting-scans",
       "library_entrypoints": [
         "endorlabs.Client.ScanResult.list_by_project",
-        "endorlabs.Client.Project.search_by_name"
+        "endorlabs.Client.Project.search_by_name",
+        "endorlabs.Client.Finding.list_for_context",
+        "endorlabs.workflows.troubleshooting_scans.common.scanlog_entries_have_content"
       ],
       "module": "endorlabs.workflows.troubleshooting_scans",
       "skill": "endor-troubleshooting-scans"

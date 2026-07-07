@@ -198,6 +198,30 @@ def scanlog_line(message: Any) -> str:
     return f"{timestamp} [{level}] {text}"
 
 
+def scanlog_line_has_content(line: str) -> bool:
+    """Return whether a normalized or embedded scan log line carries message text."""
+    stripped = line.strip()
+    if not stripped:
+        return False
+    if stripped.startswith("{"):
+        try:
+            payload = json.loads(stripped)
+        except json.JSONDecodeError:
+            return True
+        if not isinstance(payload, dict):
+            return True
+        msg = payload.get("msg") or payload.get("message") or ""
+        return bool(str(msg).strip())
+    if "]" in stripped:
+        return bool(stripped.rsplit("]", 1)[-1].strip())
+    return True
+
+
+def scanlog_entries_have_content(entries: Sequence[str]) -> bool:
+    """Return whether any scan log line includes non-empty message text."""
+    return any(scanlog_line_has_content(line) for line in entries)
+
+
 # App UI: https://app.endorlabs.com/t/{namespace}/scan-history/{scan_result_uuid}
 _APP_SCAN_HISTORY_URL = re.compile(
     r"^https://app\.endorlabs\.com/t/(?P<ns>[^/]+)/scan-history/(?P<uuid>[0-9a-f]{24})(?:[/?#].*)?$",

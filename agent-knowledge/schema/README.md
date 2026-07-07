@@ -107,7 +107,7 @@ If output is scored, ranked, or summarized (not authoritative platform state):
 - State **heuristic** in the module section and in interpretation hints.
 - Name the signals (e.g. adjacent-pair score from `ScanResult.spec.stats` aggregates).
 - Clarify what a boolean like `regression_detected` **means in code** (e.g. score > 0), not colloquial “regression.”
-- Say when to **stop** and hand off for row-level data (e.g. use scan UUIDs from pairs artifact with `context.scan_uuid` filter in retrieve-scan-results).
+- Say when to **stop** and hand off for row-level data (e.g. use scan UUIDs from pairs artifact with `Finding.list_for_context(scan)` per [retrieve-scan-results](../skills/endor-retrieve-scan-results/SKILL.md); do not filter on `context.scan_uuid` — see [resource-discovery](../contracts/resource-discovery.md)).
 
 ### What not to do
 

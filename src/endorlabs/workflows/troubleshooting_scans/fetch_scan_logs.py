@@ -13,6 +13,7 @@ from .common import (
     default_troubleshooting_output_dir,
     load_json,
     root_tenant,
+    scanlog_entries_have_content,
     scanlog_line,
     write_json,
     write_text,
@@ -78,8 +79,17 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             )
             entries = []
 
-        if not entries:
-            entries = pull_embedded_logs(scanlogs_client, args.namespace, scan_uuid)
+        embedded_entries = pull_embedded_logs(
+            scanlogs_client, args.namespace, scan_uuid
+        )
+        if not entries or not scanlog_entries_have_content(entries):
+            entries = embedded_entries
+        elif embedded_entries:
+            seen = set(entries)
+            for line in embedded_entries:
+                if line not in seen:
+                    entries.append(line)
+                    seen.add(line)
 
         text_blob = "\n".join(entries)
         log_artifact = write_text(

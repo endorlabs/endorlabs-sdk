@@ -1,9 +1,10 @@
 ---
 name: endor-troubleshooting-scans
-description: 'Scan pipeline RCA: resolve a project, fetch a bounded scan window, heuristically
-  rank suspicious scan pairs, pull scan logs via ScanResult.get_logs for selected
-  metrics/logs. Not for individual Finding rows or policy validation — hand off to
-  other skills when deeper analysis is needed.'
+description: 'Scan pipeline RCA: resolve a project (including app scan-history URLs),
+  compare scan pairs (heuristic or user-supplied), search embedded spec.logs for errors,
+  diff aggregate metrics, and probe PackageVersion resolution_errors. Not for individual
+  Finding rows or policy validation — hand off to sibling skills when deeper analysis
+  is needed.'
 ---
 
 # Troubleshooting Scans
@@ -14,15 +15,17 @@ Chain CLI steps on JSON artifacts; extend with library imports per [workflow-com
 
 **In scope (this skill):**
 
-- Resolve project candidates (name, URL, UUID).
+- Resolve project candidates (name, UUID, **app scan-history URL**).
 - Fetch a **bounded** scan-result window and normalized summary metrics.
-- **Heuristically** rank adjacent scan pairs (status, aggregate finding counts, dependency totals).
-- Pull **scan logs** for the selected pair via `client.ScanResult.get_logs` (at most two scan UUIDs by default).
-- Diff scan-level metrics and log excerpts into JSON + markdown artifacts.
+- **Heuristically** rank adjacent scan pairs **or** build an **explicit user-supplied pair**.
+- Search **embedded** `spec.logs` for error signatures (`search_scan_errors`).
+- Pull scan logs for selected pair UUIDs (embedded fallback when ScanLog API rows are hollow).
+- Diff scan-level aggregate metrics into JSON + markdown artifacts.
+- **Library probe:** `PackageVersion.list_by_project(project)` → `spec.resolution_errors` when dependency metrics collapse.
 
 **Out of scope (use another skill):**
 
-- Whether the project is **CLI vs Cloud** (agentless SCM) → [endor-cli-vs-cloud-projects](../endor-cli-vs-cloud-projects/SKILL.md)
+- Whether the project is **CLI vs Cloud** (agentless SCM) → [endor-cli-vs-cloud-projects](../endor-cli-vs-cloud-projects/SKILL.md) — especially when `RunBySystem` differs between scans
 - Listing or triaging individual **Finding** resources → [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md)
 - Policy / exception matching → [endor-validate-policy](../endor-validate-policy/SKILL.md)
 - Reachability signal conflicts on a finding → [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md)
@@ -33,40 +36,97 @@ Chain CLI steps on JSON artifacts; extend with library imports per [workflow-com
 
 Finding counts here come from **`ScanResult.spec.stats` aggregates only** — not `Finding.list`.
 
+## Entry paths (pick one)
+
+| User gives you | Start with | Skip |
+| -------------- | ---------- | ---- |
+| App **scan-history** or **project** URL | `search_projects --endor-app-url` or `--scan-result-url` | — |
+| **Two specific scans** to compare | `build_scan_pair` → `diff_scans` → `search_scan_errors` | `select_anomalous_scans` |
+| “Something regressed recently” (no UUIDs) | `run_troubleshooting_workflow` or heuristic chain below | explicit pair |
+| Single scan failed (`PARTIAL_SUCCESS`, etc.) | `search_projects` + `search_scan_errors` on that scan's window | pair diff until baseline known |
+
+Thread UUIDs and namespace from each artifact into the next step; do not re-list projects when JSON already has them.
+
 ## When to use this skill vs others
 
 | Symptom / goal | Start here | Then |
 | ---------------- | ---------- | ---- |
 | Scan failed, metrics spiked, or logs look wrong between runs | **This skill** | — |
 | Need CVE/finding rows, filters, branch dedup | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) | This skill if scan *pipeline* regressed |
-| Diff flagged `findings_*` counts; need which findings changed | This skill (pair UUIDs from diff) | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) filtered by `context.scan_uuid` |
+| Diff flagged `findings_*` counts; need which findings changed | This skill (pair UUIDs from diff) | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) via `Finding.list_for_context(scan)` |
+| `dependency_count_total` collapsed / resolution errors | This skill (embedded logs + PV probe) | [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) at branch/sha |
+| Tenant-wide PV resolution error patterns | [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md) | This skill for one scan pair |
+| Automated vs manual scan config differs (`RunBySystem`) | [endor-cli-vs-cloud-projects](../endor-cli-vs-cloud-projects/SKILL.md) | This skill for metrics/logs |
 | Exception policy matches a finding? | [endor-validate-policy](../endor-validate-policy/SKILL.md) | — |
 | Reachable dep vs unreachable function | [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) | — |
-| Tenant-wide PRF coverage / PV resolution errors | [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md) | — |
 | New vs resolved vuln trend (FindingLog) | [endor-chart-new-vs-resolved-findings](../endor-chart-new-vs-resolved-findings/SKILL.md) | — |
 | Same package, multiple versions/paths | [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md) | — |
 
-## Optional stops (artifact chain)
+## Artifact chains
 
-You do not need every step:
+### Heuristic regression (default)
+
+1. `search_projects` or `resolve_projects` → project UUID + namespace
+2. `fetch_scan_results` → scan window summary
+3. `select_anomalous_scans` → ranked pair (`regression_detected` = score > 0)
+4. `search_scan_errors` → embedded `spec.logs` regex hits
+5. `diff_scans` → aggregate metric diff
+6. `fetch_scan_logs` or `pull_scan_logs` → only if embedded search insufficient
+7. `summarize_scan_triage` → optional markdown from pull artifacts
+
+### Explicit pair (user named two scans)
+
+1. `search_projects --endor-app-url <either-scan-url>` → project UUID + namespace
+2. `build_scan_pair --primary-scan-result-url … --secondary-scan-result-url …`
+3. `search_scan_errors` (per scan or bounded window)
+4. `diff_scans --input-pairs <pairs-json>`
+5. **If dep metrics collapsed:** library PV `resolution_errors` probe (below)
+6. `fetch_scan_logs` / `pull_scan_logs` / `summarize_scan_triage` as needed
+
+### Dependency-resolution branch
+
+After `diff_scans`, when `scan_success` drops and/or `dependency_count_total` collapses:
+
+1. `search_scan_errors` with patterns like `dependency-resolution|Unable to resolve|sbt|maven|gradle|invalid`
+2. Library probe on `Project.get(uuid)`:
+
+```python
+project = client.Project.get(project_uuid, namespace=project_ns)
+scan = client.ScanResult.get(scan_uuid, namespace=project_ns)
+for line in (scan.model_dump(mode="json").get("spec") or {}).get("logs") or []:
+  ...  # embedded JSON error lines
+
+for pv in client.PackageVersion.list_by_project(project, namespace=project_ns, max_pages=5):
+    errs = (pv.model_dump(mode="json").get("spec") or {}).get("resolution_errors")
+    if errs:
+        ...  # STATUS_ERROR_BUILD / unresolved.description
+```
+
+3. **Hand off:** single-project branch/sha → [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md); tenant-wide → [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md)
+
+## Optional stops (artifact chain)
 
 | Stop after | When |
 | ---------- | ---- |
+| `search_projects` | Resolved namespace + project from app URL only |
 | `resolve_projects` | You only needed project UUID + namespace |
-| `fetch_scan_results` | You want the scan window/summary without pair scoring |
-| `select_anomalous_scans` | You have candidate pair UUIDs; skip logs until user confirms |
-| `fetch_scan_logs` | Logs are enough; skip markdown diff |
+| `fetch_scan_results` | Scan window/summary without pair scoring |
+| `build_scan_pair` | User supplied both scan UUIDs; skip heuristic pairing |
+| `search_scan_errors` | Embedded errors explain `PARTIAL_SUCCESS` or dep collapse |
+| `select_anomalous_scans` | Candidate pair UUIDs; skip logs until user confirms |
+| `diff_scans` | Aggregate diff enough; no full log pull |
+| `fetch_scan_logs` | Log artifact sufficient; skip markdown summarize |
 | `run_troubleshooting_workflow --regression-only` | Fast check; skips logs/diff when heuristic score is zero |
 
-Thread UUIDs and namespace from each artifact into the next step; do not re-list projects when JSON already has them.
+### Decision signals
 
-## What this skill does
-
-1. Resolve a project from name, URL, or UUID.
-2. Pull a scan-result window.
-3. **Heuristically** score adjacent scan pairs (drop/spike/failure patterns).
-4. Pull logs for the chosen pair UUIDs.
-5. Diff scan-result aggregate fields and log index into reports.
+| Signal in artifact | Next step |
+| -------------------- | --------- |
+| `status: STATUS_PARTIAL_SUCCESS` | `search_scan_errors` before ScanLog API pull |
+| `scan_success` ↓ and `dependency_count_total` ↓ | PV `resolution_errors` library probe |
+| `fetch_scan_logs` `entry_count > 0` but no `error` in text | Re-check embedded `spec.logs`; API rows may be hollow |
+| `regression_detected: false` but user named two scans | Use explicit-pair path; user intent overrides heuristic |
+| `RunBySystem: true` vs `false` in scan config | [endor-cli-vs-cloud-projects](../endor-cli-vs-cloud-projects/SKILL.md) for config narrative |
 
 Artifacts live under `.endorlabs-context/workspace/sessions/` (default
 `.../sessions/troubleshooting/`; prefer `.../sessions/<user>/troubleshooting/` for
@@ -84,67 +144,94 @@ contract:
 
 Installed package modules (run with `uv run python -m endorlabs.workflows.troubleshooting_scans.<name>`).
 
+- `search_projects.py`
+  - **Preferred entry** from Endor app URLs (`--endor-app-url`, `--scan-result-url`, `--scan-result-uuid`).
+  - Traverse-aware `ScanResult.get` when namespace in URL may differ from `--tenant`.
+  - Output object kind: `project_search`.
+
 - `resolve_projects.py`
-  - Resolves target project candidates.
-  - Inputs: tenant/namespace + project selector(s).
+  - Resolves target project candidates by name/UUID (no app URL parsing).
   - Output object kind: `project`.
+
+- `build_scan_pair.py`
+  - Builds `scan_result_pairs` JSON for **user-supplied** primary/secondary scan UUIDs or scan-history URLs.
+  - Output object kind: `scan_result_pairs` (`pair_mode: user_supplied`).
 
 - `fetch_scan_results.py`
   - Pulls raw scan results and normalized summary rows.
-  - Inputs: project UUID (or project-name mode / all-projects mode), limit/status.
   - Use `--scan-window` (alias of `--limit`) to bound retrieved scan count.
-  - Optional **`--status-filter`** (e.g. `STATUS_FAILURE`, `STATUS_PARTIAL_SUCCESS`) filters results client-side after listing.
+  - Optional **`--status-filter`** (e.g. `STATUS_FAILURE`, `STATUS_PARTIAL_SUCCESS`) filters client-side after listing.
   - Output object kind: `scan_results`.
-  - **Cost:** lists scan results for the namespace then filters by project client-side; keep `--limit` small for interactive RCA. **`--all-projects`** walks every project under `--tenant` — expect long runtimes (see [AGENTS.md](../../../AGENTS.md#agent-notes) — tenant-wide scan fetch).
+
+- `pull_scan_results.py`
+  - Heavier scan-result pull for `summarize_scan_triage` input artifacts.
 
 - `select_anomalous_scans.py`
-  - **Heuristic** scoring on adjacent pairs using summary metrics (status, total finding counts, dependency totals, `scan_success` / `scan_failures` deltas). Default thresholds: `--min-delta-findings 10`, `--min-delta-deps 50`.
-  - **`regression_detected`** means the selected pair's **score > 0** — not a platform-defined regression.
-  - **`--pair-mode`:** `best-anomaly` (default, one pair), `latest` (most recent pair), `adjacent` (all pairs ranked).
-  - Inputs: summary JSON from previous step.
+  - **Heuristic** scoring on adjacent pairs. `regression_detected` = selected pair **score > 0**.
+  - **`--pair-mode`:** `best-anomaly` (default), `latest`, `adjacent`.
   - Output object kind: `scan_result_pairs`.
 
-- `fetch_scan_logs.py`
-  - Retrieves ScanLog entries for the **first selected pair** (up to two scan UUIDs; `--max-entries` default 500). `ScanResult.get_logs` first, embedded `spec.logs` fallback.
-  - Inputs: selected pairs JSON.
-  - Output object kinds: `scan_log`, `scan_logs`.
-
-- `diff_scans.py`
-  - Compares normalized scan metrics (including aggregate `findings_*` counts, deps, status, ref/sha) and writes JSON + markdown report.
-  - Does **not** diff individual Finding rows.
-  - Inputs: selected pairs JSON (+ optional logs index).
-  - Output object kind: `scan_diff`.
-
 - `search_scan_errors.py`
-  - Standalone: regex search over **embedded** `spec.logs` lines in a bounded scan window (no ScanLogRequest API).
-  - Inputs: project selector or tenant-wide, error regex.
+  - Regex search over **embedded** `spec.logs` in a bounded scan window — **run before** `fetch_scan_logs` when status is partial/failed.
   - Output object kind: `scan_error_hits`.
 
+- `diff_scans.py`
+  - Compares normalized scan metrics (status, deps, findings totals, ref/sha). Does **not** diff Finding rows or `resolution_errors`.
+  - Output object kind: `scan_diff`.
+
+- `fetch_scan_logs.py`
+  - ScanLog API via `ScanResult.get_logs`; falls back to embedded `spec.logs` when API returns no rows **or hollow messages** (timestamp/level only).
+  - Output object kinds: `scan_log`, `scan_logs`.
+
+- `pull_scan_logs.py`
+  - Paginated full log pull for deep RCA / `summarize_scan_triage`.
+
+- `summarize_scan_triage.py`
+  - Markdown triage summary from `pull_scan_results` + `pull_scan_logs` artifacts.
+
 - `run_troubleshooting_workflow.py`
-  - End-to-end orchestrator chaining the steps above.
-  - **`--regression-only`:** `--scan-window 2`, latest pair, skip logs and diff when heuristic score is zero.
+  - End-to-end orchestrator (heuristic path).
+  - **`--regression-only`:** `--scan-window 2`, latest pair, skip logs/diff when heuristic score is zero.
   - **`--emit-diff`:** with `--regression-only`, still write diff when regression detected.
 
 ## Fast path examples
 
-Project-specific RCA from project name:
+From app scan-history URL (explicit pair):
 
 ```bash
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.run_troubleshooting_workflow \
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.search_projects \
   --tenant <tenant> \
-  --project-name "https://github.com/endorlabs/endorlabs-sdk" \
-  --limit 30 \
+  --endor-app-url "https://app.endorlabs.com/t/<namespace>/scan-history/<scan-uuid>"
+
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.build_scan_pair \
+  --tenant <tenant> \
+  --project-uuid <project-uuid> \
+  --primary-scan-result-url "<bad-scan-url>" \
+  --secondary-scan-result-url "<good-scan-url>" \
+  --timestamped
+
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.search_scan_errors \
+  --tenant <tenant> \
+  --project-uuid <project-uuid> \
+  --error-pattern "Unable to resolve|dependency-resolution|sbt|STATUS_" \
+  --limit 10
+
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.diff_scans \
+  --tenant <tenant> \
+  --namespace <project-namespace> \
+  --input-pairs <pairs-json> \
   --timestamped
 ```
 
-Fast regression check (latest pair only, logs only when heuristic score > 0):
+Heuristic regression from project name:
 
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.run_troubleshooting_workflow \
   --tenant <tenant> \
-  --project-name "https://github.com/endorlabs/endorlabs-sdk" \
+  --project-name "https://github.com/org/repo" \
   --scan-window 2 \
-  --regression-only
+  --regression-only \
+  --emit-diff
 ```
 
 Tenant-wide error signature search:
@@ -157,29 +244,35 @@ uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.searc
   --limit 20
 ```
 
-Manual step-by-step mode (stop at any step):
+## Hand off to finding-level drill-down
 
-```bash
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.resolve_projects --tenant <tenant> --project-name "https://github.com/endorlabs/endorlabs-sdk"
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results --tenant <tenant> --project-name "https://github.com/endorlabs/endorlabs-sdk" --limit 30
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.select_anomalous_scans --input-summary <summary-json> --root-tenant <tenant> --project-uuid <project-uuid>
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_logs --tenant <tenant> --namespace <project-namespace> --project-uuid <project-uuid> --input-pairs <pairs-json>
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.diff_scans --tenant <tenant> --namespace <project-namespace> --input-pairs <pairs-json>
+After diff, use scan UUIDs from the pairs artifact with [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md):
+
+```python
+scan = client.ScanResult.get(scan_uuid, namespace=project_ns)
+findings = client.Finding.list_for_context(scan, max_pages=5)
 ```
 
-After diff: use primary/secondary scan UUIDs from the pairs artifact with [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) (`context.scan_uuid` filter) for finding-level drill-down.
+Do **not** filter on `context.scan_uuid` — see [resource-discovery contract](../../contracts/resource-discovery.md).
 
 ## Interpretation hints
 
-- `scan_success` drop to zero + `dependency_count_total` collapse usually indicates dependency-resolution pipeline failure.
-- Compare `endorctl_version`, scan status, and dependency metrics first.
-- Use `search_scan_errors.py` with ecosystem-specific patterns to confirm signature recurrence.
+- `scan_success` drop + `dependency_count_total` collapse → dependency-resolution pipeline failure; check embedded logs and PV `resolution_errors`.
+- Compare `endorctl_version`, scan status, `RunBySystem`, and dependency metrics first.
+- Use `search_scan_errors.py` with ecosystem-specific patterns before pulling full ScanLog streams.
+- Empty `package defined in ''` in embedded logs → root build unit (e.g. root `build.sbt` / `pom.xml`).
+
+## Related skills
+
+| Need | Skill |
+| ---- | ----- |
+| Finding rows for a scan plane | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) |
+| CLI vs Cloud scan config | [endor-cli-vs-cloud-projects](../endor-cli-vs-cloud-projects/SKILL.md) |
+| Branch/sha fixed vs present | [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) |
+| Tenant-wide PV resolution errors | [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md) |
 
 ## Recommended defaults
 
-- Fast regression check:
-  - `--scan-window 2 --regression-only`
-- Full RCA:
-  - `--scan-window 30` (or `50` for noisier repos)
-- Emit diff in regression-only mode only when needed:
-  - add `--emit-diff`
+- Fast regression check: `--scan-window 2 --regression-only`
+- Full RCA: `--scan-window 30` (or `50` for noisier repos)
+- Emit diff in regression-only mode when needed: add `--emit-diff`
