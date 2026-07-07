@@ -7,10 +7,10 @@ from typing import Any, cast
 
 from endorlabs.operations.list_response import (
     GroupBucket,
+    buckets_to_counts,
     count_from_wire,
     iter_group_buckets_from_pages,
 )
-from endorlabs.workflows.logs.group_by_time import buckets_to_counts
 
 from .normalize import normalize_reference_rows
 
@@ -82,16 +82,6 @@ def next_page_token(result: Any) -> int | None:
     return int(raw)
 
 
-def group_next_page_token(result: Any) -> int | None:
-    """Return ``group_response.response.next_page_token`` when grouped."""
-    grp = extract_group_response(result)
-    resp = wire_dict(grp.get("response"))
-    raw = resp.get("next_page_token")
-    if raw is None:
-        return None
-    return int(raw)
-
-
 def iter_group_buckets(result: Any) -> Iterator[GroupBucket]:
     """Yield grouped buckets from one Query.create page."""
     grp = extract_group_response(result)
@@ -108,11 +98,6 @@ def parse_group_bucket_counts(
     """Map grouped time bucket keys to counts (``group`` / ``group_by_time``)."""
     buckets = list(iter_group_buckets(result))
     return buckets_to_counts(buckets, time_path=time_path)
-
-
-def parse_group_bucket_keys(result: Any) -> list[str]:
-    """Return raw group index keys from one Query page."""
-    return [bucket.key for bucket in iter_group_buckets(result)]
 
 
 def reference_block(project_obj: dict[str, Any], ref_key: str) -> dict[str, Any]:
@@ -240,11 +225,9 @@ __all__ = [
     "extract_query_objects",
     "extract_query_response",
     "extract_query_response_objects",
-    "group_next_page_token",
     "iter_group_buckets",
     "next_page_token",
     "parse_group_bucket_counts",
-    "parse_group_bucket_keys",
     "parse_normalized_query_objects",
     "parse_project_multi_reference_counts",
     "parse_project_reference_counts",

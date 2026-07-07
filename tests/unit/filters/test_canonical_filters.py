@@ -37,3 +37,11 @@ def test_estate_findings_filter_includes_sca_and_vuln() -> None:
     filt = estate_findings_filter()
     assert "FINDING_CATEGORY_SCA" in filt
     assert "FINDING_CATEGORY_VULNERABILITY" in filt
+
+
+def test_project_scoped_filter_single_source() -> None:
+    from endorlabs.filters.project_scope import project_scoped_filter as filters_fn
+    from endorlabs.tools.list_sharding import project_scoped_filter as tools_fn
+
+    base = 'spec.level=="FINDING_LEVEL_HIGH"'
+    assert tools_fn(base, "p1") == filters_fn(base, "p1")

@@ -59,7 +59,6 @@ from .resources.policy import CreatePolicyPayload, Policy
 from .resources.policy_template import PolicyTemplate
 from .resources.pr_comment_config import CreatePRCommentConfigPayload, PRCommentConfig
 from .resources.project import CreateProjectPayload, Project
-from .resources.query import Query
 from .resources.query_malware import CreateQueryMalwarePayload, QueryMalware
 from .resources.query_similar_packages import QuerySimilarPackages
 from .resources.query_vulnerability import (
@@ -1382,39 +1381,6 @@ class _ProjectFacade(ProjectFacade):
         is_archived: Any | None = None,
         **kwargs: Any,
     ) -> Project: ...
-
-class _QueryFacade(ResourceRuntimeFacade[Query]):
-    """Consumer facade model for Query (generated wire shape).
-
-    Create mode: payload-only.
-    """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        ci_run_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[Query] | list[dict[str, Any]]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
 
 class _QueryMalwareFacade(ResourceRuntimeFacade[QueryMalware]):
     """Advanced malware query endpoint.

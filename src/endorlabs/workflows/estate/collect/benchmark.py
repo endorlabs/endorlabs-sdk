@@ -37,7 +37,7 @@ LOGGER = get_resource_logger(__name__)
 
 
 def _session_user_slug(client: endorlabs.Client) -> str:
-    who = client.whoami() or ""
+    who = str(client.whoami())
     local = who.split("@", 1)[0].strip().lower()
     safe = "".join(c if c.isalnum() or c in "._-" else "-" for c in local)
     return safe or "agent"

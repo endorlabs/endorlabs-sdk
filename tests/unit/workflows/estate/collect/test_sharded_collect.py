@@ -11,14 +11,7 @@ from endorlabs.tools.list_sharding import (
     parallel_map_shards,
     project_dict_to_shard,
     project_model_to_shard,
-    resolve_worker_count,
 )
-
-
-def test_resolve_worker_count_caps_to_shards() -> None:
-    assert resolve_worker_count(16, 0) == 1
-    assert resolve_worker_count(16, 5) == 5
-    assert resolve_worker_count(3, 10) == 3
 
 
 def test_project_dict_to_shard_uses_tenant_meta_namespace() -> None:

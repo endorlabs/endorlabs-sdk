@@ -520,10 +520,6 @@ def build_publisher_index(
                 plane="query",
                 projects=scoped,
                 shape=OutputShape.COUNT_BY_PROJECT,
-                namespace=namespace,
-                facade=client.PackageVersion,
-                filter_expr=pv_filter,
-                traverse=True,
                 logger=LOGGER,
             )
         except Exception as exc:

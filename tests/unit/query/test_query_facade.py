@@ -44,6 +44,39 @@ def test_query_execute_delegates_to_executor() -> None:
     assert counts == {"proj-a": 42, "proj-b": 7}
 
 
+def test_query_project_count_findings_by_severity() -> None:
+    fixture = {
+        "spec": {
+            "query_response": {
+                "list": {
+                    "objects": [
+                        {
+                            "uuid": "p1",
+                            "meta": {
+                                "references": {
+                                    "CriticalVulnerabilityFindingsCount": {
+                                        "count_response": {"count": 2}
+                                    },
+                                    "HighVulnerabilityFindingsCount": {
+                                        "count_response": {"count": 5}
+                                    },
+                                }
+                            },
+                        }
+                    ]
+                }
+            }
+        }
+    }
+    api = MagicMock()
+    facade = QueryFacade(api, "tenant")
+    api.Query = facade
+    facade.create = MagicMock(return_value=fixture)
+    projects = [MagicMock(uuid="p1", namespace="tenant.child")]
+    counts = facade.Project.count_findings_by_severity(projects)
+    assert counts == {"p1": {"CRITICAL": 2, "HIGH": 5}}
+
+
 def test_query_at_namespace_merges_pages() -> None:
     from endorlabs.query.spec import QuerySpec
 
