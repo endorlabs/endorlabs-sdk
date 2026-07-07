@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-07T20:53:35.679426+00:00",
+  "generated_at": "2026-07-07T22:18:38.944080+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -118,7 +118,7 @@
     {
       "id": "endor-portable-examples",
       "path": "rules/endor-portable-examples.md",
-      "summary": "Use placeholders in git-tracked agent content; never commit customer estate identifiers (tenants, project URLs, production UUIDs).",
+      "summary": "Use placeholders in git-tracked agent content; never commit customer estate identifiers, PII, or secrets (tenants, project URLs, production UUIDs, emails).",
       "tags": [
         "examples",
         "hygiene",

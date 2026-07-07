@@ -18,6 +18,12 @@
 
 **PR title hint (optional):** `feat(cli): …` · `fix(sdk): …` · `chore(model-sync): …` (usually `none` for changelog)
 
+## PR checklist
+
+- [ ] Opened as a **draft** PR for review (`gh pr create --draft`) unless explicitly ready to merge
+- [ ] Reviewed docstrings, CLI `help=` text, and comments in the diff for freshness (paths, flags, defaults)
+- [ ] No secrets, tokens, or customer PII/estate identifiers in the diff
+
 ## Test plan
 
 - [ ] <!-- e.g. uv run pytest … -->

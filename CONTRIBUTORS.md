@@ -24,6 +24,27 @@ Alternatively: `uv venv` then `uv pip install -e .` and install dev dependencies
 
 If `uv sync` fails on version metadata (`0.1.1.dev19 can't be bumped`), see [docs/contributing/release-publishing.md](docs/contributing/release-publishing.md) and run `uv run python devtools/check_vcs_version.py`.
 
+## Before you commit / open a PR
+
+Human checklist (automation: [.pre-commit-config.yaml](.pre-commit-config.yaml); PR body: [.github/pull_request_template.md](.github/pull_request_template.md)).
+
+### Before commit
+
+- [ ] **Hooks installed** — `uv run pre-commit install` and `uv run pre-commit install --hook-type pre-push` (see [Setup](#setup)).
+- [ ] **Agent-knowledge** — after `agent-knowledge/` edits: `uv run python devtools/sync_agent_knowledge.py` and commit `src/endorlabs/agent_knowledge/`.
+- [ ] **Docs freshness** — grep changed paths for stale layout or CLI strings (`workspace/sessions/`, removed `devtools/` scripts, wrong flags such as `endor-auth refresh --sso` vs `--method sso`). Align docstrings, argparse `help=`, and comments with current code (see shipped rule `endor-workspace-layout`, [docs-skillbase-consistency](.cursor/rules/docs-skillbase-consistency.mdc)).
+- [ ] **No secrets or customer data** — never commit `.env`, tokens, API keys, or customer estate identifiers (tenants, production UUIDs, registered repo URLs, emails). Pre-commit runs **gitleaks** on staged files; see rule `endor-portable-examples`.
+- [ ] **Changelog** — user-visible changes: one bullet under `docs/changelog.md` → **Unreleased** (policy: [agent-knowledge/rules/endor-changelog.md](agent-knowledge/rules/endor-changelog.md)).
+- [ ] **Pre-commit passes** — `uv run pre-commit run --all-files` (or let the commit hook run: ruff, pyright, unit pytest, ship-artifacts verify when applicable).
+
+### Opening a pull request
+
+- [ ] **Draft first** — open as a **draft** PR unless you are explicitly ready to merge (`gh pr create --draft`).
+- [ ] **PR template** — fill Summary, changelog intake, and Test plan in [.github/pull_request_template.md](.github/pull_request_template.md).
+- [ ] **Pre-push** — before `git push`: upstream ship-artifacts verify, model-sync contract validate, and bandit (pre-push hooks; needs network for `--fetch-spec`).
+
+Maintainer invariants (stdout, typing, `endorctl scan`, portable examples): [docs/contributing/repository-layout.md](docs/contributing/repository-layout.md#maintainer-invariants).
+
 ## Environment
 
 The SDK uses environment variables only (no config file loading). Set these for local development:
