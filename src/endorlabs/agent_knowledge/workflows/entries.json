@@ -15,6 +15,23 @@
   },
   {
     "agent_visible": true,
+    "cli": null,
+    "default_output": null,
+    "id": "auth-login-count",
+    "library_entrypoints": [
+      "endorlabs.workflows.auth.aggregate_login_activity_from_groups",
+      "endorlabs.workflows.auth.fetch_authentication_logs",
+      "endorlabs.workflows.auth.aggregate_login_activity",
+      "endorlabs.workflows.auth.authentication_log_row_to_dict",
+      "endorlabs.workflows.auth.extract_user_identifiers",
+      "endorlabs.workflows.auth.is_api_key_noise",
+      "endorlabs.workflows.auth.is_sso_login_uri"
+    ],
+    "module": "endorlabs.workflows.auth.authentication_log",
+    "skill": "endor-auth-login-count"
+  },
+  {
+    "agent_visible": true,
     "cli": "endor-callgraph-path",
     "composition": "library_api",
     "default_output": "stdout or caller path",

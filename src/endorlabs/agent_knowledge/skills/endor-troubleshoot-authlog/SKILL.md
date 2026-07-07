@@ -50,6 +50,11 @@ policies = client.AuthorizationPolicy.list(traverse=True, max_pages=2)
 For structured exports, write JSON under `.endorlabs-context/workspace/sessions/<user>/`
 (see [workspace-layout](../../rules/endor-workspace-layout.md)).
 
+For **tenant-wide login activity counts** (identity, last login, count in N days),
+use [endor-auth-login-count](../endor-auth-login-count/SKILL.md) and
+`endorlabs.workflows.auth` helpers (`fetch_authentication_logs`,
+`aggregate_login_activity`).
+
 ## Interpretation notes (for agents)
 
 - **`spec.claims`** uses list **membership** filters (`contains`); regex on claims is
@@ -61,7 +66,10 @@ For structured exports, write JSON under `.endorlabs-context/workspace/sessions/
   both when reasoning about tenant mapping.
 - **Policy clauses** are **AND**ed within a policy; strings are case-sensitive.
 
-## Relationship to other docs
+## Related skills
 
-- Broader SDK debugging: [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md)
-- Contributing: `docs/contributing/troubleshooting.md`
+| Need | Skill |
+| ---- | ----- |
+| Tenant-wide login count / activity CSV | [endor-auth-login-count](../endor-auth-login-count/SKILL.md) |
+| Broader SDK debugging | [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md) |
+| Contributing | `docs/contributing/troubleshooting.md` |

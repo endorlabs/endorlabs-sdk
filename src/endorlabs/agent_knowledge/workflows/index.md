@@ -5,6 +5,7 @@ Thin index of SDK workflow entry points. See `MANIFEST.json` for machine-readabl
 | ID | CLI | Module | Skill | Default output |
 |----|-----|--------|-------|----------------|
 | agent-context | `endor-agent-context` | `endorlabs.workflows.agent_context.cli` | endor-project-retrieval-bundle | .endorlabs-context/workspace/projects/<slug>_<timestamp>/ |
+| auth-login-count | `—` | `endorlabs.workflows.auth.authentication_log` | endor-auth-login-count | — |
 | callgraph-path | `endor-callgraph-path` | `endorlabs.workflows.callgraph.path_cli` | — | stdout or caller path |
 | callgraph-search | `endor-callgraph-search` | `endorlabs.workflows.callgraph.search` | endor-fetch-and-search-call-graph | stdout or caller path |
 | context-bootstrap | `endor-context` | `endorlabs.context.cli` | — | .endorlabs-context/ |

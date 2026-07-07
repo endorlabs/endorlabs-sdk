@@ -8,6 +8,8 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- Agent skill `endor-auth-login-count` and `endorlabs.workflows.auth` — AuthenticationLog login-activity CSV via tenant list-path `list_groups` on `spec.claims` with interactive URI filter.
+
 ### Changed
 
 ### Breaking

@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-07T17:07:54.279177+00:00",
+  "generated_at": "2026-07-07T18:17:56.203229+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -149,6 +149,15 @@
   "schema_version": 2,
   "sdk_version": "0.5.1.dev1",
   "skills": [
+    {
+      "description": "Aggregate AuthenticationLog login activity by user identity over a configurable lookback window (default 90 days). Outputs a CSV with identity, user identifiers, last login, and login count. Shares workflow helpers with auth troubleshooting skills. Use for tenant login-activity audits\u2014not for SSO policy mapping or per-user auth RCA.",
+      "id": "endor-auth-login-count",
+      "name": "endor-auth-login-count",
+      "path": "skills/endor-auth-login-count/SKILL.md",
+      "refs": [
+        "skills/endor-auth-login-count/scripts/login_count_report.py"
+      ]
+    },
     {
       "description": "Author or update a shipped agent skill under agent-knowledge/skills/: portable frontmatter, optional endorlabs.catalog workflow linkage, composition handoffs, sync, and drift verification. Use when adding skills, fixing sync validation errors, or migrating workflow catalog metadata\u2014not for extending SDK resources (endor-implement-sdk-resource) or runtime API troubleshooting.",
       "id": "endor-author-agent-skill",
@@ -356,6 +365,23 @@
       ],
       "module": "endorlabs.workflows.agent_context.cli",
       "skill": "endor-project-retrieval-bundle"
+    },
+    {
+      "agent_visible": true,
+      "cli": null,
+      "default_output": null,
+      "id": "auth-login-count",
+      "library_entrypoints": [
+        "endorlabs.workflows.auth.aggregate_login_activity_from_groups",
+        "endorlabs.workflows.auth.fetch_authentication_logs",
+        "endorlabs.workflows.auth.aggregate_login_activity",
+        "endorlabs.workflows.auth.authentication_log_row_to_dict",
+        "endorlabs.workflows.auth.extract_user_identifiers",
+        "endorlabs.workflows.auth.is_api_key_noise",
+        "endorlabs.workflows.auth.is_sso_login_uri"
+      ],
+      "module": "endorlabs.workflows.auth.authentication_log",
+      "skill": "endor-auth-login-count"
     },
     {
       "agent_visible": true,

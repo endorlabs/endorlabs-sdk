@@ -60,6 +60,7 @@ Generic entrypoints (no estate literals):
 - `endorlabs.filters` — canonical main-context and finding MQL fragments (replaces removed `workflows.findings.filters` submodule)
 - `endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis` — FindingLog CREATE/DELETE weekly chart data (online aggregated)
 - `endorlabs.workflows.logs.group_by_time.group_by_time_counts` — generic log `list_groups` + `group_by_time` aggregation
+- `endorlabs.workflows.auth.fetch_authentication_logs` / `aggregate_login_activity` — AuthenticationLog login-activity aggregation
 - `endorlabs.workflows.projects.inventory.fetch_installation_lookup` — Installation external_id lookup for CLI vs app classification
 - `endorlabs.workflows.common.WorkflowResult`
 - `endorlabs.workflows.policies.run_validate_policy`
