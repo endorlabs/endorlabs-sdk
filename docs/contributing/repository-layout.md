@@ -103,6 +103,7 @@ When editing `src/endorlabs/**`:
 - **Typing:** public surfaces strict-typed; internal roots ratcheted in [pyproject.toml](../../pyproject.toml).
 - **Security:** credentials via env; run `endorctl scan` before code changes.
 - **Examples in git:** canonical repo `endorlabs/endorlabs-sdk`; no customer tenants/UUIDs in tracked content.
+- **Maintainer tooling:** one home per pre-commit guard; shared staged-path helpers in `devtools/git_staged.py` and `endorlabs.utils.repo_paths` — rule `endor-maintainer-tooling`, [devtools/README.md](../../devtools/README.md).
 
 CI, model-sync, and drift gates: [CONTRIBUTORS.md](../../CONTRIBUTORS.md), [docs-drift-workflow.md](docs-drift-workflow.md), [devtools/sync/README.md](../../devtools/sync/README.md).
 

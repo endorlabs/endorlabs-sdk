@@ -240,8 +240,8 @@ jobs:
       # Keep script list aligned with .pre-commit-config.yaml (ruff-check-ci-critical-automation / pyright-ci-critical-automation).
       - name: Validate CI-critical automation scripts
         run: |
-          uv run ruff check --select E,F,I,UP devtools/model_sync.py devtools/generate_client_stub.py devtools/generate_reference_docs.py devtools/sync_agent_knowledge.py devtools/agent_knowledge_catalog.py devtools/sync/cli.py devtools/sync/upstream_verify.py devtools/verify_ship_artifacts.py .github/scripts/check_endorctl_version.py
-          uv run pyright --project pyproject.toml devtools/model_sync.py devtools/generate_client_stub.py devtools/generate_reference_docs.py devtools/sync_agent_knowledge.py devtools/agent_knowledge_catalog.py devtools/sync/cli.py devtools/sync/upstream_verify.py devtools/verify_ship_artifacts.py .github/scripts/check_endorctl_version.py
+          uv run ruff check --select E,F,I,UP devtools/model_sync.py devtools/generate_client_stub.py devtools/generate_reference_docs.py devtools/sync_agent_knowledge.py devtools/agent_knowledge_catalog.py devtools/sync/cli.py devtools/sync/upstream_verify.py devtools/verify_ship_artifacts.py devtools/git_staged.py devtools/pre_commit_guards.py .github/scripts/check_endorctl_version.py
+          uv run pyright --project pyproject.toml devtools/model_sync.py devtools/generate_client_stub.py devtools/generate_reference_docs.py devtools/sync_agent_knowledge.py devtools/agent_knowledge_catalog.py devtools/sync/cli.py devtools/sync/upstream_verify.py devtools/verify_ship_artifacts.py devtools/git_staged.py devtools/pre_commit_guards.py .github/scripts/check_endorctl_version.py
 
       - name: Run pyright verifytypes (public API type completeness)
         continue-on-error: true  # Non-blocking verifytypes ratchet (see docs/reference/README.md)

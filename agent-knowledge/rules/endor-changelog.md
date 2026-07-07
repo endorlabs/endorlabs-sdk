@@ -79,6 +79,15 @@ Optional structured fields: [`agent-knowledge/schema/changelog-intake.schema.jso
 
 Do **not** auto-generate `docs/changelog.md` from `git log`.
 
+## Automation (commit vs release)
+
+| When | Mechanism | Behavior |
+| ---- | --------- | -------- |
+| **Commit** | `pre_commit_guards changelog-reminder` | Stderr reminder when user-facing paths are staged without `docs/changelog.md` (exit 0) |
+| **Release** | `verify_ship_artifacts --verify-changelog X.Y.Z` | Fails when `## X.Y.Z` section is missing |
+
+Layering and where to add new guards: rule **endor-maintainer-tooling**.
+
 ## Do not
 
 - Add `docs/**/*-migration.md` or long breaking tables outside the changelog.

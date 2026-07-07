@@ -1,0 +1,45 @@
+---
+id: endor-maintainer-tooling
+tags: [maintainer, pre-commit, devtools, ci]
+summary: >-
+  Place maintainer automation in devtools/ or endorlabs.context hooks; share git
+  staged utilities; keep .pre-commit-config.yaml as wiring only; one home per guard.
+---
+
+# Maintainer tooling (pre-commit and devtools)
+
+Repo-only guidance for hooks, guard scripts, and shared helpers. Not shipped in the wheel bootstrap bundle.
+
+## Layering
+
+| Layer | Location | Role |
+| ----- | -------- | ---- |
+| Hook wiring | [`.pre-commit-config.yaml`](../../.pre-commit-config.yaml) | Invoke entrypoints only — no inline shell policy |
+| Path normalization | [`endorlabs.utils.repo_paths`](../../src/endorlabs/utils/repo_paths.py) | POSIX repo-relative paths for hooks and refresh |
+| Git staged listing | [`devtools/git_staged.py`](../../devtools/git_staged.py) | `git diff --cached --name-only` wrapper |
+| Commit guards | [`devtools/pre_commit_guards.py`](../../devtools/pre_commit_guards.py) | Block `.env` / `.endorlabs-context/`; **Unreleased** reminder (stderr, exit 0) |
+| Context refresh | [`src/endorlabs/context/_maintainer_refresh.py`](../../src/endorlabs/context/_maintainer_refresh.py) | Pre-commit bundle sync + local `.endorlabs-context/` refresh (paths via hook argv) |
+| Release gates | [`devtools/verify_ship_artifacts.py`](../../devtools/verify_ship_artifacts.py) | Regen drift; optional `## X.Y.Z` changelog at release (`--verify-changelog`) |
+| Secrets scan | gitleaks + detect-private-key | Content scan — complementary to path block |
+
+## Consolidation rules
+
+1. **One home per invariant** — do not duplicate guard logic in YAML, CONTRIBUTING prose, and a second script. Document policy in this rule and the owning module docstring; checklist bullets link here.
+2. **Dependency direction** — `src/endorlabs/` never imports `devtools/`. Shared path normalization lives in `endorlabs.utils.repo_paths`; devtools scripts import the SDK via `uv run`.
+3. **Thin hooks** — new pre-commit checks: add a subcommand to `pre_commit_guards.py` or a sibling `devtools/*.py` entrypoint; wire with `uv run python devtools/...`; add unit tests under `tests/unit/tooling/scripts/`.
+4. **Changelog split** — commit-time **Unreleased** reminder (`pre_commit_guards changelog-reminder`) ≠ release **version section** gate (`verify_ship_artifacts --verify-changelog`). See rule **endor-changelog**.
+5. **Docs vs code** — human grep checklists stay in `docs-skillbase-consistency` / [CONTRIBUTORS.md](../../CONTRIBUTORS.md); automate only when the check is stable and low false-positive.
+
+## Adding a guard
+
+1. Implement the check in `devtools/pre_commit_guards.py` (or extend `git_staged.py` when only listing/normalizing paths).
+2. Add a hook to `.pre-commit-config.yaml`. Use `always_run: true` only when the check needs the full staged set independent of the hook `files:` filter.
+3. Test in `tests/unit/tooling/scripts/` (`test_pre_commit_guards.py` or `test_git_staged.py`).
+4. Update [CONTRIBUTORS.md](../../CONTRIBUTORS.md) with a link to this rule — not a second copy of the policy.
+5. Add new devtools modules to the CI-critical ruff/pyright hook list in `.pre-commit-config.yaml` when applicable.
+
+## Related
+
+- [devtools/README.md](../../devtools/README.md) — devtools map
+- [docs/contributing/repository-layout.md](../../docs/contributing/repository-layout.md#maintainer-invariants) — maintainer invariants
+- Rule **endor-changelog** — what belongs under **Unreleased**
