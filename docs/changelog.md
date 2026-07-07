@@ -8,6 +8,16 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+### Changed
+
+### Breaking
+
+## 0.5.0
+
+Query module, canonical filters, estate Query migration, and agent-knowledge expansion. Generated models pinned to **endorctl `v1.7.1037`**.
+
+### Added
+
 - **`client.Query` / `client.Query.Project`** — generic graph joins (`execute`, `at_namespace`, `create`) and project-scoped recipes (`count_pv`, `count_dm`, `count_findings_by_category`, `count_findings_by_severity`, `collect_estate_findings`, `discover`, `validate_sample`).
 - **`endorlabs.query`** — `QuerySpec`, `QueryExecutor`, `QueryScope`, `TopologySnapshot`, `discover_topology`, `preflight_count`, routing/validation helpers. Guide: [docs/guides/query-recipes.md](guides/query-recipes.md). Contract: `query-vs-list-semantics`. Skill: `endor-route-estate-queries`.
 - **`endorlabs.filters`** — canonical main-context, finding category/severity, and project-scope MQL fragments.
