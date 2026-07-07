@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: fad2b9973c0853f9db4ca0b5f043d8c4a1466cfa3112336e77751858ba0a2978
+x-endor-source-sha256: 1a55e4f30fe75ad7974f51f746992b56ea7348b395a9be197fd72bb48cea5dc9
 ---
 
 # Workflow composition
@@ -64,7 +64,7 @@ Generic entrypoints (no estate literals):
 - `endorlabs.filters` — canonical main-context and finding MQL fragments
 - `endorlabs.workflows.estate.fetch_online_dashboard_counts` — online Query tiles for estate dashboard
 - `client.Project.is_app()` / `.is_cli()` / `.is_sbom()` — project registration inventory (see [facade-helpers.md](../../docs/guides/facade-helpers.md))
-- `endorlabs.workflows.findings.filters` — **deprecated**; prefer `endorlabs.filters`
+- `endorlabs.filters` — canonical main-context and finding MQL fragments (replaces removed `workflows.findings.filters` submodule)
 - `endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis` — FindingLog CREATE/DELETE weekly chart data (online aggregated)
 - `endorlabs.workflows.logs.group_by_time.group_by_time_counts` — generic log `list_groups` + `group_by_time` aggregation
 - `endorlabs.workflows.projects.inventory.fetch_installation_lookup` — Installation external_id lookup for CLI vs app classification

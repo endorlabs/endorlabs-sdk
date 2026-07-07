@@ -208,17 +208,6 @@ class QuerySpec:
         uuid_filter = project_uuid_in_filter(list(keys))
         if uuid_filter:
             existing = lp.get("filter")
-            lp["filter"] = f"{existing} AND {uuid_filter}" if existing else uuid_filter
-        wire["list_parameters"] = lp
-        return wire
-
-    def with_page_token(self, page_token: int | None) -> dict[str, Any]:
-        """Return wire spec with root ``list_parameters.page_token`` set."""
-        wire = self.to_wire()
-        lp = dict(wire.get("list_parameters") or {})
-        if page_token is None:
-            lp.pop("page_token", None)
-        else:
-            lp["page_token"] = page_token
+            lp["filter"] = f"{existing} and {uuid_filter}" if existing else uuid_filter
         wire["list_parameters"] = lp
         return wire

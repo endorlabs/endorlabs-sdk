@@ -133,6 +133,48 @@ def test_validate_sample_pv_match() -> None:
     assert result.matched is True
 
 
+def test_validate_sample_severity_match() -> None:
+    projects = [SimpleNamespace(uuid="p1", namespace="tenant.leaf")]
+
+    class _Query:
+        def create(self, *, payload: Any, namespace: str) -> dict[str, Any]:
+            _ = payload
+            return {
+                "spec": {
+                    "query_response": {
+                        "list": {
+                            "objects": [
+                                {
+                                    "uuid": "p1",
+                                    "meta": {
+                                        "references": {
+                                            "CriticalVulnerabilityFindingsCount": {
+                                                "count_response": {"count": 1}
+                                            },
+                                            "HighVulnerabilityFindingsCount": {
+                                                "count_response": {"count": 2}
+                                            },
+                                        }
+                                    },
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+
+    client = SimpleNamespace(
+        Query=_Query(),
+        Finding=SimpleNamespace(
+            count=lambda *, namespace, filter: (  # noqa: ARG005
+                1 if "FINDING_LEVEL_CRITICAL" in filter else 2
+            )
+        ),
+    )
+    result = validate_sample(client, projects, recipe="severity", sample_size=1)
+    assert result.matched is True
+
+
 def test_query_facade_delegates_create_to_inner() -> None:
     inner = MagicMock()
     inner.create.return_value = {"uuid": "q1"}

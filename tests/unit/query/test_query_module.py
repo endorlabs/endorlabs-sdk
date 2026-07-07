@@ -7,7 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from endorlabs.filters import to_query_filter
+from endorlabs.filters import project_uuid_in_filter, to_query_filter
 from endorlabs.query import (
     QueryExecutor,
     QuerySpec,
@@ -20,7 +20,6 @@ from endorlabs.query import (
     parse_project_multi_reference_counts,
     parse_project_reference_counts,
     parse_project_reference_list_totals,
-    project_uuid_in_filter,
     pv_count_spec,
     query_create_pages,
     reference_total,

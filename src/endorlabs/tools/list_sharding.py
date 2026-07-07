@@ -6,10 +6,23 @@ from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from endorlabs.filters.project_scope import project_scoped_filter
 from endorlabs.tools.parallel_scopes import parallel_over
 from endorlabs.utils.logging_config import get_resource_logger
 
 LOGGER = get_resource_logger(__name__)
+
+__all__ = [
+    "ProjectShard",
+    "list_for_shards",
+    "parallel_map_shards",
+    "parallel_map_shards_iter",
+    "project_dict_to_shard",
+    "project_model_to_shard",
+    "project_scoped_filter",
+    "single_shard_namespace",
+    "topology_to_project_shards",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,15 +41,6 @@ def project_dict_to_shard(project: dict[str, Any], fallback_ns: str) -> ProjectS
     name = (project.get("meta") or {}).get("name")
     label = str(name) if name else None
     return ProjectShard(project_uuid=uuid, namespace=str(ns), label=label)
-
-
-PROJECT_UUID_FILTER_FIELD = "spec.project_uuid"
-
-
-def project_scoped_filter(base_filter: str, project_uuid: str) -> str:
-    """Append a project UUID clause for per-project list shards."""
-    clause = f'{PROJECT_UUID_FILTER_FIELD}=="{project_uuid}"'
-    return f"{base_filter} and {clause}" if base_filter else clause
 
 
 def single_shard_namespace(shards: Sequence[ProjectShard]) -> str | None:
@@ -86,11 +90,6 @@ def topology_to_project_shards(
         label = str(name) if name else None
         shards.append(ProjectShard(project_uuid=uuid, namespace=namespace, label=label))
     return shards
-
-
-def resolve_worker_count(max_workers: int, shard_count: int) -> int:
-    """Cap worker pool size to shard count (minimum 1)."""
-    return max(1, min(max_workers, shard_count or 1))
 
 
 def parallel_map_shards_iter[T](

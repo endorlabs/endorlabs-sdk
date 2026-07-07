@@ -109,7 +109,7 @@ Result: 13 complete weeks ending the week of 2026-06-15.
 
 Library: `endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis`.
 Generic aggregation primitive: `endorlabs.workflows.logs.group_by_time.group_by_time_counts`.
-Filters: `endorlabs.filters.reachable_vuln_log_base_filter()` (legacy: `endorlabs.workflows.findings.filters`).
+Filters: `endorlabs.filters.reachable_vuln_log_base_filter()`.
 
 Bundled script (preferred for agents):
 
@@ -140,7 +140,7 @@ analysis = build_finding_log_new_vs_resolved_analysis(client, "<namespace>", tra
 ```
 
 **Other context types:** When the user asks to include REF, CI, or all contexts,
-adjust the base filter (see `endorlabs.filters` or deprecated `workflows/findings/filters.py`) or replace
+adjust the base filter (see `endorlabs.filters`) or replace
 `context.type==CONTEXT_TYPE_MAIN` with an explicit `context.type in [...]` clause.
 State the chosen context scope in the chart subtitle and footnote.
 

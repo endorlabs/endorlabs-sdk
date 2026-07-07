@@ -7,7 +7,6 @@ from endorlabs.tools.list_sharding import (
     parallel_map_shards,
     project_dict_to_shard,
     project_model_to_shard,
-    resolve_worker_count,
 )
 
 from .bounds import (
@@ -46,6 +45,5 @@ __all__ = [
     "project_dict_to_shard",
     "project_model_to_shard",
     "resolve_max_pages",
-    "resolve_worker_count",
     "truncation_message",
 ]

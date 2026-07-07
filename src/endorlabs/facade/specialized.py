@@ -476,5 +476,4 @@ class QueryFacade:
             namespace=namespace,
             parse_page=parse,
             merge_pages=merge,
-            max_pages=max_pages,
         )

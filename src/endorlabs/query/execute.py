@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from endorlabs.resources.query import CreateQueryPayload
 
-from .parse import extract_query_objects, next_page_token
+from .parse import next_page_token
 
 if TYPE_CHECKING:
     from .scope import QueryScope
@@ -274,26 +274,3 @@ class QueryExecutor:
         )
         parsed = [parse_page(page) for page in pages]
         return merge_pages(parsed)
-
-    def collect_objects_at_namespace(
-        self,
-        spec: QuerySpec,
-        *,
-        namespace: str,
-        max_pages: int | None = None,
-    ) -> list[dict[str, Any]]:
-        """Return all root-kind objects across paginated Query pages."""
-
-        def _merge(pages: list[list[dict[str, Any]]]) -> list[dict[str, Any]]:
-            out: list[dict[str, Any]] = []
-            for page_rows in pages:
-                out.extend(page_rows)
-            return out
-
-        return self.run_at_namespace(
-            spec,
-            namespace=namespace,
-            parse_page=extract_query_objects,
-            merge_pages=_merge,
-            max_pages=max_pages,
-        )

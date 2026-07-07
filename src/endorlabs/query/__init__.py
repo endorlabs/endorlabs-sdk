@@ -12,16 +12,6 @@ POST URL namespace must match each project's wire namespace
 (``tenant_meta.namespace``); ``QueryScope`` carries namespace + optional UUID keys.
 """
 
-from endorlabs.filters import (
-    CATEGORY_QUERY_REFS,
-    FINDING_CATEGORIES,
-    category_filter,
-    project_uuid_in_filter,
-    pv_count_filter,
-    pv_main_context_filter,
-)
-from endorlabs.filters.query_wire import to_query_filter
-
 from .execute import (
     UUID_BATCH_SIZE,
     QueryExecutor,
@@ -47,7 +37,7 @@ from .parse import (
     reference_list_total,
     reference_total,
 )
-from .preflight import preflight_count, query_preflight_count
+from .preflight import preflight_count
 from .recipes import (
     dm_count_spec,
     estate_findings_list_spec,
@@ -71,8 +61,6 @@ from .validate import ValidationResult, validate_sample
 from .wire import group_by_time_query_wire, group_query_wire
 
 __all__ = [
-    "CATEGORY_QUERY_REFS",
-    "FINDING_CATEGORIES",
     "UUID_BATCH_SIZE",
     "DiscoveredProject",
     "NamespaceGeometry",
@@ -84,7 +72,6 @@ __all__ = [
     "Reference",
     "TopologySnapshot",
     "ValidationResult",
-    "category_filter",
     "discover_topology",
     "dm_count_spec",
     "estate_findings_list_spec",
@@ -110,19 +97,14 @@ __all__ = [
     "prf_findings_list_spec",
     "project_namespace",
     "project_uuid",
-    "project_uuid_in_filter",
-    "pv_count_filter",
     "pv_count_spec",
-    "pv_main_context_filter",
     "query_create",
     "query_create_pages",
-    "query_preflight_count",
     "query_scopes_from_topology",
     "recommend",
     "reference_count",
     "reference_list_total",
     "reference_total",
     "scopes_from_projects",
-    "to_query_filter",
     "validate_sample",
 ]
