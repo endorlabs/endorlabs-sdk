@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-06T21:30:14.376157+00:00",
+  "generated_at": "2026-07-07T00:24:02.815528+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -166,15 +166,6 @@
         "skills/endor-chart-new-vs-resolved-findings/scripts/paths.py",
         "skills/endor-chart-new-vs-resolved-findings/scripts/run_analysis.py",
         "skills/endor-chart-new-vs-resolved-findings/scripts/run_report.py"
-      ]
-    },
-    {
-      "description": "Tenant-wide audit of projects whose latest scan within a recent window ran via CLI endorctl (not agentless Cloud scans). Aggregates project counts by endorctl version from ScanResult.spec.environment.endorctl_version. Use when checking CI endorctl adoption, stale CLI versions, or version-specific rollout status\u2014not for scan pipeline RCA or Cloud vs CLI registration classification alone.",
-      "id": "endor-ci-endorctl-version-audit",
-      "name": "endor-ci-endorctl-version-audit",
-      "path": "skills/endor-ci-endorctl-version-audit/SKILL.md",
-      "refs": [
-        "skills/endor-ci-endorctl-version-audit/scripts/audit_ci_endorctl_versions.py"
       ]
     },
     {
