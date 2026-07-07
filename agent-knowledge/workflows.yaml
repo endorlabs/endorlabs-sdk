@@ -11,7 +11,7 @@ workflows:
     cli: null
     module: endorlabs.workflows.estate.collect.benchmark
     skill: null
-    default_output: .endorlabs-context/workspace/sessions/<user>/exports/collect-strategy-spike/
+    default_output: .endorlabs-context/workspace/runs/collect-strategy-spike/
     agent_visible: false
   - id: estate-workspace
     cli: endor-estate

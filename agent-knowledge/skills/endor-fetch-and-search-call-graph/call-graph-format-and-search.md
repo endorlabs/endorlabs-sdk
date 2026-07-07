@@ -203,4 +203,4 @@ result = find_call_graph_path(
 )
 ```
 
-Session-only glue may live under `.endorlabs-context/workspace/sessions/<user>/scripts/` when no workflow covers the case.
+Session-only glue may live under `.endorlabs-context/workspace/runs/scratch/` when no workflow covers the case.

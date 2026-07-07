@@ -14,11 +14,20 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
+from endorlabs.context.paths import default_runs_dir, sanitize_path_segment
 from endorlabs.tools.list_sharding import ProjectShard, parallel_map_shards
 from endorlabs.workflows.projects.inventory import (
     extract_run_by_system,
     scan_execution_label,
 )
+
+RUN_BUCKET = "ci-endorctl-version-audit"
+
+
+def default_ci_endorctl_csv(tenant: str) -> Path:
+    safe = sanitize_path_segment(tenant)
+    return default_runs_dir(RUN_BUCKET) / f"{safe}-ci-endorctl-versions.csv"
+
 
 SCAN_AUDIT_MASK = (
     "spec.environment.config.RunBySystem,"
@@ -324,10 +333,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    output = args.output or Path(
-        ".endorlabs-context/workspace/sessions/agent/exports/"
-        f"ci-endorctl-version-audit/{args.tenant}-ci-endorctl-versions.csv"
-    )
+    output = args.output or default_ci_endorctl_csv(args.tenant)
 
     client = endorlabs.Client(tenant=args.tenant)
     cutoff = datetime.now(tz=UTC) - timedelta(days=args.days)

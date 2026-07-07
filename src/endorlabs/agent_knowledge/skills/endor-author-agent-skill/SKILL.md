@@ -76,8 +76,7 @@ When the skill is compositional, heuristic, or part of a multi-skill RCA path, a
 - **Related skills** (direct handoffs only)
 - Optional **When to use this skill vs others** routing table
 - Optional **Optional stops** for artifact chains
-
-See [Skill composition and handoffs](../../schema/README.md#skill-composition-and-handoffs). When skill A hands off to B, update B's **Related skills** in the same PR unless B has nothing to send back.
+- **Outputs** — run bucket + default path + override flags (see [workspace-layout](../../rules/endor-workspace-layout.md)) When skill A hands off to B, update B's **Related skills** in the same PR unless B has nothing to send back.
 
 **Portable examples:** use placeholders (`<tenant>`, `<namespace>`, `<project-uuid>`) — never commit estate identifiers. See [endor-portable-examples](../../rules/endor-portable-examples.md).
 

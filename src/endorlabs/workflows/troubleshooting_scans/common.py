@@ -10,16 +10,16 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from endorlabs.context.paths import workflow_sessions_root
+from endorlabs.context.paths import default_runs_dir
 from endorlabs.utils.path_safety import safe_write_text
 
-_DEFAULT_SESSION_USER = "agent"
+RUN_BUCKET = "troubleshooting-scans"
 
 
 def default_troubleshooting_output_dir(*, user: str | None = None) -> str:
-    """Default RCA/triage directory under workspace/sessions/<user>/troubleshooting/."""
-    slug = (user or _DEFAULT_SESSION_USER).strip() or _DEFAULT_SESSION_USER
-    return str(workflow_sessions_root(user=slug, subdir="troubleshooting"))
+    """Default RCA/triage directory under ``workspace/runs/troubleshooting-scans/``."""
+    _ = user  # legacy param; user slug no longer in path
+    return str(default_runs_dir(RUN_BUCKET))
 
 
 def iso_now_compact() -> str:

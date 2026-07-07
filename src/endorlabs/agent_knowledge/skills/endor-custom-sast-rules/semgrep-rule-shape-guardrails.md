@@ -52,8 +52,8 @@ when a positive cap is hit.
 
 Outputs:
 
-- `.endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json`
-- `.endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.md`
+- `.endorlabs-context/workspace/inventory/semgrep_rule_metadata_inventory.json`
+- `.endorlabs-context/workspace/inventory/semgrep_rule_metadata_inventory.md`
 
 The JSON contains per-key prevalence and representative **`SemgrepRule`** examples
 (`meta.name`, `defined_by`, `uuid`) to help decide which fields should be

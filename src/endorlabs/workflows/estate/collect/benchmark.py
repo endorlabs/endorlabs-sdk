@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Benchmark DependencyMetadata collect strategies (S0/S1/S2) for one namespace.
 
-Writes results under ``.endorlabs-context/workspace/sessions/<user>/exports/collect-strategy-spike/``.
+Writes results under ``.endorlabs-context/workspace/runs/collect-strategy-spike/``.
 Run locally; not part of the default compile-graph pipeline.
 """
 
@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.context.paths import workflow_sessions_root
+from endorlabs.context.paths import default_runs_dir
 from endorlabs.filters import main_context_filter
 from endorlabs.utils.artifact_io import write_json
 from endorlabs.utils.logging_config import get_resource_logger
@@ -44,9 +44,8 @@ def _session_user_slug(client: endorlabs.Client) -> str:
 
 
 def spike_output_dir(*, user: str, context_dir: Path) -> Path:
-    return workflow_sessions_root(context_dir, user=user, subdir="exports") / (
-        "collect-strategy-spike"
-    )
+    _ = user
+    return default_runs_dir("collect-strategy-spike", context_dir)
 
 
 def _dm_uuid(row: Any) -> str | None:

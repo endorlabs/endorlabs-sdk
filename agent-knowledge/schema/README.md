@@ -86,6 +86,7 @@ Use these headings in `SKILL.md` body (order may vary; omit sections that do not
 | **When to use this skill vs others** | Optional routing table: symptom/goal → start skill → then skill. |
 | **Optional stops** | For artifact chains: which module/flag to stop after and when (e.g. `--regression-only`). |
 | **Related skills** | Compact table at end (or after main workflow): Need → Skill link. Keep rows to skills that are **direct** handoffs, not the whole catalog. |
+| **Outputs** | Default path under `workspace/runs/<run-bucket>/` or `workspace/projects/`; run bucket = catalog `workflow_id` or skill id minus `endor-`; override flag (`--output` / `--output-dir`). |
 | **Naming (optional footer)** | When a **CLI name, workflow id, or module path** uses domain shorthand but the API resource differs, state both once near the workflow step — e.g. `endor-semgrep-inventory` lists **`SemgrepRule`** via `client.SemgrepRule.list()`, not a separate “Semgrep” resource kind. Do not rename shipped CLIs; be explicit in prose. |
 
 **Intro blurb:** One or two sentences after the title can point **to** or **from** a sibling skill when users often start on the wrong playbook (e.g. retrieve-scan-results → troubleshooting-scans for pipeline failure).

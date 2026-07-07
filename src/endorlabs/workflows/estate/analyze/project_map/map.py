@@ -8,13 +8,22 @@ import logging
 from pathlib import Path
 
 import endorlabs
-from endorlabs.context.paths import workflow_projects_root
+from endorlabs.context.paths import (
+    default_runs_dir,
+    sanitize_path_segment,
+)
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.project_map.run import (
     run_project_relationship_map,
 )
 
 LOGGER = get_resource_logger(__name__)
+RUN_BUCKET = "relationships-map"
+
+
+def default_relationship_map_output_dir(namespace: str) -> Path:
+    """``workspace/runs/relationships-map/<namespace>/``."""
+    return default_runs_dir(RUN_BUCKET) / sanitize_path_segment(namespace)
 
 
 def parse_args() -> argparse.Namespace:
@@ -70,8 +79,11 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--output-dir",
-        default=str(workflow_projects_root()),
-        help="Output directory. Default: .endorlabs-context/workspace/projects",
+        default=None,
+        help=(
+            "Output directory. Default: "
+            ".endorlabs-context/workspace/runs/relationships-map/<namespace>/"
+        ),
     )
     p.add_argument(
         "--focus-producer-project-uuid",
@@ -89,7 +101,9 @@ def main() -> int:
     """Run the module CLI and return exit code."""
     args = parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
-    out_dir = Path(args.output_dir)
+    out_dir = Path(
+        args.output_dir or default_relationship_map_output_dir(args.namespace)
+    )
 
     client = endorlabs.Client(tenant=args.tenant)
     try:

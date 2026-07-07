@@ -93,7 +93,11 @@ def workflow_sessions_root(
     user: str | None = None,
     subdir: str | None = None,
 ) -> Path:
-    """Default base directory for session-scoped workflow artifacts."""
+    """Legacy session layout under ``workspace/sessions/``.
+
+    Prefer :func:`default_runs_dir` for new workflow output. This helper remains for
+    callers not yet migrated to the ``workspace/runs/<run-bucket>/`` layout.
+    """
     root = Path(context_dir or DEFAULT_CONTEXT_DIR)
     base = workspace_dir(root) / "sessions"
     if user:
@@ -103,10 +107,53 @@ def workflow_sessions_root(
     return base
 
 
-def workflow_artifacts_root(context_dir: str | Path | None = None) -> Path:
-    """Default directory for namespace-scoped workflow artifacts (non-project)."""
+def default_runs_dir(
+    run_bucket: str,
+    context_dir: str | Path | None = None,
+) -> Path:
+    """Return ``workspace/runs/<run-bucket>/`` for ephemeral workflow artifacts.
+
+    ``run_bucket`` is a fixed, authored string (catalog ``workflow_id`` or skill id
+    minus ``endor-``). It is not generated at runtime and must not be a timestamp.
+    """
     root = Path(context_dir or DEFAULT_CONTEXT_DIR)
-    return workspace_dir(root) / "artifacts"
+    return workspace_dir(root) / "runs" / run_bucket
+
+
+def workflow_inventory_root(context_dir: str | Path | None = None) -> Path:
+    """Return ``workspace/inventory/`` for namespace-scoped inventory artifacts."""
+    root = Path(context_dir or DEFAULT_CONTEXT_DIR)
+    return workspace_dir(root) / "inventory"
+
+
+def workflow_artifacts_root(context_dir: str | Path | None = None) -> Path:
+    """Alias for :func:`workflow_inventory_root` (legacy name ``artifacts/``)."""
+    return workflow_inventory_root(context_dir)
+
+
+def sanitize_path_segment(value: str) -> str:
+    """Normalize a namespace or tenant segment for use in filesystem paths."""
+    import re
+
+    cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip())
+    return cleaned.strip("-._") or "unknown"
+
+
+def resolve_session_user_slug(client: Any) -> str:
+    """Derive a short session slug from ``Client().whoami()`` for metadata only.
+
+    Default run paths do not include this slug; use for JSON summaries when needed.
+    Fallback is ``agent``.
+    """
+    try:
+        whoami = client.whoami()
+    except Exception:
+        return "agent"
+    email = str(getattr(whoami, "email", "") or "")
+    if email and "@" in email:
+        local = email.split("@", 1)[0]
+        return "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in local)
+    return "agent"
 
 
 __all__ = [
@@ -120,16 +167,20 @@ __all__ = [
     "WORKSPACE_DIRNAME",
     "context_json_path",
     "default_context_dir",
+    "default_runs_dir",
     "load_context_json",
     "platform_dir",
     "platform_openapi_path",
     "platform_user_docs_path",
     "project_workspace_dir",
     "resolve_openapi_spec_path",
+    "resolve_session_user_slug",
     "resolve_user_docs_path",
+    "sanitize_path_segment",
     "sdk_dir",
     "session_workspace_dir",
     "workflow_artifacts_root",
+    "workflow_inventory_root",
     "workflow_projects_root",
     "workflow_sessions_root",
     "workspace_dir",

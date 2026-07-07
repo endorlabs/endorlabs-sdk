@@ -12,10 +12,10 @@ Thin index of SDK workflow entry points. See `MANIFEST.json` for machine-readabl
 | finding-log-weekly-trends | `—` | `endorlabs.workflows.findings.finding_log_trends` | endor-chart-new-vs-resolved-findings | — |
 | policies-validate | `—` | `endorlabs.workflows.policies.validate` | endor-validate-policy | stdout or --output-json |
 | query-estate-routing | `—` | `endorlabs.query` | endor-route-estate-queries | — |
-| reachability-context | `endor-reachability-context` | `endorlabs.workflows.reachability.cli` | endor-reachability-provenance | .endorlabs-context/workspace/projects/<uuid>/ |
-| relationships-map | `—` | `endorlabs.workflows.estate.analyze.project_map.map` | endor-namespace-relationship-map | .endorlabs-context/workspace/ |
-| semgrep-inventory | `endor-semgrep-inventory` | `endorlabs.workflows.semgrep.inventory` | endor-custom-sast-rules | `.endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json` (`SemgrepRule.list`) |
-| troubleshooting-scans | `—` | `endorlabs.workflows.troubleshooting_scans` | endor-troubleshooting-scans | .endorlabs-context/workspace/sessions/<user>/troubleshooting/ |
+| reachability-context | `endor-reachability-context` | `endorlabs.workflows.reachability.cli` | endor-reachability-provenance | .endorlabs-context/workspace/projects/<uuid>/reachability_context.json |
+| relationships-map | `—` | `endorlabs.workflows.estate.analyze.project_map.map` | endor-namespace-relationship-map | .endorlabs-context/workspace/runs/relationships-map/<namespace>/ |
+| semgrep-inventory | `endor-semgrep-inventory` | `endorlabs.workflows.semgrep.inventory` | endor-custom-sast-rules | `.endorlabs-context/workspace/inventory/semgrep_rule_metadata_inventory.json` (`SemgrepRule.list`) |
+| troubleshooting-scans | `—` | `endorlabs.workflows.troubleshooting_scans` | endor-troubleshooting-scans | .endorlabs-context/workspace/runs/troubleshooting-scans/ |
 | vector-query | `endor-vector-query` | `endorlabs.workflows.vector_search.cli` | — | stdout or caller path |
 
 **Naming:** workflow id `semgrep-inventory` and module path `workflows/semgrep/` are shorthand; the API resource is **`SemgrepRule`** (`client.SemgrepRule`).

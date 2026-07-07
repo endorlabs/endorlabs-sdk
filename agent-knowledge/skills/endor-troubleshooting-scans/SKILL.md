@@ -10,7 +10,7 @@ endorlabs:
   catalog:
     workflow_id: troubleshooting-scans
     module: endorlabs.workflows.troubleshooting_scans
-    default_output: .endorlabs-context/workspace/sessions/<user>/troubleshooting/
+    default_output: .endorlabs-context/workspace/runs/troubleshooting-scans/
     agent_visible: true
     composition: artifact_chain
     library_entrypoints:
@@ -141,9 +141,8 @@ for pv in client.PackageVersion.list_by_project(project, namespace=project_ns, m
 | `regression_detected: false` but user named two scans | Use explicit-pair path; user intent overrides heuristic |
 | `RunBySystem: true` vs `false` in scan config | [endor-cli-vs-cloud-projects](../endor-cli-vs-cloud-projects/SKILL.md) for config narrative |
 
-Artifacts live under `.endorlabs-context/workspace/sessions/` (default
-`.../sessions/troubleshooting/`; prefer `.../sessions/<user>/troubleshooting/` for
-interactive RCA). See [workspace-layout](../../rules/endor-workspace-layout.md). Filename
+Artifacts live under `.endorlabs-context/workspace/runs/troubleshooting-scans/`.
+See [workspace-layout](../../rules/endor-workspace-layout.md). Filename
 contract:
 
 `{rootTenant}__{objectKind}__{objectUuid}__{purpose}[__timestamp].ext`

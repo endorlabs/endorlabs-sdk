@@ -79,12 +79,12 @@ Exclude **SBOM projects** (`spec.sbom` set) from the scan and CSV.
 
 ### Step 1: Run the bundled script
 
-Default output: `.endorlabs-context/workspace/sessions/<user>/exports/cli-vs-cloud/<tenant>-cli-vs-cloud.csv`
+Default output: `.endorlabs-context/workspace/runs/cli-vs-cloud-projects/<tenant>-cli-vs-cloud.csv`
 
 ```bash
 uv run python .endorlabs-context/sdk/skills/endor-cli-vs-cloud-projects/scripts/classify_cli_vs_cloud_projects.py \
   --tenant <tenant> \
-  --output .endorlabs-context/workspace/sessions/<user>/exports/cli-vs-cloud/<tenant>-cli-vs-cloud.csv
+  --output .endorlabs-context/workspace/runs/cli-vs-cloud-projects/<tenant>-cli-vs-cloud.csv
 ```
 
 Optional flags:
@@ -95,7 +95,7 @@ Optional flags:
 - `--skip-scan-enrichment` — registration-only (`source` column) without scan execution.
 - `--summary-json <path>` — optional machine-readable summary alongside chat output.
 
-After `endorlabs.init()`, the script path is also available under `sdk/skills/endor-cli-vs-cloud-projects/scripts/` in this repository.
+After `endorlabs.init()`, scripts live under `.endorlabs-context/sdk/skills/endor-cli-vs-cloud-projects/scripts/` (SDK repo maintainers: `sdk/skills/…`).
 
 ### Step 2: Summarize in chat (required)
 
@@ -128,7 +128,7 @@ Before finishing, confirm:
 - [ ] Cloud rows include resolved **`installation name`** when a matching `Installation` exists
 - [ ] SBOM projects excluded
 - [ ] Chat summary covers counts, installations, and any CLI exceptions
-- [ ] Artifacts under `.endorlabs-context/workspace/sessions/<user>/` (gitignored)
+- [ ] Artifacts under `.endorlabs-context/workspace/runs/cli-vs-cloud-projects/` (gitignored)
 
 ## When to use this skill vs others
 

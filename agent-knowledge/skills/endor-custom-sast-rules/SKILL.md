@@ -10,7 +10,7 @@ endorlabs:
     workflow_id: semgrep-inventory
     cli: endor-semgrep-inventory
     module: endorlabs.workflows.semgrep.inventory
-    default_output: .endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json
+    default_output: .endorlabs-context/workspace/inventory/semgrep_rule_metadata_inventory.json
     agent_visible: true
 ---
 

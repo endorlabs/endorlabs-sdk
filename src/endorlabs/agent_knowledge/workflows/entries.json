@@ -115,7 +115,7 @@
   {
     "agent_visible": true,
     "cli": "endor-reachability-context",
-    "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+    "default_output": ".endorlabs-context/workspace/projects/<uuid>/reachability_context.json",
     "id": "reachability-context",
     "module": "endorlabs.workflows.reachability.cli",
     "skill": "endor-reachability-provenance"
@@ -123,7 +123,7 @@
   {
     "agent_visible": true,
     "cli": null,
-    "default_output": ".endorlabs-context/workspace/",
+    "default_output": ".endorlabs-context/workspace/runs/relationships-map/<namespace>/",
     "id": "relationships-map",
     "module": "endorlabs.workflows.estate.analyze.project_map.map",
     "skill": "endor-namespace-relationship-map"
@@ -131,7 +131,7 @@
   {
     "agent_visible": true,
     "cli": "endor-semgrep-inventory",
-    "default_output": ".endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json",
+    "default_output": ".endorlabs-context/workspace/inventory/semgrep_rule_metadata_inventory.json",
     "id": "semgrep-inventory",
     "module": "endorlabs.workflows.semgrep.inventory",
     "skill": "endor-custom-sast-rules"
@@ -140,7 +140,7 @@
     "agent_visible": true,
     "cli": null,
     "composition": "artifact_chain",
-    "default_output": ".endorlabs-context/workspace/sessions/<user>/troubleshooting/",
+    "default_output": ".endorlabs-context/workspace/runs/troubleshooting-scans/",
     "id": "troubleshooting-scans",
     "library_entrypoints": [
       "endorlabs.Client.ScanResult.list_by_project",

@@ -96,10 +96,11 @@ status = endorlabs.init(include_openapi=True, include_user_docs=True)
 Set credentials via environment (never commit secrets):
 
 - `ENDOR_API_CREDENTIALS_KEY` + `ENDOR_API_CREDENTIALS_SECRET`, or
-- `ENDOR_TOKEN` (browser refresh via maintainer tooling writes this only)
-- Optional default namespace: `ENDOR_NAMESPACE`
+- `ENDOR_TOKEN` (browser SSO — refresh with `uv run endor-auth refresh --method sso -n <tenant>`)
+- Optional default namespace: `ENDOR_NAMESPACE` (or `~/.endorctl/config.yaml` after `endorctl init`)
 
-Verify: `endorlabs.Client().whoami()`.
+Probe and verify: `uv run endor-auth check [--tenant <tenant>]`. Skill: **endor-auth-setup**.
+Verify in code: `endorlabs.Client().whoami()`.
 
 ## Client basics
 
@@ -143,7 +144,7 @@ Harnesses should prepend `agent_knowledge_bootstrap_paths()` (or read these rule
 | Rule | Summary |
 |------|---------|
 | `endor-namespace-scoping` | Resolve Project; pass `namespace=project.namespace` on project-scoped lists |
-| `endor-workspace-layout` | Session artifacts under `workspace/sessions/<user>/` |
+| `endor-workspace-layout` | Artifacts under `workspace/projects/`, `workspace/runs/<run-bucket>/`, or `workspace/inventory/` |
 | `endor-workflow-composition` | CLI → library → Client → session script; artifact-first |
 | `endor-list-query-performance` | Do not set `page_size` unless asked |
 | `endor-local-context` | Check gitignored `.endorlabs-context/` paths explicitly |
@@ -160,11 +161,27 @@ Label conclusions clearly when reporting to users:
 
 For SDK/API validation playbooks, load **`skills/endor-troubleshoot-sdk/SKILL.md`** and [`validation-reference.md`](skills/endor-troubleshoot-sdk/validation-reference.md). Repo clone only: `docs/contributing/troubleshooting.md` (not shipped in the wheel).
 
+## Skills vs workflow CLIs
+
+- **Skills** (`skills/<id>/SKILL.md`) are agent **playbooks** — read the file, follow steps.
+- **Workflow CLIs** (`endor-*`, `python -m endorlabs.workflows…`) are what you **run**; discover names via `print(endorlabs.discover())` → `entry_points` or `MANIFEST.json` → `workflows[]`.
+- Materialize playbooks: `endorlabs.init()` → `.endorlabs-context/sdk/skills/`; optional `init(sync_skills="cursor")`.
+
+## Progressive disclosure
+
+1. **Metadata** — skill `description` in `MANIFEST.json` (WHAT + WHEN).
+2. **Playbook** — `skills/<id>/SKILL.md` when triggered.
+3. **References** — sibling skills, `contracts/`, optional `reference/*.md`.
+
 ## Workspace outputs
 
-Session/triage debugging artifacts and temporary probe scripts belong under
-`.endorlabs-context/workspace/sessions/<user>/` (not repo-root `.tmp/`). Project
-bundles go under `workspace/projects/<uuid>/`. See `rules/endor-workspace-layout.md`.
+| Bucket | Use |
+|--------|-----|
+| `workspace/projects/` | Project bundles (`<slug>_<timestamp>/`), per-uuid `reachability_context.json` |
+| `workspace/runs/<run-bucket>/` | CSV, JSON, RCA, reports — **run bucket** is a fixed string per skill (see `rules/endor-workspace-layout.md`) |
+| `workspace/inventory/` | Namespace inventories (e.g. SemgrepRule metadata) |
+
+Do not use repo-root `.tmp/`. Gitignore `.endorlabs-context/` in consumer projects.
 
 ## Read order
 
@@ -175,6 +192,22 @@ bundles go under `workspace/projects/<uuid>/`. See `rules/endor-workspace-layout
 5. **`skills/*/SKILL.md`** — task playbooks
 6. `../platform/openapi/` and `../platform/user-docs/` — product/API reference (after `init()`)
 7. `../workspace/` — your run outputs
+
+## Task routing (common intents)
+
+| Intent | Start skill |
+|--------|-------------|
+| Findings / scan results for one repo | `endor-retrieve-scan-results` |
+| Scan pipeline RCA | `endor-troubleshooting-scans` |
+| Call graph search | `endor-fetch-and-search-call-graph` |
+| Project context bundle | `endor-project-retrieval-bundle` |
+| Policy validation | `endor-validate-policy` |
+| SDK/API errors | `endor-troubleshoot-sdk` |
+| Login / SSO troubleshooting | `endor-troubleshoot-authlog` |
+| Duplicate projects audit | `endor-duplicate-projects` |
+| CLI vs Cloud classification | `endor-cli-vs-cloud-projects` |
+
+Full catalog: `MANIFEST.json` → `skills[]`.
 
 ## Maintainer docs (not shipped)
 

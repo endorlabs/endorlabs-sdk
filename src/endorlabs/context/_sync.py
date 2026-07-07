@@ -1101,9 +1101,9 @@ def init(
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
 
-    By default, ``init()`` performs no disk writes. Pass explicit flags to
-    materialize agent knowledge under ``sdk/``, download OpenAPI/user docs
-    under ``platform/``, and/or mirror skills into IDE discovery directories.
+    By default, ``init()`` materializes agent knowledge under ``sdk/``. Pass explicit
+    flags to download OpenAPI/user docs under ``platform/`` and/or mirror skills into
+    IDE discovery directories.
 
     Args:
         output_dir: Directory to save context files (default: .endorlabs-context).
