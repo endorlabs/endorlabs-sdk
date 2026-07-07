@@ -1,10 +1,9 @@
 name: Release PyPI Publish
 
-# Manual PyPI publish via OIDC Trusted Publishing (PEP 740 attestations by default).
-# Configure a pending publisher on pypi.org before first upload:
-#   Owner: endorlabs · Repo: endorlabs-sdk · Workflow: release-pypi.yml · Environment: pypi
-# Prefer tag-driven releases (release-tag-publish.yml) for final vX.Y.Z cuts with full CI gates.
-# Default publish=false for dry-run builds. See docs/contributing/release-publishing.md
+# Dry-run PyPI build gate via workflow_dispatch (publish defaults to false).
+# Production PyPI uses release-tag-publish.yml (registered OIDC publisher on pypi.org).
+# publish=true here fails OIDC unless a separate pending publisher is added for this workflow.
+# See docs/contributing/release-publishing.md
 
 on:
   workflow_dispatch:
