@@ -9,16 +9,34 @@ description: Aggregate AuthenticationLog login activity by user identity over a 
 
 # Authentication login count report
 
-Produce a **tenant-wide login activity CSV** from `AuthenticationLog` rows in the
-last **N days** (default **90**), aggregated by **identity** derived from
+Produce a **login activity CSV** for one tenant from `AuthenticationLog` rows in
+the last **N days** (default **90**), aggregated by **identity** derived from
 `spec.claims`.
+
+## Prerequisites
+
+- **SDK install:** `pip install endorlabs` (or `uv` in this repo). See [README.md](../../../README.md#installation).
+- **Credentials:** API key pair or browser SSO token in `.env`, loaded with
+  `uv run --env-file .env …`. Environment variables:
+  `ENDOR_API_CREDENTIALS_KEY` / `ENDOR_API_CREDENTIALS_SECRET`, or `ENDOR_TOKEN`
+  after browser refresh (`devtools/refresh_token_to_dotenv.py` with `--sso` and
+  `-n <tenant>` when needed). The credential must be authorized to **list**
+  `AuthenticationLog` on the target tenant; **403** usually means wrong tenant or
+  insufficient scope for that namespace.
+- **Bootstrap (agents):** workflow library code ships in the wheel (`endorlabs.workflows.auth`).
+  To materialize this playbook on disk, run `endorlabs.init()` or
+  `uv run endor-context --sync-skills cursor` — see [README.md](../../../README.md#agent-bootstrap-discover-vs-init)
+  and [agent-knowledge/README.md](../../README.md). Runtime skill path:
+  `.endorlabs-context/sdk/skills/endor-auth-login-count/`.
+- **Outputs:** write under `.endorlabs-context/workspace/sessions/<user>/exports/`
+  (see [workspace-layout](../../rules/endor-workspace-layout.md)).
 
 ## Scope
 
 **In scope**
 
 - `AuthenticationLog.list` on the tenant list path (`namespace=<tenant>`, `traverse=False`).
-- `AuthenticationLog.list_groups(paths=["spec.claims"])` for server-side counts.
+- `AuthenticationLog.list_groups(paths=["spec.claims"])` for server-side counts (default).
 - Successful interactive logins by default (interactive `spec.uri` filter).
 - CSV report: identity, user identifiers, last login, login count in N days.
 
@@ -45,7 +63,64 @@ Header example for the default window:
 identity,user identifiers,last login,login count in 90 days
 ```
 
-## Workflow
+## Bundled CLI (`login_count_report.py`)
+
+Run from repo authoring path or from `.endorlabs-context/sdk/skills/endor-auth-login-count/scripts/`
+after `init()`.
+
+```bash
+uv run --env-file .env python sdk/skills/endor-auth-login-count/scripts/login_count_report.py \
+  --tenant <tenant> \
+  --days 90
+```
+
+| Flag | Default | Meaning |
+|------|---------|---------|
+| **`--tenant`** | *(required)* | Tenant namespace for `Client(tenant=…)` and list `namespace=` |
+| **`--days`** | `90` | Lookback window in days (`meta.create_time>=date(…)` filter) |
+| **`--output`** | `workspace/sessions/<user>/exports/login-count-<tenant>-<days>d.csv` | CSV path |
+| **`--json-summary`** | unset | Optional JSON summary path (adds `csv` key with output path) |
+| **`--max-pages`** | unset | Cap `list` / `list_groups` pagination depth |
+| **`--platform-wide`** | off | Set `traverse=True` (fan out child namespaces). Default: tenant list path only |
+| **`--include-failed`** | off | Include rows with `spec.success==false` |
+| **`--include-api-key`** | off | Drop interactive URI filter; include `/v1/auth/api-key` events |
+| **`--list-rows`** | off | Client-side aggregation from full `list` rows instead of `list_groups` |
+
+Default output: `.endorlabs-context/workspace/sessions/<user>/exports/login-count-<tenant>-<days>d.csv`
+
+## endorctl parity
+
+Equivalent count query (use **hours** in `now(-…h)` — `now(-7d)` is invalid):
+
+```bash
+endorctl api list -r AuthenticationLog -n <tenant> \
+  --filter="meta.create_time>now(-2160h) and spec.success!=false and spec.uri matches '.*(/auth/google/callback|/auth/saml-callback|/auth/sso|/auth/oidc).*'" \
+  --count \
+  --timeout 60s
+```
+
+Equivalent grouped query (matches default script aggregation):
+
+```bash
+endorctl api list -r AuthenticationLog -n <tenant> \
+  --filter="meta.create_time>now(-2160h) and spec.success!=false and spec.uri matches '.*(/auth/google/callback|/auth/saml-callback|/auth/sso|/auth/oidc).*'" \
+  --group-aggregation-paths spec.claims \
+  --timeout 60s
+```
+
+| endorctl flag | Role |
+|---------------|------|
+| **`-r AuthenticationLog`** | Resource kind |
+| **`-n <tenant>`** | List path namespace (tenant scoping — do **not** use `tenant_meta.namespace` filter) |
+| **`--filter`** | Same MQL as SDK `build_authentication_log_filter()` |
+| **`--count`** | Row count only (fast probe) |
+| **`--group-aggregation-paths spec.claims`** | Server-side identity buckets |
+| **`--timeout`** | Raise for large windows (e.g. `90s` at 90 days) |
+| **`--traverse`** | Only with `--platform-wide` / child-namespace fan-out |
+
+Pass **`--api-key`** / **`--api-secret`** (or env) for API-key auth; **`--token`** for bearer token.
+
+## Workflow (library)
 
 ### Step 1: Fetch login counts (default — server-side groups)
 
@@ -56,7 +131,7 @@ from endorlabs.workflows.auth import aggregate_login_activity_from_groups
 client = endorlabs.Client(tenant="<tenant>")
 activity = aggregate_login_activity_from_groups(
     client,
-    days=7,
+    days=90,
     namespace="<tenant>",
     traverse=False,
 )
@@ -64,13 +139,12 @@ client.close()
 ```
 
 **Server aggregation:** `AuthenticationLog.list_groups(paths=["spec.claims"])` with the
-same list filter below. The API groups on the **full claims array** per row; for
+list filter below. The API groups on the **full claims array** per row; for
 interactive Google/SSO logins each user has a stable claim set, so buckets map
 1:1 to identities. Counts come from `aggregation_count.count` on each bucket.
 
-**`last login`:** supplemental sorted `list_iter` (`meta.create_time` desc) with
-early stop once every grouped identity has a timestamp — not available from
-`list_groups` alone.
+**`last login`:** supplemental sorted `list` (`meta.create_time` desc, one page) with
+unsorted fallback max scan — not available from `list_groups` alone.
 
 **Fallback — client-side row aggregation:**
 
@@ -82,17 +156,12 @@ from endorlabs.workflows.auth import (
 
 rows = fetch_authentication_logs(
     client,
-    days=7,
+    days=90,
     namespace="<tenant>",
     traverse=False,
 )
-activity = aggregate_login_activity(rows, days=7)
+activity = aggregate_login_activity(rows, days=90)
 ```
-
-Use `--list-rows` on the bundled script to force the list path.
-
-Library helpers live in `endorlabs.workflows.auth.authentication_log` — shared
-normalization with [endor-troubleshoot-authlog](../endor-troubleshoot-authlog/SKILL.md).
 
 **List filter (default — interactive human logins)**
 
@@ -104,38 +173,12 @@ meta.create_time>=date(<iso>)
 
 **Field mask:** `meta.create_time,spec.claims,spec.uri,spec.success,spec.remote_address`
 
-**Tenant scoping (default):** list path only — equivalent to:
+**Tenant scoping trap:** use **`namespace=<tenant>`** and **`traverse=False`**.
+Do **not** add `tenant_meta.namespace=="<tenant>"` to the filter — wire rows often
+show `system` but are returned on the tenant list path. A `tenant_meta.namespace`
+filter typically returns **zero** rows.
 
-```bash
-endorctl api list -r AuthenticationLog -n <tenant> \
-  --filter="meta.create_time>now(-168h) and spec.uri matches '.*(/auth/google/callback|...).*'" \
-  --group-aggregation-paths spec.claims
-```
-
-Use **`namespace=<tenant>`** and **`traverse=False`**. Do **not** add
-`tenant_meta.namespace=="<tenant>"` to the filter — rows are stored under `system`
-but are returned on the tenant list path (endorctl count ≈365 for tgowan 7d).
-
-**`--platform-wide`:** sets `traverse=True` (child namespace fan-out).
-
-Pass `--include-failed` to count unsuccessful attempts. Pass `--include-api-key`
-to drop the interactive URI filter and include API-key automation events.
-
-### Step 2: Write CSV
-
-Default path: `.endorlabs-context/workspace/sessions/<user>/exports/login-count-<tenant>-<days>d.csv`
-
-Bundled script:
-
-```bash
-uv run --env-file .env python sdk/skills/endor-auth-login-count/scripts/login_count_report.py \
-  --tenant <tenant> \
-  --days 90
-```
-
-After `init()` / sync, the same path under `.endorlabs-context/sdk/skills/endor-auth-login-count/scripts/`.
-
-### Step 3: Summarize in chat
+### Step 2: Summarize
 
 Report total identities, total login events, top identities by count, and the CSV path.
 
