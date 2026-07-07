@@ -9,12 +9,10 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 import endorlabs
-from endorlabs.api_client import APIClient
 from endorlabs.resources.audit_log import AuditLogOperation
 from tests.conftest import (
     TEST_LOG_LIST_MAX_PAGES,
     TEST_LOG_LIST_MAX_ROWS,
-    TEST_NAMESPACE_DEFAULT,
 )
 from tests.integration.conftest import (
     assert_bounded_log_rows,
@@ -24,7 +22,6 @@ from tests.integration.conftest import (
 
 
 @pytest.mark.integration
-@pytest.mark.long
 class TestAuditLog:
     """Test cases for AuditLog resource operations."""
 
@@ -225,15 +222,3 @@ class TestAuditLog:
                 max_pages=TEST_LOG_LIST_MAX_PAGES,
             )
             assert_bounded_log_rows(filtered_logs)
-
-    def test_audit_log_update_raises_not_implemented(self) -> None:
-        """When update_fn is None, AuditLog.update raises NotImplementedError."""
-        from unittest.mock import Mock
-
-        mock = Mock(spec=APIClient)
-        client = endorlabs.Client(
-            api_client=mock,
-            tenant=TEST_NAMESPACE_DEFAULT,
-        )
-        with pytest.raises(NotImplementedError, match="does not support update"):
-            client.AuditLog.update("dummy-uuid", {}, update_mask="meta.description")

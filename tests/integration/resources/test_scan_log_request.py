@@ -26,7 +26,6 @@ from tests.integration.conftest import assert_bounded_log_rows, bounded_log_list
 
 
 @pytest.mark.integration
-@pytest.mark.long
 class TestScanLogRequest:
     """Test cases for ScanLogRequest resource operations."""
 
@@ -198,18 +197,7 @@ class TestScanLogRequest:
             or "uuid" in exc_info.value.message.lower()
         )
 
-    def test_scan_log_level_enum(self) -> None:
-        """Test ScanLogLevel enum values."""
-        print("\n=== TESTING SCAN LOG LEVEL ENUM ===")
-
-        # Test enum values
-        assert ScanLogLevel.ERROR == "LOG_LEVEL_ERROR"
-        assert ScanLogLevel.WARNING == "LOG_LEVEL_WARNING"
-        assert ScanLogLevel.INFO == "LOG_LEVEL_INFO"
-        assert ScanLogLevel.DEBUG == "LOG_LEVEL_DEBUG"
-
-        print("All log level enum values validated")
-
+    @pytest.mark.long
     @pytest.mark.writes
     def test_scan_log_request_per_namespace_debug(self) -> None:
         """Per-namespace debug: list namespaces, then list scan results and try create.

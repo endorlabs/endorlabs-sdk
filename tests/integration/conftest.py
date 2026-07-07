@@ -7,7 +7,6 @@ marked @pytest.mark.writes for optional selective runs
 """
 
 import os
-import shutil
 
 import pytest
 
@@ -65,13 +64,31 @@ def _has_credentials() -> bool:
     )
 
 
+def _needs_live_api_credentials(item: pytest.Item) -> bool:
+    """True when a test requires API key auth (marker or live-api fixtures)."""
+    if "integration" in item.keywords:
+        return True
+    live_api_fixtures = frozenset(
+        {
+            "api_client",
+            "api_client_fast_retry",
+            "endor_client",
+            "endor_root_client",
+            "requires_credentials",
+            "integration_config",
+        }
+    )
+    return bool(live_api_fixtures & set(getattr(item, "fixturenames", ())))
+
+
 def pytest_collection_modifyitems(config, items) -> None:
-    """Skip integration tests when credentials are absent."""
+    """Mark integration tests and skip live-API tests when credentials are absent."""
+    del config
     for item in items:
         if "integration" in item.nodeid:
             item.add_marker(pytest.mark.integration)
 
-        if not _has_credentials() and "integration" in item.nodeid:
+        if not _has_credentials() and _needs_live_api_credentials(item):
             item.add_marker(
                 pytest.mark.skip(reason="No Endor Labs credentials available")
             )
@@ -185,12 +202,4 @@ def requires_credentials() -> bool:
     """Fixture that requires valid credentials."""
     if not _has_credentials():
         pytest.skip("Endor Labs credentials not available")
-    return True
-
-
-@pytest.fixture(scope="session")
-def requires_endorctl() -> bool:
-    """Fixture that requires endorctl to be installed."""
-    if not shutil.which("endorctl"):
-        pytest.skip("endorctl not found - install endorctl to run security tests")
     return True
