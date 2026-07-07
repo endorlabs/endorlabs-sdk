@@ -197,6 +197,7 @@ Do not use repo-root `.tmp/`. Gitignore `.endorlabs-context/` in consumer projec
 
 | Intent | Start skill |
 |--------|-------------|
+| Credential setup / refresh | `endor-auth-setup` |
 | Findings / scan results for one repo | `endor-retrieve-scan-results` |
 | Scan pipeline RCA | `endor-troubleshooting-scans` |
 | Call graph search | `endor-fetch-and-search-call-graph` |
@@ -204,6 +205,7 @@ Do not use repo-root `.tmp/`. Gitignore `.endorlabs-context/` in consumer projec
 | Policy validation | `endor-validate-policy` |
 | SDK/API errors | `endor-troubleshoot-sdk` |
 | Login / SSO troubleshooting | `endor-troubleshoot-authlog` |
+| Login activity CSV | `endor-auth-login-count` |
 | Duplicate projects audit | `endor-duplicate-projects` |
 | CLI vs Cloud classification | `endor-cli-vs-cloud-projects` |
 

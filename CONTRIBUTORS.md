@@ -160,7 +160,7 @@ status = endorlabs.init()
 #   .endorlabs-context/sdk/              (shipped agent knowledge; no auth)
 #   .endorlabs-context/platform/openapi/  (optional download)
 #   .endorlabs-context/platform/user-docs/
-#   .endorlabs-context/workspace/        (workflow run outputs)
+#   .endorlabs-context/workspace/        (workflow outputs: projects/, runs/<run-bucket>/, inventory/)
 ```
 
 Options: `include_openapi=True/False`, `include_user_docs=True/False`, `include_agent_knowledge=True/False`, `max_pages=N`, `force=True`, `sync_skills="none|cursor|claude|both"`.

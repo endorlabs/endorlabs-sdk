@@ -137,7 +137,7 @@ See [consumer-ux-list-update.md](consumer-ux-list-update.md).
 ## 6. Scan troubleshooting — logs and diffs
 
 When scan results look wrong or regressed, use the troubleshooting workflow (writes
-artifacts under `.endorlabs-context/workspace/sessions/`):
+artifacts under `.endorlabs-context/workspace/runs/troubleshooting-scans/`):
 
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results \
