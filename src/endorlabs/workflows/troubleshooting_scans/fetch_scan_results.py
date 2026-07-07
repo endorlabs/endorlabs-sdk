@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from endorlabs.tools.list_sharding import ProjectShard
 
 from endorlabs.client_surface import Client
+from endorlabs.workflows.wire_access import dict_str, nested_str
 
 from .common import (
     default_troubleshooting_output_dir,
@@ -75,22 +76,19 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     effective_limit = args.scan_window or args.limit
 
     traverse = "." not in ns
-    projects = [
-        p.model_dump(mode="json")
-        for p in client.Project.list(namespace=ns, traverse=traverse)
-    ]
+    project_rows = client.Project.list(namespace=ns, traverse=traverse)
+    projects = [object_to_dict(p) for p in project_rows]
     selected_projects = projects
     if not args.all_projects:
         if args.project_uuid:
             selected_projects = [
-                p for p in projects if p.get("uuid") == args.project_uuid
+                p for p in projects if dict_str(p, "uuid") == args.project_uuid
             ]
         elif args.project_name:
             selected_projects = [
                 p
                 for p in projects
-                if args.project_name.lower()
-                in str((p.get("meta") or {}).get("name", "")).lower()
+                if args.project_name.lower() in nested_str(p, "meta", "name").lower()
             ]
         else:
             raise ValueError(
@@ -119,8 +117,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         )
     else:
         for project in selected_projects:
-            project_uuid = project.get("uuid")
-            project_ns = (project.get("tenant_meta") or {}).get("namespace") or ns
+            project_uuid = dict_str(project, "uuid")
+            project_ns = nested_str(project, "tenant_meta", "namespace") or ns
             if not project_uuid:
                 continue
             all_results.extend(
@@ -136,18 +134,18 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     primary_uuid = (
         args.project_uuid
-        or (selected_projects[0].get("uuid") if selected_projects else None)
+        or (dict_str(selected_projects[0], "uuid") if selected_projects else None)
         or "tenant-scope"
     )
 
-    raw_payload = {
+    raw_payload: dict[str, Any] = {
         "root_tenant": root,
         "query_namespace": ns,
         "project_count": len(selected_projects),
         "scan_result_count": len(all_results),
         "scan_results": all_results,
     }
-    summary_payload = {
+    summary_payload: dict[str, Any] = {
         "root_tenant": root,
         "query_namespace": ns,
         "project_count": len(selected_projects),

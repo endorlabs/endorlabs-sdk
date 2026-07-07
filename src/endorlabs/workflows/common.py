@@ -13,8 +13,13 @@ if TYPE_CHECKING:
     from endorlabs import Client
 
 from endorlabs.utils.logging_config import get_resource_logger
+from endorlabs.workflows.wire_access import dict_str, model_to_dict, nested_str
 
 logger = get_resource_logger(__name__)
+
+
+def _empty_str_list() -> list[str]:
+    return []
 
 
 # ---------------------------------------------------------------------------
@@ -34,7 +39,7 @@ class WorkflowResult:
 
     status: str = "success"
     message: str = ""
-    errors: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=_empty_str_list)
 
     @property
     def ok(self) -> bool:
@@ -104,12 +109,13 @@ def find_project_by_repository_url(
         )
         if projects:
             project_obj = projects[0]
+            proj_dict = model_to_dict(project_obj)
             logger.info(
                 "Found project: %s (UUID: %s)",
-                project_obj.meta.name,
-                project_obj.uuid,
+                nested_str(proj_dict, "meta", "name"),
+                dict_str(proj_dict, "uuid"),
             )
-            return project_obj.uuid
+            return dict_str(proj_dict, "uuid") or None
 
     # Fallback: search all projects with substring matching
     logger.debug("No projects found with filters, searching all projects...")
@@ -117,13 +123,14 @@ def find_project_by_repository_url(
 
     url_lower = repository_url.lower()
     for proj in all_projects:
-        if url_lower in str(proj.model_dump()).lower():
+        proj_dict = model_to_dict(proj)
+        if url_lower in str(proj_dict).lower():
             logger.info(
                 "Found matching project: %s (UUID: %s)",
-                proj.meta.name,
-                proj.uuid,
+                nested_str(proj_dict, "meta", "name"),
+                dict_str(proj_dict, "uuid"),
             )
-            return proj.uuid
+            return dict_str(proj_dict, "uuid") or None
 
     logger.warning("No project found for repository: '%s'", repository_url)
     return None

@@ -66,7 +66,7 @@ def bfs_multi_source(
     q = deque(starts)
     prev: dict[int, int | None] = {s: None for s in starts}
     seen = set(starts)
-    found = set()
+    found: set[int] = set()
     while q and found != targets:
         cur = q.popleft()
         if cur in targets:

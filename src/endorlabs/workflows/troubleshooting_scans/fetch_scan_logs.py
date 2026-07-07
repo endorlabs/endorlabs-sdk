@@ -111,7 +111,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             }
         )
 
-    index_payload = {
+    index_payload: dict[str, Any] = {
         "root_tenant": root,
         "project_uuid": args.project_uuid,
         "namespace": args.namespace,

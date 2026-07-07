@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from endorlabs.tools.list_sharding import (
     ProjectShard,
     parallel_map_shards,
 )
+from endorlabs.workflows.wire_access import dict_str, nested_dict, nested_str
 
 if TYPE_CHECKING:
     from endorlabs import Client
@@ -33,9 +34,9 @@ def build_installation_lookup(
     """Map ``Installation.spec.external_id`` to installation dict rows."""
     lookup: dict[str, dict[str, Any]] = {}
     for row in installations:
-        ext_id = (row.get("spec") or {}).get("external_id")
+        ext_id = nested_str(nested_dict(row, "spec"), "external_id")
         if ext_id:
-            lookup[str(ext_id)] = row
+            lookup[ext_id] = row
     return lookup
 
 
@@ -43,10 +44,10 @@ def installation_display_name(installation: dict[str, Any] | None) -> str:
     """Resolve a human-readable installation label for CSV or summaries."""
     if not installation:
         return ""
-    spec = installation.get("spec") or {}
-    meta_name = (installation.get("meta") or {}).get("name") or ""
-    external_name = spec.get("external_name") or ""
-    login = spec.get("login") or ""
+    spec = nested_dict(installation, "spec")
+    meta_name = nested_str(installation, "meta", "name")
+    external_name = dict_str(spec, "external_name")
+    login = dict_str(spec, "login")
     if external_name:
         return external_name
     if meta_name and login:
@@ -71,7 +72,7 @@ def fetch_installation_lookup(
 
 def _project_uuid(row: Any) -> str:
     if isinstance(row, dict):
-        return str(row.get("uuid") or "")
+        return dict_str(cast("dict[str, Any]", row), "uuid")
     return str(getattr(row, "uuid", None) or "")
 
 
@@ -101,13 +102,10 @@ def registration_source_label(client: Client, row: Any) -> str:
 def extract_run_by_system(scan_row: Any) -> bool | None:
     """Read ``ScanResult.spec.environment.config.RunBySystem`` when present."""
     if isinstance(scan_row, dict):
-        spec = scan_row.get("spec") or {}
-        environment = spec.get("environment") if isinstance(spec, dict) else None
-        if not isinstance(environment, dict):
-            return None
-        config = environment.get("config")
-        if not isinstance(config, dict):
-            return None
+        scan_dict = cast("dict[str, Any]", scan_row)
+        config = nested_dict(
+            nested_dict(nested_dict(scan_dict, "spec"), "environment"), "config"
+        )
         value = config.get("RunBySystem")
         if value is None:
             return None
@@ -119,7 +117,8 @@ def extract_run_by_system(scan_row: Any) -> bool | None:
     if config is None:
         return None
     if isinstance(config, dict):
-        value = config.get("RunBySystem")
+        config_dict = cast("dict[str, Any]", config)
+        value = config_dict.get("RunBySystem")
     else:
         value = getattr(config, "RunBySystem", None)
     if value is None:

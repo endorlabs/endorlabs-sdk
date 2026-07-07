@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from endorlabs.core.exceptions import (
     NotFoundError,
@@ -76,10 +76,14 @@ def probe_store_indexed_for_project(
         }
 
     hits = 0
+    documents_raw: Any = None
     spec = getattr(result, "spec", None)
     if spec is not None:
-        documents = getattr(spec, "documents", None) or []
-        hits = len(documents)
+        documents_raw = getattr(spec, "documents", None)
+    documents: list[Any] = (
+        cast("list[Any]", documents_raw) if isinstance(documents_raw, list) else []
+    )
+    hits = len(documents)
     if hits == 0:
         warnings.append(
             f"No documents matched metadata_filter repo={project_meta_name!r}; "

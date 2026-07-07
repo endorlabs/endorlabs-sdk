@@ -1133,7 +1133,7 @@ def init(
         .endorlabs-context/sdk
 
     """
-    from endorlabs import __version__
+    from endorlabs._version import __version__
     from endorlabs.api_client import APIClient as APIClientClass
 
     normalized_sync_target = _normalize_skill_sync_mode(sync_skills)

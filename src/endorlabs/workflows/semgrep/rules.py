@@ -9,11 +9,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import yaml
 
 from ..common import WorkflowResult
+from ..wire_access import as_dict, dict_str, model_to_dict, nested_dict, nested_str
 
 if TYPE_CHECKING:
     from endorlabs import Client
@@ -45,7 +46,7 @@ class ExportResult(WorkflowResult):
 
     exported: int = 0
     total: int = 0
-    paths: list[str] = field(default_factory=list)
+    paths: list[str] = field(default_factory=list[str])
 
 
 @dataclass
@@ -175,12 +176,20 @@ def _parse_yaml_file(path: Path) -> list[dict[str, Any]]:
         logger.warning("Empty YAML file: %s", path)
         return []
 
-    if isinstance(doc, dict) and "rules" in doc:
-        rules = doc["rules"]
-        return rules if isinstance(rules, list) else []
+    doc_dict = as_dict(doc)
+    if "rules" in doc_dict:
+        rules_raw = doc_dict["rules"]
+        if isinstance(rules_raw, list):
+            rules_list = cast("list[Any]", rules_raw)
+            return [
+                cast("dict[str, Any]", item)
+                for item in rules_list
+                if isinstance(item, dict)
+            ]
+        return []
 
     if isinstance(doc, dict):
-        return [doc]
+        return [cast("dict[str, Any]", doc)]
 
     logger.warning("Unexpected YAML structure in %s", path)
     return []
@@ -210,9 +219,8 @@ def _wrap_yaml(rule_dict: dict[str, Any], raw_yaml: str) -> str:
 
 def _extract_rule_description(rule_dict: dict[str, Any]) -> str:
     """Extract a description from a parsed rule dict, truncated to 1024 bytes."""
-    desc = rule_dict.get("metadata", {}).get("description", "") or rule_dict.get(
-        "message", ""
-    )
+    metadata = nested_dict(rule_dict, "metadata")
+    desc = dict_str(metadata, "description") or dict_str(rule_dict, "message")
     if len(desc.encode("utf-8")) > 1024:
         desc = desc[:1020] + "..."
     return desc
@@ -249,8 +257,9 @@ def _import_single_rule(
     existing = existing_rules[0] if existing_rules else None
 
     if existing and not force:
+        existing_uuid = dict_str(model_to_dict(existing), "uuid")
         logger.info(
-            "SKIP: Rule '%s' already exists (uuid=%s).", display_id, existing.uuid
+            "SKIP: Rule '%s' already exists (uuid=%s).", display_id, existing_uuid
         )
         result.skipped += 1
         return
@@ -266,7 +275,8 @@ def _import_single_rule(
             client.SemgrepRule.update(
                 existing, payload=payload, update_mask="spec,meta.description"
             )
-            logger.info("Updated: %s (uuid=%s)", display_id, existing.uuid)
+            existing_uuid = dict_str(model_to_dict(existing), "uuid")
+            logger.info("Updated: %s (uuid=%s)", display_id, existing_uuid)
             result.updated += 1
         except Exception as exc:
             logger.error("Unable to update '%s': %s", display_id, exc)
@@ -289,7 +299,8 @@ def _import_single_rule(
             propagate=True,
         )
         created_rule = client.SemgrepRule.create(payload=payload, namespace=namespace)
-        logger.info("Created: %s (uuid=%s)", display_id, created_rule.uuid)
+        created_uuid = dict_str(model_to_dict(created_rule), "uuid")
+        logger.info("Created: %s (uuid=%s)", display_id, created_uuid)
         result.created += 1
     except Exception as exc:
         logger.error("Unable to create '%s': %s", display_id, exc)
@@ -418,28 +429,30 @@ def export_rules_to_yaml(
     import re
 
     for rule in rules:
+        rule_wire = model_to_dict(rule)
+        spec = nested_dict(rule_wire, "spec")
         # Determine display ID and filename
+        native_rule = nested_dict(spec, "rule")
         display_id = (
-            (
-                rule.spec.rule.id
-                if rule.spec and rule.spec.rule and rule.spec.rule.id
-                else None
-            )
-            or (rule.meta.name if rule.meta else None)
-            or rule.uuid
+            dict_str(native_rule, "id")
+            or nested_str(rule_wire, "meta", "name")
+            or dict_str(rule_wire, "uuid")
         )
         sanitized = re.sub(r'[<>:"/\\|?*\s]+', "-", display_id)
         sanitized = re.sub(r"-{2,}", "-", sanitized).strip("-.")
         filename = (sanitized or "unknown") + ".yaml"
 
         # Build YAML content
-        if rule.spec and rule.spec.yaml:
-            yaml_content = rule.spec.yaml
+        if dict_str(spec, "yaml"):
+            yaml_content = dict_str(spec, "yaml")
         else:
             yaml_content = yaml.dump(
                 {
                     "rules": [
-                        {"id": rule.uuid, "message": "No rule definition available"}
+                        {
+                            "id": dict_str(rule_wire, "uuid"),
+                            "message": "No rule definition available",
+                        }
                     ]
                 },
                 default_flow_style=False,
@@ -507,12 +520,14 @@ def calibrate_rules(
     result = CalibrationResult(total=len(all_rules))
 
     for rule in all_rules:
+        rule_wire = model_to_dict(rule)
+        spec = nested_dict(rule_wire, "spec")
         is_ai = is_ai_model_rule(rule)
-        defined_by = rule.spec.defined_by if rule.spec else None
+        defined_by = dict_str(spec, "defined_by") or None
         is_third_party = defined_by in {"3rd-Party", "Endor Labs"}
 
-        is_currently_disabled = rule.disabled is True or (
-            rule.spec is not None and rule.spec.disabled is True
+        is_currently_disabled = (
+            rule_wire.get("disabled") is True or spec.get("disabled") is True
         )
 
         # Determine desired state
@@ -534,11 +549,8 @@ def calibrate_rules(
 
         if dry_run:
             action = "enable" if want_enabled else "disable"
-            rule_id = (
-                rule.spec.rule.id
-                if rule.spec and rule.spec.rule and rule.spec.rule.id
-                else rule.uuid
-            )
+            native_rule = nested_dict(spec, "rule")
+            rule_id = dict_str(native_rule, "id") or dict_str(rule_wire, "uuid")
             logger.info("[DRY RUN] Would %s: %s", action, rule_id)
             if want_enabled:
                 result.enabled += 1
@@ -550,7 +562,7 @@ def calibrate_rules(
         try:
             payload = UpdateSemgrepRulePayload(
                 disabled=not want_enabled,
-                spec=SemgrepRuleSpec(disabled=not want_enabled) if rule.spec else None,
+                spec=SemgrepRuleSpec(disabled=not want_enabled) if spec else None,
             )
             client.SemgrepRule.update(
                 rule, payload=payload, update_mask="disabled,spec.disabled"
@@ -561,12 +573,13 @@ def calibrate_rules(
                 result.disabled += 1
         except Exception as exc:
             exc_str = str(exc)
+            rule_uuid = dict_str(rule_wire, "uuid")
             if "501" in exc_str or "Method Not Allowed" in exc_str:
-                logger.warning("Cannot update read-only rule '%s'", rule.uuid)
+                logger.warning("Cannot update read-only rule '%s'", rule_uuid)
             else:
-                logger.error("Unable to update rule '%s': %s", rule.uuid, exc)
+                logger.error("Unable to update rule '%s': %s", rule_uuid, exc)
             result.failed += 1
-            result.errors.append(f"{rule.uuid}: {exc}")
+            result.errors.append(f"{rule_uuid}: {exc}")
 
     if result.failed:
         result.status = "partial"

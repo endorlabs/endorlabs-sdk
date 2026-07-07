@@ -19,6 +19,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - CODEOWNERS default review owner → `@endorlabs/solutions` (Customer Solutions).
 - Version cardinality CLI default output → `workspace/runs/version-cardinality/`; `verify_auth` next-steps use `endor-auth refresh --method sso`.
 - Pre-commit: block staged `.env` / `.endorlabs-context/`; stderr **Unreleased** changelog reminder on user-facing diffs; shared helpers in `devtools/git_staged.py` and `endorlabs.utils.repo_paths` (rule `endor-maintainer-tooling`).
+- Pyright: drive workflow/operations unknown-type warnings to zero via `workflows.wire_access` helpers, import-cycle breaks, and typed wire-dict narrowing (no user-visible API change).
 
 ### Breaking
 

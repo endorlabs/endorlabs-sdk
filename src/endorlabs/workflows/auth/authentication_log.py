@@ -24,9 +24,10 @@ import json
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from endorlabs.operations.list_response import GroupBucket, group_bucket_count
+from endorlabs.workflows.wire_access import dict_str, nested_dict
 
 if TYPE_CHECKING:
     from endorlabs import Client
@@ -148,18 +149,25 @@ def normalize_auth_log(row: Any) -> dict[str, Any]:
     ``authorized_tenants``. Downstream helpers expect this shape.
     """
     if isinstance(row, dict):
-        meta = row.get("meta") or {}
-        spec = row.get("spec") or {}
-        tenant_meta = row.get("tenant_meta") or {}
+        row_dict = cast("dict[str, Any]", row)
+        meta = nested_dict(row_dict, "meta")
+        spec = nested_dict(row_dict, "spec")
+        tenant_meta = nested_dict(row_dict, "tenant_meta")
+        claims_raw = spec.get("claims")
+        authorized_raw = spec.get("authorized_tenants")
         return {
-            "uuid": row.get("uuid"),
+            "uuid": row_dict.get("uuid"),
             "namespace": tenant_meta.get("namespace"),
             "created": meta.get("create_time") or meta.get("created"),
-            "uri": str(spec.get("uri") or ""),
+            "uri": dict_str(spec, "uri"),
             "success": spec.get("success"),
-            "claims": list(spec.get("claims") or []),
+            "claims": [str(c) for c in cast("list[Any]", claims_raw)]
+            if isinstance(claims_raw, list)
+            else [],
             "remote_address": spec.get("remote_address"),
-            "authorized_tenants": list(spec.get("authorized_tenants") or []),
+            "authorized_tenants": [str(t) for t in cast("list[Any]", authorized_raw)]
+            if isinstance(authorized_raw, list)
+            else [],
         }
 
     spec = getattr(row, "spec", None)
@@ -286,7 +294,12 @@ def filter_auth_logs_by_email(
         if needle in uri:
             matched.append(row)
             continue
-        claims = [str(claim) for claim in (row.get("claims") or [])]
+        claims_raw = row.get("claims")
+        claims = (
+            [str(claim) for claim in cast("list[Any]", claims_raw)]
+            if isinstance(claims_raw, list)
+            else []
+        )
         if any(needle in claim.lower() for claim in claims):
             matched.append(row)
             continue
@@ -432,14 +445,15 @@ def parse_claims_from_group_bucket(bucket: GroupBucket) -> list[str]:
         return []
     if not isinstance(payload, list):
         return []
-    for entry in payload:
-        if not isinstance(entry, dict):
+    for raw_entry in cast("list[Any]", payload):
+        if not isinstance(raw_entry, dict):
             continue
-        if entry.get("key") != "spec.claims":
+        entry_dict = cast("dict[str, Any]", raw_entry)
+        if entry_dict.get("key") != "spec.claims":
             continue
-        value = entry.get("value")
+        value = entry_dict.get("value")
         if isinstance(value, list):
-            return [str(claim) for claim in value if claim]
+            return [str(claim) for claim in cast("list[Any]", value) if claim]
     return []
 
 

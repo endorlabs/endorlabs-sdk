@@ -8,10 +8,16 @@ import re
 from collections.abc import Callable, Iterable, Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from endorlabs.context.paths import default_runs_dir
 from endorlabs.utils.path_safety import safe_write_text
+from endorlabs.workflows.wire_access import (
+    dict_str,
+    model_to_dict,
+    nested_dict,
+    nested_str,
+)
 
 RUN_BUCKET = "troubleshooting-scans"
 
@@ -127,8 +133,8 @@ def match_projects(
     )
     selected: list[dict[str, Any]] = []
     for project in projects:
-        uuid = project.get("uuid", "")
-        name = (project.get("meta") or {}).get("name", "")
+        uuid = dict_str(project, "uuid")
+        name = nested_str(project, "meta", "name")
         if project_uuid and uuid != project_uuid:
             continue
         if project_name and project_name.lower() not in str(name).lower():
@@ -159,7 +165,7 @@ def parallel_collect_for_projects(
     shards = [
         project_dict_to_shard(project, fallback_ns)
         for project in projects
-        if project.get("uuid")
+        if dict_str(project, "uuid")
     ]
     per_shard = parallel_map_shards(
         shards,
@@ -176,11 +182,7 @@ def parallel_collect_for_projects(
 
 def object_to_dict(item: Any) -> dict[str, Any]:
     """Convert SDK model objects to JSON dict; passthrough dicts."""
-    if hasattr(item, "model_dump"):
-        return item.model_dump(mode="json")
-    if isinstance(item, dict):
-        return item
-    return {}
+    return model_to_dict(item)
 
 
 def project_namespace(project: Any) -> str | None:
@@ -210,8 +212,9 @@ def scanlog_line_has_content(line: str) -> bool:
             return True
         if not isinstance(payload, dict):
             return True
-        msg = payload.get("msg") or payload.get("message") or ""
-        return bool(str(msg).strip())
+        payload_dict = cast("dict[str, Any]", payload)
+        msg = dict_str(payload_dict, "msg") or dict_str(payload_dict, "message")
+        return bool(msg.strip())
     if "]" in stripped:
         return bool(stripped.rsplit("]", 1)[-1].strip())
     return True
@@ -313,15 +316,17 @@ def summarize_environment_config(config: Any, *, max_keys: int = 80) -> dict[str
     """Shape-only summary of spec.environment.config (no secret values)."""
     if not isinstance(config, dict):
         return {}
+    config_dict = cast("dict[str, Any]", config)
     out: dict[str, Any] = {}
-    for i, (k, v) in enumerate(config.items()):
+    for i, (k, v) in enumerate(config_dict.items()):
         if i >= max_keys:
-            out["_truncated_keys"] = len(config) - max_keys
+            out["_truncated_keys"] = len(config_dict) - max_keys
             break
         if isinstance(v, dict):
-            out[str(k)] = {"kind": "object", "child_keys": list(v.keys())[:40]}
+            v_dict = cast("dict[str, Any]", v)
+            out[str(k)] = {"kind": "object", "child_keys": list(v_dict.keys())[:40]}
         elif isinstance(v, list):
-            out[str(k)] = {"kind": "array", "length": len(v)}
+            out[str(k)] = {"kind": "array", "length": len(cast("list[Any]", v))}
         else:
             out[str(k)] = {"kind": "scalar"}
     return out
@@ -340,29 +345,51 @@ def _duration_seconds(start: str | None, end: str | None) -> float | None:
 
 def scan_result_extended_summary(scan_result: dict[str, Any]) -> dict[str, Any]:
     """Rich machine-readable summary for ScanResult triage (dict/API shape)."""
-    spec = scan_result.get("spec") or {}
-    meta = scan_result.get("meta") or {}
-    stats = spec.get("stats") or {}
-    env = spec.get("environment") or {}
-    versions = spec.get("versions") or []
+    spec = nested_dict(scan_result, "spec")
+    meta = nested_dict(scan_result, "meta")
+    stats = nested_dict(spec, "stats")
+    env = nested_dict(spec, "environment")
+    versions_raw = spec.get("versions")
+    versions: list[Any] = (
+        cast("list[Any]", versions_raw) if isinstance(versions_raw, list) else []
+    )
     prov = spec.get("provisioning_result")
     prov_summary: dict[str, Any] | None = None
     if isinstance(prov, dict):
+        prov_dict = cast("dict[str, Any]", prov)
         prov_summary = {
-            "provisioning_result_uuid": prov.get("provisioning_result_uuid"),
-            "exit_code": prov.get("exit_code"),
-            "error": prov.get("error"),
-            "tool_chains_source": prov.get("tool_chains_source"),
-            "has_scan_profile": bool(prov.get("scan_profile")),
+            "provisioning_result_uuid": prov_dict.get("provisioning_result_uuid"),
+            "exit_code": prov_dict.get("exit_code"),
+            "error": prov_dict.get("error"),
+            "tool_chains_source": prov_dict.get("tool_chains_source"),
+            "has_scan_profile": bool(prov_dict.get("scan_profile")),
         }
+    tools_raw = env.get("tools")
+    tools: list[dict[str, Any]] = []
+    if isinstance(tools_raw, list):
+        for raw_tool in cast("list[Any]", tools_raw):
+            if not isinstance(raw_tool, dict):
+                continue
+            tool_dict = cast("dict[str, Any]", raw_tool)
+            tools.append(
+                {
+                    "name": tool_dict.get("name"),
+                    "version": tool_dict.get("version"),
+                }
+            )
+    logs_raw = spec.get("logs")
+    log_line_count = (
+        len(cast("list[Any]", logs_raw)) if isinstance(logs_raw, list) else 0
+    )
     return {
         **scan_result_metrics(scan_result),
         "meta_parent_uuid": meta.get("parent_uuid"),
-        "namespace": (scan_result.get("tenant_meta") or {}).get("namespace"),
+        "namespace": nested_str(scan_result, "tenant_meta", "namespace"),
         "start_time": spec.get("start_time"),
         "end_time": spec.get("end_time"),
         "duration_seconds": _duration_seconds(
-            spec.get("start_time"), spec.get("end_time")
+            dict_str(spec, "start_time") or None,
+            dict_str(spec, "end_time") or None,
         ),
         "type": spec.get("type"),
         "has_panic": spec.get("has_panic"),
@@ -377,30 +404,31 @@ def scan_result_extended_summary(scan_result: dict[str, Any]) -> dict[str, Any]:
             "num_cpus": env.get("num_cpus"),
             "memory_bytes": env.get("memory"),
             "endorctl_version": env.get("endorctl_version"),
-            "tools": [
-                {"name": t.get("name"), "version": t.get("version")}
-                for t in (env.get("tools") or [])
-                if isinstance(t, dict)
-            ],
+            "tools": tools,
             "config_summary": summarize_environment_config(env.get("config")),
         },
         "versions": versions,
         "provisioning_result_summary": prov_summary,
-        "log_line_count": len(spec.get("logs") or []),
+        "log_line_count": log_line_count,
     }
 
 
 def scan_result_metrics(scan_result: dict[str, Any]) -> dict[str, Any]:
     """Extract normalized metrics used for anomaly and diff analysis."""
-    spec = scan_result.get("spec") or {}
-    stats = spec.get("stats") or {}
-    versions = spec.get("versions") or []
-    version = versions[0] if versions else {}
+    spec = nested_dict(scan_result, "spec")
+    stats = nested_dict(spec, "stats")
+    versions_raw = spec.get("versions")
+    versions: list[Any] = (
+        cast("list[Any]", versions_raw) if isinstance(versions_raw, list) else []
+    )
+    version = cast("dict[str, Any]", versions[0]) if versions else {}
+    if versions and not isinstance(versions[0], dict):
+        version = {}
     return {
         "uuid": scan_result.get("uuid"),
         "status": spec.get("status"),
         "exit_code": spec.get("exit_code"),
-        "create_time": (scan_result.get("meta") or {}).get("create_time"),
+        "create_time": nested_str(scan_result, "meta", "create_time"),
         "scan_success": stats.get("scan_success", 0),
         "scan_failures": stats.get("scan_failures", 0),
         "findings_critical": stats.get("findings_critical", 0),
@@ -412,7 +440,7 @@ def scan_result_metrics(scan_result: dict[str, Any]) -> dict[str, Any]:
             "dependency_analysis_num_approximate", 0
         ),
         "dependency_count_total": stats.get("dependency_count_total", 0),
-        "endorctl_version": (spec.get("environment") or {}).get("endorctl_version"),
+        "endorctl_version": nested_str(spec, "environment", "endorctl_version"),
         "sha": version.get("sha"),
         "ref": version.get("ref"),
     }
