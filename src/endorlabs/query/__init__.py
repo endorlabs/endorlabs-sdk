@@ -1,5 +1,7 @@
 """Query graph join composition for multi-resource fetches.
 
+Released in endorlabs 0.5.0.
+
 The platform Query service returns a root Resource Kind plus nested references
 in one HTTP call. ``list_parameters`` on each node support filter, mask,
 count, group, group_by_time, and pagination — same as facade list.
