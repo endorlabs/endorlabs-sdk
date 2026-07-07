@@ -57,12 +57,15 @@ Edit `agent-knowledge/` → `uv run python devtools/sync_agent_knowledge.py` →
 | `sdk/` | Copy of shipped agent knowledge (`rules/`, `skills/`, `contracts/`, `INDEX.md`, `MANIFEST.json`) |
 | `platform/openapi/` | Downloaded OpenAPI (`openapiv2.swagger.json`) when synced |
 | `platform/user-docs/` | Downloaded platform docs when synced (`[docs]` extra) |
-| `workspace/projects/<uuid>/` | Project-scoped workflow bundles (agent context, call graph, relationship maps) |
-| `workspace/sessions/<user>/` | Interactive RCA, exports, temp scripts, notes |
-| `workspace/artifacts/` | Namespace-scoped inventories (e.g. **`SemgrepRule`** metadata from `endor-semgrep-inventory`) |
+| `workspace/projects/<slug>_<timestamp>/` | Project bundles (`endor-agent-context`), per-uuid reachability |
+| `workspace/runs/<run-bucket>/` | Workflow CSV/JSON/RCA/report outputs (e.g. `troubleshooting-scans/`, `relationships-map/`) |
+| `workspace/runs/scratch/` | Ephemeral probes, triage scripts, session notes (gitignored) |
+| `workspace/inventory/` | Namespace inventories (e.g. **`SemgrepRule`** metadata from `endor-semgrep-inventory`) |
 | `workspace/<slug>-<YYYYMMDD>/` | Estate pull/analyze workspaces — [estate/workspace.md](../estate/workspace.md) |
 
-Path helpers: `endorlabs.context.paths`. Session layout rule: shipped `rules/endor-workspace-layout.md`.
+Legacy paths `workspace/sessions/` and `workspace/artifacts/` are deprecated — see shipped `rules/endor-workspace-layout.md`.
+
+Path helpers: `endorlabs.context.paths`.
 
 Consumer projects should **gitignore** `.endorlabs-context/`. Print the line: `uv run endor-context --print-gitignore-line`.
 
@@ -80,7 +83,7 @@ Skills **condense and route**; workflows **run**. Full skill index: [agent-knowl
 
 ## Documentation placement
 
-Tracked [`docs/`](../README.md) is durable and public-safe. Ephemeral markdown → `.endorlabs-context/workspace/sessions/<user>/notes/` (gitignored). Do not commit `docs/findings/`, `*-draft.md`, or parallel `*-migration.md` — use [changelog.md](../changelog.md). Details: [design.md](../design.md).
+Tracked [`docs/`](../README.md) is durable and public-safe. Ephemeral markdown → `.endorlabs-context/workspace/runs/scratch/` (gitignored). Do not commit `docs/findings/`, `*-draft.md`, or parallel `*-migration.md` — use [changelog.md](../changelog.md). Details: [design.md](../design.md).
 
 ## Cursor / IDE mirrors (this repo)
 
@@ -100,6 +103,7 @@ When editing `src/endorlabs/**`:
 - **Typing:** public surfaces strict-typed; internal roots ratcheted in [pyproject.toml](../../pyproject.toml).
 - **Security:** credentials via env; run `endorctl scan` before code changes.
 - **Examples in git:** canonical repo `endorlabs/endorlabs-sdk`; no customer tenants/UUIDs in tracked content.
+- **Maintainer tooling:** one home per pre-commit guard; shared staged-path helpers in `devtools/git_staged.py` and `endorlabs.utils.repo_paths` — rule `endor-maintainer-tooling`, [devtools/README.md](../../devtools/README.md).
 
 CI, model-sync, and drift gates: [CONTRIBUTORS.md](../../CONTRIBUTORS.md), [docs-drift-workflow.md](docs-drift-workflow.md), [devtools/sync/README.md](../../devtools/sync/README.md).
 

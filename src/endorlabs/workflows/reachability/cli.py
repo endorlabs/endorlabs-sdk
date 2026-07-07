@@ -5,11 +5,27 @@ from __future__ import annotations
 import argparse
 import logging
 
-from endorlabs.context.paths import workflow_projects_root
+from endorlabs.context.paths import (
+    DEFAULT_CONTEXT_DIR,
+    project_workspace_dir,
+    workflow_projects_root,
+)
 from endorlabs.workflows.reachability.context import (
     ReachabilityContextRequest,
     build_reachability_context,
 )
+
+
+def default_reachability_output_dir(
+    *,
+    finding_uuid: str = "",
+    pv_uuid: str = "",
+) -> str:
+    """``workspace/projects/<uuid>/`` when subject is known."""
+    subject = (finding_uuid or pv_uuid or "").strip()
+    if subject:
+        return str(project_workspace_dir(DEFAULT_CONTEXT_DIR, subject))
+    return str(workflow_projects_root())
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -32,8 +48,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--pv-uuid", default="", help="Importer package-version UUID.")
     parser.add_argument(
         "--output-dir",
-        default=str(workflow_projects_root()),
-        help="Output directory (default: .endorlabs-context/workspace/projects).",
+        default=None,
+        help=(
+            "Output directory (default: "
+            ".endorlabs-context/workspace/projects/<finding-or-pv-uuid>/)."
+        ),
     )
     parser.add_argument(
         "--max-pages",
@@ -74,10 +93,14 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     if bool(args.finding_uuid) == bool(args.pv_uuid):
         raise SystemExit("Provide exactly one of --finding-uuid or --pv-uuid.")
+    output_dir = args.output_dir or default_reachability_output_dir(
+        finding_uuid=args.finding_uuid,
+        pv_uuid=args.pv_uuid,
+    )
     req = ReachabilityContextRequest(
         tenant=args.tenant,
         namespace=args.namespace,
-        output_dir=args.output_dir,
+        output_dir=output_dir,
         finding_uuid=args.finding_uuid or None,
         pv_uuid=args.pv_uuid or None,
         decode_zstd=args.decode_zstd,

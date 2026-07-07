@@ -18,7 +18,7 @@ summary: >-
 | **Utils** | `endorlabs.utils.*` | Transport/concurrency/namespace helpers | Domain list composition |
 | **Workflow libraries** | `endorlabs.workflows.*` (non-`cli`) | `Client` in → typed `WorkflowResult` out | `print()`, argparse, cwd-relative writes |
 | **Workflow CLIs** | `*.cli`, `troubleshooting_scans/*` | Args, artifacts, filenames | Become copy-paste targets for agents |
-| **Session scripts** | `workspace/sessions/<user>/scripts/` | Thin glue on artifacts + library imports | Live in `src/`, reimplement discovery |
+| **Session scripts** | `workspace/runs/scratch/` | Thin glue on artifacts + library imports | Live in `src/`, reimplement discovery |
 
 `endorlabs.workflows` ships **documented contracts** — prefer importing
 `library_entrypoints` from `MANIFEST.json` over vendoring workflow source.
@@ -30,7 +30,7 @@ Use one step at a time:
 1. **Workflow CLI** — run the skill's documented command with defaults.
 2. **Workflow library** — import composable functions (see `MANIFEST.json` `library_entrypoints`).
 3. **`Client` facade** — when no workflow covers the query.
-4. **Session script** — minimal glue under `sessions/<user>/scripts/` (see `endor-workspace-layout`).
+4. **Session script** — minimal glue under `runs/scratch/` (see `endor-workspace-layout`).
 
 ## Artifact-first
 
@@ -60,6 +60,10 @@ Generic entrypoints (no estate literals):
 - `endorlabs.filters` — canonical main-context and finding MQL fragments (replaces removed `workflows.findings.filters` submodule)
 - `endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis` — FindingLog CREATE/DELETE weekly chart data (online aggregated)
 - `endorlabs.workflows.logs.group_by_time.group_by_time_counts` — generic log `list_groups` + `group_by_time` aggregation
+- `endorlabs.workflows.auth.verify_auth` / `refresh_token_to_dotenv` — credential probe and browser refresh (`endor-auth`)
+- `endorlabs.workflows.auth.probe_auth_logs` — tenant list-path auth-log RCA rows
+- `endorlabs.workflows.auth.count_logins_from_groups` — server-side login counts (`list_groups`)
+- `endorlabs.workflows.auth.list_auth_logs` / `count_logins_from_rows` — client-side fallback only
 - `endorlabs.workflows.projects.inventory.fetch_installation_lookup` — Installation external_id lookup for CLI vs app classification
 - `endorlabs.workflows.common.WorkflowResult`
 - `endorlabs.workflows.policies.run_validate_policy`

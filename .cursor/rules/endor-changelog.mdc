@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-changelog.md
-x-endor-source-sha256: b9e088bbff23a187570fdc608384e9ed65c2a51b828e972f409fd7d02754fa63
+x-endor-source-sha256: ea9e71c0b73a459702a1deb2485ca68036e0e83f8fe1842fca41f47490e214b4
 ---
 
 # Changelog (maintainer)
@@ -85,6 +85,15 @@ Optional structured fields: [`agent-knowledge/schema/changelog-intake.schema.jso
 3. Grep for removed CLI/API names; update durable docs to **current** behavior only.
 
 Do **not** auto-generate `docs/changelog.md` from `git log`.
+
+## Automation (commit vs release)
+
+| When | Mechanism | Behavior |
+| ---- | --------- | -------- |
+| **Commit** | `pre_commit_guards changelog-reminder` | Stderr reminder when user-facing paths are staged without `docs/changelog.md` (exit 0) |
+| **Release** | `verify_ship_artifacts --verify-changelog X.Y.Z` | Fails when `## X.Y.Z` section is missing |
+
+Layering and where to add new guards: rule **endor-maintainer-tooling**.
 
 ## Do not
 

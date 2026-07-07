@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-07T00:51:39.851415+00:00",
+  "generated_at": "2026-07-07T22:18:38.944080+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -118,7 +118,7 @@
     {
       "id": "endor-portable-examples",
       "path": "rules/endor-portable-examples.md",
-      "summary": "Use placeholders in git-tracked agent content; never commit customer estate identifiers (tenants, project URLs, production UUIDs).",
+      "summary": "Use placeholders in git-tracked agent content; never commit customer estate identifiers, PII, or secrets (tenants, project URLs, production UUIDs, emails).",
       "tags": [
         "examples",
         "hygiene",
@@ -138,7 +138,7 @@
     {
       "id": "endor-workspace-layout",
       "path": "rules/endor-workspace-layout.md",
-      "summary": "Write session/triage artifacts under workspace/sessions/<user>/; not repo-root .tmp/.",
+      "summary": "Write workflow artifacts under workspace/projects, workspace/runs/<run-bucket>, or workspace/inventory; not repo-root .tmp/.",
       "tags": [
         "artifacts",
         "sessions",
@@ -147,8 +147,24 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.4.1.dev27",
+  "sdk_version": "0.5.1.dev6",
   "skills": [
+    {
+      "description": "Aggregate AuthenticationLog login activity by user identity over a configurable lookback window (default 90 days). Outputs a CSV with identity, user identifiers, last login, and login count. Shares workflow helpers with auth troubleshooting skills. Use for tenant login-activity audits\u2014not for SSO policy mapping or per-user auth RCA.",
+      "id": "endor-auth-login-count",
+      "name": "endor-auth-login-count",
+      "path": "skills/endor-auth-login-count/SKILL.md",
+      "refs": [
+        "skills/endor-auth-login-count/scripts/login_count_report.py"
+      ]
+    },
+    {
+      "description": "Probe, verify, and refresh Endor Labs SDK credentials before API workflows. Covers env-key scan, Client whoami check, endorctl detection, and interactive browser token refresh into .env. Use as step zero for any tenant session\u2014not for SSO policy mapping or AuthenticationLog RCA.",
+      "id": "endor-auth-setup",
+      "name": "endor-auth-setup",
+      "path": "skills/endor-auth-setup/SKILL.md",
+      "refs": []
+    },
     {
       "description": "Author or update a shipped agent skill under agent-knowledge/skills/: portable frontmatter, optional endorlabs.catalog workflow linkage, composition handoffs, sync, and drift verification. Use when adding skills, fixing sync validation errors, or migrating workflow catalog metadata\u2014not for extending SDK resources (endor-implement-sdk-resource) or runtime API troubleshooting.",
       "id": "endor-author-agent-skill",
@@ -325,7 +341,7 @@
       ]
     },
     {
-      "description": "Scan pipeline RCA: resolve a project, fetch a bounded scan window, heuristically rank suspicious scan pairs, pull scan logs via ScanResult.get_logs for selected metrics/logs. Not for individual Finding rows or policy validation \u2014 hand off to other skills when deeper analysis is needed.",
+      "description": "Scan pipeline RCA: resolve a project (including app scan-history URLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs for errors, diff aggregate metrics, and probe PackageVersion resolution_errors. Not for individual Finding rows or policy validation \u2014 hand off to sibling skills when deeper analysis is needed.",
       "id": "endor-troubleshooting-scans",
       "name": "endor-troubleshooting-scans",
       "path": "skills/endor-troubleshooting-scans/SKILL.md",
@@ -359,6 +375,37 @@
     },
     {
       "agent_visible": true,
+      "cli": null,
+      "default_output": null,
+      "id": "auth-login-count",
+      "library_entrypoints": [
+        "endorlabs.workflows.auth.count_logins_from_groups",
+        "endorlabs.workflows.auth.list_auth_logs",
+        "endorlabs.workflows.auth.count_logins_from_rows",
+        "endorlabs.workflows.auth.normalize_auth_log",
+        "endorlabs.workflows.auth.extract_user_identifiers",
+        "endorlabs.workflows.auth.is_api_key_noise",
+        "endorlabs.workflows.auth.is_sso_login_uri"
+      ],
+      "module": "endorlabs.workflows.auth.authentication_log",
+      "skill": "endor-auth-login-count"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-auth",
+      "default_output": null,
+      "id": "auth-setup",
+      "library_entrypoints": [
+        "endorlabs.workflows.auth.scan_auth_env",
+        "endorlabs.workflows.auth.verify_auth",
+        "endorlabs.workflows.auth.refresh_token_to_dotenv",
+        "endorlabs.workflows.auth.probe_endorctl"
+      ],
+      "module": "endorlabs.workflows.auth.cli",
+      "skill": "endor-auth-setup"
+    },
+    {
+      "agent_visible": true,
       "cli": "endor-callgraph-path",
       "composition": "library_api",
       "default_output": "stdout or caller path",
@@ -389,7 +436,7 @@
     {
       "agent_visible": false,
       "cli": null,
-      "default_output": ".endorlabs-context/workspace/sessions/<user>/exports/collect-strategy-spike/",
+      "default_output": ".endorlabs-context/workspace/runs/collect-strategy-spike/",
       "id": "collect-strategy-spike",
       "module": "endorlabs.workflows.estate.collect.benchmark",
       "skill": null
@@ -466,7 +513,7 @@
     {
       "agent_visible": true,
       "cli": "endor-reachability-context",
-      "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+      "default_output": ".endorlabs-context/workspace/projects/<uuid>/reachability_context.json",
       "id": "reachability-context",
       "module": "endorlabs.workflows.reachability.cli",
       "skill": "endor-reachability-provenance"
@@ -474,7 +521,7 @@
     {
       "agent_visible": true,
       "cli": null,
-      "default_output": ".endorlabs-context/workspace/",
+      "default_output": ".endorlabs-context/workspace/runs/relationships-map/<namespace>/",
       "id": "relationships-map",
       "module": "endorlabs.workflows.estate.analyze.project_map.map",
       "skill": "endor-namespace-relationship-map"
@@ -482,7 +529,7 @@
     {
       "agent_visible": true,
       "cli": "endor-semgrep-inventory",
-      "default_output": ".endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json",
+      "default_output": ".endorlabs-context/workspace/inventory/semgrep_rule_metadata_inventory.json",
       "id": "semgrep-inventory",
       "module": "endorlabs.workflows.semgrep.inventory",
       "skill": "endor-custom-sast-rules"
@@ -491,11 +538,13 @@
       "agent_visible": true,
       "cli": null,
       "composition": "artifact_chain",
-      "default_output": ".endorlabs-context/workspace/sessions/<user>/troubleshooting/",
+      "default_output": ".endorlabs-context/workspace/runs/troubleshooting-scans/",
       "id": "troubleshooting-scans",
       "library_entrypoints": [
         "endorlabs.Client.ScanResult.list_by_project",
-        "endorlabs.Client.Project.search_by_name"
+        "endorlabs.Client.Project.search_by_name",
+        "endorlabs.Client.Finding.list_for_context",
+        "endorlabs.workflows.troubleshooting_scans.common.scanlog_entries_have_content"
       ],
       "module": "endorlabs.workflows.troubleshooting_scans",
       "skill": "endor-troubleshooting-scans"

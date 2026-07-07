@@ -746,6 +746,10 @@ class PackageFirewallConfigFirewallNotificationRule(BaseModel):
     FirewallNotificationRule maps firewall block/warn events to NotificationTarget(s).
     """
 
+    name: str | None = None
+    """
+    Optional name for the notification rule.
+    """
     notification_target_uuids: list[str] | None = None
     """
     UUIDs of the NotificationTarget(s) to send to.
@@ -806,6 +810,10 @@ class NotificationRule(BaseModel):
     FirewallNotificationRule maps firewall block/warn events to NotificationTarget(s).
     """
 
+    name: str | None = None
+    """
+    Optional name for the notification rule.
+    """
     notification_target_uuids: list[str] | None = None
     """
     UUIDs of the NotificationTarget(s) to send to.

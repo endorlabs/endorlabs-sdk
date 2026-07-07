@@ -98,7 +98,7 @@ uv run endor-callgraph-search \
   --path-from "get" \
   --path-to "Client.request" \
   --max-depth 6 \
-  --out .endorlabs-context/workspace/sessions/<user>/callgraph/path.json
+  --out .endorlabs-context/workspace/runs/callgraph-search/path.json
 
 # Live probe (no bundle): endor-callgraph-path --tenant … --project … --path-from … --path-to …
 ```
@@ -129,7 +129,7 @@ Raw call graph payloads are not directly search-friendly. Safe retrieval starts 
 
 ## Outputs
 
-- Directory under `.endorlabs-context/workspace/projects/` (bundle) or `workspace/sessions/<user>/callgraph/` (ad-hoc) with `callgraph_export_manifest.json` when using export.
+- Directory under `.endorlabs-context/workspace/projects/` (bundle) or `workspace/runs/callgraph-search/` (ad-hoc) with `callgraph_export_manifest.json` when using export.
 - Decoded `decoded_*.json` when `--decode-zstd` is set.
 - **`context_manifest.json`** at bundle root: `artifacts.callgraph_export` locates export output (`null` if Pass 3 was not run).
 

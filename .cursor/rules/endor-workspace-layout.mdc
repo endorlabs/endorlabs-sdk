@@ -1,5 +1,5 @@
 ---
-description: Write session/triage artifacts under workspace/sessions/<user>/; not repo-root .tmp/.
+description: Write workflow artifacts under workspace/projects, workspace/runs/<run-bucket>, or workspace/inventory; not repo-root .tmp/.
 globs:
   - src/endorlabs/**
   - **/*.py
@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workspace-layout.md
-x-endor-source-sha256: 3e8d95687ae814179fb60b1073dd433abed967a39b0d0855b4b586e1ebc97235
+x-endor-source-sha256: fe38e28fb0e6b0487fd8fda6e011c06174718b7dae0e68c295074625d4939596
 ---
 
 # Workspace layout
@@ -19,43 +19,53 @@ Run outputs and agent-written files belong under **`.endorlabs-context/workspace
 (gitignored). Do **not** write session/triage debugging artifacts or ad-hoc probe
 scripts to repo-root `.tmp/` unless the user explicitly requests that path.
 
-## Subdirectories
+## Three buckets (+ estate)
 
-| Subdir | Use for |
-|--------|---------|
-| `<slug>-<YYYYMMDD>/` | Estate pull + analyze (`endor-estate`; `data/`, `intermediate-representation/`, `viz/`) |
-| `projects/<uuid>/` | Project-scoped workflow bundles (`endor-agent-context`, reachability exports, relationship maps) |
-| `sessions/<user>/` | Interactive session, RCA/triage exports, one-off scripts, and other non-project scratch work |
-| `artifacts/` | Namespace-scoped inventory outputs (e.g. **`SemgrepRule`** metadata inventory from `endor-semgrep-inventory`) |
+| Bucket | Use for | Default pattern |
+|--------|---------|-----------------|
+| **`projects/`** | One project: bundles, per-finding reachability | `projects/<slug>_<timestamp>/` · `projects/<uuid>/reachability_context.json` |
+| **`runs/`** | Ephemeral workflow CSV/JSON/RCA/HTML | `runs/<run-bucket>/` + tenant in **filename** |
+| **`inventory/`** | Namespace-scoped inventories | `inventory/<artifact-name>.json` |
+| **`<estate-slug>-<YYYYMMDD>/`** | Explicit `endor-estate` bulk only | unchanged |
 
-Common session subfolders (create as needed):
+SDK helpers: `default_runs_dir(run_bucket)`, `workflow_projects_root()`,
+`workflow_inventory_root()`, `project_workspace_dir()`.
 
-- `sessions/<user>/troubleshooting/` — scan RCA (`troubleshooting_scans` workflow default)
-- `sessions/<user>/scripts/` — temporary probe/debug `.py` files for the current investigation
-- `sessions/<user>/exports/` — structured JSON/CSV from auth/SSO/policy spot-checks
-- `sessions/<user>/notes/` — ephemeral markdown (readiness reports, doc audits, design spikes)
+## Run bucket (not a timestamp)
 
-## Ephemeral markdown (do not commit)
+**Run bucket** is a fixed folder name under `runs/` — authored per skill, not
+generated at runtime.
 
-Short-shelf-life notes belong under **`sessions/<user>/notes/`**, not tracked `docs/`.
-Do not add `docs/findings/`, `*-draft.md`, or `*-assessment.md` under git. Durable
-public docs live in `docs/guides/` (consumers) and `docs/contributing/` (maintainers).
-Breaking changes and notable releases: [docs/changelog.md](../../docs/changelog.md) only — no parallel `*-migration.md`.
-See [docs/design.md](../../docs/design.md) placement rules.
+1. Skill has `endorlabs.catalog.workflow_id` → use that string (see `MANIFEST.json` → `workflows[].id`).
+2. Script-only skill → skill id minus `endor-` prefix (e.g. `endor-duplicate-projects` → `duplicate-projects`).
+3. Never use timestamps as run bucket names.
 
-## Resolving `<user>`
+**Filename convention** in `runs/`: `<tenant-sanitized>-<purpose>.{ext}` unless a
+workflow documents a richer pattern (e.g. troubleshooting `--timestamped`).
 
-Derive a short directory slug from `Client().whoami()` (email local-part, sanitized).
-When identity is unknown, use `agent`.
+## Timestamps
+
+| Location | Pattern | When |
+|----------|---------|------|
+| `projects/` bundle | `<slug>_YYYYMMDDTHHMMSSZ/` | `endor-agent-context` |
+| `runs/troubleshooting-scans/` files | `…__purpose[__YYYYMMDDTHHMMSSZ].ext` | optional `--timestamped` |
+| Estate | `<slug>-<YYYYMMDD>/` | `endor-estate` collect |
+
+## Agent scratch (optional)
+
+Ad-hoc probes and ephemeral notes may use `runs/scratch/` (scripts, markdown).
+Do not commit under `docs/`.
 
 ## Agent rules
 
-1. **Project workflows** — pass `--output-dir .endorlabs-context/workspace/projects/` (or omit when the CLI default is already `workspace/projects`).
-2. **Triage / debugging** — write artifacts under `.endorlabs-context/workspace/sessions/<user>/` (add a task subdir when helpful).
-3. **Temp scripts** — create under `sessions/<user>/scripts/`; never commit them to `src/` or repo root.
-4. **Ephemeral markdown** — readiness assessments, audit logs, and spike notes go under
-   `sessions/<user>/notes/`; do not commit under `docs/`.
-5. **Do not** assume `.endorlabs-context/` exists; `mkdir -p` parent dirs before writing.
+1. **Project workflows** — `--output-dir` under `workspace/projects/` (or CLI default).
+2. **Report / RCA workflows** — default `workspace/runs/<run-bucket>/`; override with `--output` / `--output-dir`.
+3. **Temp scripts** — `runs/scratch/`; never commit to `src/` or repo root.
+4. **Do not** assume `.endorlabs-context/` exists; create parent dirs before writing.
+5. **Gitignore** — consumer projects should ignore `.endorlabs-context/` (`uv run endor-context --print-gitignore-line`).
 
-Path helpers (SDK): `endorlabs.context.paths.workflow_projects_root`,
-`workflow_sessions_root`, `workflow_artifacts_root`.
+## Legacy paths
+
+Older docs used `workspace/sessions/<user>/exports/…` and `workspace/artifacts/`.
+Prefer the three-bucket layout above. `workflow_artifacts_root()` aliases
+`workflow_inventory_root()` (`inventory/`).

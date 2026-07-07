@@ -1,8 +1,8 @@
 """Context bootstrap for Endor Labs agentic workflows.
 
-By default ``init()`` performs no disk writes. Use explicit flags to materialize
-agent knowledge, download platform context (OpenAPI spec and user documentation),
-or mirror skills into IDE discovery directories.
+By default ``init()`` materializes agent knowledge under ``sdk/``. Use explicit flags
+to download platform context (OpenAPI spec and user documentation) or mirror skills
+into IDE discovery directories.
 
 Optional dependencies for user-docs sync::
 

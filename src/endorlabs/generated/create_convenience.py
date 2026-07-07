@@ -246,6 +246,7 @@ MALWARE_SPEC_FIELDS = (
     "additional_notes",
     "cwe_id",
     "deletion_exempt",
+    "iocs",
 )
 MALWARE_SPEC_REQUIRED = ("ecosystem", "package_name")
 MALWARE_META_FIELDS = ()

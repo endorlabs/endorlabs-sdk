@@ -1,4 +1,4 @@
-"""Unit tests for API key token lifecycle hardening."""
+"""API key token lifecycle tests (transport layer)."""
 
 from collections.abc import Callable
 from datetime import UTC, datetime

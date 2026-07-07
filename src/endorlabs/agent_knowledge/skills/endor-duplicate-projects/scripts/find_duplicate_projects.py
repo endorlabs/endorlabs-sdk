@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
+from endorlabs.context.paths import default_runs_dir, sanitize_path_segment
 from endorlabs.workflows.projects.inventory import (
     fetch_latest_scan_execution_labels,
     is_mixed_registration_execution,
@@ -185,6 +186,14 @@ def write_csv(
     return rows
 
 
+RUN_BUCKET = "duplicate-projects"
+
+
+def default_duplicate_projects_csv(tenant: str) -> Path:
+    safe = sanitize_path_segment(tenant)
+    return default_runs_dir(RUN_BUCKET) / f"{safe}-duplicates.csv"
+
+
 def parse_strip_tokens(raw: list[str]) -> frozenset[str] | None:
     tokens: set[str] = set()
     for item in raw:
@@ -201,10 +210,8 @@ def main() -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path(
-            ".endorlabs-context/workspace/sessions/agent/exports/duplicate-projects.csv"
-        ),
-        help="CSV output path",
+        default=None,
+        help="CSV output path (default: workspace/runs/duplicate-projects/<tenant>-duplicates.csv)",
     )
     parser.add_argument(
         "--name-strip-tokens",
@@ -233,6 +240,7 @@ def main() -> int:
         help="Skip latest ScanResult RunBySystem lookup",
     )
     args = parser.parse_args()
+    output = args.output or default_duplicate_projects_csv(args.tenant)
 
     client = endorlabs.Client(tenant=args.tenant)
     list_kwargs: dict[str, Any] = {
@@ -263,7 +271,7 @@ def main() -> int:
     rows = write_csv(
         client,
         clusters,
-        args.output,
+        output,
         scan_labels=scan_labels,
     )
 
@@ -297,7 +305,7 @@ def main() -> int:
         print(f"Canonical strip tokens: {', '.join(sorted(strip_tokens))}")
     else:
         print("Canonical strip tokens: (none — exact-name clusters only)")
-    print(f"Wrote {args.output}")
+    print(f"Wrote {output}")
     return 0
 
 

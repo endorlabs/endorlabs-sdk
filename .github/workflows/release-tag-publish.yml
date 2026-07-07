@@ -1,8 +1,9 @@
 name: Release Tag Publish
 
 # Tag push or workflow_dispatch for final vX.Y.Z release builds.
-# Production PyPI publish is opt-in: workflow_dispatch publish=true, or tag push with
-# repository variable PYPI_TAG_PUBLISH_ENABLED=true. Default is build-only (dry-run).
+# Production PyPI: workflow_dispatch with ref=main, publish=true, then approve pypi env.
+# Tag push + PYPI_TAG_PUBLISH_ENABLED=true does not publish when pypi env allows protected branches only.
+# Default workflow_dispatch publish=false is build-only (dry-run).
 # See docs/contributing/release-publishing.md
 
 on:

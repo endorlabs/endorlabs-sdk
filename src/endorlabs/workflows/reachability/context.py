@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import endorlabs
 from endorlabs.context.paths import workflow_projects_root
@@ -24,6 +24,7 @@ from endorlabs.workflows.reachability.stitch import (
     find_bridge_norms,
     reconstruct_path,
 )
+from endorlabs.workflows.wire_access import as_dict, dict_str, nested_dict, nested_str
 
 
 @dataclass
@@ -63,22 +64,43 @@ def _fetch_decoded_callgraph(
         return None
 
 
+def _wire_list(d: dict[str, Any], key: str) -> list[Any]:
+    raw = d.get(key)
+    if isinstance(raw, list):
+        return cast("list[Any]", raw)
+    return []
+
+
 def _extract_vulnerable_uris(finding: dict[str, Any]) -> list[str]:
-    spec = finding.get("spec") or {}
-    fmd = spec.get("finding_metadata") or {}
-    vuln = fmd.get("vulnerability") or {}
-    vspec = vuln.get("spec") or {}
+    spec = nested_dict(finding, "spec")
+    fmd = nested_dict(spec, "finding_metadata")
+    vuln = nested_dict(fmd, "vulnerability")
+    vspec = nested_dict(vuln, "spec")
     uris: set[str] = set()
-    for affected in vspec.get("affected") or []:
-        for u in affected.get("affected_callpath_uris") or []:
-            if isinstance(u, str) and u.strip():
-                uris.add(u)
-    raw = vspec.get("raw") or {}
-    endor_v = (raw.get("endor_vulnerability") or {}) if isinstance(raw, dict) else {}
-    for comp in endor_v.get("component") or []:
-        for u in comp.get("endor_uri") or []:
-            if isinstance(u, str) and u.strip() and u != "data-removed":
-                uris.add(u)
+    affected_raw = vspec.get("affected")
+    if isinstance(affected_raw, list):
+        for affected in cast("list[Any]", affected_raw):
+            if not isinstance(affected, dict):
+                continue
+            affected_dict = cast("dict[str, Any]", affected)
+            uris_raw = affected_dict.get("affected_callpath_uris")
+            if isinstance(uris_raw, list):
+                for u in cast("list[Any]", uris_raw):
+                    if isinstance(u, str) and u.strip():
+                        uris.add(u)
+    raw = vspec.get("raw")
+    endor_v = nested_dict(as_dict(raw), "endor_vulnerability")
+    component_raw = endor_v.get("component")
+    if isinstance(component_raw, list):
+        for comp in cast("list[Any]", component_raw):
+            if not isinstance(comp, dict):
+                continue
+            comp_dict = cast("dict[str, Any]", comp)
+            uri_raw = comp_dict.get("endor_uri")
+            if isinstance(uri_raw, list):
+                for u in cast("list[Any]", uri_raw):
+                    if isinstance(u, str) and u.strip() and u != "data-removed":
+                        uris.add(u)
     return sorted(uris)
 
 
@@ -100,8 +122,16 @@ def _build_stitching(
         {mid for u in vulnerable_uris for mid in oss_index.get(u, set())}
     )
 
-    customer_uri = {r["method_id"]: r.get("uri", "") for r in customer_callables}
-    oss_uri = {r["method_id"]: r.get("uri", "") for r in oss_callables}
+    customer_uri: dict[int, Any] = {}
+    for row in customer_callables:
+        mid = row.get("method_id")
+        if isinstance(mid, int):
+            customer_uri[mid] = row.get("uri", "")
+    oss_uri: dict[int, Any] = {}
+    for row in oss_callables:
+        mid = row.get("method_id")
+        if isinstance(mid, int):
+            oss_uri[mid] = row.get("uri", "")
     customer_starts = [
         mid
         for mid, uri in customer_uri.items()
@@ -217,11 +247,9 @@ def build_reachability_context(request: ReachabilityContextRequest) -> Path:
         if request.finding_uuid and finding_obj:
             oss_vuln_payload = {
                 "extra_key": subject.extra_key,
-                "finding_metadata_vulnerability": (
-                    ((finding_obj.get("spec") or {}).get("finding_metadata") or {}).get(
-                        "vulnerability"
-                    )
-                ),
+                "finding_metadata_vulnerability": nested_dict(
+                    nested_dict(as_dict(finding_obj), "spec"), "finding_metadata"
+                ).get("vulnerability"),
             }
 
         oss_cg_payload: dict[str, Any] | None = None
@@ -286,20 +314,26 @@ def build_reachability_context(request: ReachabilityContextRequest) -> Path:
                 "oss_package_name": subject.oss_package_name,
             },
             "sources": {
-                "finding": finding_obj.get("uuid") if finding_obj else None,
-                "dependency_metadata": dep_meta.get("uuid") if dep_meta else None,
+                "finding": dict_str(as_dict(finding_obj), "uuid") or None,
+                "dependency_metadata": dict_str(as_dict(dep_meta), "uuid") or None,
                 "vulnerable_uri_count": len(vulnerable_uris),
             },
             "finding": (
                 {
-                    "extra_key": (finding_obj.get("spec") or {}).get("extra_key"),
-                    "call_graph_analysis_type": (finding_obj.get("spec") or {}).get(
-                        "call_graph_analysis_type"
-                    ),
+                    "extra_key": nested_str(as_dict(finding_obj), "spec", "extra_key")
+                    or None,
+                    "call_graph_analysis_type": nested_dict(
+                        as_dict(finding_obj), "spec"
+                    ).get("call_graph_analysis_type"),
                     "reachable_paths_count": len(
-                        (finding_obj.get("spec") or {}).get("reachable_paths") or []
+                        _wire_list(
+                            nested_dict(as_dict(finding_obj), "spec"),
+                            "reachable_paths",
+                        )
                     ),
-                    "finding_tags": (finding_obj.get("spec") or {}).get("finding_tags"),
+                    "finding_tags": nested_dict(as_dict(finding_obj), "spec").get(
+                        "finding_tags"
+                    ),
                 }
                 if finding_obj
                 else None
@@ -311,11 +345,12 @@ def build_reachability_context(request: ReachabilityContextRequest) -> Path:
             "verdict_hints": {
                 "dependency_reachable_hint": (
                     "REACHABLE"
-                    in str(
-                        (dep_meta or {})
-                        .get("spec", {})
-                        .get("dependency_data", {})
-                        .get("reachable", "")
+                    in nested_str(
+                        nested_dict(
+                            nested_dict(as_dict(dep_meta), "spec"),
+                            "dependency_data",
+                        ),
+                        "reachable",
                     )
                     if dep_meta
                     else None

@@ -4,6 +4,8 @@ Provides ``ResourceRuntimeFacade[T]`` and resource-specific facades.
 See docs/reference/resources.md and docs/guides/retrieving-scan-results.md.
 """
 
+# pyright: reportImportCycles=false
+
 from ..operations import BaseResourceOperations
 from .base import ListableFacade
 from .context_partition import context_partition_filter, main_context_filter

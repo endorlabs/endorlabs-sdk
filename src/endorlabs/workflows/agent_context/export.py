@@ -506,7 +506,7 @@ def main() -> int:
             if session_result.errors:
                 warnings.extend(session_result.errors)
 
-        cli_flags = {
+        cli_flags: dict[str, Any] = {
             "tenant": args.tenant,
             "namespace": ns or None,
             "project": args.project,

@@ -7,7 +7,7 @@ endorlabs:
     workflow_id: reachability-context
     cli: endor-reachability-context
     module: endorlabs.workflows.reachability.cli
-    default_output: .endorlabs-context/workspace/projects/<uuid>/
+    default_output: .endorlabs-context/workspace/projects/<uuid>/reachability_context.json
     agent_visible: true
 ---
 
@@ -54,7 +54,7 @@ Practical implication: a finding can be `REACHABLE_FUNCTION` even when a direct 
 ## Workflow
 
 0. Build unified context artifact (default path)
-   - Run `uv run endor-reachability-context --tenant <tenant> --namespace <namespace> --finding-uuid <finding_uuid> --output-dir .endorlabs-context/workspace/projects/reachability`.
+   - Run `uv run endor-reachability-context --tenant <tenant> --namespace <namespace> --finding-uuid <finding_uuid>` (default output: `workspace/projects/<finding-uuid>/reachability_context.json`).
    - Use `--pv-uuid` for direct PV analysis.
    - Treat `reachability_context.json` as the canonical triage bundle (customer graph plane, `oss` graph plane, stitching summary, warnings). `--max-pages` defaults to **0 (unlimited)**; check `list_bounds` and `warnings` when call-graph lists may be capped.
    - Bundle requirement (deterministic): include decoded call graphs from both planes:

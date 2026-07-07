@@ -12,7 +12,7 @@ agent-knowledge/
   README.md         # Skill index (authoring)
   workflows.yaml    # Supplemental workflow rows (skill: null)
   schema/           # This directory (not shipped)
-  rules/*.md        # Harness bootstrap (always load; generates .cursor/rules/*.mdc)
+  rules/*.md        # Harness bootstrap (sync → .cursor/rules/*.mdc; footgun subset always-on)
   contracts/*.md    # Reference SDK semantics (on demand)
   skills/<name>/    # Task playbooks
     SKILL.md
@@ -53,7 +53,7 @@ Only these keys appear in the generated bundle:
 | `description` | yes | 1–1024 chars; third person; **WHAT** + **WHEN** |
 | `disable-model-invocation` | no | Cursor-only; omit unless `true` |
 
-Validated by [`skill.schema.json`](skill.schema.json) (portable subset).
+Authoring validation uses the full [`skill.schema.json`](skill.schema.json); sync writes only the portable subset above into the wheel bundle.
 
 Every skill `name` and directory **must** use the `endor-*` prefix (same family as `endor-context`, `endor-callgraph-search`, …). Sync and schema reject unprefixed ids.
 
@@ -86,6 +86,7 @@ Use these headings in `SKILL.md` body (order may vary; omit sections that do not
 | **When to use this skill vs others** | Optional routing table: symptom/goal → start skill → then skill. |
 | **Optional stops** | For artifact chains: which module/flag to stop after and when (e.g. `--regression-only`). |
 | **Related skills** | Compact table at end (or after main workflow): Need → Skill link. Keep rows to skills that are **direct** handoffs, not the whole catalog. |
+| **Outputs** | Default path under `workspace/runs/<run-bucket>/` or `workspace/projects/`; run bucket = catalog `workflow_id` or skill id minus `endor-`; override flag (`--output` / `--output-dir`). |
 | **Naming (optional footer)** | When a **CLI name, workflow id, or module path** uses domain shorthand but the API resource differs, state both once near the workflow step — e.g. `endor-semgrep-inventory` lists **`SemgrepRule`** via `client.SemgrepRule.list()`, not a separate “Semgrep” resource kind. Do not rename shipped CLIs; be explicit in prose. |
 
 **Intro blurb:** One or two sentences after the title can point **to** or **from** a sibling skill when users often start on the wrong playbook (e.g. retrieve-scan-results → troubleshooting-scans for pipeline failure).
@@ -107,7 +108,7 @@ If output is scored, ranked, or summarized (not authoritative platform state):
 - State **heuristic** in the module section and in interpretation hints.
 - Name the signals (e.g. adjacent-pair score from `ScanResult.spec.stats` aggregates).
 - Clarify what a boolean like `regression_detected` **means in code** (e.g. score > 0), not colloquial “regression.”
-- Say when to **stop** and hand off for row-level data (e.g. use scan UUIDs from pairs artifact with `context.scan_uuid` filter in retrieve-scan-results).
+- Say when to **stop** and hand off for row-level data (e.g. use scan UUIDs from pairs artifact with `Finding.list_for_context(scan)` per [retrieve-scan-results](../skills/endor-retrieve-scan-results/SKILL.md); do not filter on `context.scan_uuid` — see [resource-discovery](../contracts/resource-discovery.md)).
 
 ### What not to do
 
@@ -116,7 +117,32 @@ If output is scored, ranked, or summarized (not authoritative platform state):
 - Do not add Related skills rows for every skill in `INDEX.md`; only **direct** next/previous steps in typical RCA.
 
 
-Optional `endorlabs.catalog` links a skill to a workflow CLI/module row. Sync **strips** the entire `endorlabs` key from shipped `SKILL.md`. See prior examples in skill `SKILL.md` files under `agent-knowledge/skills/`.
+## Authoring-only frontmatter (`endorlabs.catalog`)
+
+Authoring `SKILL.md` may include an `endorlabs.catalog` block (validated by the full skill schema). Sync **strips** the entire `endorlabs` key from shipped bundle `SKILL.md`.
+
+| Field | Required | Purpose |
+|-------|----------|---------|
+| `workflow_id` | yes | Catalog row id (`^[a-z0-9-]+$`); often matches skill id minus `endor-` |
+| `module` | yes | Import path for the workflow implementation |
+| `cli` | no | Console script name when the workflow is exposed as a CLI |
+| `default_output` | no | Default artifact directory under `workspace/runs/<run-bucket>/` |
+| `agent_visible` | no | Include in agent-facing workflow catalog (default `true`) |
+| `composition` | no | `artifact_chain`, `library_api`, or `cli_only` |
+| `library_entrypoints` | no | Callable symbols when `composition` is `library_api` |
+
+Example shape (authoring only):
+
+```yaml
+endorlabs:
+  catalog:
+    workflow_id: troubleshooting-scans
+    module: endorlabs.workflows.troubleshooting_scans
+    composition: artifact_chain
+    agent_visible: true
+```
+
+See live examples under `agent-knowledge/skills/*/SKILL.md`.
 
 ## Rules (`agent-knowledge/rules/`)
 

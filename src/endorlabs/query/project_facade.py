@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from endorlabs.filters import CATEGORY_QUERY_REFS
 
-from .execute import QueryExecutor, project_uuid
+from .execute import QueryExecutor
 from .normalize import normalize_reference_rows
 from .parse import (
     extract_query_objects,
@@ -27,6 +27,7 @@ from .recipes import (
     pv_count_spec,
 )
 from .routing import OutputShape
+from .row_fields import project_uuid
 from .scope import scopes_from_projects
 from .topology import TopologySnapshot, discover_topology
 from .validate import RecipeKind, ValidationResult, validate_sample

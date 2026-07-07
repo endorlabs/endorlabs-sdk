@@ -8,9 +8,12 @@ import json
 from pathlib import Path
 
 import endorlabs
+from endorlabs.context.paths import default_runs_dir
 from endorlabs.workflows.findings.finding_log_trends import (
     build_finding_log_new_vs_resolved_analysis,
 )
+
+RUN_BUCKET = "finding-log-weekly-trends"
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -26,10 +29,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path(
-            ".endorlabs-context/workspace/sessions/agent/exports/new-vs-resolved"
-        ),
-        help="Directory for analysis JSON.",
+        default=default_runs_dir(RUN_BUCKET),
+        help="Directory for analysis JSON (default: workspace/runs/finding-log-weekly-trends/).",
     )
     parser.add_argument(
         "--interval",
