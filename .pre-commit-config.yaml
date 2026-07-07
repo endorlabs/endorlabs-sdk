@@ -23,11 +23,30 @@ default_stages: [pre-commit]
 # (including devtools/) even when those files are staged — diverging from CI.
 #
 # Install: uv run pre-commit install && uv run pre-commit install --hook-type pre-push
+# Guards: devtools/pre_commit_guards.py (policy) + devtools/git_staged.py (staged listing);
+#   rule endor-maintainer-tooling — block .env / .endorlabs-context/ staged;
+#   changelog Unreleased reminder (stderr, non-blocking) on user-facing diffs.
 # Run manually: uv run pre-commit run --all-files
 repos:
   # --- Ruff + Pyright (parity with CI PR Main lint job) ---
   - repo: local
     hooks:
+      - id: pre-commit-guards-blocked-paths
+        name: block gitignored runtime paths (.endorlabs-context, .env)
+        entry: uv
+        args: [run, python, devtools/pre_commit_guards.py, blocked-paths]
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: pre-commit-guards-changelog-reminder
+        name: changelog Unreleased reminder (user-facing staged paths)
+        entry: uv
+        args: [run, python, devtools/pre_commit_guards.py, changelog-reminder]
+        language: system
+        pass_filenames: false
+        always_run: true
+
       - id: refresh-local-context-and-skills
         name: refresh local context + skill mirrors
         entry: uv
@@ -119,6 +138,8 @@ repos:
           - devtools/sync/cli.py
           - devtools/sync/upstream_verify.py
           - devtools/verify_ship_artifacts.py
+          - devtools/git_staged.py
+          - devtools/pre_commit_guards.py
           - .github/scripts/check_endorctl_version.py
         language: system
         pass_filenames: false
@@ -141,6 +162,8 @@ repos:
           - devtools/sync/cli.py
           - devtools/sync/upstream_verify.py
           - devtools/verify_ship_artifacts.py
+          - devtools/git_staged.py
+          - devtools/pre_commit_guards.py
           - .github/scripts/check_endorctl_version.py
         language: system
         pass_filenames: false

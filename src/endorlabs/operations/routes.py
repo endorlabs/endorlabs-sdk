@@ -1,4 +1,4 @@
-# ruff: noqa: D102, D105, UP046, UP047, SIM108
+# ruff: noqa: D102, D105, UP046, UP047
 """Generic route executors for generated relationship accessors."""
 
 from __future__ import annotations
@@ -23,6 +23,10 @@ if TYPE_CHECKING:
 T = TypeVar("T", bound=BaseModel)
 
 
+def _empty_str_list() -> list[str]:
+    return []
+
+
 @dataclass
 class RouteResult(Generic[T]):
     """Outcome of a stitched route execution.
@@ -35,7 +39,7 @@ class RouteResult(Generic[T]):
     value: T | None = None
     values: list[T] | None = None
     truncated: bool = False
-    warnings: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=_empty_str_list)
 
     def __iter__(self) -> Iterator[T]:
         if self.values is not None:
@@ -90,7 +94,8 @@ def resolve_attr_path(
         if current is None:
             return None
         if isinstance(current, dict):
-            current = current.get(part)
+            current_dict = cast("dict[str, Any]", current)
+            current = current_dict.get(part)
         else:
             current = getattr(current, part, None)
     return current
@@ -285,11 +290,11 @@ class RouteExecutor:
         if when is None:
             return
         if when.categories:
-            cats = resolve_attr_path(source, "spec.finding_categories") or []
-            if isinstance(cats, list):
-                cat_set = {str(c) for c in cats}
+            cats_raw: Any = resolve_attr_path(source, "spec.finding_categories") or []
+            if isinstance(cats_raw, list):
+                cat_set = {str(c) for c in cast("list[Any]", cats_raw)}
             else:
-                cat_set = set()
+                cat_set: set[str] = set()
             if not cat_set.intersection(when.categories):
                 raise RouteNotApplicableError(
                     f"Route {edge_id!r} not applicable: finding_categories mismatch.",

@@ -8,7 +8,6 @@ from tests.integration.conftest import assert_bounded_log_rows, log_list_kwargs
 
 
 @pytest.mark.integration
-@pytest.mark.long
 class TestAuthenticationLog:
     """Test cases for AuthenticationLog resource operations."""
 

@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 from endorlabs.workflows.projects.discovery import duplicate_project_decision
+from endorlabs.workflows.troubleshooting_scans.build_scan_pair import (
+    _resolve_scan_uuid,
+)
 from endorlabs.workflows.troubleshooting_scans.common import (
     build_filename,
     date_window_from_bounds,
     parse_app_scan_history_url,
     parse_endor_app_url,
     scan_result_extended_summary,
+    scanlog_entries_have_content,
+    scanlog_line_has_content,
 )
 from endorlabs.workflows.troubleshooting_scans.select_anomalous_scans import (
     anomaly_score,
@@ -144,3 +149,31 @@ def test_scan_result_extended_summary_minimal() -> None:
     assert s["duration_seconds"] == 3600.0
     assert s["stats"]["call_graph_errors"] == 1
     assert "ScanConfig" in s["environment"]["config_summary"]
+
+
+def test_scanlog_line_has_content_embedded_json() -> None:
+    line = '{"level":"error","msg":"Unable to resolve dependencies","ts":1}'
+    assert scanlog_line_has_content(line)
+
+
+def test_scanlog_line_has_content_hollow_api_row() -> None:
+    line = "2026-07-06 03:16:57.423892+00:00 [UNKNOWN] "
+    assert not scanlog_line_has_content(line)
+
+
+def test_scanlog_entries_have_content_mixed() -> None:
+    entries = [
+        "2026-07-06 03:16:57.423892+00:00 [UNKNOWN] ",
+        '{"level":"error","msg":"checkout failed","ts":1}',
+    ]
+    assert scanlog_entries_have_content(entries)
+
+
+def test_resolve_scan_uuid_from_url() -> None:
+    url = (
+        "https://app.endorlabs.com/t/acme.ns/scan-history/"
+        "69e7d564f391c87dbcba85b2?return_to=%2Ffoo"
+    )
+    assert _resolve_scan_uuid(url=url, uuid=None, label="primary") == (
+        "69e7d564f391c87dbcba85b2"
+    )

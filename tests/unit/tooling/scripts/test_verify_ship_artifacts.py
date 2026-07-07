@@ -20,6 +20,10 @@ from verify_ship_artifacts import (  # noqa: E402
 )
 
 
+def _ok_process() -> subprocess.CompletedProcess[str]:
+    return subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
+
+
 def test_ship_git_paths_includes_core_artifacts() -> None:
     paths = ship_git_paths()
     assert "src/endorlabs/generated/registry_contract.py" in paths
@@ -59,39 +63,48 @@ def test_git_diff_dirty_clean_repo() -> None:
     assert err is None
 
 
-def test_run_verify_skip_upstream_skips_upstream_only(tmp_path: Path) -> None:
-    spec = tmp_path / ".endorlabs-context/platform/openapi/openapiv2.swagger.json"
+def test_git_diff_dirty_reports_when_diff_nonzero() -> None:
+    from verify_ship_artifacts import git_diff_dirty
+
+    def fake_run(cmd: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
+        if cmd[:3] == ["git", "diff", "--exit-code"]:
+            return subprocess.CompletedProcess(
+                args=cmd, returncode=1, stdout="", stderr=""
+            )
+        if cmd[:3] == ["git", "diff", "--stat"]:
+            return subprocess.CompletedProcess(
+                args=cmd,
+                returncode=0,
+                stdout=" src/endorlabs/generated/registry_contract.py | 2 +-\n",
+                stderr="",
+            )
+        raise AssertionError(f"unexpected cmd: {cmd}")
+
+    with patch("verify_ship_artifacts._run", side_effect=fake_run):
+        err = git_diff_dirty(
+            ("src/endorlabs/generated/registry_contract.py",),
+            root=_REPO_ROOT,
+        )
+
+    assert err is not None
+    assert "out of date" in err
+    assert "registry_contract.py" in err
+
+
+def _write_skip_upstream_fixtures(root: Path) -> None:
+    spec = root / ".endorlabs-context/platform/openapi/openapiv2.swagger.json"
     spec.parent.mkdir(parents=True)
     spec.write_text("{}", encoding="utf-8")
-    regen = tmp_path / "src/endorlabs/generated/registry_contract.py"
+    regen = root / "src/endorlabs/generated/registry_contract.py"
     regen.parent.mkdir(parents=True)
     regen.write_text("# ok", encoding="utf-8")
-    models_init = tmp_path / "src/endorlabs/generated/models/__init__.py"
+    models_init = root / "src/endorlabs/generated/models/__init__.py"
     models_init.parent.mkdir(parents=True, exist_ok=True)
     models_init.write_text("", encoding="utf-8")
 
-    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run(
-        ["git", "config", "user.email", "test@example.com"],
-        cwd=tmp_path,
-        check=True,
-        capture_output=True,
-    )
-    subprocess.run(
-        ["git", "config", "user.name", "test"],
-        cwd=tmp_path,
-        check=True,
-        capture_output=True,
-    )
-    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run(
-        ["git", "commit", "-m", "init"],
-        cwd=tmp_path,
-        check=True,
-        capture_output=True,
-    )
 
-    ok = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
+def test_run_verify_skip_upstream_skips_upstream_only(tmp_path: Path) -> None:
+    _write_skip_upstream_fixtures(tmp_path)
 
     def _mentions(cmd: list[str], needle: str) -> bool:
         return any(needle in part for part in cmd)
@@ -100,48 +113,18 @@ def test_run_verify_skip_upstream_skips_upstream_only(tmp_path: Path) -> None:
         if _mentions(cmd, "model_sync.py") and "--verify-upstream-only" in cmd:
             raise AssertionError("upstream verify should be skipped")
         if _mentions(cmd, "model_sync.py"):
-            return ok
+            return _ok_process()
         if _mentions(cmd, "generate_route_contract.py"):
-            return ok
+            return _ok_process()
         if _mentions(cmd, "generate_filter_enum_reference.py"):
-            return ok
+            return _ok_process()
         if _mentions(cmd, "sync_agent_knowledge.py"):
-            return ok
-        return subprocess.run(cmd, cwd=cwd, check=False, capture_output=True, text=True)
+            return _ok_process()
+        if cmd[:3] == ["git", "diff", "--exit-code"]:
+            return _ok_process()
+        if cmd[:3] == ["git", "diff", "--stat"]:
+            return _ok_process()
+        raise AssertionError(f"unexpected cmd: {cmd}")
 
     with patch("verify_ship_artifacts._run", side_effect=fake_run):
         assert run_verify(skip_upstream=True, root=tmp_path) == 0
-
-
-def test_git_diff_dirty_after_touch(tmp_path: Path) -> None:
-    from verify_ship_artifacts import git_diff_dirty
-
-    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run(
-        ["git", "config", "user.email", "test@example.com"],
-        cwd=tmp_path,
-        check=True,
-        capture_output=True,
-    )
-    subprocess.run(
-        ["git", "config", "user.name", "test"],
-        cwd=tmp_path,
-        check=True,
-        capture_output=True,
-    )
-    artifact = tmp_path / "src/endorlabs/generated/registry_contract.py"
-    artifact.parent.mkdir(parents=True)
-    artifact.write_text("# v1\n", encoding="utf-8")
-    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run(
-        ["git", "commit", "-m", "init"],
-        cwd=tmp_path,
-        check=True,
-        capture_output=True,
-    )
-    artifact.write_text("# v2\n", encoding="utf-8")
-    err = git_diff_dirty(
-        ("src/endorlabs/generated/registry_contract.py",), root=tmp_path
-    )
-    assert err is not None
-    assert "out of date" in err

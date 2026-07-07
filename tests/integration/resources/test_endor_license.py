@@ -7,7 +7,6 @@ from tests.conftest import TEST_MAX_PAGES, TEST_PAGE_SIZE
 
 
 @pytest.mark.integration
-@pytest.mark.long
 class TestEndorLicense:
     """Test cases for EndorLicense resource operations."""
 

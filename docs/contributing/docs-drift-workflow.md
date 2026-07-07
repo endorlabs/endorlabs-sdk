@@ -57,6 +57,9 @@ matching `## VERSION` section before publish.
 
 **Release** (`.github/workflows/release-tag-publish.yml`, `release-testpypi.yml`): composite
 `.github/actions/release-build-gate` (quality gate + `verify_ship_artifacts` + wheel build).
+Production PyPI publish is **`release-tag-publish.yml`** `workflow_dispatch` from `main` — see
+[release-publishing.md](./release-publishing.md). `release-pypi.yml` is dry-run only unless infra
+registers a second PyPI trusted publisher.
 
 **Pre-commit** (`.pre-commit-config.yaml`): `ship-artifacts-verify` runs
 `verify_ship_artifacts.py --skip-upstream` before ruff/pyright when model-sync or

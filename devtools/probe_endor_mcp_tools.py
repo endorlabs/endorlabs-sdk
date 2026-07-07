@@ -24,7 +24,7 @@ Negotiate ``protocolVersion`` **2025-06-18** (matches current endorctl MCP).
 
 Usage:
   uv run python devtools/probe_endor_mcp_tools.py
-  uv run python devtools/probe_endor_mcp_tools.py --dump-tools-json .endorlabs-context/workspace/sessions/agent/exports/mcp_tools.json
+  uv run python devtools/probe_endor_mcp_tools.py --dump-tools-json .endorlabs-context/workspace/runs/scratch/mcp_tools.json
   set ENDORCTL=G:\\Tools\\endorctl\\endorctl.exe
   uv run python devtools/probe_endor_mcp_tools.py --endorctl "%ENDORCTL%"
 """

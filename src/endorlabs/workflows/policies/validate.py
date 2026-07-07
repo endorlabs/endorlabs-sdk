@@ -16,11 +16,12 @@ import json
 import os
 import sys
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 import endorlabs
 from endorlabs.core.exceptions import EndorAPIError, PermissionDeniedError
 from endorlabs.resources.policy import Policy
+from endorlabs.workflows.wire_access import as_dict, model_to_dict, nested_dict
 
 
 @dataclass
@@ -33,12 +34,13 @@ class PolicyValidationResult:
     response: dict[str, Any]
     finding_uuid: str | None = None
     finding_matched: bool | None = None
-    errors: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list[str])
 
     @property
     def ok(self) -> bool:
         """True when validation succeeded and no auxiliary errors were recorded."""
-        result = (self.response.get("spec") or {}).get("result") or self.response
+        spec = nested_dict(self.response, "spec")
+        result = nested_dict(spec, "result") or self.response
         return bool(result.get("valid_policy")) and not self.errors
 
 
@@ -52,21 +54,15 @@ def _policy_target_kind(policy: Policy) -> str | None:
     spec = policy.spec
     if spec is None or not spec.finding:
         return None
-    finding_cfg = spec.finding
-    tk = getattr(finding_cfg, "target_kind", None)
-    if tk is None and hasattr(finding_cfg, "get"):
-        tk = finding_cfg.get("target_kind")
+    finding_cfg = model_to_dict(spec.finding)
+    tk = finding_cfg.get("target_kind")
     return str(tk) if tk else None
 
 
 def _template_values_for_request(template_values: Any) -> Any:
     if isinstance(template_values, dict):
-        return {
-            key: (
-                value.model_dump(mode="json") if hasattr(value, "model_dump") else value
-            )
-            for key, value in template_values.items()
-        }
+        template_dict = cast("dict[str, Any]", template_values)
+        return {key: model_to_dict(value) for key, value in template_dict.items()}
     return template_values
 
 
@@ -151,19 +147,21 @@ def validate_policy(
     data = response.json()
     if not isinstance(data, dict):
         raise TypeError("Unexpected non-object validation response")
-    return data
+    return cast("dict[str, Any]", data)
 
 
 def _collect_uuids(obj: Any, out: set[str]) -> None:
     if isinstance(obj, dict):
-        for key, value in obj.items():
+        obj_dict = cast("dict[str, Any]", obj)
+        for key, value in obj_dict.items():
             if key in {"uuid", "resource_uuid", "finding_uuid"} and isinstance(
                 value, str
             ):
                 out.add(value)
             _collect_uuids(value, out)
     elif isinstance(obj, list):
-        for item in obj:
+        obj_list = cast("list[Any]", obj)
+        for item in obj_list:
             _collect_uuids(item, out)
 
 
@@ -178,21 +176,27 @@ def finding_in_validation_output(finding_uuid: str, validation: dict[str, Any]) 
 def summarize_validation(validation: dict[str, Any]) -> str:
     """Return a short human-readable summary of a validation response."""
     lines: list[str] = []
-    result = (validation.get("spec") or {}).get("result") or validation
+    spec = nested_dict(validation, "spec")
+    result = nested_dict(spec, "result") or validation
     if "valid_policy" in result or "allow" in result:
         lines.append(f"valid_policy: {result.get('valid_policy')}")
         lines.append(f"allow: {result.get('allow')}")
-        if result.get("validation_error"):
-            lines.append(f"validation_error: {result['validation_error']}")
-    matching = result.get("policy_output") or validation.get("matching_findings")
-    if isinstance(matching, dict):
+        validation_error = result.get("validation_error")
+        if validation_error:
+            lines.append(f"validation_error: {validation_error}")
+    matching_raw = result.get("policy_output") or validation.get("matching_findings")
+    if isinstance(matching_raw, dict):
+        matching = cast("dict[str, Any]", matching_raw)
         lines.append(f"policy_output projects: {len(matching)}")
         for proj_uuid, output in list(matching.items())[:3]:
             if isinstance(output, dict):
-                vr = output.get("violating_resources") or {}
+                output_dict = cast("dict[str, Any]", output)
+                vr_raw = output_dict.get("violating_resources")
+                vr = as_dict(vr_raw) if vr_raw is not None else {}
                 lines.append(f"  project {proj_uuid}: resource groups {len(vr)}")
-    elif isinstance(matching, list):
-        lines.append(f"matching_findings: {len(matching)}")
+    elif isinstance(matching_raw, list):
+        matching_list = cast("list[Any]", matching_raw)
+        lines.append(f"matching_findings: {len(matching_list)}")
     return "\n".join(lines)
 
 

@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
+
+from endorlabs.workflows.wire_access import as_dict, nested_dict
 
 
 @dataclass(frozen=True)
@@ -27,21 +29,22 @@ def parse_group_key(group_key: str) -> dict[str, str]:
     if not isinstance(payload, list):
         return {"_raw": group_key}
     parsed: dict[str, str] = {}
-    for entry in payload:
-        if isinstance(entry, dict) and "key" in entry and "value" in entry:
+    for raw_entry in cast("list[Any]", payload):
+        if not isinstance(raw_entry, dict):
+            continue
+        entry = cast("dict[str, Any]", raw_entry)
+        if "key" in entry and "value" in entry:
             parsed[str(entry["key"])] = str(entry["value"])
     return parsed
 
 
 def count_from_wire(block: Any) -> int:
     """Extract integer count from ``count_response``-shaped wire JSON."""
-    if not isinstance(block, dict):
-        return 0
-    raw = block.get("count")
+    block_dict = as_dict(block)
+    raw = block_dict.get("count")
     if raw is None:
-        count_response = block.get("count_response")
-        if isinstance(count_response, dict):
-            raw = count_response.get("count")
+        count_response = nested_dict(block_dict, "count_response")
+        raw = count_response.get("count")
     if raw is None:
         return 0
     return int(raw)
@@ -52,22 +55,24 @@ def extract_list_objects(data: dict[str, Any]) -> list[dict[str, Any]]:
     if "list" not in data:
         return []
     list_data = data["list"]
-    if isinstance(list_data, dict) and "objects" in list_data:
-        objects = list_data["objects"]
-        if isinstance(objects, list):
-            return [obj for obj in objects if isinstance(obj, dict)]
+    if isinstance(list_data, dict):
+        list_block = cast("dict[str, Any]", list_data)
+        objects_raw = list_block.get("objects")
+        if isinstance(objects_raw, list):
+            return [
+                cast("dict[str, Any]", obj)
+                for obj in cast("list[Any]", objects_raw)
+                if isinstance(obj, dict)
+            ]
     return []
 
 
 def next_page_id_from_response(data: dict[str, Any]) -> str | None:
     """Return ``next_page_id`` from a list or group response page."""
-    list_block = data.get("list")
-    if isinstance(list_block, dict):
-        response_meta = list_block.get("response")
-        if isinstance(response_meta, dict):
-            raw_next = response_meta.get("next_page_id")
-            if raw_next:
-                return str(raw_next)
+    response_meta = nested_dict(nested_dict(data, "list"), "response")
+    raw_next = response_meta.get("next_page_id")
+    if raw_next:
+        return str(raw_next)
     return None
 
 
@@ -75,15 +80,14 @@ def iter_group_buckets_from_page(
     page: dict[str, Any],
 ) -> Iterator[tuple[str, dict[str, Any]]]:
     """Yield ``(group_key, group_data)`` from one grouped list page."""
-    group_response = page.get("group_response")
-    if not isinstance(group_response, dict):
+    group_response = nested_dict(page, "group_response")
+    groups_raw = group_response.get("groups")
+    if not isinstance(groups_raw, dict):
         return
-    groups = group_response.get("groups")
-    if not isinstance(groups, dict):
-        return
+    groups = cast("dict[str, Any]", groups_raw)
     for key, value in groups.items():
         if isinstance(value, dict):
-            yield str(key), value
+            yield str(key), cast("dict[str, Any]", value)
 
 
 def iter_group_buckets_from_pages(
@@ -108,9 +112,10 @@ def parse_bucket_key(raw: str) -> str:
 
 def group_bucket_count(bucket: GroupBucket) -> int:
     """Extract integer count from a ``GroupBucket`` wire row."""
-    agg = bucket.data.get("aggregation_count")
-    if isinstance(agg, dict) and agg.get("count") is not None:
-        return int(agg["count"])
+    agg = nested_dict(bucket.data, "aggregation_count")
+    count_raw = agg.get("count")
+    if count_raw is not None:
+        return int(count_raw)
     return bucket.count
 
 

@@ -338,7 +338,9 @@ def _sorted_tags(frontmatter: dict[str, Any]) -> list[str]:
 
 
 # Maintainer-only rules: agent-knowledge/rules + .cursor/rules; not copied to wheel.
-MAINTAINER_ONLY_RULE_IDS: frozenset[str] = frozenset({"endor-changelog"})
+MAINTAINER_ONLY_RULE_IDS: frozenset[str] = frozenset(
+    {"endor-changelog", "endor-maintainer-tooling"}
+)
 
 
 def _is_shipped_rule(rule_id: str) -> bool:

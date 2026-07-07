@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 import endorlabs
@@ -13,6 +15,7 @@ from endorlabs.workflows.callgraph.resolve import (
     resolve_package_version_with_callgraph,
 )
 from endorlabs.workflows.projects.discovery import resolve_project_candidate
+from tests.conftest import CANONICAL_SDK_REPO_URL
 
 
 @pytest.mark.integration
@@ -26,16 +29,17 @@ class TestCallgraphPath:
 
     def test_path_get_to_httpx_request_on_endorlabs_sdk(self) -> None:
         """Multi-hop path from APIClient.get to httpx Client.request when CG exists."""
+        repo_url = os.getenv("TEST_REPO_URL", CANONICAL_SDK_REPO_URL)
         try:
             proj = resolve_project_candidate(
                 self.client,
-                "endorlabs-sdk",
+                repo_url,
                 namespace=self.namespace,
                 traverse=True,
                 max_pages=1,
             )
         except ValueError:
-            pytest.skip("endorlabs-sdk project not found in this tenant")
+            pytest.skip(f"No project matched repo URL: {repo_url}")
 
         project_ns = (
             proj.tenant_meta.namespace

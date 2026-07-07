@@ -12,6 +12,7 @@ from typing import Literal
 
 import endorlabs
 from endorlabs.utils.logging_config import get_resource_logger
+from endorlabs.utils.repo_paths import normalize_repo_paths
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CONTEXT_DIR = REPO_ROOT / ".endorlabs-context"
@@ -22,16 +23,6 @@ CONTEXT_PREFIX = "src/endorlabs/context/"
 SYNC_AGENT_KNOWLEDGE = REPO_ROOT / "devtools" / "sync_agent_knowledge.py"
 
 logger = get_resource_logger(__name__)
-
-
-def _normalize_paths(paths: Sequence[str]) -> tuple[str, ...]:
-    """Normalize hook file paths for prefix matching."""
-    normalized: list[str] = []
-    for raw_path in paths:
-        cleaned = raw_path.strip().replace("\\", "/")
-        if cleaned:
-            normalized.append(cleaned)
-    return tuple(normalized)
 
 
 def _requires_skill_sync(paths: Sequence[str]) -> bool:
@@ -86,7 +77,7 @@ def _run_bundle_sync() -> None:
 def main(argv: Sequence[str] | None = None) -> int:
     """Refresh local generated context artifacts for maintainers."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    changed_paths = _normalize_paths(sys.argv[1:] if argv is None else argv)
+    changed_paths = normalize_repo_paths(sys.argv[1:] if argv is None else argv)
     if not changed_paths:
         logger.info("No staged context or skill paths were provided.")
         return 0

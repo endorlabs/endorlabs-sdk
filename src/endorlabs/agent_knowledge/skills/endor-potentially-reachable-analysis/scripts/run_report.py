@@ -8,7 +8,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+from endorlabs.context.paths import default_runs_dir
+
 SCRIPT_DIR = Path(__file__).resolve().parent
+RUN_BUCKET = "potentially-reachable-analysis"
 
 
 def run_step(label: str, cmd: list[str]) -> int:
@@ -31,12 +34,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path(
-            ".endorlabs-context/workspace/sessions/agent/exports/prf-analysis"
-        ),
+        default=default_runs_dir(RUN_BUCKET),
         help=(
             "Directory for JSON, HTML, and PDF "
-            "(default: .endorlabs-context/workspace/sessions/agent/exports/prf-analysis)."
+            "(default: workspace/runs/potentially-reachable-analysis/)."
         ),
     )
     parser.add_argument(

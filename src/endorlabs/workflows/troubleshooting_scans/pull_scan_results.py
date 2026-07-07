@@ -107,7 +107,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     )
     summaries = [scan_result_extended_summary(d) for d in raw_list]
 
-    payload = {
+    payload: dict[str, Any] = {
         "root_tenant": rt,
         "query_tenant": args.tenant,
         "list_namespace": list_ns,

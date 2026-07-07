@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING, Any, cast
 import httpx
 from pydantic import BaseModel, ValidationError
 
+from endorlabs.workflows.wire_access import as_dict, nested_dict
+
 from ..core.exceptions import (
     NAMESPACE_SCOPE_HINT,
     EndorAPIError,
@@ -136,7 +138,7 @@ class BaseResourceOperations[T: BaseModel]:
             warnings=False,
             by_alias=True,
         )
-        dump_kwargs = {
+        dump_kwargs: dict[str, Any] = {
             "exclude_none": exclude_none,
             "mode": "json",
             "warnings": False,
@@ -805,22 +807,21 @@ class BaseResourceOperations[T: BaseModel]:
             params = self._build_params(count_params)
 
             res = self.client.get(url, params=params)
-            data = res.json()
+            data = as_dict(res.json())
 
             # Handle count response (OpenAPI: count_response.count or list total)
-            count_response = data.get("count_response")
-            if isinstance(count_response, dict):
-                raw_count = count_response.get("count")
-                if raw_count is not None:
-                    return int(raw_count)
-            if "list" in data and isinstance(data["list"], dict):
-                list_block = data["list"]
-                if isinstance(list_block.get("response"), dict):
-                    total = list_block["response"].get("total")
-                    if total is not None:
-                        return int(total)
-            if data.get("total") is not None:
-                return int(data["total"])
+            count_response = nested_dict(data, "count_response")
+            raw_count = count_response.get("count")
+            if raw_count is not None:
+                return int(raw_count)
+            list_block = nested_dict(data, "list")
+            response_meta = nested_dict(list_block, "response")
+            total = response_meta.get("total")
+            if total is not None:
+                return int(total)
+            total_top = data.get("total")
+            if total_top is not None:
+                return int(total_top)
             return 0
 
         except EndorAPIError:
@@ -863,9 +864,10 @@ class BaseResourceOperations[T: BaseModel]:
             if page_id:
                 request_params["list_parameters.page_id"] = page_id
             response = self.client.get(url, params=request_params)
-            data = response.json()
-            if not isinstance(data, dict):
+            data_raw = response.json()
+            if not isinstance(data_raw, dict):
                 break
+            data = cast("dict[str, Any]", data_raw)
             yield data
             pages += 1
 

@@ -50,7 +50,7 @@ from .recipes import (
     pv_count_spec,
 )
 from .routing import OutputShape, QueryPlan, recommend
-from .scope import QueryScope, query_scopes_from_topology, scopes_from_projects
+from .scope import QueryScope, scopes_from_projects
 from .spec import QuerySpec, Reference
 from .topology import (
     DiscoveredProject,
@@ -58,6 +58,7 @@ from .topology import (
     TopologySnapshot,
     discover_topology,
     infer_archetype,
+    query_scopes_from_topology,
 )
 from .validate import ValidationResult, validate_sample
 from .wire import group_by_time_query_wire, group_query_wire

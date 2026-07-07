@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import argparse
 from types import SimpleNamespace
+from typing import Any, cast
+
+from endorlabs.workflows.wire_access import as_dict, dict_str, nested_str
 
 from . import (
     diff_scans,
@@ -12,7 +15,11 @@ from . import (
     resolve_projects,
     select_anomalous_scans,
 )
-from .common import default_troubleshooting_output_dir, load_json, root_tenant
+from .common import (
+    default_troubleshooting_output_dir,
+    load_json,
+    root_tenant,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -74,13 +81,20 @@ def main() -> int:
             timestamped=args.timestamped,
         )
     )
-    project_payload = load_json(step1["artifact"])
-    projects = project_payload.get("projects", [])
+    project_payload = as_dict(load_json(step1["artifact"]))
+    projects_raw = project_payload.get("projects")
+    projects: list[dict[str, Any]] = []
+    if isinstance(projects_raw, list):
+        projects.extend(
+            cast("dict[str, Any]", item)
+            for item in cast("list[Any]", projects_raw)
+            if isinstance(item, dict)
+        )
     if not projects:
         raise SystemExit("No matching project found.")
     project = projects[0]
-    project_uuid = project.get("uuid")
-    project_ns = (project.get("tenant_meta") or {}).get("namespace") or ns
+    project_uuid = dict_str(project, "uuid")
+    project_ns = nested_str(project, "tenant_meta", "namespace") or ns
 
     step2 = fetch_scan_results.run(
         SimpleNamespace(

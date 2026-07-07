@@ -1,0 +1,91 @@
+"""Authentication workflow helpers for login counts, auth RCA, and session setup.
+
+See :mod:`endorlabs.workflows.auth.authentication_log` and
+:mod:`endorlabs.workflows.auth.session` module docstrings for composition layers
+and tenant-scoping callouts. Skill playbooks: ``endor-auth-setup``,
+``endor-auth-login-count``, ``endor-troubleshoot-authlog``.
+"""
+
+from __future__ import annotations
+
+from .authentication_log import (
+    API_KEY_URI_FRAGMENTS,
+    AUTHENTICATION_LOG_INVESTIGATION_MASK,
+    AUTHENTICATION_LOG_LIST_MASK,
+    INTERACTIVE_URI_REGEX,
+    SSO_URI_FRAGMENTS,
+    LoginActivityRow,
+    auth_log_filter,
+    auth_log_snapshot,
+    count_logins_from_groups,
+    count_logins_from_rows,
+    create_time_lower_bound_filter,
+    extract_user_identifiers,
+    fetch_last_logins_for_identities,
+    filter_auth_logs_by_email,
+    interactive_uri_filter,
+    is_api_key_noise,
+    is_sso_login_uri,
+    list_auth_logs,
+    normalize_auth_log,
+    parse_claims_from_group_bucket,
+    parse_create_time,
+    primary_identity,
+    probe_auth_logs,
+)
+from .dotenv import read_dotenv_value, read_env_or_dotenv, upsert_dotenv_key
+from .session import (
+    AuthEnvironmentScan,
+    AuthVerification,
+    BrowserAuthMethod,
+    EndorctlProbe,
+    build_browser_auth_kwargs,
+    probe_endorctl,
+    refresh_token_to_dotenv,
+    resolve_api_environment,
+    resolve_sso_tenant,
+    scan_auth_env,
+    sso_tenant_from_namespace,
+    verify_auth,
+)
+
+__all__ = [
+    "API_KEY_URI_FRAGMENTS",
+    "AUTHENTICATION_LOG_INVESTIGATION_MASK",
+    "AUTHENTICATION_LOG_LIST_MASK",
+    "INTERACTIVE_URI_REGEX",
+    "SSO_URI_FRAGMENTS",
+    "AuthEnvironmentScan",
+    "AuthVerification",
+    "BrowserAuthMethod",
+    "EndorctlProbe",
+    "LoginActivityRow",
+    "auth_log_filter",
+    "auth_log_snapshot",
+    "build_browser_auth_kwargs",
+    "count_logins_from_groups",
+    "count_logins_from_rows",
+    "create_time_lower_bound_filter",
+    "extract_user_identifiers",
+    "fetch_last_logins_for_identities",
+    "filter_auth_logs_by_email",
+    "interactive_uri_filter",
+    "is_api_key_noise",
+    "is_sso_login_uri",
+    "list_auth_logs",
+    "normalize_auth_log",
+    "parse_claims_from_group_bucket",
+    "parse_create_time",
+    "primary_identity",
+    "probe_auth_logs",
+    "probe_endorctl",
+    "read_dotenv_value",
+    "read_env_or_dotenv",
+    "refresh_token_to_dotenv",
+    "resolve_api_environment",
+    "resolve_sso_tenant",
+    "scan_auth_env",
+    "sso_tenant_from_namespace",
+    "upsert_dotenv_key",
+    "verify_auth",
+]

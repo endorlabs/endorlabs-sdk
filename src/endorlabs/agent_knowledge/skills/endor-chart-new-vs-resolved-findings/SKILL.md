@@ -114,7 +114,7 @@ Filters: `endorlabs.filters.reachable_vuln_log_base_filter()`.
 Bundled script (preferred for agents):
 
 ```bash
-uv run python sdk/skills/endor-chart-new-vs-resolved-findings/scripts/run_analysis.py <namespace>
+uv run python .endorlabs-context/sdk/skills/endor-chart-new-vs-resolved-findings/scripts/run_analysis.py <namespace>
 ```
 
 Uses `client.FindingLog.list_groups(..., list_params=ListParameters(group_by_time=True, ...))`
@@ -211,7 +211,7 @@ Producer: `endorlabs.workflows.findings.finding_log_trends.build_analysis` (via
 Use a Cursor canvas (`.canvas.tsx`) for interactive charts. Store under the Cursor
 project `canvases/` folder (typically `~/.cursor/projects/<repo-slug>/canvases/` —
 outside the git repo). Write artifacts under
-`.endorlabs-context/workspace/sessions/<user>/exports/` only when the user asks for
+`.endorlabs-context/workspace/runs/finding-log-weekly-trends/` only when the user asks for
 a repo-local copy.
 
 ### Cumulative weekly line chart (default)

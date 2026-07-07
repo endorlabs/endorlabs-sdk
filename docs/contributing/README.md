@@ -1,6 +1,6 @@
 # Contributing to the SDK
 
-Process and checklists for contributors and AI agents extending the **generated** client surface. Setup and commands: [CONTRIBUTORS.md](../../CONTRIBUTORS.md). Full docs index: [docs/README.md](../README.md).
+Process and checklists for contributors and AI agents extending the **generated** client surface. Setup and commands: [CONTRIBUTORS.md](../../CONTRIBUTORS.md) (including [before you commit / open a PR](../../CONTRIBUTORS.md#before-you-commit--open-a-pr)). Full docs index: [docs/README.md](../README.md).
 
 Agent skills: [endor-implement-sdk-resource](../../agent-knowledge/skills/endor-implement-sdk-resource/), [endor-model-sync-drift](../../agent-knowledge/skills/endor-model-sync-drift/), [endor-troubleshoot-sdk](../../agent-knowledge/skills/endor-troubleshoot-sdk/).
 
