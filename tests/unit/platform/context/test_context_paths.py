@@ -37,6 +37,17 @@ def test_context_json_path(tmp_path: Path) -> None:
 
 def test_workflow_defaults_use_workspace() -> None:
     assert workflow_projects_root().as_posix().endswith("workspace/projects")
+    from endorlabs.context.paths import (
+        default_runs_dir,
+        workflow_inventory_root,
+    )
+
+    assert (
+        default_runs_dir("troubleshooting-scans")
+        .as_posix()
+        .endswith("workspace/runs/troubleshooting-scans")
+    )
+    assert workflow_inventory_root().as_posix().endswith("workspace/inventory")
     assert (
         workflow_sessions_root(subdir="troubleshooting")
         .as_posix()

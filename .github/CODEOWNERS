@@ -1,30 +1,5 @@
 # CODEOWNERS — last matching pattern wins.
 # Teams: @endorlabs/<slug>  Users: @username
 
-# Default owner for the SDK repo
-* @endorlabs/engineering
-
-# CI, releases, GitHub automation
-/.github/ @endorlabs/engineering
-
-# IDE agent rules and skill mirrors
-/.cursor/ @endorlabs/engineering
-
-# Maintainer automation and model sync
-/devtools/ @endorlabs/engineering
-
-# Agent knowledge (authoring + shipped wheel copy)
-/agent-knowledge/ @endorlabs/engineering
-/src/endorlabs/agent_knowledge/ @endorlabs/engineering
-
-# Runtime SDK
-/src/ @endorlabs/engineering
-
-# Tests
-/tests/ @endorlabs/engineering
-
-# Documentation (user + contributor guides)
-/docs/ @endorlabs/technical-documentation
-/README.md @endorlabs/technical-documentation
-/CONTRIBUTORS.md @endorlabs/technical-documentation
-/AGENTS.md @endorlabs/engineering
+# Default owner: Customer Solutions (Solutions Architecture/Engineering)
+* @endorlabs/solutions

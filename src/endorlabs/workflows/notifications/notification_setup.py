@@ -7,12 +7,13 @@ Provides composable functions for setting up notification integrations
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from ..common import WorkflowResult
 
 if TYPE_CHECKING:
     from endorlabs import Client
+    from endorlabs.resources.notification_target import NotificationTarget
 
 from endorlabs.utils.logging_config import get_resource_logger
 
@@ -232,7 +233,10 @@ def create_notification_target(
     )
 
     try:
-        target = client.NotificationTarget.create(payload=payload, namespace=namespace)
+        target = cast(
+            "NotificationTarget",
+            client.NotificationTarget.create(payload=payload, namespace=namespace),
+        )
         result.uuid = target.uuid
         result.message = f"Created notification target '{name}' (uuid={target.uuid})."
         logger.info(result.message)

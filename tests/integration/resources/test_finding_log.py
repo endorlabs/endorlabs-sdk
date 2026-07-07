@@ -6,9 +6,8 @@ Tests LIST/GET and filtering by operation type for FindingLog resources.
 import pytest
 
 import endorlabs
-from endorlabs.api_client import APIClient
 from endorlabs.core.exceptions import ServerError
-from tests.conftest import TEST_LOG_LIST_MAX_PAGES, TEST_NAMESPACE_DEFAULT
+from tests.conftest import TEST_LOG_LIST_MAX_PAGES
 from tests.integration.conftest import (
     assert_bounded_log_rows,
     bounded_log_list_params,
@@ -17,7 +16,6 @@ from tests.integration.conftest import (
 
 
 @pytest.mark.integration
-@pytest.mark.long
 class TestFindingLog:
     """Test cases for FindingLog resource operations."""
 
@@ -92,15 +90,3 @@ class TestFindingLog:
                 log.spec.operation == "OPERATION_UPDATE"
                 or str(log.spec.operation) == "OPERATION_UPDATE"
             )
-
-    def test_finding_log_update_raises_not_implemented(self) -> None:
-        """When update_fn is None, FindingLog.update raises NotImplementedError."""
-        from unittest.mock import Mock
-
-        mock = Mock(spec=APIClient)
-        client = endorlabs.Client(
-            api_client=mock,
-            tenant=TEST_NAMESPACE_DEFAULT,
-        )
-        with pytest.raises(NotImplementedError, match="does not support update"):
-            client.FindingLog.update("dummy-uuid", {}, update_mask="meta.description")

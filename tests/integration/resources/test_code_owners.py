@@ -6,7 +6,6 @@ from tests.conftest import TEST_MAX_PAGES, TEST_PAGE_SIZE
 
 
 @pytest.mark.integration
-@pytest.mark.long
 class TestCodeOwners:
     """Test cases for CodeOwners resource operations."""
 

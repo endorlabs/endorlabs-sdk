@@ -3,7 +3,7 @@ id: endor-portable-examples
 tags: [examples, hygiene, placeholders]
 summary: >-
   Use placeholders in git-tracked agent content; never commit customer estate
-  identifiers (tenants, project URLs, production UUIDs).
+  identifiers, PII, or secrets (tenants, project URLs, production UUIDs, emails).
 ---
 
 # Portable examples
@@ -19,6 +19,11 @@ substring allowlist—apply judgment using the classes below.
 | **Placeholders** | `<tenant>`, `<namespace>`, `<project-uuid>`, `tenant.namespace`, `https://github.com/org/repo.git` | **Required** in commands and snippets |
 | **Product vocabulary** | Platform features, connector types, resource kinds, scan categories in product/user-docs | OK when describing *how the product works* |
 | **Estate identifiers** | Tenant roots, child namespaces, registered project URLs/names, production UUIDs | **Never** commit; resolve from env, user input, or API at runtime |
+| **PII** | Customer or end-user emails, names, auth identities, account ids in examples or logs | **Never** commit in git-tracked content; use placeholders (`user@example.com`) |
+
+## Secrets
+
+Never commit API keys, bearer tokens, `.env` files, or credential files. Pre-commit runs **gitleaks** on staged changes. Confirm env vars exist without printing values (rule `endor-local-context`).
 
 ## Integration surface vs inventory record
 

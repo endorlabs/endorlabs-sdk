@@ -15,6 +15,10 @@ if TYPE_CHECKING:
 logger = get_resource_logger(__name__)
 
 
+def _empty_log_messages() -> list[dict[str, Any]]:
+    return []
+
+
 @dataclass
 class ScanLogEntry:
     """A single scan run's metadata and log messages."""
@@ -24,14 +28,18 @@ class ScanLogEntry:
     exit_code: int | None = None
     start_time: str = ""
     end_time: str = ""
-    log_messages: list[dict[str, Any]] = field(default_factory=list)
+    log_messages: list[dict[str, Any]] = field(default_factory=_empty_log_messages)
+
+
+def _empty_scan_log_entries() -> list[ScanLogEntry]:
+    return []
 
 
 @dataclass
 class ScanLogComparison(WorkflowResult):
     """Result of comparing multiple scan runs."""
 
-    entries: list[ScanLogEntry] = field(default_factory=list)
+    entries: list[ScanLogEntry] = field(default_factory=_empty_scan_log_entries)
     num_scans_requested: int = 0
     num_scans_found: int = 0
 

@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any, cast
 
 from ..operations import BaseResourceOperations
 from ..operations.routes import RouteExecutor, RouteResult, unwrap_route_list
-from ..registry import RESOURCE_REGISTRY
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -17,6 +16,8 @@ if TYPE_CHECKING:
 
 
 def _registry_attr_by_kind() -> dict[str, str]:
+    from ..registry import RESOURCE_REGISTRY
+
     return {entry.model_class.__name__: entry.attr_name for entry in RESOURCE_REGISTRY}
 
 
@@ -136,6 +137,8 @@ class RouteHostMixin:
     def _get_route_executor(self) -> RouteExecutor:
         if self._route_executor is not None:
             return self._route_executor
+        from ..registry import RESOURCE_REGISTRY
+
         ops_for_kind: dict[str, BaseResourceOperations[Any]] = {}
         for entry in RESOURCE_REGISTRY:
             kind = entry.model_class.__name__

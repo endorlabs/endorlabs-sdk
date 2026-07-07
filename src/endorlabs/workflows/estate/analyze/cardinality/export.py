@@ -712,7 +712,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "-o",
         help=(
             "Output CSV path for version-cardinality rollup "
-            "(default: .endorlabs-context/workspace/sessions/<user>/exports/"
+            "(default: .endorlabs-context/workspace/runs/version-cardinality/"
             "version_cardinality_<slug>.csv)."
         ),
     )
@@ -798,14 +798,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.output:
         output_path = Path(args.output)
     else:
-        from endorlabs.context.paths import workflow_sessions_root
+        from endorlabs.context.paths import default_runs_dir
         from endorlabs.workflows.estate.analyze.compile_graph.pipeline import (
             namespace_slug,
         )
 
         slug = namespace_slug(args.namespace)
         output_path = (
-            workflow_sessions_root(subdir="exports") / f"version_cardinality_{slug}.csv"
+            default_runs_dir("version-cardinality") / f"version_cardinality_{slug}.csv"
         )
     request_timeout = _resolve_request_timeout(args.request_timeout)
     remediation: RemediationComparisonResult | None = None

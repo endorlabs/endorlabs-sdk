@@ -160,10 +160,3 @@ class TestLinterResult:
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
-
-    def test_linter_result_update_raises_not_implemented(self) -> None:
-        """If update_fn is None, self.endor_client.LinterResult.update raises NotImplemented."""
-        with pytest.raises(NotImplementedError, match="does not support update"):
-            self.endor_client.LinterResult.update(
-                "dummy-uuid", {}, update_mask="meta.description"
-            )

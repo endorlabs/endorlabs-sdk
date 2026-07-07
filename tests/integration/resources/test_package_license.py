@@ -8,7 +8,6 @@ from tests.integration.client.conftest import OSS_NAMESPACE
 
 
 @pytest.mark.integration
-@pytest.mark.long
 class TestPackageLicense:
     """Test cases for PackageLicense resource operations."""
 

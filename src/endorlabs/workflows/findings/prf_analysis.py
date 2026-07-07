@@ -4,13 +4,19 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from endorlabs.tools.list_sharding import (
     ProjectShard,
     parallel_map_shards,
     project_scoped_filter,
     single_shard_namespace,
+)
+from endorlabs.workflows.wire_access import (
+    dict_str,
+    model_to_dict,
+    nested_dict,
+    nested_str,
 )
 
 if TYPE_CHECKING:
@@ -43,29 +49,21 @@ PV_BATCH_SIZE = 50
 
 def finding_row_to_dict(finding: Any) -> dict[str, Any]:
     """Normalize a masked Finding list row to a dict."""
-    if isinstance(finding, dict):
-        return finding
-    if hasattr(finding, "model_dump"):
-        return finding.model_dump(mode="json", warnings=False)
-    return dict(finding)
+    return model_to_dict(finding)
 
 
 def pv_row_to_dict(pv: Any) -> dict[str, Any]:
     """Normalize a masked PackageVersion list row to a dict."""
-    if isinstance(pv, dict):
-        return pv
-    if hasattr(pv, "model_dump"):
-        return pv.model_dump(mode="json", warnings=False)
-    return dict(pv)
+    return model_to_dict(pv)
 
 
 def findings_by_parent(findings: list[dict[str, Any]]) -> Counter[str]:
     """Count findings per ``meta.parent_uuid``."""
     counts: Counter[str] = Counter()
     for finding in findings:
-        parent_uuid = (finding.get("meta") or {}).get("parent_uuid")
+        parent_uuid = nested_str(nested_dict(finding, "meta"), "parent_uuid")
         if parent_uuid:
-            counts[str(parent_uuid)] += 1
+            counts[parent_uuid] += 1
     return counts
 
 
@@ -91,10 +89,12 @@ def _is_approximated(spec: dict[str, Any]) -> bool | None:
 
 
 def _has_prd_tag(spec: dict[str, Any]) -> bool:
-    tags = spec.get("finding_tags") or []
-    if isinstance(tags, str):
-        return PRD_TAG in tags
-    return PRD_TAG in list(tags)
+    tags_raw = spec.get("finding_tags")
+    if isinstance(tags_raw, str):
+        return PRD_TAG in tags_raw
+    if isinstance(tags_raw, list):
+        return PRD_TAG in [str(tag) for tag in cast("list[Any]", tags_raw)]
+    return False
 
 
 def aggregate_prf_metrics(
@@ -107,7 +107,7 @@ def aggregate_prf_metrics(
     prd_counts: dict[str, int] = defaultdict(int)
 
     for finding in findings:
-        spec = finding.get("spec") or {}
+        spec = nested_dict(finding, "spec")
         eco = _eco_key(spec.get("ecosystem"))
         if eco is None:
             continue
@@ -132,12 +132,12 @@ def parent_uuids_by_eco(findings: list[dict[str, Any]]) -> dict[str, set[str]]:
     """Map ecosystem key to unique PRF parent PackageVersion UUIDs."""
     out: dict[str, set[str]] = defaultdict(set)
     for finding in findings:
-        spec = finding.get("spec") or {}
+        spec = nested_dict(finding, "spec")
         eco = _eco_key(spec.get("ecosystem"))
-        parent_uuid = (finding.get("meta") or {}).get("parent_uuid")
+        parent_uuid = nested_str(nested_dict(finding, "meta"), "parent_uuid")
         if eco is None or not parent_uuid:
             continue
-        out[eco].add(str(parent_uuid))
+        out[eco].add(parent_uuid)
     return out
 
 
@@ -148,15 +148,15 @@ def parent_uuids_by_namespace(
     """Group parent PV UUIDs by finding ``tenant_meta.namespace``."""
     by_namespace: dict[str, set[str]] = defaultdict(set)
     for finding in findings:
-        parent_uuid = (finding.get("meta") or {}).get("parent_uuid")
+        parent_uuid = nested_str(nested_dict(finding, "meta"), "parent_uuid")
         if not parent_uuid:
             continue
-        parent_key = str(parent_uuid)
+        parent_key = parent_uuid
         if parent_key not in parent_uuids:
             continue
-        namespace = (finding.get("tenant_meta") or {}).get("namespace")
+        namespace = nested_str(nested_dict(finding, "tenant_meta"), "namespace")
         if namespace:
-            by_namespace[str(namespace)].add(parent_key)
+            by_namespace[namespace].add(parent_key)
     assigned = {uuid for uuids in by_namespace.values() for uuid in uuids}
     return dict(by_namespace), parent_uuids - assigned
 
@@ -322,9 +322,9 @@ def fetch_parent_package_versions(
                 pv_filter=pv_filter,
                 traverse=False,
             ):
-                uuid = pv.get("uuid")
+                uuid = dict_str(pv, "uuid")
                 if uuid:
-                    pv_by_uuid[str(uuid)] = pv
+                    pv_by_uuid[uuid] = pv
 
     if orphan_uuids:
         sorted_orphans = sorted(orphan_uuids)
@@ -337,8 +337,8 @@ def fetch_parent_package_versions(
                 pv_filter=pv_filter,
                 traverse=True,
             ):
-                uuid = pv.get("uuid")
-                if uuid and str(uuid) not in pv_by_uuid:
-                    pv_by_uuid[str(uuid)] = pv
+                uuid = dict_str(pv, "uuid")
+                if uuid and uuid not in pv_by_uuid:
+                    pv_by_uuid[uuid] = pv
 
     return pv_by_uuid

@@ -8,7 +8,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+from endorlabs.context.paths import default_runs_dir
+
 SCRIPT_DIR = Path(__file__).resolve().parent
+RUN_BUCKET = "finding-log-weekly-trends"
 
 
 def run_step(label: str, cmd: list[str]) -> int:
@@ -31,12 +34,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path(
-            ".endorlabs-context/workspace/sessions/agent/exports/new-vs-resolved"
-        ),
+        default=default_runs_dir(RUN_BUCKET),
         help=(
             "Directory for analysis JSON "
-            "(default: .endorlabs-context/workspace/sessions/agent/exports/new-vs-resolved)."
+            "(default: workspace/runs/finding-log-weekly-trends/)."
         ),
     )
     parser.add_argument(

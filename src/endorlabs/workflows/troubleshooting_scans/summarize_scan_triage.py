@@ -5,7 +5,9 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
+
+from endorlabs.workflows.wire_access import as_dict, dict_str, nested_dict, nested_str
 
 from .common import (
     default_troubleshooting_output_dir,
@@ -15,11 +17,26 @@ from .common import (
 )
 
 
+def _dict_list(d: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    raw = d.get(key)
+    if not isinstance(raw, list):
+        return []
+    return [
+        cast("dict[str, Any]", item)
+        for item in cast("list[Any]", raw)
+        if isinstance(item, dict)
+    ]
+
+
+def _first_dict(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    return rows[0] if rows else {}
+
+
 def _load_json(path: str) -> dict[str, Any]:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise TypeError(f"Artifact is not a JSON object: {path}")
-    return data
+    return cast("dict[str, Any]", data)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -61,23 +78,15 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _latest_scan_summary(results_artifact: dict[str, Any]) -> dict[str, Any]:
-    summaries = results_artifact.get("scan_results_summary") or []
-    if not isinstance(summaries, list) or not summaries:
-        return {}
-    first = summaries[0]
-    return first if isinstance(first, dict) else {}
+    return _first_dict(_dict_list(results_artifact, "scan_results_summary"))
 
 
 def _error_entries(logs_artifact: dict[str, Any]) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
-    for message in logs_artifact.get("messages") or []:
-        if not isinstance(message, dict):
-            continue
-        level = str(message.get("level") or "")
-        payload = message.get("json_payload")
-        payload_level = ""
-        if isinstance(payload, dict):
-            payload_level = str(payload.get("level") or "")
+    for message in _dict_list(logs_artifact, "messages"):
+        level = dict_str(message, "level")
+        payload = as_dict(message.get("json_payload"))
+        payload_level = dict_str(payload, "level")
         if level == "LOG_LEVEL_ERROR" or payload_level.lower() == "error":
             out.append(message)
     return out
@@ -111,41 +120,31 @@ def _value_excerpt(value: Any, *, max_len: int = 320) -> str:
 def _latest_scan_raw(
     results_artifact: dict[str, Any], scan_uuid: str | None = None
 ) -> dict[str, Any]:
-    scans = results_artifact.get("scan_results") or []
-    if not isinstance(scans, list) or not scans:
+    scans = _dict_list(results_artifact, "scan_results")
+    if not scans:
         return {}
     if scan_uuid:
         for candidate in scans:
-            if (
-                isinstance(candidate, dict)
-                and str(candidate.get("uuid") or "") == scan_uuid
-            ):
+            if dict_str(candidate, "uuid") == scan_uuid:
                 return candidate
-    first = scans[0]
-    return first if isinstance(first, dict) else {}
+    return scans[0]
 
 
 def _extract_log_evidence(
     logs_artifact: dict[str, Any], *, max_entries: int = 8
 ) -> list[dict[str, str]]:
     entries: list[dict[str, str]] = []
-    messages = logs_artifact.get("messages") or []
-    if not isinstance(messages, list):
-        return entries
-    for message in messages:
-        if not isinstance(message, dict):
-            continue
-        payload = message.get("json_payload")
-        p = payload if isinstance(payload, dict) else {}
-        level = str(message.get("level") or "")
-        payload_level = str(p.get("level") or "")
+    for message in _dict_list(logs_artifact, "messages"):
+        payload = as_dict(message.get("json_payload"))
+        level = dict_str(message, "level")
+        payload_level = dict_str(payload, "level")
         norm_level = payload_level.lower() or level.lower()
         if norm_level not in {"error", "warn", "warning", "fatal", "log_level_error"}:
             continue
         entries.append(
             {
                 "path": "messages[].json_payload.msg",
-                "value": _value_excerpt(p.get("msg") or ""),
+                "value": _value_excerpt(payload.get("msg") or ""),
                 "source": "scan_logs_artifact",
             }
         )
@@ -158,13 +157,11 @@ def _signature_tags(
     scan_raw: dict[str, Any], logs_artifact: dict[str, Any]
 ) -> list[str]:
     tags: set[str] = set()
-    spec = scan_raw.get("spec")
-    s = spec if isinstance(spec, dict) else {}
-    provisioning = s.get("provisioning_result")
-    p = provisioning if isinstance(provisioning, dict) else {}
+    spec = nested_dict(scan_raw, "spec")
+    provisioning = nested_dict(spec, "provisioning_result")
     blob = " ".join(
         [
-            str(p.get("error") or ""),
+            dict_str(provisioning, "error"),
             json.dumps(logs_artifact.get("messages") or [], ensure_ascii=False).lower(),
         ]
     ).lower()
@@ -176,7 +173,7 @@ def _signature_tags(
         tags.add("manifest_or_tooling_discovery_issue")
     if "unable to generate manifest path" in blob:
         tags.add("manifest_generation_failure")
-    if str(s.get("status") or "") == "STATUS_PARTIAL_SUCCESS":
+    if dict_str(spec, "status") == "STATUS_PARTIAL_SUCCESS":
         tags.add("partial_scan_coverage")
     return sorted(tags)
 
@@ -192,61 +189,58 @@ def _build_evidence_payload(
     logs_artifact: dict[str, Any],
 ) -> dict[str, Any]:
     scan_raw = _latest_scan_raw(results_artifact, scan_uuid)
-    spec = scan_raw.get("spec")
-    s = spec if isinstance(spec, dict) else {}
-    provisioning = s.get("provisioning_result")
-    p = provisioning if isinstance(provisioning, dict) else {}
-    stats = s.get("stats")
-    st = stats if isinstance(stats, dict) else {}
+    spec = nested_dict(scan_raw, "spec")
+    provisioning = nested_dict(spec, "provisioning_result")
+    stats = nested_dict(spec, "stats")
 
     status_evidence = [
         {
             "path": "scan_results[].spec.status",
-            "value": _value_excerpt(s.get("status")),
+            "value": _value_excerpt(spec.get("status")),
             "source": "scan_results_artifact",
         },
         {
             "path": "scan_results[].spec.type",
-            "value": _value_excerpt(s.get("type")),
+            "value": _value_excerpt(spec.get("type")),
             "source": "scan_results_artifact",
         },
     ]
     provisioning_evidence = [
         {
             "path": "scan_results[].spec.provisioning_result.exit_code",
-            "value": _value_excerpt(p.get("exit_code")),
+            "value": _value_excerpt(provisioning.get("exit_code")),
             "source": "scan_results_artifact",
         },
         {
             "path": "scan_results[].spec.provisioning_result.error",
-            "value": _value_excerpt(p.get("error")),
+            "value": _value_excerpt(provisioning.get("error")),
             "source": "scan_results_artifact",
         },
     ]
     stats_evidence = [
         {
             "path": "scan_results[].spec.stats.scan_success",
-            "value": _value_excerpt(st.get("scan_success")),
+            "value": _value_excerpt(stats.get("scan_success")),
             "source": "scan_results_artifact",
         },
         {
             "path": "scan_results[].spec.stats.scan_failures",
-            "value": _value_excerpt(st.get("scan_failures")),
+            "value": _value_excerpt(stats.get("scan_failures")),
             "source": "scan_results_artifact",
         },
         {
             "path": "scan_results[].spec.stats.package_versions",
-            "value": _value_excerpt(st.get("package_versions")),
+            "value": _value_excerpt(stats.get("package_versions")),
             "source": "scan_results_artifact",
         },
         {
             "path": "scan_results[].spec.stats.dependency_analysis_num_full",
-            "value": _value_excerpt(st.get("dependency_analysis_num_full")),
+            "value": _value_excerpt(stats.get("dependency_analysis_num_full")),
             "source": "scan_results_artifact",
         },
         {
             "path": "scan_results[].spec.stats.dependency_analysis_num_approximate",
-            "value": _value_excerpt(st.get("dependency_analysis_num_approximate")),
+            "value": _value_excerpt(stats.get("dependency_analysis_num_approximate")),
             "source": "scan_results_artifact",
         },
     ]
@@ -269,15 +263,14 @@ def _build_evidence_payload(
 def _error_markdown_rows(errors: list[dict[str, Any]], max_errors: int) -> list[str]:
     rows: list[str] = []
     for idx, entry in enumerate(errors[:max_errors], start=1):
-        payload = entry.get("json_payload")
-        p = payload if isinstance(payload, dict) else {}
-        ts = str(entry.get("timestamp") or "")
-        code = str(p.get("code") or "")
-        msg = str(p.get("msg") or "")
-        package_name = str(p.get("package_name") or "")
-        resolution_error = _first_line(str(p.get("resolution_error") or ""))
-        stderr = _first_line(str(p.get("stderr") or ""))
-        details = []
+        payload = as_dict(entry.get("json_payload"))
+        ts = dict_str(entry, "timestamp")
+        code = dict_str(payload, "code")
+        msg = dict_str(payload, "msg")
+        package_name = dict_str(payload, "package_name")
+        resolution_error = _first_line(dict_str(payload, "resolution_error"))
+        stderr = _first_line(dict_str(payload, "stderr"))
+        details: list[str] = []
         if package_name:
             details.append(f"package={package_name}")
         if resolution_error:
@@ -329,6 +322,23 @@ def _fix_guidance(errors: list[dict[str, Any]]) -> list[str]:
     return guidance
 
 
+def _project_name_from_search(search_artifact: dict[str, Any] | None) -> str:
+    if search_artifact is None:
+        return ""
+    projects = _dict_list(search_artifact, "projects")
+    if not projects:
+        return ""
+    return nested_str(projects[0], "meta", "name")
+
+
+def _evidence_markdown_lines(evidence_payload: dict[str, Any], key: str) -> list[str]:
+    return [
+        f"  - `{dict_str(entry, 'path')}` -> `{dict_str(entry, 'value')}` "
+        f"(source: `{dict_str(entry, 'source')}`)"
+        for entry in _dict_list(evidence_payload, key)
+    ]
+
+
 def _build_markdown(
     *,
     tenant: str,
@@ -344,20 +354,12 @@ def _build_markdown(
     latest = _latest_scan_summary(results_artifact)
     errors = _error_entries(logs_artifact)
 
-    project_uuid = str(logs_artifact.get("project_uuid") or "") or str(
-        results_artifact.get("project_uuid") or ""
+    project_uuid = dict_str(logs_artifact, "project_uuid") or dict_str(
+        results_artifact, "project_uuid"
     )
-    scan_uuid = str(logs_artifact.get("scan_result_uuid") or latest.get("uuid") or "")
-    namespace = str(logs_artifact.get("namespace") or latest.get("namespace") or "")
-    project_name = ""
-    if isinstance(search_artifact, dict):
-        projects = search_artifact.get("projects") or []
-        if isinstance(projects, list) and projects:
-            first = projects[0]
-            if isinstance(first, dict):
-                meta = first.get("meta")
-                if isinstance(meta, dict):
-                    project_name = str(meta.get("name") or "")
+    scan_uuid = dict_str(logs_artifact, "scan_result_uuid") or dict_str(latest, "uuid")
+    namespace = dict_str(logs_artifact, "namespace") or dict_str(latest, "namespace")
+    project_name = _project_name_from_search(search_artifact)
 
     lines: list[str] = [
         "# Troubleshooting Scan Triage Summary",
@@ -379,11 +381,11 @@ def _build_markdown(
         f"- project_uuid: `{project_uuid}`",
         f"- project_name: `{project_name}`" if project_name else "- project_name: n/a",
         f"- scan_result_uuid: `{scan_uuid}`",
-        f"- scan_status: `{latest.get('status', '')}`",
-        f"- scan_exit_code: `{latest.get('exit_code', '')}`",
-        f"- scan_success: `{latest.get('scan_success', '')}`",
-        f"- scan_failures: `{latest.get('scan_failures', '')}`",
-        f"- endorctl_version: `{latest.get('endorctl_version', '')}`",
+        f"- scan_status: `{dict_str(latest, 'status')}`",
+        f"- scan_exit_code: `{dict_str(latest, 'exit_code')}`",
+        f"- scan_success: `{dict_str(latest, 'scan_success')}`",
+        f"- scan_failures: `{dict_str(latest, 'scan_failures')}`",
+        f"- endorctl_version: `{dict_str(latest, 'endorctl_version')}`",
         "",
         "## What Is Wrong (citing logs)",
         "",
@@ -420,35 +422,16 @@ def _build_markdown(
             "- status_evidence:",
         ]
     )
-    lines.extend(
-        f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
-        f"(source: `{entry.get('source', '')}`)"
-        for entry in evidence_payload.get("status_evidence", [])
-        if isinstance(entry, dict)
-    )
+    lines.extend(_evidence_markdown_lines(evidence_payload, "status_evidence"))
     lines.append("- provisioning_evidence:")
-    lines.extend(
-        f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
-        f"(source: `{entry.get('source', '')}`)"
-        for entry in evidence_payload.get("provisioning_evidence", [])
-        if isinstance(entry, dict)
-    )
+    lines.extend(_evidence_markdown_lines(evidence_payload, "provisioning_evidence"))
     lines.append("- stats_evidence:")
-    lines.extend(
-        f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
-        f"(source: `{entry.get('source', '')}`)"
-        for entry in evidence_payload.get("stats_evidence", [])
-        if isinstance(entry, dict)
-    )
+    lines.extend(_evidence_markdown_lines(evidence_payload, "stats_evidence"))
     lines.append("- log_evidence:")
-    lines.extend(
-        f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
-        f"(source: `{entry.get('source', '')}`)"
-        for entry in evidence_payload.get("log_evidence", [])
-        if isinstance(entry, dict)
-    )
-    signatures = evidence_payload.get("matched_signatures") or []
-    if isinstance(signatures, list) and signatures:
+    lines.extend(_evidence_markdown_lines(evidence_payload, "log_evidence"))
+    signatures_raw = evidence_payload.get("matched_signatures")
+    if isinstance(signatures_raw, list) and signatures_raw:
+        signatures = [str(tag) for tag in cast("list[Any]", signatures_raw)]
         lines.append("- matched_signatures:")
         lines.extend(f"  - `{tag}`" for tag in signatures)
 
@@ -477,20 +460,12 @@ def main() -> int:
     )
 
     latest = _latest_scan_summary(results_artifact)
-    project_uuid = str(logs_artifact.get("project_uuid") or "") or str(
-        results_artifact.get("project_uuid") or ""
+    project_uuid = dict_str(logs_artifact, "project_uuid") or dict_str(
+        results_artifact, "project_uuid"
     )
-    namespace = str(logs_artifact.get("namespace") or latest.get("namespace") or "")
-    scan_uuid = str(logs_artifact.get("scan_result_uuid") or latest.get("uuid") or "")
-    project_name = ""
-    if isinstance(search_artifact, dict):
-        projects = search_artifact.get("projects") or []
-        if isinstance(projects, list) and projects:
-            first = projects[0]
-            if isinstance(first, dict):
-                meta = first.get("meta")
-                if isinstance(meta, dict):
-                    project_name = str(meta.get("name") or "")
+    namespace = dict_str(logs_artifact, "namespace") or dict_str(latest, "namespace")
+    scan_uuid = dict_str(logs_artifact, "scan_result_uuid") or dict_str(latest, "uuid")
+    project_name = _project_name_from_search(search_artifact)
     evidence_payload = _build_evidence_payload(
         tenant=args.tenant,
         project_uuid=project_uuid,

@@ -11,10 +11,11 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from endorlabs.client_surface import Client
 from endorlabs.tools.list_sharding import ProjectShard
+from endorlabs.workflows.wire_access import as_dict, dict_str, nested_dict, nested_str
 
 from .common import (
     default_troubleshooting_output_dir,
@@ -81,12 +82,19 @@ def _resolve_scope(
 ) -> tuple[list[dict[str, Any]], str]:
     """Return (selected_projects, scope_label)."""
     if args.from_search_artifact:
-        data = load_json(Path(args.from_search_artifact))
-        plist = data.get("projects") or []
+        data = as_dict(load_json(Path(args.from_search_artifact)))
+        plist_raw = data.get("projects")
+        plist: list[dict[str, Any]] = []
+        if isinstance(plist_raw, list):
+            plist.extend(
+                cast("dict[str, Any]", item)
+                for item in cast("list[Any]", plist_raw)
+                if isinstance(item, dict)
+            )
         if not plist:
             raise ValueError("search artifact has no projects[]")
         if args.project_uuid:
-            sel = [p for p in plist if p.get("uuid") == args.project_uuid]
+            sel = [p for p in plist if dict_str(p, "uuid") == args.project_uuid]
             if not sel:
                 raise ValueError("--project-uuid not found in search artifact")
             return sel, "artifact"
@@ -108,7 +116,7 @@ def _resolve_scope(
         return projects, "all_projects_capped"
 
     if args.project_uuid:
-        selected = [p for p in projects if p.get("uuid") == args.project_uuid]
+        selected = [p for p in projects if dict_str(p, "uuid") == args.project_uuid]
         if not selected:
             raise ValueError("project-uuid not found under tenant listing")
         return selected, "project_uuid"
@@ -117,8 +125,7 @@ def _resolve_scope(
         selected = [
             p
             for p in projects
-            if args.project_name.lower()
-            in str((p.get("meta") or {}).get("name", "")).lower()
+            if args.project_name.lower() in nested_str(p, "meta", "name").lower()
         ]
         if not selected:
             raise ValueError("No project matched --project-name")
@@ -140,7 +147,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     if not args.from_search_artifact:
         traverse = "." not in ns
         projects = [
-            p.model_dump(mode="json")
+            object_to_dict(p)
             for p in client.Project.list(namespace=ns, traverse=traverse)
         ]
     else:
@@ -161,14 +168,20 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             )
         ]
         for scan_result in scan_results:
-            scan_uuid = scan_result.get("uuid")
-            scan_logs = (scan_result.get("spec") or {}).get("logs") or []
+            scan_uuid = dict_str(scan_result, "uuid")
+            spec = nested_dict(scan_result, "spec")
+            scan_logs_raw = spec.get("logs")
+            scan_logs: list[Any] = (
+                cast("list[Any]", scan_logs_raw)
+                if isinstance(scan_logs_raw, list)
+                else []
+            )
             project_hits.extend(
                 {
                     "project_uuid": shard.project_uuid,
                     "project_namespace": shard.namespace,
                     "scan_result_uuid": scan_uuid,
-                    "status": (scan_result.get("spec") or {}).get("status"),
+                    "status": spec.get("status"),
                     "match_line": str(line),
                 }
                 for line in scan_logs
@@ -186,8 +199,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         )
     else:
         for project in selected_projects:
-            project_uuid = project.get("uuid")
-            project_ns = (project.get("tenant_meta") or {}).get("namespace") or ns
+            project_uuid = dict_str(project, "uuid")
+            project_ns = nested_str(project, "tenant_meta", "namespace") or ns
             if not project_uuid:
                 continue
             shard = ProjectShard(
@@ -195,8 +208,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             )
             hits.extend(_search_project(shard))
 
-    scope_uuid = args.project_uuid or selected_projects[0].get("uuid") or "scoped"
-    payload = {
+    scope_uuid = args.project_uuid or dict_str(selected_projects[0], "uuid") or "scoped"
+    payload: dict[str, Any] = {
         "root_tenant": root,
         "query_namespace": ns,
         "scope_mode": scope_label,

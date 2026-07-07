@@ -3,7 +3,8 @@
 
 Use when ENDOR_TOKEN is expired but ENDOR_API_CREDENTIALS_* are valid for
 **your own** tenant. Customer cross-tenant list/get usually still needs a fresh
-admin ``ENDOR_TOKEN`` (see ``refresh_token_to_dotenv.py --admin``).
+Customer cross-tenant list/get may need a fresh bearer token for that tenant
+(see ``uv run endor-auth refresh --method sso -n <tenant>``).
 
 Injects ``--no-env-file`` after each ``uv run`` so nested ``uv`` does not reload
 a stale ``ENDOR_TOKEN`` from disk. Does not print secrets.

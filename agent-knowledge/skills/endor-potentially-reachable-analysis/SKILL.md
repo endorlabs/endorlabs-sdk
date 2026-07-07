@@ -47,9 +47,9 @@ Produce the **PRF vulnerability & PV resolution errors — main context** report
 From the repo root with credentials configured (`ENDOR_TOKEN` or API key/secret):
 
 ```bash
-uv run python agent-knowledge/skills/endor-potentially-reachable-analysis/scripts/run_report.py \
+uv run python .endorlabs-context/sdk/skills/endor-potentially-reachable-analysis/scripts/run_report.py \
   <tenant> \
-  --output-dir .endorlabs-context/workspace/sessions/<user>/exports/prf-analysis
+  --output-dir .endorlabs-context/workspace/runs/potentially-reachable-analysis
 ```
 
 After `init()`, use the materialized skill path:
@@ -57,14 +57,14 @@ After `init()`, use the materialized skill path:
 ```bash
 uv run python .endorlabs-context/sdk/skills/endor-potentially-reachable-analysis/scripts/run_report.py \
   <tenant> \
-  --output-dir .endorlabs-context/workspace/sessions/<user>/exports/prf-analysis
+  --output-dir .endorlabs-context/workspace/runs/potentially-reachable-analysis
 ```
 
 Replace `<tenant>` with the tenant root namespace. Child namespaces are included via `list_parameters.traverse=true`.
 
 ## Outputs
 
-Under `--output-dir` (default `.endorlabs-context/workspace/sessions/agent/exports/prf-analysis`):
+Under `--output-dir` (default `.endorlabs-context/workspace/runs/potentially-reachable-analysis/`):
 
 | File | Description |
 |------|-------------|
@@ -98,14 +98,14 @@ Run steps individually when iterating on layout without re-querying:
 ```bash
 uv run python .endorlabs-context/sdk/skills/endor-potentially-reachable-analysis/scripts/run_analysis.py \
   <tenant> \
-  --output-dir .endorlabs-context/workspace/sessions/<user>/exports/prf-analysis
+  --output-dir .endorlabs-context/workspace/runs/potentially-reachable-analysis
 
 uv run python .endorlabs-context/sdk/skills/endor-potentially-reachable-analysis/scripts/generate_canvas.py \
-  .endorlabs-context/workspace/sessions/<user>/exports/prf-analysis/<tenant>-prf-analysis.json
+  .endorlabs-context/workspace/runs/potentially-reachable-analysis/<tenant>-prf-analysis.json
 
 uv run python .endorlabs-context/sdk/skills/endor-potentially-reachable-analysis/scripts/generate_report_pdf.py \
-  .endorlabs-context/workspace/sessions/<user>/exports/prf-analysis/<tenant>-prf-analysis.json \
-  --output-dir .endorlabs-context/workspace/sessions/<user>/exports/prf-analysis
+  .endorlabs-context/workspace/runs/potentially-reachable-analysis/<tenant>-prf-analysis.json \
+  --output-dir .endorlabs-context/workspace/runs/potentially-reachable-analysis
 ```
 
 ## Authentication
@@ -148,7 +148,7 @@ Internal consistency checks in `run_analysis.py` assert breakdown row counts sum
 ## Agent workflow
 
 1. Confirm tenant root and credentials (do not print secrets).
-2. Run `run_report.py` with `--output-dir .endorlabs-context/workspace/sessions/<user>/exports/prf-analysis`.
+2. Run `run_report.py` with `--output-dir .endorlabs-context/workspace/runs/potentially-reachable-analysis`.
 3. Open the generated canvas for interactive review; attach or share the PDF.
 4. If PDF fails (no Chrome), use `--html-only` or install Chrome and set `CHROME_PATH`.
 5. If canvas auto-detect fails, pass `--canvas-dir` to the Cursor project `canvases/` folder.

@@ -39,6 +39,8 @@ Each skill is a directory with `SKILL.md` plus optional reference files. Format:
 | [endor-troubleshooting-scans](endor-troubleshooting-scans/) | Scan pipeline RCA; ScanResults, `ScanResult.get_logs`, scripted diffs | `endorlabs.workflows.troubleshooting_scans`; see `docs/guides/`, `docs/contributing/list-query-performance.md` |
 | [endor-troubleshoot-sdk](endor-troubleshoot-sdk/) | Debugging SDK errors, 404s, 500s, or test failures | `docs/contributing/` |
 | [endor-troubleshoot-authlog](endor-troubleshoot-authlog/) | AuthenticationLog / AuthorizationPolicy / SSO login troubleshooting | Skill-owned |
+| [endor-auth-setup](endor-auth-setup/) | Probe, verify, and refresh SDK credentials (`endor-auth check` / `refresh`) | `endorlabs.workflows.auth` |
+| [endor-auth-login-count](endor-auth-login-count/) | AuthenticationLog login counts by identity (CSV; default 90-day window; tenant list path) | `endorlabs.workflows.auth` |
 | [endor-reachability-provenance](endor-reachability-provenance/) | Triaging conflicting reachability signals on findings | `endor-reachability-context` |
 | [endor-sso-integration-validation-troubleshooting](endor-sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, and claims-to-namespace troubleshooting | Skill-owned |
 | [endor-validate-policy](endor-validate-policy/) | Validate exception policies vs project findings (PolicyValidation API + endorctl parity) | `endorlabs.workflows.policies.validate` |

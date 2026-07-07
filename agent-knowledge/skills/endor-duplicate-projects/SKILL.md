@@ -119,7 +119,7 @@ Use `max_pages` when the user requests a bounded audit; otherwise paginate until
 `mirror`, `shadow`, `clone`), pass them to the bundled script:
 
 ```bash
-uv run python agent-knowledge/skills/endor-duplicate-projects/scripts/find_duplicate_projects.py \
+uv run python .endorlabs-context/sdk/skills/endor-duplicate-projects/scripts/find_duplicate_projects.py \
   --tenant <tenant> --name-strip-tokens mirror,shadow,clone
 ```
 
@@ -148,10 +148,10 @@ Merge overlapping groups (same UUID appearing in multiple candidate groups) befo
 
 ### Step 3: Write CSV
 
-Default path: `.endorlabs-context/workspace/sessions/<user>/exports/duplicate-projects.csv`
+Default path: `.endorlabs-context/workspace/runs/duplicate-projects/<tenant>-duplicates.csv`
 
 ```python
-output = Path(".endorlabs-context/workspace/sessions/<user>/exports/duplicate-projects.csv")
+output = Path(".endorlabs-context/workspace/runs/duplicate-projects/<tenant>-duplicates.csv")
 output.parent.mkdir(parents=True, exist_ok=True)
 
 fieldnames = [
@@ -176,7 +176,7 @@ Or run the bundled helper:
 ```bash
 uv run python .endorlabs-context/sdk/skills/endor-duplicate-projects/scripts/find_duplicate_projects.py \
   --tenant <tenant> \
-  --output .endorlabs-context/workspace/sessions/<user>/exports/duplicate-projects.csv
+  --output .endorlabs-context/workspace/runs/duplicate-projects/<tenant>-duplicates.csv
 ```
 
 ### Step 4: Canvas (required when duplicates exist)
@@ -199,7 +199,7 @@ Before finishing, confirm:
 - [ ] SBOM projects (`spec.sbom` set) excluded from scan and output
 - [ ] Only projects in multi-member duplicate groups are included
 - [ ] Canvas groups the same rows visually (when duplicates exist)
-- [ ] Artifacts under `.endorlabs-context/workspace/sessions/<user>/` (gitignored)
+- [ ] Artifacts under `.endorlabs-context/workspace/runs/duplicate-projects/` (gitignored)
 
 ## When to use this skill vs others
 

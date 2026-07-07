@@ -9,7 +9,7 @@ endorlabs:
   catalog:
     workflow_id: relationships-map
     module: endorlabs.workflows.estate.analyze.project_map.map
-    default_output: .endorlabs-context/workspace/
+    default_output: .endorlabs-context/workspace/runs/relationships-map/<namespace>/
     agent_visible: true
 ---
 
@@ -46,7 +46,7 @@ uv run --env-file .env python -m endorlabs.workflows.estate.analyze.project_map.
   --tenant "<client_tenant>" \
   --namespace "<namespace_scope>" \
   --focus-producer-project-uuid "<producer_project_uuid>" \
-  --output-dir .endorlabs-context/workspace/relationships
+  --output-dir .endorlabs-context/workspace/runs/relationships-map/<namespace_scope>
 ```
 
 Or:
@@ -65,14 +65,18 @@ uv run --env-file .env python -m endorlabs.workflows.estate.analyze.project_map.
   --tenant "<client_tenant>" \
   --namespace "<namespace_scope>" \
   --max-depth 3 \
-  --output-dir .endorlabs-context/workspace/relationships
+  --output-dir .endorlabs-context/workspace/runs/relationships-map/<namespace_scope>
 ```
 
 **Writes:** `project_relationship_graph.json`, `project_relationship_paths.json`, `project_relationship_stats.json`.
 
-## Inputs
+## Outputs
 
-- `tenant`, `namespace` (required)
+| Deliverable | Default path | Override |
+|-------------|--------------|----------|
+| Relationship JSON | `workspace/runs/relationships-map/<namespace>/project_relationship_*.json` | `--output-dir` |
+
+**Run bucket:** `relationships-map` (catalog `workflow_id`).
 - `focus_producer_project_uuid` (optional)
 - `include_public`, `max_depth`, `max_pages`, `dep_metadata_max_pages`, `page_size`, `max_workers`
 
