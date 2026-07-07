@@ -102,7 +102,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     root = root_tenant(args.tenant)
     base_uuid = f"{primary_uuid}__vs__{secondary_uuid}"
     output_dir = Path(args.output_dir)
-    report_payload = {
+    report_payload: dict[str, Any] = {
         "root_tenant": root,
         "namespace": args.namespace,
         "primary_scan_result_uuid": primary_uuid,

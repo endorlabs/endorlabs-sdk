@@ -2,8 +2,10 @@
 
 Pulls per-project context (findings, policies, repository versions,
 dependencies, call graphs) from the Endor Labs API and writes structured
-artifacts into a progressive-disclosure directory tree under
-``.endorlabs-context/workspace/sessions/<user>/``.
+artifacts into a progressive-disclosure directory tree. Primary production
+use is under a project bundle at
+``.endorlabs-context/workspace/projects/<slug>_<timestamp>/`` (see
+``endor-agent-context`` with ``--session-summaries``).
 
 Experimental: API may change without the same stability guarantees
 as the rest of the SDK.
@@ -16,9 +18,10 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from ..common import WorkflowResult
+from ..wire_access import dict_str, model_to_dict, nested_dict, nested_str
 
 if TYPE_CHECKING:
     from endorlabs import Client
@@ -74,9 +77,11 @@ class FindingsContext:
     project_uuid: str = ""
     project_name: str = ""
     total: int = 0
-    by_category: dict[str, dict[str, int]] = field(default_factory=dict)
-    top_findings: list[dict[str, Any]] = field(default_factory=list)
-    raw_findings: list[dict[str, Any]] = field(default_factory=list)
+    by_category: dict[str, dict[str, int]] = field(
+        default_factory=dict[str, dict[str, int]]
+    )
+    top_findings: list[dict[str, Any]] = field(default_factory=list[dict[str, Any]])
+    raw_findings: list[dict[str, Any]] = field(default_factory=list[dict[str, Any]])
     fetch_error: str | None = None
 
 
@@ -86,7 +91,7 @@ class PoliciesContext:
 
     namespace: str = ""
     total: int = 0
-    policies: list[dict[str, Any]] = field(default_factory=list)
+    policies: list[dict[str, Any]] = field(default_factory=list[dict[str, Any]])
     fetch_error: str | None = None
 
 
@@ -96,7 +101,7 @@ class VersionsContext:
 
     project_uuid: str = ""
     total: int = 0
-    versions: list[dict[str, Any]] = field(default_factory=list)
+    versions: list[dict[str, Any]] = field(default_factory=list[dict[str, Any]])
     fetch_error: str | None = None
 
 
@@ -167,15 +172,17 @@ def pull_findings_context(
         ctx.by_category[cat_short]["Total"] = 0
 
     for f in findings:
-        raw_level = f.spec.level if f.spec and f.spec.level else ""
-        # Handle enum or string values
-        level = raw_level.value if hasattr(raw_level, "value") else str(raw_level)
-        raw_cats = (
-            f.spec.finding_categories if f.spec and f.spec.finding_categories else []
-        )
+        f_wire = model_to_dict(f)
+        spec = nested_dict(f_wire, "spec")
+        level = dict_str(spec, "level")
+        raw_cats = spec.get("finding_categories", [])
         if isinstance(raw_cats, str):
-            raw_cats = [raw_cats]
-        categories = [c.value if hasattr(c, "value") else str(c) for c in raw_cats]
+            categories = [raw_cats]
+        elif isinstance(raw_cats, list):
+            cats_list = cast("list[Any]", raw_cats)
+            categories = [str(c) for c in cats_list]
+        else:
+            categories = []
 
         sev_short = _SEVERITY_SHORT.get(level, "")
 
@@ -192,16 +199,16 @@ def pull_findings_context(
 
         # Collect raw data (masked to key fields)
         finding_dict: dict[str, Any] = {
-            "uuid": f.uuid,
-            "description": f.meta.description if f.meta else "",
+            "uuid": dict_str(f_wire, "uuid"),
+            "description": nested_str(f_wire, "meta", "description"),
             "level": level,
             "categories": categories,
         }
-        if f.spec:
-            finding_dict["target_dependency"] = getattr(
-                f.spec, "target_dependency_package_name", None
+        if spec:
+            finding_dict["target_dependency"] = spec.get(
+                "target_dependency_package_name"
             )
-            finding_dict["summary"] = getattr(f.spec, "summary", "")
+            finding_dict["summary"] = dict_str(spec, "summary")
         ctx.raw_findings.append(finding_dict)
 
     # Top critical/high findings
@@ -255,15 +262,17 @@ def pull_policies_context(
 
     ctx.total = len(policies)
     for p in policies:
+        p_wire = model_to_dict(p)
+        spec = nested_dict(p_wire, "spec")
         policy_dict: dict[str, Any] = {
-            "uuid": p.uuid,
-            "name": p.meta.name if p.meta else "",
-            "description": p.meta.description if p.meta else "",
+            "uuid": dict_str(p_wire, "uuid"),
+            "name": nested_str(p_wire, "meta", "name"),
+            "description": nested_str(p_wire, "meta", "description"),
         }
-        if p.spec:
-            policy_dict["disabled"] = getattr(p.spec, "disabled", None)
-            policy_dict["policy_type"] = str(getattr(p.spec, "policy_type", ""))
-            action = getattr(p.spec, "action", None)
+        if spec:
+            policy_dict["disabled"] = spec.get("disabled")
+            policy_dict["policy_type"] = dict_str(spec, "policy_type")
+            action = spec.get("action")
             policy_dict["action"] = str(action) if action else ""
         ctx.policies.append(policy_dict)
 
@@ -302,16 +311,20 @@ def pull_repository_versions_context(
 
     ctx.total = len(versions)
     for v in versions:
+        v_wire = model_to_dict(v)
+        spec = nested_dict(v_wire, "spec")
         ver_dict: dict[str, Any] = {
-            "uuid": v.uuid,
-            "name": v.meta.name if v.meta else "",
+            "uuid": dict_str(v_wire, "uuid"),
+            "name": nested_str(v_wire, "meta", "name"),
         }
-        if v.spec:
-            version_info = getattr(v.spec, "version", None)
-            if version_info:
-                ver_dict["ref"] = getattr(version_info, "ref", "")
-                ver_dict["sha"] = getattr(version_info, "sha", "")
-            ver_dict["last_commit_date"] = str(getattr(v.spec, "last_commit_date", ""))
+        if spec:
+            version_info = spec.get("version")
+            if isinstance(version_info, dict):
+                version_dict = cast("dict[str, Any]", version_info)
+                ver_dict["ref"] = dict_str(version_dict, "ref")
+                ver_dict["sha"] = dict_str(version_dict, "sha")
+            last_commit = spec.get("last_commit_date")
+            ver_dict["last_commit_date"] = str(last_commit) if last_commit else ""
         ctx.versions.append(ver_dict)
 
     return ctx
@@ -367,7 +380,11 @@ def render_findings_summary(ctx: FindingsContext) -> str:
         for f_dict in ctx.top_findings:
             level = f_dict.get("level", "").replace("FINDING_LEVEL_", "")
             desc = f_dict.get("description", "") or f_dict.get("summary", "")
-            cats = f_dict.get("categories", [])
+            cats_raw = f_dict.get("categories", [])
+            if isinstance(cats_raw, list):
+                cats = [str(c) for c in cast("list[Any]", cats_raw)]
+            else:
+                cats = []
             cat_str = ", ".join(_CATEGORY_SHORT.get(c, c) for c in cats)
             buf.write(f"- `{f_dict.get('uuid', '')}` {desc} ({level}, {cat_str})\n")
         buf.write("\n")

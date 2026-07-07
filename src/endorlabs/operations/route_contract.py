@@ -6,7 +6,9 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
+
+from endorlabs.workflows.wire_access import as_dict, dict_str
 
 RouteEdgeKind = Literal[
     "get_by_uuid",
@@ -42,12 +44,22 @@ class RouteWhen:
     def from_dict(cls, raw: dict[str, Any] | None) -> RouteWhen | None:
         if not raw:
             return None
-        categories = raw.get("categories")
-        methods = raw.get("methods")
-        return cls(
-            categories=tuple(categories) if isinstance(categories, list) else (),
-            methods=tuple(methods) if isinstance(methods, list) else (),
-        )
+        raw_dict = as_dict(raw)
+        categories_raw = raw_dict.get("categories")
+        methods_raw = raw_dict.get("methods")
+        categories: tuple[str, ...] = ()
+        if isinstance(categories_raw, list):
+            categories = tuple(
+                str(item)
+                for item in cast("list[Any]", categories_raw)
+                if item is not None
+            )
+        methods: tuple[str, ...] = ()
+        if isinstance(methods_raw, list):
+            methods = tuple(
+                str(item) for item in cast("list[Any]", methods_raw) if item is not None
+            )
+        return cls(categories=categories, methods=methods)
 
 
 @dataclass(frozen=True)
@@ -94,9 +106,10 @@ class RouteEdge:
         steps: tuple[RouteChainStep, ...] = ()
         if isinstance(steps_raw, list):
             parsed: list[RouteChainStep] = []
-            for item in steps_raw:
-                if not isinstance(item, dict):
+            for raw_item in cast("list[Any]", steps_raw):
+                if not isinstance(raw_item, dict):
                     continue
+                item = cast("dict[str, Any]", raw_item)
                 kind = item.get("kind")
                 if not isinstance(kind, str) or kind not in VALID_EDGE_KINDS:
                     raise ValueError(f"Invalid chain step kind: {kind!r}")
@@ -104,26 +117,18 @@ class RouteEdge:
                 match: Literal["exact", "substring", "regex"] | None = None
                 if match_raw in ("exact", "substring", "regex"):
                     match = match_raw
+                optional_raw = item.get("optional")
                 parsed.append(
                     RouteChainStep(
                         kind=kind,  # type: ignore[arg-type]
-                        through_kind=item.get("through_kind")
-                        if isinstance(item.get("through_kind"), str)
-                        else None,
-                        filter_field=item.get("filter_field")
-                        if isinstance(item.get("filter_field"), str)
-                        else None,
-                        uuid_from=item.get("uuid_from")
-                        if isinstance(item.get("uuid_from"), str)
-                        else None,
-                        source_attr=item.get("source_attr")
-                        if isinstance(item.get("source_attr"), str)
-                        else None,
-                        target_filter_field=item.get("target_filter_field")
-                        if isinstance(item.get("target_filter_field"), str)
-                        else None,
+                        through_kind=dict_str(item, "through_kind") or None,
+                        filter_field=dict_str(item, "filter_field") or None,
+                        uuid_from=dict_str(item, "uuid_from") or None,
+                        source_attr=dict_str(item, "source_attr") or None,
+                        target_filter_field=dict_str(item, "target_filter_field")
+                        or None,
                         match=match,
-                        optional=bool(item.get("optional")),
+                        optional=bool(optional_raw),
                     )
                 )
             steps = tuple(parsed)
@@ -136,34 +141,22 @@ class RouteEdge:
             from_kind=str(raw["from_kind"]),
             to_kind=str(raw["to_kind"]),
             edge=edge,  # type: ignore[arg-type]
-            tier=str(raw.get("tier", "B")),
-            public_method=raw.get("public_method")
-            if isinstance(raw.get("public_method"), str)
-            else None,
-            filter_field=raw.get("filter_field")
-            if isinstance(raw.get("filter_field"), str)
-            else None,
-            uuid_from=raw.get("uuid_from")
-            if isinstance(raw.get("uuid_from"), str)
-            else None,
-            namespace_from=str(raw.get("namespace_from", "source")),
+            tier=dict_str(raw, "tier") or "B",
+            public_method=dict_str(raw, "public_method") or None,
+            filter_field=dict_str(raw, "filter_field") or None,
+            uuid_from=dict_str(raw, "uuid_from") or None,
+            namespace_from=dict_str(raw, "namespace_from") or "source",
             list_only=bool(raw.get("list_only")),
-            parent_kind=raw.get("parent_kind")
-            if isinstance(raw.get("parent_kind"), str)
-            else None,
-            source_attr=raw.get("source_attr")
-            if isinstance(raw.get("source_attr"), str)
-            else None,
-            target_filter_field=raw.get("target_filter_field")
-            if isinstance(raw.get("target_filter_field"), str)
-            else None,
+            parent_kind=dict_str(raw, "parent_kind") or None,
+            source_attr=dict_str(raw, "source_attr") or None,
+            target_filter_field=dict_str(raw, "target_filter_field") or None,
             match=top_match,
-            also_filter=raw.get("also_filter")
-            if isinstance(raw.get("also_filter"), str)
-            else None,
-            context_from=str(raw.get("context_from", "context")),
+            also_filter=dict_str(raw, "also_filter") or None,
+            context_from=dict_str(raw, "context_from") or "context",
             when=RouteWhen.from_dict(
-                raw.get("when") if isinstance(raw.get("when"), dict) else None
+                cast("dict[str, Any]", when_raw)
+                if isinstance((when_raw := raw.get("when")), dict)
+                else None
             ),
             steps=steps,
         )
@@ -179,7 +172,9 @@ class RouteContract:
         if not isinstance(edges_raw, list):
             raise ValueError("Route contract must contain an 'edges' list")
         edges = tuple(
-            RouteEdge.from_dict(item) for item in edges_raw if isinstance(item, dict)
+            RouteEdge.from_dict(cast("dict[str, Any]", item))
+            for item in cast("list[Any]", edges_raw)
+            if isinstance(item, dict)
         )
         validate_contract(edges)
         return cls(edges=edges)
@@ -189,7 +184,7 @@ class RouteContract:
         payload = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
             raise ValueError(f"Expected JSON object in {path}")
-        return cls.from_dict(payload)
+        return cls.from_dict(cast("dict[str, Any]", payload))
 
     def edge_by_id(self, edge_id: str) -> RouteEdge | None:
         for edge in self.edges:

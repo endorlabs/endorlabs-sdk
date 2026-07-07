@@ -11,7 +11,7 @@ description: 'Project-scoped SDK workflow: resolve Project → latest ScanResult
 
 **Default path:** one **Project** → **`ScanResult.list_by_project(project)`** → **`Finding.list_by_project(project)`** / **`Finding.list_for_context(scan)`** — no `traverse=True` on findings after the project is resolved.
 
-For **scan pipeline** regressions (bounded scan window, heuristic pair scoring, scan logs via `ScanResult.get_logs`, aggregate diffs), use [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) first, then return here with scan UUIDs for finding-level drill-down.
+For **scan pipeline** regressions (bounded scan window, heuristic or explicit scan pairs, embedded `spec.logs` search, aggregate diffs), use [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) first, then return here with scan UUIDs and `Finding.list_for_context(scan)` for finding-level drill-down.
 
 Human-oriented reference: [docs/guides/retrieving-scan-results.md](../../../docs/guides/retrieving-scan-results.md). General **`traverse`** mechanics: [docs/contributing/namespace-traversal.md](../../../docs/contributing/namespace-traversal.md).
 

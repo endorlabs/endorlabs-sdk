@@ -66,6 +66,7 @@ endor-callgraph-path = "endorlabs.workflows.callgraph.path_cli:main"
 endor-vector-query = "endorlabs.workflows.vector_search.cli:main"
 endor-reachability-context = "endorlabs.workflows.reachability.cli:main"
 endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
+endor-auth = "endorlabs.workflows.auth.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/endorlabs/endorlabs-sdk"
@@ -324,7 +325,8 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 "src/endorlabs/resources/finding.py" = ["F811", "S105"]  # TenantMeta duplicate; INVALID_SECRET/VALID_SECRET enum
 "src/endorlabs/resources/package_license.py" = ["ARG001"]
 # --- Utils: intentional patterns ---
-"devtools/refresh_token_to_dotenv.py" = ["T201", "D103", "S105"]  # CLI; env var name strings
+"src/endorlabs/workflows/auth/cli.py" = ["T201"]
+"src/endorlabs/workflows/auth/session.py" = []
 "devtools/run_without_endor_token.py" = ["D103", "S603"]  # maintainer env wrapper
 "main.py" = ["T201"]  # repo-root SDK walkthrough; intentional print() for learners
 "src/endorlabs/examples/agent_bootstrap.py" = ["T201"]  # CLI bootstrap ladder; intentional stdout

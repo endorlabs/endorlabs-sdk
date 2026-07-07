@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
+from endorlabs.context.paths import default_runs_dir, sanitize_path_segment
 from endorlabs.workflows.projects.inventory import (
     INSTALLATION_LIST_MASK,
     fetch_installation_lookup,
@@ -20,6 +21,14 @@ from endorlabs.workflows.projects.inventory import (
     is_mixed_registration_execution,
     registration_source_label,
 )
+
+RUN_BUCKET = "cli-vs-cloud-projects"
+
+
+def default_cli_vs_cloud_csv(tenant: str) -> Path:
+    safe = sanitize_path_segment(tenant)
+    return default_runs_dir(RUN_BUCKET) / f"{safe}-cli-vs-cloud.csv"
+
 
 CSV_FIELDS = [
     "project name",
@@ -239,7 +248,7 @@ def main() -> int:
         "--output",
         type=Path,
         default=None,
-        help="CSV output path (default: workspace exports/cli-vs-cloud/<tenant>-cli-vs-cloud.csv)",
+        help="CSV output path (default: workspace/runs/cli-vs-cloud-projects/<tenant>-cli-vs-cloud.csv)",
     )
     parser.add_argument(
         "--project-uuid",
@@ -272,10 +281,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    output = args.output or Path(
-        f".endorlabs-context/workspace/sessions/agent/exports/cli-vs-cloud/"
-        f"{args.tenant}-cli-vs-cloud.csv"
-    )
+    output = args.output or default_cli_vs_cloud_csv(args.tenant)
 
     client = endorlabs.Client(tenant=args.tenant)
 

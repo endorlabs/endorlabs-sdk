@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Literal, cast
 
-from .execute import project_namespace, project_uuid
+from .row_fields import project_namespace, project_uuid
 
 Archetype = Literal[
     "single_repo",
@@ -85,9 +85,21 @@ class TopologySnapshot:
 
     def query_scopes(self) -> list[Any]:
         """Query-plane POST scopes derived from discovered projects."""
-        from .scope import query_scopes_from_topology
-
         return query_scopes_from_topology(self)
+
+
+def query_scopes_from_topology(topology: TopologySnapshot) -> list[Any]:
+    """Build query-plane scopes from a topology snapshot."""
+    from .scope import QueryScope
+
+    grouped: dict[str, list[str]] = defaultdict(list)
+    for proj in topology.projects:
+        grouped[proj.namespace].append(proj.uuid)
+    scopes: list[QueryScope] = [
+        QueryScope(namespace=ns, keys=tuple(sorted(set(uuids))))
+        for ns, uuids in sorted(grouped.items())
+    ]
+    return scopes
 
 
 def infer_archetype(

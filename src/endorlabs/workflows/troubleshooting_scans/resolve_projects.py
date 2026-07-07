@@ -7,10 +7,12 @@ from pathlib import Path
 from typing import Any
 
 from endorlabs.client_surface import Client
+from endorlabs.workflows.wire_access import dict_str
 
 from .common import (
     default_troubleshooting_output_dir,
     match_projects,
+    object_to_dict,
     root_tenant,
     write_json,
 )
@@ -36,8 +38,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     client = Client(tenant=ns)
     traverse = "." not in ns
     projects = [
-        p.model_dump(mode="json")
-        for p in client.Project.list(namespace=ns, traverse=traverse)
+        object_to_dict(p) for p in client.Project.list(namespace=ns, traverse=traverse)
     ]
     selected = match_projects(
         projects,
@@ -49,9 +50,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     root = root_tenant(ns)
     output_dir = Path(args.output_dir)
 
-    object_uuid = selected[0].get("uuid", "unknown") if selected else "no-match"
+    object_uuid = dict_str(selected[0], "uuid") if selected else "no-match"
 
-    payload = {
+    payload: dict[str, Any] = {
         "root_tenant": root,
         "query_namespace": ns,
         "total_projects": len(projects),

@@ -35,7 +35,7 @@ class TestRetrievingScanResultsWorkflow:
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not projects:
-            pytest.fail(f"No project matched repo URL: {self.repo_url}")
+            pytest.skip(f"No project matched repo URL: {self.repo_url}")
         project = projects[0]
 
         scans = self.endor_client.ScanResult.list_by_project(

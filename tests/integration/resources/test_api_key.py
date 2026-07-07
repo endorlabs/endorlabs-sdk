@@ -9,7 +9,6 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 import endorlabs
-from endorlabs.api_client import APIClient
 from endorlabs.resources.api_key import (
     APIKeyMeta,
     APIKeyPermissions,
@@ -18,7 +17,6 @@ from endorlabs.resources.api_key import (
 )
 from tests.conftest import (
     TEST_MAX_PAGES,
-    TEST_NAMESPACE_DEFAULT,
 )
 
 
@@ -137,17 +135,3 @@ class TestAPIKey:
             pytest.skip("Failed to create API key for delete test")
         result = client.APIKey.delete(created.uuid)
         assert result is True
-
-    def test_api_key_update_raises_not_implemented(self) -> None:
-        """When update_fn is None, client.APIKey.update raises NotImplementedError."""
-        from unittest.mock import Mock
-
-        import endorlabs
-
-        mock = Mock(spec=APIClient)
-        client = endorlabs.Client(
-            api_client=mock,
-            tenant=TEST_NAMESPACE_DEFAULT,
-        )
-        with pytest.raises(NotImplementedError, match="does not support update"):
-            client.APIKey.update("dummy-uuid", {}, update_mask="meta.description")

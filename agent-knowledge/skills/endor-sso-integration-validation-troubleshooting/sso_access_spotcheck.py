@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 import endorlabs
-from endorlabs.context.paths import workflow_sessions_root
+from endorlabs.context.paths import default_runs_dir
 
 
 class PolicyRecord(TypedDict):
@@ -156,37 +156,37 @@ def _collect_authorization_policies(
 
 
 def _collect_authentication_log_rows(
-    tenant_hint: str, target_email: str | None, *, max_pages_auth: int
+    tenant_hint: str,
+    target_email: str | None,
+    *,
+    max_pages_auth: int,
+    days: int = 30,
 ) -> list[dict[str, Any]]:
     """Collect recent AuthenticationLog rows for optional correlation."""
-    client = endorlabs.Client(tenant=tenant_hint)
-    auth_logs = client.AuthenticationLog.list(
-        traverse=True,
-        max_pages=max_pages_auth,
+    from endorlabs.workflows.auth import (
+        auth_log_snapshot,
+        filter_auth_logs_by_email,
+        probe_auth_logs,
     )
-    rows: list[dict[str, Any]] = []
-    for row in auth_logs:
-        spec = getattr(row, "spec", None)
-        uri = str(getattr(spec, "uri", "") or "")
-        user = str(getattr(spec, "user", "") or "")
-        if target_email:
-            lower_email = target_email.lower()
-            if lower_email not in user.lower() and lower_email not in uri.lower():
-                continue
-        authorized_tenants = list(getattr(spec, "authorized_tenants", []) or [])
-        rows.append(
-            {
-                "user": user,
-                "uri": uri,
-                "authorized_tenants": authorized_tenants,
-            }
-        )
+
+    client = endorlabs.Client(tenant=tenant_hint)
+    rows = probe_auth_logs(
+        client,
+        namespace=tenant_hint,
+        max_pages=max_pages_auth,
+        days=days,
+    )
     client.close()
-    return rows
+    if target_email:
+        rows = filter_auth_logs_by_email(rows, target_email)
+    return [auth_log_snapshot(row) for row in rows]
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     _ = path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+
+RUN_BUCKET = "sso-integration-validation-troubleshooting"
 
 
 def parse_args() -> argparse.Namespace:
@@ -224,10 +224,10 @@ def parse_args() -> argparse.Namespace:
     )
     _ = parser.add_argument(
         "--output-dir",
-        default=str(workflow_sessions_root(user="agent", subdir="exports")),
+        default=str(default_runs_dir(RUN_BUCKET)),
         help=(
             "Output directory for JSON report files "
-            "(default: .endorlabs-context/workspace/sessions/agent/exports)."
+            f"(default: .endorlabs-context/workspace/runs/{RUN_BUCKET}/)."
         ),
     )
     return parser.parse_args()

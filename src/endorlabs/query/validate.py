@@ -18,7 +18,7 @@ from endorlabs.filters.finding_categories import (
 )
 from endorlabs.filters.project_scope import dm_importer_project_filter
 
-from .execute import QueryExecutor, project_namespace, project_uuid
+from .execute import QueryExecutor
 from .parse import parse_project_multi_reference_counts, parse_project_reference_counts
 from .recipes import (
     DM_REFERENCE_KEY,
@@ -28,6 +28,7 @@ from .recipes import (
     finding_severity_count_spec,
     pv_count_spec,
 )
+from .row_fields import project_namespace, project_uuid
 from .scope import QueryScope, scopes_from_projects
 
 RecipeKind = Literal["pv", "findings", "dm", "severity"]

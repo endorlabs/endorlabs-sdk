@@ -67,10 +67,6 @@ def test_fetch_scan_results_writes_raw_and_summary_artifacts() -> None:
             return_value=mock_client,
         ),
         patch(
-            "endorlabs.workflows.troubleshooting_scans.fetch_scan_results.object_to_dict",
-            side_effect=lambda item: item,
-        ),
-        patch(
             "endorlabs.workflows.troubleshooting_scans.fetch_scan_results.scan_result_metrics",
             return_value={"uuid": "scan-1"},
         ),

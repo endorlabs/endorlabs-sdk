@@ -42,7 +42,7 @@ See [policy-validation-api.md](policy-validation-api.md) for request/response sh
 1. **`ENDOR_NAMESPACE`** (or `--namespace`) must be the **customer tenant** you are validating (e.g. `<customer-namespace>`).
 2. Include **`tenant_meta.namespace`** in the POST body with the **same** value as the URL path segment.
 3. **Cross-tenant endor-admin read** against a **customer** namespace often returns **403** on `policy/validate` even when `Policy.get` / `Finding.list` succeed. Reproduce in your **home tenant** first, or use **tenant-scoped** user/service credentials for customer work.
-4. Run with `uv run --env-file .env …`; refresh token via `devtools/refresh_token_to_dotenv.py` (env defaults; `--sso` / `-n` or `--admin` when needed).
+4. Run with `uv run --env-file .env …`; refresh token via `uv run endor-auth refresh --method sso -n <tenant>` when needed.
 
 ### Inputs
 
@@ -132,7 +132,7 @@ Output uses top-level `matching_findings` (full finding objects), not `spec.resu
 - OpenAPI: `PolicyValidationService_CreatePolicyValidation` → `POST /v1/namespaces/{tenant_meta.namespace}/policy/validate` (`x-internal: true`)
 - Local docs: `.endorlabs-context/platform/user-docs/developers-api/cli/commands/validate/policy.md`
 - Implementation: `src/endorlabs/workflows/policies/validate.py`
-- Fixture probe (creates templated policy in `ENDOR_NAMESPACE`): place under `.endorlabs-context/workspace/sessions/<user>/scripts/policy_validate_probe.py` (see [workspace-layout](../../rules/endor-workspace-layout.md))
+- Fixture probe (creates templated policy in `ENDOR_NAMESPACE`): place under `.endorlabs-context/workspace/runs/scratch/policy_validate_probe.py` (see [workspace-layout](../../rules/endor-workspace-layout.md))
 
 Run validate:
 

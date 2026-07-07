@@ -16,6 +16,7 @@
 | Bootstrap depth (SDK-only vs `init()`) | [Bootstrap](#bootstrap) below · [CONTRIBUTORS.md — Optional: sync external docs](CONTRIBUTORS.md#optional-sync-external-docs) |
 | Repo regions and gitignored paths | [docs/contributing/repository-layout.md](docs/contributing/repository-layout.md) |
 | Extend the SDK surface | [docs/contributing/architecture.md](docs/contributing/architecture.md) · skill **endor-implement-sdk-resource** |
+| Commit / open a PR (maintainers) | [CONTRIBUTORS.md](CONTRIBUTORS.md#before-you-commit--open-a-pr) · [pull_request_template.md](.github/pull_request_template.md) |
 | Author or update agent skills | [agent-knowledge/schema/README.md](agent-knowledge/schema/README.md) · skill **endor-author-agent-skill** |
 
 ## Consuming the SDK
@@ -96,7 +97,7 @@ Maintainers editing authoring: `uv run python devtools/sync_agent_knowledge.py` 
 
 **Discovery:** `.endorlabs-context/sdk/INDEX.md` → `MANIFEST.json` → `skills/`; or wheel via `agent_knowledge_index_path()`. Authoring index (maintainers): [agent-knowledge/README.md](agent-knowledge/README.md).
 
-Common entry skills: **endor-retrieve-scan-results**, **endor-troubleshooting-scans**, **endor-troubleshoot-sdk**, **endor-troubleshoot-authlog**. Full list: `MANIFEST.json` → `skills[]`.
+Common entry skills: **endor-auth-setup**, **endor-retrieve-scan-results**, **endor-troubleshooting-scans**, **endor-troubleshoot-sdk**, **endor-troubleshoot-authlog**. Full list: `MANIFEST.json` → `skills[]`.
 
 Skills compose with handoffs — [agent-knowledge/schema/README.md — Skill composition](agent-knowledge/schema/README.md#skill-composition-and-handoffs).
 

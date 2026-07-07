@@ -8,7 +8,18 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- Agent skill `endor-auth-setup`, console script `endor-auth` (`check` / `refresh`), and `endorlabs.workflows.auth` session helpers — probe env keys, verify `Client().whoami()`, optional endorctl detection, interactive browser token refresh into `.env`.
+- Agent skill `endor-auth-login-count` and `endorlabs.workflows.auth` — AuthenticationLog login-activity CSV via tenant list-path `list_groups` on `spec.claims` with interactive URI filter.
+
 ### Changed
+
+- Replaced maintainer-only `devtools/refresh_token_to_dotenv.py` with shipped `endor-auth refresh` and `refresh_token_to_dotenv`.
+- Workflow default outputs migrated to three-bucket workspace layout: `workspace/projects/`, `workspace/runs/<run-bucket>/`, `workspace/inventory/` (legacy `workspace/sessions/` and `workspace/artifacts/` deprecated).
+- Agent-knowledge e2e tests split: `tests/unit/platform/context/test_agent_knowledge_init_e2e.py` (init, no API) and `tests/integration/workflows/test_retrieve_scan_results_skill.py` (live API); integration test taxonomy and credential gating refined.
+- CODEOWNERS default review owner → `@endorlabs/solutions` (Customer Solutions).
+- Version cardinality CLI default output → `workspace/runs/version-cardinality/`; `verify_auth` next-steps use `endor-auth refresh --method sso`.
+- Pre-commit: block staged `.env` / `.endorlabs-context/`; stderr **Unreleased** changelog reminder on user-facing diffs; shared helpers in `devtools/git_staged.py` and `endorlabs.utils.repo_paths` (rule `endor-maintainer-tooling`).
+- Pyright: drive workflow/operations unknown-type warnings to zero via `workflows.wire_access` helpers, import-cycle breaks, and typed wire-dict narrowing (no user-visible API change).
 
 ### Breaking
 
