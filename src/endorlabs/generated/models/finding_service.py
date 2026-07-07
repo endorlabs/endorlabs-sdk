@@ -2716,6 +2716,26 @@ class V1GroupAggregationValueResponse(BaseModel):
     value: float | None = None
 
 
+class V1IOCType(StrEnum):
+    """
+    IOCType classifies the type of Indicator of Compromise.
+    """
+
+    IOC_TYPE_UNSPECIFIED = 'IOC_TYPE_UNSPECIFIED'
+    IOC_TYPE_URL = 'IOC_TYPE_URL'
+    IOC_TYPE_IP = 'IOC_TYPE_IP'
+    IOC_TYPE_DOMAIN = 'IOC_TYPE_DOMAIN'
+    IOC_TYPE_FILENAME = 'IOC_TYPE_FILENAME'
+    IOC_TYPE_FILEPATH = 'IOC_TYPE_FILEPATH'
+    IOC_TYPE_DIGEST_SHA1 = 'IOC_TYPE_DIGEST_SHA1'
+    IOC_TYPE_DIGEST_SHA256 = 'IOC_TYPE_DIGEST_SHA256'
+    IOC_TYPE_DIGEST_SHA512 = 'IOC_TYPE_DIGEST_SHA512'
+    IOC_TYPE_DIGEST_MD5 = 'IOC_TYPE_DIGEST_MD5'
+    IOC_TYPE_WALLET_ADDRESS = 'IOC_TYPE_WALLET_ADDRESS'
+    IOC_TYPE_REGISTRY_ACCOUNT_NAME = 'IOC_TYPE_REGISTRY_ACCOUNT_NAME'
+    IOC_TYPE_REGISTRY_ACCOUNT_EMAIL = 'IOC_TYPE_REGISTRY_ACCOUNT_EMAIL'
+
+
 class V1IndexData(BaseModel):
     """
     IndexData is used to index the resource for search. It's an internal
@@ -2821,6 +2841,38 @@ class V1LocationType(StrEnum):
     LOCATION_TYPE_SINK = 'LOCATION_TYPE_SINK'
     LOCATION_TYPE_INTERMEDIATE = 'LOCATION_TYPE_INTERMEDIATE'
     LOCATION_TYPE_LOGICAL_BUG = 'LOCATION_TYPE_LOGICAL_BUG'
+
+
+class V1MalwareIOCAttribute(BaseModel):
+    """
+    MalwareIOC represents a particular Indicator of Compromise.
+    Use it to embed the IOC attributes in other messages.
+    """
+
+    type: V1IOCType
+    """
+    Type of the IOC attribute.
+    """
+    value: str
+    """
+    Value of the IOC attribute.
+    """
+
+
+class Ioc(BaseModel):
+    """
+    MalwareIOC represents a particular Indicator of Compromise.
+    Use it to embed the IOC attributes in other messages.
+    """
+
+    type: V1IOCType
+    """
+    Type of the IOC attribute.
+    """
+    value: str
+    """
+    Value of the IOC attribute.
+    """
 
 
 class Reference2(BaseModel):
@@ -6543,6 +6595,10 @@ class V1MalwareSpec(BaseModel):
     ecosystem: V1Ecosystem
     """
     The ecosystem of the malware record.
+    """
+    iocs: list[Ioc] | None = None
+    """
+    IOC attributes of the malware found during the analysis.
     """
     malware_detected_on: AwareDatetime | None = None
     """

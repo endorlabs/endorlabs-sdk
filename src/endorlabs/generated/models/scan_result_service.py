@@ -539,6 +539,11 @@ class V1AutomatedScanParameters(BaseModel):
     languages is a list of languages that should be scanned. If emtpy
     default values are used.
     """
+    segment_match_languages: list[str] | None = None
+    """
+    segment_match_languages is the list of languages to enable segment-match based analysis for.
+    Clears the default languages if languages is not set explicitly.
+    """
 
 
 class V1AutomatedScanParametersSource(StrEnum):
