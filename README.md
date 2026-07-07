@@ -81,6 +81,8 @@ CSV export from `workflows.estate.analyze.cardinality.tabular` works without ext
 
 **SDK-only** — examples below do not call `endorlabs.init()`. For agent bootstrap, see [AGENTS.md](AGENTS.md).
 
+**Credentials:** Set env vars per [Configuration](#configuration) (API key for CI). For local or agent sessions, probe with `uv run endor-auth check` or use skill **endor-auth-setup** (shipped after `init()`).
+
 Entry point: `endorlabs.Client(tenant=...)`. Resources are **PascalCase** facades (`client.Project`, `client.Finding`, …) matching `endorctl api … --resource <Kind>`.
 
 ### Basic usage

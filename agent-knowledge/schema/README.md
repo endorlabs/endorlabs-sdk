@@ -12,7 +12,7 @@ agent-knowledge/
   README.md         # Skill index (authoring)
   workflows.yaml    # Supplemental workflow rows (skill: null)
   schema/           # This directory (not shipped)
-  rules/*.md        # Harness bootstrap (always load; generates .cursor/rules/*.mdc)
+  rules/*.md        # Harness bootstrap (sync → .cursor/rules/*.mdc; footgun subset always-on)
   contracts/*.md    # Reference SDK semantics (on demand)
   skills/<name>/    # Task playbooks
     SKILL.md
@@ -53,7 +53,7 @@ Only these keys appear in the generated bundle:
 | `description` | yes | 1–1024 chars; third person; **WHAT** + **WHEN** |
 | `disable-model-invocation` | no | Cursor-only; omit unless `true` |
 
-Validated by [`skill.schema.json`](skill.schema.json) (portable subset).
+Authoring validation uses the full [`skill.schema.json`](skill.schema.json); sync writes only the portable subset above into the wheel bundle.
 
 Every skill `name` and directory **must** use the `endor-*` prefix (same family as `endor-context`, `endor-callgraph-search`, …). Sync and schema reject unprefixed ids.
 
@@ -117,7 +117,32 @@ If output is scored, ranked, or summarized (not authoritative platform state):
 - Do not add Related skills rows for every skill in `INDEX.md`; only **direct** next/previous steps in typical RCA.
 
 
-Optional `endorlabs.catalog` links a skill to a workflow CLI/module row. Sync **strips** the entire `endorlabs` key from shipped `SKILL.md`. See prior examples in skill `SKILL.md` files under `agent-knowledge/skills/`.
+## Authoring-only frontmatter (`endorlabs.catalog`)
+
+Authoring `SKILL.md` may include an `endorlabs.catalog` block (validated by the full skill schema). Sync **strips** the entire `endorlabs` key from shipped bundle `SKILL.md`.
+
+| Field | Required | Purpose |
+|-------|----------|---------|
+| `workflow_id` | yes | Catalog row id (`^[a-z0-9-]+$`); often matches skill id minus `endor-` |
+| `module` | yes | Import path for the workflow implementation |
+| `cli` | no | Console script name when the workflow is exposed as a CLI |
+| `default_output` | no | Default artifact directory under `workspace/runs/<run-bucket>/` |
+| `agent_visible` | no | Include in agent-facing workflow catalog (default `true`) |
+| `composition` | no | `artifact_chain`, `library_api`, or `cli_only` |
+| `library_entrypoints` | no | Callable symbols when `composition` is `library_api` |
+
+Example shape (authoring only):
+
+```yaml
+endorlabs:
+  catalog:
+    workflow_id: troubleshooting-scans
+    module: endorlabs.workflows.troubleshooting_scans
+    composition: artifact_chain
+    agent_visible: true
+```
+
+See live examples under `agent-knowledge/skills/*/SKILL.md`.
 
 ## Rules (`agent-knowledge/rules/`)
 
