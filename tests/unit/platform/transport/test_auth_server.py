@@ -4,7 +4,7 @@ get_token() rejects CI environments before mocks apply (see
 test_get_token_prevents_ci_usage). Other get_token() tests use
 @pytest.mark.interactive and are excluded in CI (-m "not interactive").
 Run locally: pytest tests/unit/platform/transport/test_auth_server.py -m interactive.
-For a real browser token, use devtools/refresh_token_to_dotenv.py — not pytest.
+For a real browser token, use `uv run endor-auth refresh` — not pytest.
 """
 
 import os

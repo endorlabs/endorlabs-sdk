@@ -8,9 +8,12 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- Agent skill `endor-auth-setup`, console script `endor-auth` (`check` / `refresh`), and `endorlabs.workflows.auth` session helpers — probe env keys, verify `Client().whoami()`, optional endorctl detection, interactive browser token refresh into `.env`.
 - Agent skill `endor-auth-login-count` and `endorlabs.workflows.auth` — AuthenticationLog login-activity CSV via tenant list-path `list_groups` on `spec.claims` with interactive URI filter.
 
 ### Changed
+
+- Replaced maintainer-only `devtools/refresh_token_to_dotenv.py` with shipped `endor-auth refresh` and `refresh_token_to_dotenv`.
 
 ### Breaking
 

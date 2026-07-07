@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-07T20:52:41.418039+00:00",
+  "generated_at": "2026-07-07T20:53:35.679426+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -147,7 +147,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.5.1.dev5",
+  "sdk_version": "0.5.1.dev6",
   "skills": [
     {
       "description": "Aggregate AuthenticationLog login activity by user identity over a configurable lookback window (default 90 days). Outputs a CSV with identity, user identifiers, last login, and login count. Shares workflow helpers with auth troubleshooting skills. Use for tenant login-activity audits\u2014not for SSO policy mapping or per-user auth RCA.",
@@ -157,6 +157,13 @@
       "refs": [
         "skills/endor-auth-login-count/scripts/login_count_report.py"
       ]
+    },
+    {
+      "description": "Probe, verify, and refresh Endor Labs SDK credentials before API workflows. Covers env-key scan, Client whoami check, endorctl detection, and interactive browser token refresh into .env. Use as step zero for any tenant session\u2014not for SSO policy mapping or AuthenticationLog RCA.",
+      "id": "endor-auth-setup",
+      "name": "endor-auth-setup",
+      "path": "skills/endor-auth-setup/SKILL.md",
+      "refs": []
     },
     {
       "description": "Author or update a shipped agent skill under agent-knowledge/skills/: portable frontmatter, optional endorlabs.catalog workflow linkage, composition handoffs, sync, and drift verification. Use when adding skills, fixing sync validation errors, or migrating workflow catalog metadata\u2014not for extending SDK resources (endor-implement-sdk-resource) or runtime API troubleshooting.",
@@ -372,16 +379,30 @@
       "default_output": null,
       "id": "auth-login-count",
       "library_entrypoints": [
-        "endorlabs.workflows.auth.aggregate_login_activity_from_groups",
-        "endorlabs.workflows.auth.fetch_authentication_logs",
-        "endorlabs.workflows.auth.aggregate_login_activity",
-        "endorlabs.workflows.auth.authentication_log_row_to_dict",
+        "endorlabs.workflows.auth.count_logins_from_groups",
+        "endorlabs.workflows.auth.list_auth_logs",
+        "endorlabs.workflows.auth.count_logins_from_rows",
+        "endorlabs.workflows.auth.normalize_auth_log",
         "endorlabs.workflows.auth.extract_user_identifiers",
         "endorlabs.workflows.auth.is_api_key_noise",
         "endorlabs.workflows.auth.is_sso_login_uri"
       ],
       "module": "endorlabs.workflows.auth.authentication_log",
       "skill": "endor-auth-login-count"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-auth",
+      "default_output": null,
+      "id": "auth-setup",
+      "library_entrypoints": [
+        "endorlabs.workflows.auth.scan_auth_env",
+        "endorlabs.workflows.auth.verify_auth",
+        "endorlabs.workflows.auth.refresh_token_to_dotenv",
+        "endorlabs.workflows.auth.probe_endorctl"
+      ],
+      "module": "endorlabs.workflows.auth.cli",
+      "skill": "endor-auth-setup"
     },
     {
       "agent_visible": true,

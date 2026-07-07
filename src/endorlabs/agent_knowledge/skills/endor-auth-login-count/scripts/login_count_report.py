@@ -11,35 +11,20 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.context.paths import workflow_sessions_root
+from endorlabs.context.paths import default_runs_dir, sanitize_path_segment
 from endorlabs.workflows.auth import (
     LoginActivityRow,
-    aggregate_login_activity,
-    aggregate_login_activity_from_groups,
-    fetch_authentication_logs,
+    count_logins_from_groups,
+    count_logins_from_rows,
+    list_auth_logs,
 )
 
-
-def _default_output_path(tenant: str, days: int, user_slug: str) -> Path:
-    safe_tenant = tenant.replace("/", "-")
-    return (
-        workflow_sessions_root()
-        / user_slug
-        / "exports"
-        / f"login-count-{safe_tenant}-{days}d.csv"
-    )
+RUN_BUCKET = "auth-login-count"
 
 
-def _resolve_user_slug(client: endorlabs.Client) -> str:
-    try:
-        whoami = client.whoami()
-    except Exception:
-        return "agent"
-    email = str(getattr(whoami, "email", "") or "")
-    if email and "@" in email:
-        local = email.split("@", 1)[0]
-        return "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in local)
-    return "agent"
+def _default_output_path(tenant: str, days: int) -> Path:
+    safe_tenant = sanitize_path_segment(tenant)
+    return default_runs_dir(RUN_BUCKET) / f"login-count-{safe_tenant}-{days}d.csv"
 
 
 def _csv_fieldnames(days: int) -> list[str]:
@@ -111,7 +96,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--output",
         type=Path,
         default=None,
-        help="CSV output path (default: workspace/sessions/<user>/exports/...).",
+        help="CSV output path (default: workspace/runs/auth-login-count/...).",
     )
     parser.add_argument(
         "--max-pages",
@@ -158,8 +143,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     client = endorlabs.Client(tenant=args.tenant)
-    user_slug = _resolve_user_slug(client)
-    output = args.output or _default_output_path(args.tenant, args.days, user_slug)
+    output = args.output or _default_output_path(args.tenant, args.days)
 
     tenant_scoped = not args.platform_wide
     list_kwargs = {
@@ -172,16 +156,16 @@ def main(argv: list[str] | None = None) -> int:
     }
 
     if args.list_rows:
-        rows = fetch_authentication_logs(
+        rows = list_auth_logs(
             client,
             exclude_api_key=not args.include_api_key,
             concurrent=False,
             **list_kwargs,
         )
-        activity = aggregate_login_activity(rows, days=args.days)
+        activity = count_logins_from_rows(rows, days=args.days)
         raw_row_count = len(rows)
     else:
-        activity = aggregate_login_activity_from_groups(client, **list_kwargs)
+        activity = count_logins_from_groups(client, **list_kwargs)
         raw_row_count = sum(item.login_count for item in activity)
     client.close()
 

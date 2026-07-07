@@ -8,15 +8,15 @@ from unittest.mock import MagicMock
 
 from endorlabs.operations.list_response import GroupBucket
 from endorlabs.workflows.auth.authentication_log import (
-    aggregate_login_activity,
-    authentication_log_row_to_dict,
-    build_authentication_log_filter,
+    auth_log_filter,
+    count_logins_from_rows,
     create_time_lower_bound_filter,
     extract_user_identifiers,
-    fetch_authentication_logs,
     interactive_uri_filter,
     is_api_key_noise,
     is_sso_login_uri,
+    list_auth_logs,
+    normalize_auth_log,
     parse_claims_from_group_bucket,
     primary_identity,
 )
@@ -42,17 +42,17 @@ def test_create_time_lower_bound_filter_uses_iso_date() -> None:
     assert "2026-04-" in filt
 
 
-def test_build_authentication_log_filter_composes_interactive_login_filter() -> None:
+def test_auth_log_filter_composes_interactive_login_filter() -> None:
     anchor = datetime(2026, 7, 7, 12, 0, 0, tzinfo=UTC)
-    filt = build_authentication_log_filter(7, now=anchor)
+    filt = auth_log_filter(7, now=anchor)
     assert "meta.create_time>=date(" in filt
     assert "spec.success!=false" in filt
     assert interactive_uri_filter() in filt
     assert "tenant_meta.namespace" not in filt
 
 
-def test_build_authentication_log_filter_can_disable_interactive_uri_filter() -> None:
-    filt = build_authentication_log_filter(7, interactive_only=False)
+def test_auth_log_filter_can_disable_interactive_uri_filter() -> None:
+    filt = auth_log_filter(7, interactive_only=False)
     assert "spec.uri matches" not in filt
 
 
@@ -92,7 +92,7 @@ def test_is_sso_login_uri_detects_interactive_callbacks() -> None:
     assert not is_sso_login_uri("/v1/auth/api-key")
 
 
-def test_authentication_log_row_to_dict_from_masked_dict() -> None:
+def test_normalize_auth_log_from_masked_dict() -> None:
     row = {
         "uuid": "log-1",
         "tenant_meta": {"namespace": "system"},
@@ -104,7 +104,7 @@ def test_authentication_log_row_to_dict_from_masked_dict() -> None:
             "remote_address": "203.0.113.1",
         },
     }
-    normalized = authentication_log_row_to_dict(row)
+    normalized = normalize_auth_log(row)
     assert normalized["namespace"] == "system"
     assert normalized["created"] == "2026-07-01T10:00:00Z"
     assert normalized["claims"] == ["email=user@example.com"]
@@ -125,7 +125,7 @@ def test_parse_claims_from_group_bucket_reads_spec_claims() -> None:
     ]
 
 
-def test_aggregate_login_activity_groups_by_identity() -> None:
+def test_count_logins_from_rows_groups_by_identity() -> None:
     rows = [
         {
             "created": "2026-07-01T10:00:00Z",
@@ -146,7 +146,7 @@ def test_aggregate_login_activity_groups_by_identity() -> None:
             "success": True,
         },
     ]
-    activity = aggregate_login_activity(rows, days=7)
+    activity = count_logins_from_rows(rows, days=7)
     assert len(activity) == 2
     alice = next(item for item in activity if item.identity == "alice@example.com")
     bob = next(item for item in activity if item.identity == "bob@example.com")
@@ -155,7 +155,165 @@ def test_aggregate_login_activity_groups_by_identity() -> None:
     assert bob.login_count == 1
 
 
-def test_fetch_authentication_logs_uses_tenant_list_path_defaults() -> None:
+def test_probe_auth_logs_uses_tenant_path() -> None:
+    client = MagicMock()
+    client.AuthenticationLog.list.return_value = []
+
+    from endorlabs.workflows.auth.authentication_log import (
+        AUTHENTICATION_LOG_INVESTIGATION_MASK,
+        probe_auth_logs,
+    )
+
+    probe_auth_logs(
+        client,
+        namespace="tenant.ns",
+        days=14,
+        max_pages=3,
+    )
+
+    client.AuthenticationLog.list.assert_called_once()
+    kwargs = client.AuthenticationLog.list.call_args.kwargs
+    assert kwargs["namespace"] == "tenant.ns"
+    assert kwargs["traverse"] is False
+    assert kwargs["mask"] == AUTHENTICATION_LOG_INVESTIGATION_MASK
+    assert "meta.create_time>=date(" in kwargs["filter"]
+    assert "spec.uri matches" not in kwargs["filter"]
+
+
+def test_filter_auth_logs_by_email_matches_claims() -> None:
+    from endorlabs.workflows.auth.authentication_log import filter_auth_logs_by_email
+
+    rows = [
+        {
+            "uri": "/auth/sso",
+            "claims": ["email=user@example.com"],
+            "authorized_tenants": [],
+        },
+        {
+            "uri": "/auth/sso",
+            "claims": ["email=other@example.com"],
+            "authorized_tenants": [],
+        },
+    ]
+    matched = filter_auth_logs_by_email(rows, "user@example.com")
+    assert len(matched) == 1
+
+
+def test_auth_log_snapshot() -> None:
+    from endorlabs.workflows.auth.authentication_log import auth_log_snapshot
+
+    snap = auth_log_snapshot(
+        {
+            "uri": "/auth/saml-callback",
+            "claims": ["email=user@example.com"],
+            "authorized_tenants": ["tenant-a"],
+            "success": True,
+            "created": "2026-07-01T00:00:00Z",
+        }
+    )
+    assert snap["user"] == "user@example.com"
+    assert snap["authorized_tenants"] == ["tenant-a"]
+    assert set(snap) == {"user", "uri", "authorized_tenants", "success", "created"}
+
+
+def test_filter_auth_logs_by_email_empty_returns_all() -> None:
+    from endorlabs.workflows.auth.authentication_log import filter_auth_logs_by_email
+
+    rows = [{"claims": ["email=a@example.com"]}, {"claims": ["email=b@example.com"]}]
+    assert filter_auth_logs_by_email(rows, "") == rows
+    assert filter_auth_logs_by_email(rows, "   ") == rows
+
+
+def test_list_auth_logs_excludes_failed_login() -> None:
+    client = MagicMock()
+    client.AuthenticationLog.list.return_value = [
+        {
+            "uuid": "ok",
+            "meta": {"create_time": "2026-07-01T10:00:00Z"},
+            "spec": {
+                "uri": "/v1/auth/saml-callback",
+                "success": True,
+                "claims": ["email=ok@example.com"],
+            },
+        },
+        {
+            "uuid": "fail",
+            "meta": {"create_time": "2026-07-01T11:00:00Z"},
+            "spec": {
+                "uri": "/v1/auth/saml-callback",
+                "success": False,
+                "claims": ["email=fail@example.com"],
+            },
+        },
+    ]
+
+    rows = list_auth_logs(client, days=7, namespace="tenant")
+    assert len(rows) == 1
+    assert rows[0]["uuid"] == "ok"
+
+
+def test_probe_auth_logs_includes_failed_login() -> None:
+    client = MagicMock()
+    client.AuthenticationLog.list.return_value = [
+        {
+            "uuid": "fail",
+            "meta": {"create_time": "2026-07-01T11:00:00Z"},
+            "spec": {
+                "uri": "/v1/auth/api-key",
+                "success": False,
+                "claims": ["email=fail@example.com"],
+                "authorized_tenants": ["tenant-a"],
+            },
+        },
+    ]
+
+    from endorlabs.workflows.auth.authentication_log import probe_auth_logs
+
+    rows = probe_auth_logs(client, namespace="tenant", days=7)
+    assert len(rows) == 1
+    assert rows[0]["success"] is False
+    assert rows[0]["authorized_tenants"] == ["tenant-a"]
+
+
+def test_count_logins_from_groups_aggregates_buckets() -> None:
+    from endorlabs.workflows.auth.authentication_log import count_logins_from_groups
+
+    bucket = GroupBucket(
+        key=GROUP_KEY,
+        parsed={"spec.claims": "[]"},
+        data={"aggregation_count": {"count": 4}},
+        count=0,
+    )
+    client = MagicMock()
+    client.AuthenticationLog.list_groups.return_value = [bucket]
+    client.AuthenticationLog.list.return_value = [
+        {
+            "meta": {"create_time": "2026-07-02T10:00:00Z"},
+            "spec": {"claims": ["email=darcher@endor.ai"]},
+        }
+    ]
+
+    activity = count_logins_from_groups(
+        client,
+        days=30,
+        namespace="tenant",
+        traverse=False,
+    )
+    assert len(activity) == 1
+    row = activity[0]
+    assert row.identity == "darcher@endor.ai"
+    assert row.login_count == 4
+    assert row.last_login == "2026-07-02T10:00:00Z"
+    assert row.days == 30
+
+    client.AuthenticationLog.list_groups.assert_called_once()
+    group_kwargs = client.AuthenticationLog.list_groups.call_args.kwargs
+    assert group_kwargs["namespace"] == "tenant"
+    assert group_kwargs["paths"] == ["spec.claims"]
+    assert "spec.success!=false" in group_kwargs["filter"]
+
+
+def test_list_auth_logs_uses_tenant_list_path_defaults() -> None:
     client = MagicMock()
     client.AuthenticationLog.list.return_value = [
         {
@@ -178,7 +336,7 @@ def test_fetch_authentication_logs_uses_tenant_list_path_defaults() -> None:
         },
     ]
 
-    rows = fetch_authentication_logs(
+    rows = list_auth_logs(
         client,
         days=30,
         namespace="cyera",

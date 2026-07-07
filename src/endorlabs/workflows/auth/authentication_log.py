@@ -1,4 +1,22 @@
-"""Shared AuthenticationLog normalization and login-activity aggregation."""
+"""AuthenticationLog helpers for login counts and auth RCA.
+
+Composable layers (build bottom-up):
+
+1. **Filters** — ``auth_log_filter``, ``interactive_uri_filter``, claim helpers.
+2. **Normalize** — ``normalize_auth_log`` turns list rows into uniform dicts.
+3. **Fetch** — ``list_auth_logs`` (login-count defaults) or ``probe_auth_logs`` (RCA).
+4. **Narrow / export** — ``filter_auth_logs_by_email``, ``auth_log_snapshot``.
+5. **Aggregate** — ``count_logins_from_groups`` (default) or ``count_logins_from_rows``.
+
+**Tenant scoping:** pass ``namespace=<tenant>`` on list calls with ``traverse=False``.
+Do **not** filter ``tenant_meta.namespace`` in MQL — wire rows may show ``system`` but
+are returned on the tenant list path; that filter usually yields zero rows.
+
+**Recipes:** login-count → ``count_logins_from_groups``; auth RCA →
+``probe_auth_logs`` → ``filter_auth_logs_by_email`` → ``auth_log_snapshot``;
+custom → ``auth_log_filter`` + ``client.AuthenticationLog.list`` →
+``normalize_auth_log``.
+"""
 
 from __future__ import annotations
 
@@ -15,6 +33,11 @@ if TYPE_CHECKING:
 
 AUTHENTICATION_LOG_LIST_MASK = (
     "meta.create_time,spec.claims,spec.uri,spec.success,spec.remote_address"
+)
+
+AUTHENTICATION_LOG_INVESTIGATION_MASK = (
+    "meta.create_time,spec.claims,spec.uri,spec.success,spec.remote_address,"
+    "spec.authorized_tenants"
 )
 
 API_KEY_URI_FRAGMENTS = (
@@ -38,7 +61,12 @@ INTERACTIVE_URI_REGEX = (
 
 @dataclass(frozen=True)
 class LoginActivityRow:
-    """One identity row in a login-activity report."""
+    """One identity row in a login-activity report.
+
+    ``identity`` is the aggregation key from claims; ``user_identifiers`` holds
+    all ``email=`` / ``user=`` / ``id=`` strings for that identity. Use
+    :meth:`to_csv_row` for the skill CSV column schema.
+    """
 
     identity: str
     user_identifiers: tuple[str, ...]
@@ -90,14 +118,19 @@ def interactive_uri_filter() -> str:
     return f"spec.uri matches '{INTERACTIVE_URI_REGEX}'"
 
 
-def build_authentication_log_filter(
+def auth_log_filter(
     days: int,
     *,
     successful_only: bool = True,
     interactive_only: bool = True,
     now: datetime | None = None,
 ) -> str:
-    """Compose the list ``filter`` for login-activity fetches."""
+    """Compose the MQL ``filter`` for AuthenticationLog list/group calls.
+
+    Default parts: time lower bound, ``spec.success!=false`` (unset counts as
+    success), and interactive SSO/OIDC URI match. Pair with ``namespace=<tenant>``
+    on the list path — never add ``tenant_meta.namespace`` here.
+    """
     parts = [create_time_lower_bound_filter(days, now=now)]
     if successful_only:
         # spec.success is often unset on successful callbacks; exclude explicit false.
@@ -107,8 +140,13 @@ def build_authentication_log_filter(
     return " and ".join(parts)
 
 
-def authentication_log_row_to_dict(row: Any) -> dict[str, Any]:
-    """Normalize a model or masked dict AuthenticationLog row."""
+def normalize_auth_log(row: Any) -> dict[str, Any]:
+    """Normalize a model or masked-dict AuthenticationLog row.
+
+    Returns keys: ``uuid``, ``namespace`` (from ``tenant_meta``, display-only),
+    ``created``, ``uri``, ``success``, ``claims``, ``remote_address``,
+    ``authorized_tenants``. Downstream helpers expect this shape.
+    """
     if isinstance(row, dict):
         meta = row.get("meta") or {}
         spec = row.get("spec") or {}
@@ -121,6 +159,7 @@ def authentication_log_row_to_dict(row: Any) -> dict[str, Any]:
             "success": spec.get("success"),
             "claims": list(spec.get("claims") or []),
             "remote_address": spec.get("remote_address"),
+            "authorized_tenants": list(spec.get("authorized_tenants") or []),
         }
 
     spec = getattr(row, "spec", None)
@@ -137,6 +176,9 @@ def authentication_log_row_to_dict(row: Any) -> dict[str, Any]:
         "success": getattr(spec, "success", None) if spec else None,
         "claims": list(getattr(spec, "claims", []) or []) if spec else [],
         "remote_address": getattr(spec, "remote_address", None) if spec else None,
+        "authorized_tenants": list(getattr(spec, "authorized_tenants", []) or [])
+        if spec
+        else [],
     }
 
 
@@ -210,7 +252,51 @@ def _is_countable_login(
     return not (successful_only and row.get("success") is False)
 
 
-def fetch_authentication_logs(
+def auth_log_snapshot(row: dict[str, Any]) -> dict[str, Any]:
+    """Compact export dict for troubleshooting / SSO correlation.
+
+    Keys: ``user``, ``uri``, ``authorized_tenants``, ``success``, ``created``.
+    Input must be a :func:`normalize_auth_log` dict (or equivalent).
+    """
+    identifiers = extract_user_identifiers(list(row.get("claims") or []))
+    return {
+        "user": primary_identity(identifiers),
+        "uri": str(row.get("uri") or ""),
+        "authorized_tenants": list(row.get("authorized_tenants") or []),
+        "success": row.get("success"),
+        "created": row.get("created"),
+    }
+
+
+def filter_auth_logs_by_email(
+    rows: list[dict[str, Any]],
+    email: str,
+) -> list[dict[str, Any]]:
+    """Keep rows whose claims, derived identity, or URI mention *email*.
+
+    Case-insensitive substring match. Empty *email* returns *rows* unchanged.
+    """
+    needle = email.strip().lower()
+    if not needle:
+        return rows
+
+    matched: list[dict[str, Any]] = []
+    for row in rows:
+        uri = str(row.get("uri") or "").lower()
+        if needle in uri:
+            matched.append(row)
+            continue
+        claims = [str(claim) for claim in (row.get("claims") or [])]
+        if any(needle in claim.lower() for claim in claims):
+            matched.append(row)
+            continue
+        identity = primary_identity(extract_user_identifiers(claims))
+        if needle in identity.lower():
+            matched.append(row)
+    return matched
+
+
+def list_auth_logs(
     client: Client,
     *,
     days: int = 90,
@@ -221,9 +307,19 @@ def fetch_authentication_logs(
     interactive_only: bool = True,
     exclude_api_key: bool = True,
     concurrent: bool = False,
+    mask: str | None = None,
 ) -> list[dict[str, Any]]:
-    """List AuthenticationLog rows for the trailing window and normalize them."""
-    filter_expr = build_authentication_log_filter(
+    """List and normalize AuthenticationLog rows for the trailing window.
+
+    Defaults match login-count: successful interactive logins, API-key URIs
+    dropped client-side. Pass ``namespace=<tenant>`` — do not filter
+    ``tenant_meta.namespace`` in MQL.
+
+    For auth RCA (failures, api-key events, ``authorized_tenants``), use
+    :func:`probe_auth_logs`. Aggregate via :func:`count_logins_from_rows` or
+    prefer server-side :func:`count_logins_from_groups`.
+    """
+    filter_expr = auth_log_filter(
         days,
         successful_only=successful_only,
         interactive_only=interactive_only,
@@ -233,14 +329,14 @@ def fetch_authentication_logs(
         "namespace": namespace,
         "traverse": traverse,
         "filter": filter_expr,
-        "mask": AUTHENTICATION_LOG_LIST_MASK,
+        "mask": mask or AUTHENTICATION_LOG_LIST_MASK,
         "concurrent": concurrent,
     }
     if max_pages is not None:
         list_kwargs["max_pages"] = max_pages
 
     raw_rows = client.AuthenticationLog.list(**list_kwargs)
-    rows = [authentication_log_row_to_dict(item) for item in raw_rows]
+    rows = [normalize_auth_log(item) for item in raw_rows]
     return [
         row
         for row in rows
@@ -253,12 +349,50 @@ def fetch_authentication_logs(
     ]
 
 
-def aggregate_login_activity(
+def probe_auth_logs(
+    client: Client,
+    *,
+    namespace: str,
+    days: int = 30,
+    traverse: bool = False,
+    max_pages: int | None = 10,
+    successful_only: bool = False,
+    interactive_only: bool = False,
+    exclude_api_key: bool = False,
+    concurrent: bool = False,
+) -> list[dict[str, Any]]:
+    """Fetch normalized auth-log rows for SSO / login RCA.
+
+    Preset over :func:`list_auth_logs`: broader defaults (includes failures and
+    non-interactive URIs), investigation mask with ``authorized_tenants``, tenant
+    list path (``namespace=<tenant>``, ``traverse=False``). Narrow with
+    :func:`filter_auth_logs_by_email`; export with :func:`auth_log_snapshot`.
+    """
+    return list_auth_logs(
+        client,
+        days=days,
+        namespace=namespace,
+        traverse=traverse,
+        max_pages=max_pages,
+        successful_only=successful_only,
+        interactive_only=interactive_only,
+        exclude_api_key=exclude_api_key,
+        concurrent=concurrent,
+        mask=AUTHENTICATION_LOG_INVESTIGATION_MASK,
+    )
+
+
+def count_logins_from_rows(
     rows: list[dict[str, Any]],
     *,
     days: int,
 ) -> list[LoginActivityRow]:
-    """Aggregate normalized auth-log rows by primary identity."""
+    """Aggregate normalized rows by primary identity (client-side fallback).
+
+    Use after :func:`list_auth_logs` when ``list_groups`` is unavailable or
+    ``--list-rows`` parity is required. Prefer :func:`count_logins_from_groups`
+    for large windows.
+    """
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     identifier_map: dict[str, set[str]] = defaultdict(set)
 
@@ -337,7 +471,7 @@ def fetch_last_logins_for_identities(
         max_pages=1,
     )
     for item in sorted_page:
-        row = authentication_log_row_to_dict(item)
+        row = normalize_auth_log(item)
         identity = primary_identity(
             extract_user_identifiers(list(row.get("claims") or []))
         )
@@ -361,7 +495,7 @@ def fetch_last_logins_for_identities(
         scan_kwargs["max_pages"] = max_pages
 
     for item in client.AuthenticationLog.list_iter(**scan_kwargs):
-        row = authentication_log_row_to_dict(item)
+        row = normalize_auth_log(item)
         identity = primary_identity(
             extract_user_identifiers(list(row.get("claims") or []))
         )
@@ -377,7 +511,7 @@ def fetch_last_logins_for_identities(
     return best
 
 
-def aggregate_login_activity_from_groups(
+def count_logins_from_groups(
     client: Client,
     *,
     days: int,
@@ -388,8 +522,14 @@ def aggregate_login_activity_from_groups(
     interactive_only: bool = True,
     last_login_max_pages: int | None = None,
 ) -> list[LoginActivityRow]:
-    """Aggregate login counts via server-side ``list_groups`` on ``spec.claims``."""
-    filter_expr = build_authentication_log_filter(
+    """Aggregate login counts via server-side ``list_groups`` on ``spec.claims``.
+
+    Default path for login-count skills. Applies :func:`auth_log_filter`, then
+    fetches per-identity ``last login`` via a supplemental sorted list (see
+    :func:`fetch_last_logins_for_identities`). Fallback:
+    :func:`list_auth_logs` → :func:`count_logins_from_rows`.
+    """
+    filter_expr = auth_log_filter(
         days,
         successful_only=successful_only,
         interactive_only=interactive_only,

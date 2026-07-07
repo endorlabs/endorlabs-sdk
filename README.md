@@ -205,7 +205,7 @@ Runnable probe (paths only): `python -m endorlabs.examples.agent_bootstrap --dry
 
 Before `Client()`, run `print(endorlabs.discover())` (or `agent_bootstrap --dry-run`) and read every path in `bootstrap_paths`. Before **workflow** tasks (call graph, project bundle, scan RCA), run `endorlabs.init()` and open the relevant skill under `.endorlabs-context/sdk/skills/`.
 
-Browser auth, SSO setup, and skill walkthroughs: [docs/guides/examples.md](docs/guides/examples.md).
+Browser auth, SSO setup, and skill walkthroughs: [docs/guides/examples.md](docs/guides/examples.md). Credential probe and refresh: `uv run endor-auth check` / `endor-auth refresh` (skill **endor-auth-setup**).
 
 ## Try it with skills
 
@@ -216,7 +216,7 @@ Guided tenant sessions use shipped agent skills — start with [docs/guides/exam
 - **SDK docs:** [docs/README.md](docs/README.md) — contracts, guides, generated reference, errors
 - **API surfaces:** [docs/reference/api-surfaces.md](docs/reference/api-surfaces.md)
 - **Architecture (contributors):** [docs/contributing/architecture.md](docs/contributing/architecture.md)
-- **Agents:** [AGENTS.md](AGENTS.md) — bootstrap, workflows inventory, naming
+- **Agents:** `discover().agents_guide` (shipped wheel) or repo [AGENTS.md](AGENTS.md) for contributors
 - **Contribute:** [CONTRIBUTORS.md](CONTRIBUTORS.md) · [devtools/README.md](devtools/README.md)
 
 ## License

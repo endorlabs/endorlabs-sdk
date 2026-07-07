@@ -62,13 +62,13 @@ Use `sso_access_spotcheck.py` to collect evidence and produce a normalized mappi
 Run:
 
 ```bash
-uv run --env-file .env python sdk/skills/endor-sso-integration-validation-troubleshooting/sso_access_spotcheck.py --tenant-hint root --output-dir .endorlabs-context/workspace/sessions/agent/exports
+uv run --env-file .env python .endorlabs-context/sdk/skills/endor-sso-integration-validation-troubleshooting/sso_access_spotcheck.py --tenant-hint root --output-dir .endorlabs-context/workspace/runs/sso-integration-validation-troubleshooting
 ```
 
 Then optionally narrow by actor:
 
 ```bash
-uv run --env-file .env python sdk/skills/endor-sso-integration-validation-troubleshooting/sso_access_spotcheck.py --tenant-hint root --target-email user@example.com --target-group group-a --target-group group-b --output-dir .endorlabs-context/workspace/sessions/agent/exports
+uv run --env-file .env python .endorlabs-context/sdk/skills/endor-sso-integration-validation-troubleshooting/sso_access_spotcheck.py --tenant-hint root --target-email user@example.com --target-group group-a --target-group group-b --output-dir .endorlabs-context/workspace/runs/sso-integration-validation-troubleshooting
 ```
 
 ## Step 5: Troubleshooting Decision Tree

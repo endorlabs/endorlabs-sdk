@@ -85,7 +85,7 @@ Integration tests (require valid credentials):
 uv run pytest -m integration -v
 ```
 
-**Pytest markers:** `integration`, `writes` (mutating API calls), `long` (heavy integration; CI runs `-m "not long"`), `interactive` (browser OAuth — excluded from CI; use `devtools/refresh_token_to_dotenv.py`; `--admin` / `--sso` / `-n` override env defaults). The unused `slow` marker was removed; use `long` or `interactive` instead. Unit CI: `-m "not interactive and not long"`. Traverse coverage lives in `tests/integration/client/test_concurrent_list.py`; per-resource tests list in the integration `namespace` without `traverse`.
+**Pytest markers:** `integration`, `writes` (mutating API calls), `long` (heavy integration; CI runs `-m "not long"`), `interactive` (browser OAuth — excluded from CI; use `uv run endor-auth refresh`). The unused `slow` marker was removed; use `long` or `interactive` instead. Unit CI: `-m "not interactive and not long"`. Traverse coverage lives in `tests/integration/client/test_concurrent_list.py`; per-resource tests list in the integration `namespace` without `traverse`.
 
 **Log-style integration bounds** (`tests/conftest.py`): `TEST_LOG_LIST_MAX_PAGES` (no forced `page_size` on logs), `TEST_LOG_LIST_MAX_ROWS`, `TEST_SCAN_LOG_MAX_ENTRIES`; helpers `log_list_kwargs()` / `bounded_log_list_params()` / `assert_bounded_log_rows()` in `tests/integration/conftest.py`.
 

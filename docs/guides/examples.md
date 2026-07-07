@@ -31,7 +31,14 @@ Browser auth via `APIClient(auth_method='browser-auth')`: validates an existing 
 uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_method='browser-auth'); print(c.token)"
 ```
 
-For shell portability (PowerShell + POSIX), prefer `uv run python -c ...` over shell-specific export workflows.
+To persist a bearer token in `.env` after browser SSO:
+
+```bash
+uv run endor-auth refresh --method sso -n <tenant>
+uv run --env-file .env endor-auth check --tenant <tenant>
+```
+
+See skill **endor-auth-setup** (shipped under `skills/endor-auth-setup/SKILL.md` after `init()`).
 
 ### SSO / login investigations
 
@@ -188,7 +195,7 @@ and [CONTRIBUTORS.md — Optional: sync external docs](../../CONTRIBUTORS.md#opt
 | 5 | Materialize skills for IDE/agents | `endorlabs.init()` / endor-context |
 
 After **endor-troubleshooting-scans**, use scan UUIDs from the pairs/diff artifacts with
-**endor-retrieve-scan-results** (`context.scan_uuid` filter) for finding-level drill-down.
+**endor-retrieve-scan-results** (`Finding.list_for_context(scan)`) for finding-level drill-down.
 For policy, reachability, or dependency lineage questions, follow the **Related skills**
 tables in each skill's `SKILL.md`.
 
