@@ -47,21 +47,21 @@ shards = [project_model_to_shard(p, child_ns) for p in projects]
 rows = list_for_shards(
     client.Finding,
     shards,
-    filter_fn=lambda s: f'spec.project_uuid=="{s.key}"',
+    filter_fn=lambda s: f'spec.project_uuid=="{s.project_uuid}"',
     max_workers=12,
 )
 ```
 
 Estate-scale bulk collect remains in `endor-estate` workflows; see `AGENTS.md` for measured speedup notes.
 
-**Primitives:** [`endorlabs.tools.list_sharding`](../../src/endorlabs/tools/list_sharding.py) (`ParentShard`, `parallel_map_shards`, `list_for_shards`), [`facade.count()`](../../src/endorlabs/facade.py) / [`count_for_progress()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`format_progress()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`execute_across_namespaces()`](../../src/endorlabs/utils/parallel.py), [`main_context_filter()`](../../src/endorlabs/workflows/estate/filters/main_context.py). Catalog: [facade-helpers.md](../guides/facade-helpers.md). Estate context: [estate/README.md](../estate/README.md).
+**Primitives:** [`endorlabs.tools.list_sharding`](../../src/endorlabs/tools/list_sharding.py) (`ProjectShard`, `parallel_map_shards`, `topology_to_project_shards`), [`endorlabs.query`](../../src/endorlabs/query/__init__.py) (`discover_topology`, `preflight_count`), [`client.Query.Project`](../../src/endorlabs/query/project_facade.py) (count/collect recipes), [`facade.count()`](../../src/endorlabs/facade.py) / [`count_for_progress()`](../../src/endorlabs/tools/list_bounds.py), [`format_progress()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`execute_across_namespaces()`](../../src/endorlabs/utils/parallel.py), [`endorlabs.filters`](../../src/endorlabs/filters/__init__.py). Catalog: [facade-helpers.md](../guides/facade-helpers.md), [query-recipes.md](../guides/query-recipes.md). Estate context: [estate/README.md](../estate/README.md).
 
 ### Workflow applicability
 
 | Area | Module / skill | Shard key | Parallel? | Notes |
 | ---- | -------------- | --------- | ----------- | ----- |
 | Compile graph collect | [`estate/collect/runner.py`](../../src/endorlabs/workflows/estate/collect/runner.py) | `spec.importer_data.project_uuid` | **Yes** | `endor-estate pull` → `data/`; `--resume` via `collect_manifest.json` |
-| Relationship map | [`estate/analyze/project_map/map.py`](../../src/endorlabs/workflows/estate/analyze/project_map/map.py) | `spec.importer_data.project_uuid` | **Yes** | Uses [`estate/collect/shards.py`](../../src/endorlabs/workflows/estate/collect/shards.py) |
+| Relationship map | [`estate/analyze/project_map/run.py`](../../src/endorlabs/workflows/estate/analyze/project_map/run.py) | `spec.importer_data.project_uuid` | **Yes** | `discover_topology` → `topology.project_shards()` |
 | Estate cardinality | [`estate/analyze/cardinality/export.py`](../../src/endorlabs/workflows/estate/analyze/cardinality/export.py) | — | **No** | Disk rollup from pulled JSONL |
 | Tenant traverse | `Client.*.list(traverse=True, concurrent=True)` | namespace path | **Yes** | Per child namespace, not per project |
 | Scan RCA (all projects) | [`fetch_scan_results.py`](../../src/endorlabs/workflows/troubleshooting_scans/fetch_scan_results.py) | `meta.parent_uuid` | **Yes** | Prefer `--project-uuid` for interactive RCA |

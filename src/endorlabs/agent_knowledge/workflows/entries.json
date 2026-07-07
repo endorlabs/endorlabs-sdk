@@ -58,8 +58,8 @@
     "library_entrypoints": [
       "endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis",
       "endorlabs.workflows.logs.group_by_time.group_by_time_counts",
-      "endorlabs.workflows.findings.filters.reachable_vuln_log_base_filter",
-      "endorlabs.workflows.findings.filters.prf_vuln_filter"
+      "endorlabs.filters.reachable_vuln_log_base_filter",
+      "endorlabs.filters.prf_vuln_filter"
     ],
     "module": "endorlabs.workflows.findings.finding_log_trends",
     "skill": "endor-chart-new-vs-resolved-findings"
@@ -75,6 +75,25 @@
     ],
     "module": "endorlabs.workflows.policies.validate",
     "skill": "endor-validate-policy"
+  },
+  {
+    "agent_visible": true,
+    "cli": null,
+    "composition": "library_api",
+    "default_output": null,
+    "id": "query-estate-routing",
+    "library_entrypoints": [
+      "endorlabs.query.discover_topology",
+      "endorlabs.query.recommend",
+      "endorlabs.query.validate_sample",
+      "endorlabs.query.preflight_count",
+      "endorlabs.workflows.estate.online.dashboard.fetch_online_dashboard_counts",
+      "endorlabs.workflows.agent_context.dashboard_counts.project_pv_counts",
+      "endorlabs.workflows.agent_context.dashboard_counts.project_category_counts",
+      "endorlabs.workflows.query_collect.collect_project_findings_via_query"
+    ],
+    "module": "endorlabs.query",
+    "skill": "endor-route-estate-queries"
   },
   {
     "agent_visible": true,

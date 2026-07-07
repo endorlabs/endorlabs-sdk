@@ -257,6 +257,8 @@ class APIClient:
         self._token: str | None = None
         self._token_expires: datetime | None = None
         self._token_expiration_source: str | None = None
+        self._token_expiry_warning_sent = False
+        self._expiration_synced_in_threshold = False
         self._browser_session_validated = False
 
         # Get max_retries with precedence: explicit parameter > env var > default (5)
@@ -1347,14 +1349,21 @@ class APIClient:
             _ = self.authenticate()
             return
 
-        _ = self._sync_expiration_from_v1_auth(self._token)
-        remaining = self._seconds_until_token_expiry()
-        if remaining is not None and remaining <= TOKEN_REFRESH_THRESHOLD_SECONDS:
+        if not self._expiration_synced_in_threshold:
+            _ = self._sync_expiration_from_v1_auth(self._token)
+            self._expiration_synced_in_threshold = True
+            remaining = self._seconds_until_token_expiry()
+        if (
+            remaining is not None
+            and remaining <= TOKEN_REFRESH_THRESHOLD_SECONDS
+            and not self._token_expiry_warning_sent
+        ):
             self.logger.warning(
                 "Bearer token expires in %.0f minute(s); renew ENDOR_TOKEN or "
                 "run browser auth before expiry.",
                 max(remaining / 60.0, 0.0),
             )
+            self._token_expiry_warning_sent = True
 
     def _sync_expiration_from_v1_auth(self, token: str) -> bool:
         """Update ``_token_expires`` from ``GET /v1/auth`` when the token is valid."""
@@ -1409,6 +1418,8 @@ class APIClient:
         if expiration is not None:
             self._token_expires = expiration
             self._token_expiration_source = expiration_source
+        self._token_expiry_warning_sent = False
+        self._expiration_synced_in_threshold = False
         self._request_headers["Authorization"] = f"Bearer {token}"
         self.default_headers = self._headers_copy()
         if browser_validated is not None:
@@ -1686,10 +1697,7 @@ class APIClient:
             ``True`` when ``/v1/auth`` accepts the token, otherwise ``False``.
 
         """
-        from .utils.bearer_token import (
-            expiration_from_auth_payload,
-            jwt_expiration_unverified,
-        )
+        from .utils.bearer_token import resolve_token_expiration
 
         payload = self._verify_bearer_with_v1_auth(token)
         if payload is None:
@@ -1699,11 +1707,7 @@ class APIClient:
             self._browser_session_validated = False
             return False
 
-        expiration = expiration_from_auth_payload(payload)
-        source = "v1_auth" if expiration is not None else None
-        if expiration is None:
-            expiration = jwt_expiration_unverified(token)
-            source = "jwt" if expiration is not None else None
+        expiration, source = resolve_token_expiration(token, auth_payload=payload)
 
         self._apply_session_token(
             token,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .filters import (
+from endorlabs.filters import (
     finding_log_time_window_filter,
     main_context_vulnerability_filter,
     prd_vuln_filter,
@@ -10,6 +10,7 @@ from .filters import (
     pv_main_context_filter,
     reachable_vuln_log_base_filter,
 )
+
 from .finding_log_trends import (
     FINDING_CRITERIA,
     build_finding_log_new_vs_resolved_analysis,

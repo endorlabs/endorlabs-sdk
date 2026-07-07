@@ -5,10 +5,32 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from .filters import FINDING_CATEGORIES, category_filter, pv_count_filter
-from .recipes import count_findings_by_category, count_pv_by_project
+from endorlabs.filters import (
+    CATEGORY_QUERY_REFS,
+    FINDING_CATEGORIES,
+    category_filter,
+    pv_count_filter,
+)
+from endorlabs.filters.finding_categories import (
+    FINDING_SEVERITY_LEVELS,
+    SEVERITY_QUERY_REFS,
+    severity_level_filter,
+)
+from endorlabs.filters.project_scope import dm_importer_project_filter
 
-RecipeKind = Literal["pv", "findings"]
+from .execute import QueryExecutor, project_namespace, project_uuid
+from .parse import parse_project_multi_reference_counts, parse_project_reference_counts
+from .recipes import (
+    DM_REFERENCE_KEY,
+    PV_REFERENCE_KEY,
+    dm_count_spec,
+    finding_category_count_spec,
+    finding_severity_count_spec,
+    pv_count_spec,
+)
+from .scope import QueryScope, scopes_from_projects
+
+RecipeKind = Literal["pv", "findings", "dm", "severity"]
 
 
 @dataclass
@@ -59,8 +81,6 @@ def _sample_projects(projects: list[Any], sample_size: int) -> list[Any]:
 def _facade_pv_counts(client: Any, projects: list[Any]) -> dict[str, int]:
     counts: dict[str, int] = {}
     for proj in projects:
-        from .execute import project_namespace, project_uuid
-
         uid = project_uuid(proj)
         ns = project_namespace(proj)
         if not uid or not ns:
@@ -76,8 +96,6 @@ def _facade_finding_counts(
     client: Any,
     projects: list[Any],
 ) -> dict[str, dict[str, int]]:
-    from .execute import project_namespace, project_uuid
-
     by_project: dict[str, dict[str, int]] = {}
     for proj in projects:
         uid = project_uuid(proj)
@@ -94,6 +112,179 @@ def _facade_finding_counts(
     return by_project
 
 
+def _facade_dm_counts(client: Any, projects: list[Any]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for proj in projects:
+        uid = project_uuid(proj)
+        ns = project_namespace(proj)
+        if not uid or not ns:
+            continue
+        counts[uid] = client.DependencyMetadata.count(
+            namespace=ns,
+            filter=dm_importer_project_filter(uid),
+        )
+    return counts
+
+
+def _facade_severity_counts(
+    client: Any,
+    projects: list[Any],
+) -> dict[str, dict[str, int]]:
+    by_project: dict[str, dict[str, int]] = {}
+    for proj in projects:
+        uid = project_uuid(proj)
+        ns = project_namespace(proj)
+        if not uid or not ns:
+            continue
+        counts: dict[str, int] = {}
+        for label, enum in FINDING_SEVERITY_LEVELS.items():
+            counts[label] = client.Finding.count(
+                namespace=ns,
+                filter=severity_level_filter(enum) + f' and spec.project_uuid=="{uid}"',
+            )
+        by_project[uid] = counts
+    return by_project
+
+
+def _count_mismatches(
+    query_counts: dict[str, int],
+    facade_counts: dict[str, int],
+) -> list[ValidationMismatch]:
+    mismatches: list[ValidationMismatch] = []
+    for uid in sorted(set(query_counts) | set(facade_counts)):
+        qv = query_counts.get(uid, 0)
+        fv = facade_counts.get(uid, 0)
+        if qv != fv:
+            mismatches.append(
+                ValidationMismatch(
+                    project_uuid=uid,
+                    query_value=qv,
+                    facade_value=fv,
+                )
+            )
+    return mismatches
+
+
+def _nested_count_mismatches(
+    query_counts: dict[str, dict[str, int]],
+    facade_counts: dict[str, dict[str, int]],
+    labels: dict[str, str],
+) -> list[ValidationMismatch]:
+    mismatches: list[ValidationMismatch] = []
+    for uid in sorted(set(query_counts) | set(facade_counts)):
+        q_map = query_counts.get(uid, {})
+        f_map = facade_counts.get(uid, {})
+        for label in labels:
+            qv = q_map.get(label, 0)
+            fv = f_map.get(label, 0)
+            if qv != fv:
+                mismatches.append(
+                    ValidationMismatch(
+                        project_uuid=uid,
+                        category=label,
+                        query_value=qv,
+                        facade_value=fv,
+                    )
+                )
+    return mismatches
+
+
+def _parse_multi_ref_counts(
+    result: Any,
+    ref_keys: list[str],
+    label_by_ref: dict[str, str],
+) -> dict[str, dict[str, int]]:
+    raw = parse_project_multi_reference_counts(result, ref_keys)
+    return {
+        pid: {label_by_ref[key]: count for key, count in counts.items()}
+        for pid, counts in raw.items()
+    }
+
+
+def _validate_pv(
+    client: Any,
+    executor: QueryExecutor,
+    scopes: list[QueryScope],
+    sample: list[Any],
+) -> list[ValidationMismatch]:
+    query_counts = executor.execute(
+        pv_count_spec(),
+        scopes=scopes,
+        parse_page=lambda result: parse_project_reference_counts(
+            result, PV_REFERENCE_KEY
+        ),
+    )
+    return _count_mismatches(query_counts, _facade_pv_counts(client, sample))
+
+
+def _validate_dm(
+    client: Any,
+    executor: QueryExecutor,
+    scopes: list[QueryScope],
+    sample: list[Any],
+) -> list[ValidationMismatch]:
+    query_counts = executor.execute(
+        dm_count_spec(),
+        scopes=scopes,
+        parse_page=lambda result: parse_project_reference_counts(
+            result, DM_REFERENCE_KEY
+        ),
+    )
+    return _count_mismatches(query_counts, _facade_dm_counts(client, sample))
+
+
+def _validate_findings(
+    client: Any,
+    executor: QueryExecutor,
+    scopes: list[QueryScope],
+    sample: list[Any],
+) -> list[ValidationMismatch]:
+    ref_keys = list(CATEGORY_QUERY_REFS.values())
+    label_by_ref = {value: key for key, value in CATEGORY_QUERY_REFS.items()}
+    query_counts = executor.execute(
+        finding_category_count_spec(),
+        scopes=scopes,
+        parse_page=lambda result: _parse_multi_ref_counts(
+            result, ref_keys, label_by_ref
+        ),
+    )
+    return _nested_count_mismatches(
+        query_counts,
+        _facade_finding_counts(client, sample),
+        FINDING_CATEGORIES,
+    )
+
+
+def _validate_severity(
+    client: Any,
+    executor: QueryExecutor,
+    scopes: list[QueryScope],
+    sample: list[Any],
+) -> list[ValidationMismatch]:
+    ref_keys = list(SEVERITY_QUERY_REFS.values())
+    label_by_ref = {value: key for key, value in SEVERITY_QUERY_REFS.items()}
+    query_counts = executor.execute(
+        finding_severity_count_spec(),
+        scopes=scopes,
+        parse_page=lambda result: _parse_multi_ref_counts(
+            result, ref_keys, label_by_ref
+        ),
+    )
+    return _nested_count_mismatches(
+        query_counts,
+        _facade_severity_counts(client, sample),
+        FINDING_SEVERITY_LEVELS,
+    )
+
+
+_RECIPE_VALIDATORS = {
+    "pv": _validate_pv,
+    "dm": _validate_dm,
+    "findings": _validate_findings,
+    "severity": _validate_severity,
+}
+
+
 def validate_sample(
     client: Any,
     projects: list[Any],
@@ -103,41 +294,12 @@ def validate_sample(
 ) -> ValidationResult:
     """Compare Query recipe output to facade ``count()`` on a bounded sample."""
     sample = _sample_projects(projects, sample_size)
-    mismatches: list[ValidationMismatch] = []
-
-    if recipe == "pv":
-        query_counts = count_pv_by_project(client, sample)
-        facade_counts = _facade_pv_counts(client, sample)
-        for uid in sorted(set(query_counts) | set(facade_counts)):
-            qv = query_counts.get(uid, 0)
-            fv = facade_counts.get(uid, 0)
-            if qv != fv:
-                mismatches.append(
-                    ValidationMismatch(
-                        project_uuid=uid,
-                        query_value=qv,
-                        facade_value=fv,
-                    )
-                )
-    else:
-        query_counts = count_findings_by_category(client, sample)
-        facade_counts = _facade_finding_counts(client, sample)
-        for uid in sorted(set(query_counts) | set(facade_counts)):
-            q_cats = query_counts.get(uid, {})
-            f_cats = facade_counts.get(uid, {})
-            for label in FINDING_CATEGORIES:
-                qv = q_cats.get(label, 0)
-                fv = f_cats.get(label, 0)
-                if qv != fv:
-                    mismatches.append(
-                        ValidationMismatch(
-                            project_uuid=uid,
-                            category=label,
-                            query_value=qv,
-                            facade_value=fv,
-                        )
-                    )
-
+    executor = QueryExecutor(client, name_prefix="query-validate")
+    scopes = scopes_from_projects(sample)
+    validator = _RECIPE_VALIDATORS.get(recipe)
+    if validator is None:
+        raise ValueError(f"unsupported validate_sample recipe: {recipe!r}")
+    mismatches = validator(client, executor, scopes, sample)
     return ValidationResult(
         recipe=recipe,
         sample_size=len(sample),

@@ -718,7 +718,10 @@ def main() -> None:  # noqa: D103
         ".operations.routes": ["RouteResult"],
     }
     facade_imports: set[str] = set()
+    custom_attr_names = {c.attr_name for c in CUSTOM_FACADE_REGISTRY}
     for entry in RESOURCE_REGISTRY:
+        if entry.attr_name in custom_attr_names:
+            continue
         mod = entry.model_class.__module__
         name = entry.model_class.__name__
         if mod.startswith("endorlabs."):
@@ -767,6 +770,8 @@ def main() -> None:  # noqa: D103
     # One stub class per model (e.g. EndorLicense + License alias share _EndorLicenseFacade).
     emitted_facade_classes: set[str] = set()
     for entry in RESOURCE_REGISTRY:
+        if entry.attr_name in custom_attr_names:
+            continue
         model_name = entry.model_class.__name__
         class_name = f"_{model_name}Facade"
         if class_name in emitted_facade_classes:

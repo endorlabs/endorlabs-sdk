@@ -6,10 +6,8 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 from endorlabs.tools.list_sharding import (
-    ParentShard,
+    ProjectShard,
     parallel_map_shards,
-    project_dict_to_shard,
-    project_model_to_shard,
 )
 
 if TYPE_CHECKING:
@@ -83,34 +81,14 @@ def discover_tenant_project_shards(
     *,
     max_pages: int | None = None,
     exclude_sbom: bool = True,
-) -> list[ParentShard]:
-    """Discover non-SBOM projects for parallel tenant-wide list shards.
-
-    Each shard uses ``ParentShard.key`` (project UUID) for ``spec.project_uuid``
-    filters; ``namespace`` is the project's ``tenant_meta.namespace`` list path
-    (often shared by many projects under one child namespace).
-    """
-    kwargs: dict[str, Any] = {
-        "traverse": True,
-        "mask": PROJECT_SHARD_MASK,
-    }
-    if max_pages is not None:
-        kwargs["max_pages"] = max_pages
-
-    seen: set[str] = set()
-    shards: list[ParentShard] = []
-    for row in client.Project.list_iter(**kwargs):
-        if exclude_sbom and client.Project.is_sbom(row):
-            continue
-        uuid = _project_uuid(row)
-        if not uuid or uuid in seen:
-            continue
-        seen.add(uuid)
-        if isinstance(row, dict):
-            shards.append(project_dict_to_shard(row, tenant))
-        else:
-            shards.append(project_model_to_shard(row, tenant))
-    return shards
+) -> list[ProjectShard]:
+    """Discover non-SBOM projects for parallel tenant-wide list shards."""
+    return client.Query.Project.discover(
+        tenant,
+        traverse=True,
+        max_pages=max_pages,
+        exclude_sbom=exclude_sbom,
+    ).project_shards()
 
 
 def registration_source_label(client: Client, row: Any) -> str:
@@ -181,11 +159,13 @@ def fetch_latest_scan_execution_labels(
     if not by_uuid:
         return {}
 
-    shards = [ParentShard(key=uuid, namespace="", label=None) for uuid in by_uuid]
+    shards = [
+        ProjectShard(project_uuid=uuid, namespace="", label=None) for uuid in by_uuid
+    ]
 
-    def _worker(shard: ParentShard) -> tuple[str, str]:
-        row = by_uuid[shard.key]
-        return shard.key, latest_scan_execution_label(client, row)
+    def _worker(shard: ProjectShard) -> tuple[str, str]:
+        row = by_uuid[shard.project_uuid]
+        return shard.project_uuid, latest_scan_execution_label(client, row)
 
     return dict(
         parallel_map_shards(
