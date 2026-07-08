@@ -25,9 +25,9 @@ rules live in [errors-and-auth](../../contracts/errors-and-auth.md).
 
 ## Prerequisites
 
-- **SDK install:** `pip install endorlabs` (or `uv` in this repo). See [README.md](../../../README.md#installation).
+- **SDK install:** `pip install endorlabs` (or `uv` in this repo). See [README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/README.md#installation).
 - **Bootstrap (agents):** `endorlabs.init()` or `uv run endor-context --sync-skills cursor` —
-  see [README.md](../../../README.md#agent-bootstrap-discover-vs-init).
+  see [README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/README.md#agent-bootstrap-discover-vs-init).
 - **Not for CI:** browser refresh opens localhost:30000 and requires a human present.
 
 ## Quick start

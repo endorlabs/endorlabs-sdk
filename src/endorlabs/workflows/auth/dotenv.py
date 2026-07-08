@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import stat
 from pathlib import Path
 
 
@@ -32,6 +33,15 @@ def read_env_or_dotenv(key: str, env_file: Path) -> str | None:
     return read_dotenv_value(env_file, key)
 
 
+def _write_private_text(path: Path, text: str) -> None:
+    """Write *text* to *path* with owner-only permissions (0o600)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    mode = stat.S_IRUSR | stat.S_IWUSR
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        fh.write(text)
+
+
 def upsert_dotenv_key(env_path: Path, key: str, value: str) -> None:
     """Create or update a single ``key=value`` line in a dotenv file."""
     line = f"{key}={value}\n"
@@ -50,5 +60,4 @@ def upsert_dotenv_key(env_path: Path, key: str, value: str) -> None:
     else:
         lines[idx] = line
 
-    env_path.parent.mkdir(parents=True, exist_ok=True)
-    env_path.write_text("".join(lines), encoding="utf-8")
+    _write_private_text(env_path, "".join(lines))

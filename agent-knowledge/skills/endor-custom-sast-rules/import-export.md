@@ -31,7 +31,7 @@ Set these in your `.env` file or shell environment:
 | `ENDOR_API_CREDENTIALS_SECRET` | API secret for Endor Labs authentication |
 | `ENDOR_NAMESPACE` | Target namespace (e.g., `tenant.child`) |
 
-`sast_rule_manager.py` and other SDK workflow scripts read these from the environment. Load a local `.env` with **`uv run --env-file .env`** (see [README.md](../../../README.md#configuration)):
+`sast_rule_manager.py` and other SDK workflow scripts read these from the environment. Load a local `.env` with **`uv run --env-file .env`** (see [README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/README.md#configuration)):
 
 ```bash
 uv run --env-file .env endorctl api list --resource Project -n tenant.ns

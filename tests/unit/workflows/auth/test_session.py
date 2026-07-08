@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -39,6 +40,13 @@ def test_upsert_dotenv_key_updates_existing(tmp_path: Path) -> None:
     assert "ENDOR_TOKEN=new-token" in text
     assert "ENDOR_NAMESPACE=old" in text
     assert "old-token" not in text
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Unix file mode semantics")
+def test_upsert_dotenv_key_writes_private_mode(tmp_path: Path) -> None:
+    env_file = tmp_path / ".env"
+    upsert_dotenv_key(env_file, "ENDOR_TOKEN", "secret-token")
+    assert env_file.stat().st_mode & 0o777 == 0o600
 
 
 def test_scan_auth_env_dual_mode(

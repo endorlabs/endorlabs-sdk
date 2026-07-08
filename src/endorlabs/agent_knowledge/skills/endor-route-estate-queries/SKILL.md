@@ -10,7 +10,7 @@ description: Routes estate-scale data pulls between Query graph joins and facade
 
 **Default path:** classify the ask → discover topology → pick shard grain → validate on a sample → scale.
 
-Normative parity: [query-vs-list-semantics contract](../../contracts/query-vs-list-semantics.md). Guide: [docs/guides/query-recipes.md](../../../docs/guides/query-recipes.md).
+Normative parity: [query-vs-list-semantics contract](../../contracts/query-vs-list-semantics.md). Guide: [docs/guides/query-recipes.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/query-recipes.md).
 
 ## Scope
 
@@ -93,7 +93,7 @@ counts = client.Query.Project.count_pv(topo.projects)
 
 **Row materialization** (findings/DM JSONL): `topo.project_shards()` → `tools/list_sharding`. **Online-only dashboard:** `endorlabs.workflows.estate.fetch_online_dashboard_counts` (no `endor-estate pull`).
 
-Parallel row materialization: [`tools/list_sharding`](../../../src/endorlabs/tools/list_sharding.py). Query executor supports `max_workers` for namespace fan-out (default sequential).
+Parallel row materialization: [`tools/list_sharding`](https://github.com/endorlabs/endorlabs-sdk/blob/main/src/endorlabs/tools/list_sharding.py). Query executor supports `max_workers` for namespace fan-out (default sequential).
 
 ## Anti-patterns
 

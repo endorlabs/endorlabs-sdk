@@ -25,7 +25,7 @@ description: Live API namespace consumer→producer project graph from PackageVe
 |------|------|
 | **Breaking change:** who consumes **my repo's packages** | `--focus-producer-project-uuid <24-hex>` |
 | Full namespace graph (all edges) | module CLI or `endor-estate analyze --only-relationships` |
-| Same JSON into workspace IR | [docs/estate/README.md](../../../docs/estate/README.md) — `endor-estate analyze --only-relationships` |
+| Same JSON into workspace IR | [docs/estate/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/estate/README.md) — `endor-estate analyze --only-relationships` |
 | **One repository** SBOM/DM/CG | [endor-project-retrieval-bundle](../endor-project-retrieval-bundle/SKILL.md) |
 | Compile-import graph | `endor-estate analyze --only graph,viz` |
 

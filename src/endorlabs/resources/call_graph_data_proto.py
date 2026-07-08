@@ -12,6 +12,8 @@ try:
 except ImportError:
     zstandard = None
 
+_MAX_CALLGRAPH_DECOMPRESSED_BYTES = 256 * 1024 * 1024  # 256 MiB
+
 _HAS_ZSTD = zstandard is not None
 
 WIRETYPE_VARINT = 0
@@ -382,6 +384,21 @@ def _decode_timestamp(ts_bytes: bytes) -> datetime | None:
     return datetime.fromtimestamp(seconds + nanos / 1e9, tz=UTC)
 
 
+def _decompress_callgraph_bytes(compressed: bytes) -> bytes:
+    """Decompress zstd call graph payload with a bounded output size."""
+    assert zstandard is not None
+    try:
+        return zstandard.ZstdDecompressor().decompress(
+            compressed,
+            max_output_size=_MAX_CALLGRAPH_DECOMPRESSED_BYTES,
+        )
+    except zstandard.ZstdError as exc:
+        raise ValueError(
+            f"Call graph decompression failed or exceeded "
+            f"{_MAX_CALLGRAPH_DECOMPRESSED_BYTES} bytes: {exc}"
+        ) from exc
+
+
 def decode_callgraph(envelope: dict[str, Any]) -> CallGraphInfo:
     """Decode a CallGraphData JSON envelope into a :class:`CallGraphInfo`.
 
@@ -404,7 +421,7 @@ def decode_callgraph(envelope: dict[str, Any]) -> CallGraphInfo:
 
     assert zstandard is not None  # guarded by _HAS_ZSTD check above
     compressed = base64.b64decode(envelope["zstd_bytes"])
-    raw = zstandard.ZstdDecompressor().decompress(compressed)
+    raw = _decompress_callgraph_bytes(compressed)
 
     pkg_raw = _get_field(raw, 1)
     package_name = _unwrap_string(pkg_raw) if isinstance(pkg_raw, bytes) else ""

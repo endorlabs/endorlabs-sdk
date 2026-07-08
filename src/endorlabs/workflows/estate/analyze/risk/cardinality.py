@@ -142,6 +142,7 @@ def build_risk_document(
             "findings_critical": summary.findings_critical,
             "findings_high": summary.findings_high,
             "findings_total": summary.findings_total,
+            "findings_unscored": summary.findings_unscored,
         }
         for index, summary in enumerate(ranked, start=1)
     ]
@@ -183,9 +184,7 @@ def export_risk_ranked_version_cardinality(
     finding_result = collect_estate_findings(
         client,
         estate_root,
-        max_workers=max_workers,
         max_pages=max_pages,
-        page_size=page_size,
         findings_output=findings_output,
     )
     if finding_result.errors and not finding_result.findings:

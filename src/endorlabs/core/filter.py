@@ -1,8 +1,9 @@
 """Composable filter builder for Endor Labs API queries.
 
-Provides a type-safe, injection-resistant way to build filter expressions
-for the ``list_parameters.filter`` API parameter. All 12 API filter
-operators are supported, with ``&`` (AND) and ``|`` (OR) for composition.
+Provides a type-safe way to build filter expressions for the
+``list_parameters.filter`` API parameter. Filter **values** are escaped;
+field paths and ``date()`` / ``now()`` arguments are validated. All 12 API
+filter operators are supported, with ``&`` (AND) and ``|`` (OR) for composition.
 
 Field paths are **strings**: ``F("spec.level")``, not ``F.level`` or attributes
 on ``F``.
@@ -34,21 +35,31 @@ from typing import Any, Union, override
 
 # Pattern for enum-like constants: UPPER_CASE or UPPER_CASE_123
 _ENUM_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$")
+_FIELD_PATH_RE = re.compile(r"^[A-Za-z_]\w*(\.[A-Za-z_]\w*)*$")
+_DATE_VALUE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}(?:T[^\)]*)?$")
+_NOW_OFFSET_RE = re.compile(r"^-?\d+[smhdw](?:\.\d+)?$")
 
 # Type alias for values accepted by filter operators
-FilterValue = Union[str, int, float, bool, "DateValue", "NowValue"]
+FilterValue = Union[str, int, float, bool, "DateValue", "NowValue", "EnumValue"]
+
+
+def _validate_field_path(path: str) -> None:
+    if not _FIELD_PATH_RE.match(path):
+        msg = f"Invalid filter field path: {path!r}"
+        raise ValueError(msg)
 
 
 def _format_value(value: FilterValue) -> str:
     """Format a single value for the wire format.
 
-    - Enum-like strings (UPPER_CASE_WORDS): unquoted
+    - Enum-like strings (UPPER_CASE_WORDS): unquoted legacy heuristic;
+      prefer ``F.literal()``
     - Other strings: double-quoted with internal double-quotes escaped
     - Booleans: lowercase ``true`` / ``false``
     - Numbers: plain repr
     - DateValue / NowValue: their own str()
     """
-    if isinstance(value, (DateValue, NowValue)):
+    if isinstance(value, (DateValue, NowValue, EnumValue)):
         return str(value)
     if isinstance(value, bool):
         return "true" if value else "false"
@@ -79,6 +90,9 @@ class DateValue:
 
     def __init__(self, value: str) -> None:
         super().__init__()
+        if not _DATE_VALUE_RE.match(value):
+            msg = f"Invalid date filter value: {value!r}"
+            raise ValueError(msg)
         self._value = value
 
     @override
@@ -99,6 +113,9 @@ class NowValue:
 
     def __init__(self, offset: str) -> None:
         super().__init__()
+        if not _NOW_OFFSET_RE.match(offset):
+            msg = f"Invalid now() offset: {offset!r}"
+            raise ValueError(msg)
         self._offset = offset
 
     @override
@@ -110,6 +127,27 @@ class NowValue:
     def __repr__(self) -> str:
         """Return a debug-friendly representation."""
         return f"NowValue({self._offset!r})"
+
+
+class EnumValue:
+    """Explicit enum constant for unquoted wire-format emission."""
+
+    __slots__ = ("_value",)
+
+    def __init__(self, value: str) -> None:
+        super().__init__()
+        if not _ENUM_RE.match(value):
+            msg = f"Invalid enum filter value: {value!r}"
+            raise ValueError(msg)
+        self._value = value
+
+    @override
+    def __str__(self) -> str:
+        return self._value
+
+    @override
+    def __repr__(self) -> str:
+        return f"EnumValue({self._value!r})"
 
 
 # ---------------------------------------------------------------------------
@@ -222,6 +260,7 @@ class FieldRef:
 
     def __init__(self, path: str) -> None:
         super().__init__()
+        _validate_field_path(path)
         self._path = path
 
     # -- Comparison operators -----------------------------------------------
@@ -325,6 +364,16 @@ class F(FieldRef):
     """
 
     @staticmethod
+    def literal(value: str) -> EnumValue:
+        """Create an unquoted enum/literal constant for wire-format filters."""
+        return EnumValue(value)
+
+    @staticmethod
+    def enum(value: str) -> EnumValue:
+        """Deprecated alias for :meth:`literal`."""
+        return F.literal(value)
+
+    @staticmethod
     def date(value: str) -> DateValue:
         """Create a ``date(...)`` value for date comparisons.
 
@@ -347,6 +396,7 @@ __all__ = [
     "Clause",
     "CompositeFilter",
     "DateValue",
+    "EnumValue",
     "F",
     "FieldRef",
     "FilterExpression",
