@@ -181,7 +181,7 @@ def _bind_callback_server(
     raise OSError("Unable to bind OAuth callback server")
 
 
-def get_token(
+def get_token(  # noqa: C901
     timeout: int = 20,
     environment: str = DEFAULT_ENV,
     browser_name: str | None = None,
@@ -237,9 +237,18 @@ def get_token(
             "and ENDOR_API_CREDENTIALS_SECRET environment variables."
         )
 
-    normalized_method = {"browser": "browser-auth", "admin": "browser-auth"}.get(
-        method, method
-    )
+    raw_method = method.strip().lower()
+    normalized_method = {"browser": "browser-auth"}.get(raw_method, raw_method)
+
+    legacy_insider_methods = frozenset({"browser-auth", "admin"})
+    if normalized_method in legacy_insider_methods:
+        logger.warning(
+            "Auth method '%s' is deprecated; use method='sso' with auth_tenant=.",
+            normalized_method,
+        )
+        normalized_method = "sso"
+        if not auth_tenant:
+            auth_tenant = "endor-admin"
 
     if normalized_method not in AUTH_METHODS:
         raise ValidationError(
@@ -256,10 +265,13 @@ def get_token(
     expected_state = secrets.token_urlsafe(32)
 
     auth_url_template = AUTH_METHODS[normalized_method]
-    auth_url = auth_url_template.format(
-        environment=environment,
-        tenant=auth_tenant or "endor-admin",
-    )
+    if "{tenant}" in auth_url_template:
+        auth_url = auth_url_template.format(
+            environment=environment,
+            tenant=auth_tenant,
+        )
+    else:
+        auth_url = auth_url_template.format(environment=environment)
 
     extra_params: dict[str, str] = {
         "redirect": "cli",

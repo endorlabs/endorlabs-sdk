@@ -163,8 +163,8 @@ The SDK uses **environment variables** only (no config file loading). Precedence
 | `ENDOR_API`                    | API base URL (default: `https://api.endorlabs.com`)       |
 | `ENDOR_API_CREDENTIALS_KEY`    | API key                                                   |
 | `ENDOR_API_CREDENTIALS_SECRET` | API secret                                                |
-| `ENDOR_TOKEN`                  | Bearer token; validated first when set                    |
-| `ENDOR_NAMESPACE`              | Default tenant namespace (e.g. `tenant.namespace`)        |
+| `ENDOR_TOKEN`                  | Bearer token (read at process start; `Client` never writes it) |
+| `ENDOR_NAMESPACE`              | Default tenant namespace; API scope (SSO tenant root when method is `sso`) |
 | `ENDOR_LOG_LEVEL`              | Optional: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |
 | `ENDOR_MAX_RETRIES`            | Optional: retry count (default: 5)                        |
 | `ENDOR_REQUEST_TIMEOUT`        | Optional: HTTP read timeout in seconds (default: 60)        |
@@ -192,6 +192,8 @@ ENDOR_LOG_LEVEL=INFO
 ```
 
 If both token and API key variables are set, the SDK prefers the token; **MCP and endorctl** typically fail with conflicting auth.
+
+Bearer sessions are **in-memory only**: load `ENDOR_TOKEN` once (or `token=` on `Client`), get a one-time stderr warning within 30 minutes of expiry, then fail closed on expiry/401 with an `endor-auth refresh` hint. Cross-session: `uv run endor-auth refresh` only — `Client` never writes secrets to disk or `os.environ`. Contract: [agent-knowledge/contracts/errors-and-auth.md](agent-knowledge/contracts/errors-and-auth.md).
 
 ### Agent bootstrap: `discover()` vs `init()`
 

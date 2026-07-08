@@ -10,6 +10,9 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Auth env parity: removed `ENDOR_AUTH_TENANT` / `ENDOR_INIT_AUTH_TENANT` reads from `Client`; no new auth env vars. Bearer refresh hints are learned in-memory from `GET /v1/auth` (not from namespace), but bearer sessions no longer reauthenticate mid-run. `Client` never writes `ENDOR_TOKEN` or mutates `os.environ`; bearer expiry/401 now fail closed with refresh guidance, while API-key auth retains transport-level reauthentication. Proactive expiry prints a one-time stderr warning (no secrets). `endor-auth check --json` adds `auth_mode_resolved`, `sso_tenant_resolved`, `browser_auth_method_resolved`. Disk persistence remains `endor-auth refresh` only.
+- Browser OAuth (`get_token` / `endor-auth refresh`): accept CLI redirects without CSRF `state`; poll callback until timeout (0.5.3).
+
 ### Breaking
 
 ## 0.5.3

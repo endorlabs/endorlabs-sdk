@@ -68,3 +68,4 @@ Traverse coverage: `tests/integration/client/test_concurrent_list.py`. List perf
 - [ ] `uv run ruff check .` and `uv run pyright` pass
 - [ ] `uv run pytest tests/unit -m "not interactive and not long"` pass
 - [ ] Integration tests pass locally with `ENDOR_*` creds when applicable
+- [ ] New or changed env vars cite Endor Labs docs; README/contracts updated; read-only `os.getenv` (no `os.environ` mutation) — rule `endor-environment-variables`

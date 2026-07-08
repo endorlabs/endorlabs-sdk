@@ -8,6 +8,7 @@ import html
 import logging
 import os
 import re
+import sys
 import threading
 import time
 from collections.abc import Iterable, Iterator
@@ -88,6 +89,7 @@ AUTH_METHOD_ALIASES: dict[str, str] = {
     "browser": "browser-auth",
     "admin": "browser-auth",
 }
+_LEGACY_BROWSER_METHODS: frozenset[str] = frozenset({"browser-auth", "admin"})
 SUPPORTED_AUTH_METHODS: tuple[str, ...] = (
     "api-key",
     "browser-auth",
@@ -117,7 +119,8 @@ class APIClient:
 
         Non-Retryable Errors (Graceful Exit):
         - HTTP 400 (Validation Error): Client error, not retried
-        - HTTP 401 (Unauthorized): Single retry after reauthentication, then exit
+        - HTTP 401 (Unauthorized): Single retry after API-key reauthentication,
+          else exit
         - HTTP 403 (Permission Denied): Client error, not retried
         - HTTP 404 (Not Found): Client error, not retried
         - HTTP 409 (Conflict): Client error, not retried
@@ -216,26 +219,45 @@ class APIClient:
 
         # Get token if provided directly
         self._provided_token = token or os.getenv("ENDOR_TOKEN")
-        self._email = email or os.getenv("ENDOR_AUTH_EMAIL")
-        self._auth_tenant = (
-            auth_tenant
-            or os.getenv("ENDOR_AUTH_TENANT")
-            or os.getenv("ENDOR_INIT_AUTH_TENANT")
-        )
+        self._email = email
+        self._auth_tenant = auth_tenant
+        self._auth_method_pending_resolution = False
 
-        # Determine interactive auth mode. No undocumented env-mode fallback:
+        from endorlabs.workflows.auth.env_resolution import resolve_sso_tenant
+
+        # Determine interactive auth mode:
         # - explicit auth_method wins
-        # - otherwise a provided token implies browser-auth validation path
-        # - otherwise use api-key credentials flow
+        # - constructor key/secret → api-key
+        # - ENDOR_TOKEN → bearer; method learned from GET /v1/auth on first validation
         normalized_auth_method = "api-key"
         if auth_method:
             normalized_auth_method = self._normalize_auth_method(auth_method)
+            if normalized_auth_method in _LEGACY_BROWSER_METHODS:
+                normalized_auth_method = "sso"
+                if not self._auth_tenant:
+                    self._auth_tenant = "endor-admin"
         elif key is not None or secret is not None:
-            # Explicit constructor credentials take precedence over env token.
             normalized_auth_method = "api-key"
         elif token is not None or self._provided_token:
-            normalized_auth_method = "browser-auth"
+            normalized_auth_method = "sso"
+            self._auth_method_pending_resolution = True
         self.auth_method = normalized_auth_method
+
+        if self.auth_method == "sso" and not self._auth_tenant:
+            self._auth_tenant = resolve_sso_tenant(namespace=None)
+
+        if (
+            self.auth_method == "sso"
+            and not self._auth_tenant
+            and not self._auth_method_pending_resolution
+            and (token is not None or self._provided_token)
+        ):
+            raise ValidationError(
+                "Bearer SSO refresh hint requires ENDOR_NAMESPACE (or auth_tenant= on "
+                "Client/APIClient). For Google/GitHub/GitLab tokens pass "
+                "Client(auth_method='google') or rely on /v1/auth identity hints."
+            )
+
         self._validate_auth_method()
 
         env_token = os.getenv("ENDOR_TOKEN")
@@ -249,8 +271,7 @@ class APIClient:
                 self.auth_method,
             )
 
-        # Browser-family flows validate ENDOR_TOKEN first; if invalid, then
-        # interactive browser fallback.
+        # Browser-family flows validate ENDOR_TOKEN first.
         if self.auth_method != "api-key":
             # Browser-based authentication
             self.key = None
@@ -270,7 +291,7 @@ class APIClient:
                     "  - Environment variables: ENDOR_API_CREDENTIALS_KEY and "
                     "ENDOR_API_CREDENTIALS_SECRET\n"
                     "  - Or use browser authentication: "
-                    "APIClient(auth_method='browser-auth')"
+                    "APIClient(auth_method='sso', auth_tenant='...')"
                 )
                 self.logger.error(error_msg)
                 raise ValidationError(error_msg)
@@ -829,7 +850,7 @@ class APIClient:
     ) -> httpx.Response:
         """Perform request with retry on connection/timeout and retryable status.
 
-        Headers are rebuilt from live session state on every attempt so 401
+        Headers are rebuilt from live session state on every attempt so API-key
         reauthentication and proactive token refresh propagate to retries.
         """
         assert self.client is not None, "APIClient is closed"
@@ -946,13 +967,20 @@ class APIClient:
         _extra_headers: dict[str, str] | None = None,
         **kwargs: Any,
     ) -> httpx.Response | None:
-        """Handle HTTP 401 responses with single reauth retry."""
+        """Handle HTTP 401 responses with single API-key retry."""
         if _reauth_attempted:
             self.logger.error(
                 "Unable to reauthenticate. "
                 "Verify credentials are valid and not expired."
             )
             return None
+        if self._auth_type != "api-key":
+            from .core.exceptions import UnauthorizedError
+
+            raise UnauthorizedError(
+                "Authentication failed (401). Renew with: "
+                f"{self._refresh_reauth_hint()}"
+            )
         self.logger.warning(
             "Unable to authenticate (401). Verify credentials are valid."
         )
@@ -1418,7 +1446,7 @@ class APIClient:
         return expires_in_seconds(self._token_expires)
 
     def _ensure_fresh_token(self) -> None:
-        """Refresh or re-authenticate when the session token is missing or stale."""
+        """Refresh API-key sessions; bearer sessions warn then fail closed."""
         if self._token is None:
             _ = self.authenticate()
             return
@@ -1437,11 +1465,13 @@ class APIClient:
             _ = self.authenticate()
             return
 
-        # Browser / ENDOR_TOKEN bearer: no silent mint — re-auth when expired.
+        # Browser / ENDOR_TOKEN bearer: no silent mint.
         if remaining <= 0:
-            self.logger.info("Bearer token expired; attempting re-authentication.")
-            _ = self.authenticate()
-            return
+            from .core.exceptions import UnauthorizedError
+
+            raise UnauthorizedError(
+                f"Bearer token expired. Renew with: {self._refresh_reauth_hint()}"
+            )
 
         if not self._expiration_synced_in_threshold:
             _ = self._sync_expiration_from_v1_auth(self._token)
@@ -1452,11 +1482,7 @@ class APIClient:
             and remaining <= TOKEN_REFRESH_THRESHOLD_SECONDS
             and not self._token_expiry_warning_sent
         ):
-            self.logger.warning(
-                "Bearer token expires in %.0f minute(s); renew ENDOR_TOKEN or "
-                "run browser auth before expiry.",
-                max(remaining / 60.0, 0.0),
-            )
+            self._emit_bearer_expiry_warning(remaining)
             self._token_expiry_warning_sent = True
 
     def _sync_expiration_from_v1_auth(self, token: str) -> bool:
@@ -1538,11 +1564,11 @@ class APIClient:
         return remaining <= TOKEN_EXPIRY_CHECK_SECONDS
 
     def refresh_session(self) -> str | None:
-        """Re-authenticate and return a fresh bearer token when supported.
+        """Re-authenticate and return a fresh token when supported.
 
-        API-key auth exchanges credentials for a new token. Bearer/browser auth
-        re-validates via ``GET /v1/auth`` and, when expired, attempts interactive
-        browser OAuth if configured.
+        API-key auth exchanges credentials for a new token. Browser auth without a
+        configured token may start an interactive OAuth flow. Bearer-token sessions
+        remain validate-only and fail closed on expiry.
 
         Returns:
             Current bearer token after refresh attempt, or ``None`` on failure.
@@ -1715,15 +1741,9 @@ class APIClient:
             return None
         return datetime.now(UTC) + timedelta(seconds=max(0.0, ttl_seconds))
 
-    def _determine_browser_method(
-        self, *, allow_direct_token_fallback: bool = False
-    ) -> str | None:
+    def _determine_browser_method(self) -> str | None:
         """Determine browser OAuth method."""
-        if (
-            self._provided_token
-            and self._provided_token != "browser"
-            and not allow_direct_token_fallback
-        ):
+        if self._provided_token and self._provided_token != "browser":
             return None  # Direct token provided, no browser method needed
         return self.auth_method
 
@@ -1768,22 +1788,72 @@ class APIClient:
 
         if self.auth_method == "email" and not self._email:
             raise ValidationError(
-                "auth_method='email' requires email=... "
-                "(or ENDOR_AUTH_EMAIL environment variable)."
+                "auth_method='email' requires email=... on Client/APIClient."
             )
 
-        if self.auth_method == "sso" and not self._auth_tenant:
+        if (
+            self.auth_method == "sso"
+            and not self._auth_tenant
+            and not self._auth_method_pending_resolution
+        ):
             raise ValidationError(
-                "auth_method='sso' requires auth_tenant=... "
-                "(or ENDOR_AUTH_TENANT / ENDOR_INIT_AUTH_TENANT)."
+                "auth_method='sso' requires auth_tenant=... or ENDOR_NAMESPACE."
             )
 
         if self.auth_method == "azureadv2":
             raise ValidationError(
                 "auth_method='azureadv2' is recognized for parity but is not "
                 "implemented in SDK browser OAuth routing yet. "
-                "Use 'sso', 'browser-auth', 'google', 'github', 'gitlab', or 'email'."
+                "Use 'sso', 'google', 'github', 'gitlab', or 'email'."
             )
+
+    def _resolve_bearer_auth_method_from_session(self, payload: dict[str, Any]) -> None:
+        """Persist bearer refresh-hint routing in-memory from ``/v1/auth`` metadata."""
+        from endorlabs.workflows.auth.env_resolution import (
+            browser_method_from_auth_payload,
+            resolve_sso_tenant,
+        )
+
+        if self._auth_type != "browser":
+            return
+
+        learned = browser_method_from_auth_payload(payload)
+
+        if learned:
+            self.auth_method = learned
+            self._auth_method_pending_resolution = False
+        elif self._auth_method_pending_resolution:
+            if self._auth_tenant:
+                self.auth_method = "sso"
+                self._auth_method_pending_resolution = False
+            else:
+                raise ValidationError(
+                    "Cannot determine bearer refresh hint from /v1/auth. "
+                    "Pass auth_method= on Client (e.g. google, sso)."
+                )
+
+        if self.auth_method == "sso" and not self._auth_tenant:
+            self._auth_tenant = resolve_sso_tenant(namespace=None)
+            if not self._auth_tenant:
+                raise ValidationError(
+                    "SSO bearer refresh hint requires ENDOR_NAMESPACE or auth_tenant=."
+                )
+
+    def _refresh_reauth_hint(self) -> str:
+        if self.auth_method == "sso":
+            tenant = self._auth_tenant or "<tenant>"
+            return f"uv run endor-auth refresh --method sso -n {tenant}"
+        return f"uv run endor-auth refresh --method {self.auth_method}"
+
+    def _emit_bearer_expiry_warning(self, remaining_seconds: float) -> None:
+        """Print a one-time proactive expiry notice to stderr (no secret values)."""
+        minutes = max(remaining_seconds / 60.0, 0.0)
+        _ = sys.stderr.write(
+            "warning: Bearer token expires in "
+            f"{minutes:.0f} minute(s). Renew for the next shell with: "
+            f"{self._refresh_reauth_hint()}. "
+            "This Client will fail closed if the token expires mid-run.\n"
+        )
 
     def _validate_and_store_token(self, token: str) -> bool:
         """Validate bearer token via ``GET /v1/auth`` and store session metadata.
@@ -1801,6 +1871,8 @@ class APIClient:
             self._token_expiration_source = None
             self._browser_session_validated = False
             return False
+
+        self._resolve_bearer_auth_method_from_session(payload)
 
         expiration, source = resolve_token_expiration(token, auth_payload=payload)
 
@@ -1827,7 +1899,6 @@ class APIClient:
         """
         try:
             token: str | None = None
-            fallback_attempted = False
             has_direct_token = bool(
                 self._provided_token and self._provided_token != "browser"
             )
@@ -1838,16 +1909,18 @@ class APIClient:
                 self.logger.info("Validating provided token for browser auth")
                 if self._validate_and_store_token(provided_token):
                     return provided_token
-                self.logger.info("Provided token invalid; attempting browser fallback")
-                fallback_attempted = True
+                self.logger.error(
+                    "Provided bearer token is invalid. Renew with: %s",
+                    self._refresh_reauth_hint(),
+                )
+                self._token = None
+                self._token_expires = None
+                self._browser_session_validated = False
+                return None
 
-            # Fallback (or primary path when no token provided): browser OAuth flow.
-            browser_method = self._determine_browser_method(
-                allow_direct_token_fallback=fallback_attempted
-            )
-            if browser_method is not None and (
-                not has_direct_token or fallback_attempted
-            ):
+            # Primary path when no token is provided: browser OAuth flow.
+            browser_method = self._determine_browser_method()
+            if browser_method is not None and not has_direct_token:
                 environment = self._extract_environment()
                 token = self._get_browser_token(browser_method, environment)
 
