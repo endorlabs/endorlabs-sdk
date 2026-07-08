@@ -117,7 +117,7 @@ def _run_check(args: argparse.Namespace) -> int:
 
 def _run_refresh(args: argparse.Namespace) -> int:
     method: BrowserAuthMethod = args.method
-    env_file: Path = args.env_file
+    env_file = Path(args.env_file)
     environment = args.environment or resolve_api_environment(env_file)
 
     if method == "sso":
