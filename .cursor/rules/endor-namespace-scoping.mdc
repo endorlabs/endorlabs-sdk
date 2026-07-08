@@ -3,7 +3,7 @@ description: Resolve Project first; pass namespace=project.namespace on project-
 alwaysApply: true
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-namespace-scoping.md
-x-endor-source-sha256: e86fee764a4a4fd9a7e01ecbf8454ac6b5728085b9f340d206d8dc82de855eff
+x-endor-source-sha256: f8f653aa36fb0af3cb691e47c7368c3d3af49ddb3d25741ba5b6526416c585fe
 ---
 
 # Namespace scoping
@@ -34,7 +34,7 @@ widen the path.
 **empty results with no error** (the SDK may emit a `UserWarning` on empty tenant-root lists for
 these resources).
 
-**Do not confuse:** `Client(tenant=…)` (auth) with **`--namespace` scope** on bulk workflows (`endor-estate pull -n …`) — namespace scope may be tenant root **or** a child namespace; see [docs/estate/README.md](../../docs/estate/README.md). Do not run bulk pull unless the user explicitly requests it.
+**Do not confuse:** `Client(tenant=…)` (auth) with **`--namespace` scope** on bulk workflows (`endor-estate pull -n …`) — namespace scope may be tenant root **or** a child namespace; see [docs/estate/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/estate/README.md). Do not run bulk pull unless the user explicitly requests it.
 
 Alternatives:
 

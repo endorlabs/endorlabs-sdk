@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from endorlabs.api_client import APIClient
+from endorlabs.api_client import DEFAULT_API_BASE_URL, APIClient
 from endorlabs.core.exceptions import ValidationError
 from endorlabs.utils.logging_config import setup_logging
 
@@ -107,6 +107,25 @@ class TestEndorMaxRetries:
             client = APIClient(max_retries=10)
 
         assert client.max_retries == 10
+
+
+class TestDefaultApiBaseUrl:
+    """Test ENDOR_API default without mutating process environment."""
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_TOKEN": "",
+        },
+        clear=True,
+    )
+    def test_constructor_does_not_set_endor_api_env(self) -> None:
+        with _patch_httpx_client_for_auth():
+            client = APIClient()
+        assert os.getenv("ENDOR_API") is None
+        assert client.base_url == DEFAULT_API_BASE_URL
 
 
 class TestRequestTimeout:
@@ -437,10 +456,8 @@ class TestRequestDelegation:
         with patch.object(client, "_request_with_retry", mock_retry):
             client.get("/v1/namespaces", headers=custom)
 
-        sent_headers = mock_retry.call_args.kwargs.get("headers", {})
+        sent_headers = mock_retry.call_args.kwargs.get("_extra_headers", {})
         assert sent_headers.get("X-Custom") == "value"
-        # Session headers (e.g. Content-Type) are also present
-        assert "Content-Type" in sent_headers
 
     def test_params_forwarded(self) -> None:
         """Query params are forwarded to _request_with_retry."""

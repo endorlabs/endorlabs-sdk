@@ -42,6 +42,7 @@ Prefer these before assuming full-tenant sweeps or hand-built relationship filte
 - **Sharded parallel lists:** for large project-scoped resources, prefer per-project parallel `list()` with selective filters — [docs/contributing/list-query-performance.md](docs/contributing/list-query-performance.md#sharded-parallel-lists).
 - **Graph joins across projects:** `client.Query.Project.count_*` / `collect_*` and custom `client.Query.execute` joins — POST namespace is grouped per wire path automatically; validate with `validate_sample` before scale; see [docs/guides/query-recipes.md](docs/guides/query-recipes.md).
 - **Evidence vs inference:** Separate API rows, workflow artifacts, and cited spec paths from heuristic or partial conclusions. Mark guesses as **Inferred:**; for SDK/API failure playbooks use skill **endor-troubleshoot-sdk** (maintainers: [docs/contributing/troubleshooting.md](docs/contributing/troubleshooting.md)).
+- **Client concurrency:** One `Client` per credential set; thread-safe session with blocking I/O — see [docs/contracts.md](docs/contracts.md#concurrency-and-transport-retries).
 
 ## Bootstrap
 

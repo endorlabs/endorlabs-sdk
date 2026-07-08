@@ -29,13 +29,13 @@ the last **N days** (default **90**), aggregated by **identity** derived from
 
 ## Prerequisites
 
-- **SDK install:** `pip install endorlabs` (or `uv` in this repo). See [README.md](../../../README.md#installation).
+- **SDK install:** `pip install endorlabs` (or `uv` in this repo). See [README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/README.md#installation).
 - **Credentials:** Set up auth first — skill [endor-auth-setup](../endor-auth-setup/SKILL.md)
   or `uv run endor-auth check --tenant <tenant>`.
 - **Bootstrap (agents):** workflow library code ships in the wheel (`endorlabs.workflows.auth`).
   To materialize this playbook on disk, run `endorlabs.init()` or
-  `uv run endor-context --sync-skills cursor` — see [README.md](../../../README.md#agent-bootstrap-discover-vs-init)
-  and [agent-knowledge/README.md](../../README.md). Runtime skill path:
+  `uv run endor-context --sync-skills cursor` — see [README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/README.md#agent-bootstrap-discover-vs-init)
+  and [agent-knowledge/README.md](../../INDEX.md). Runtime skill path:
   `.endorlabs-context/sdk/skills/endor-auth-login-count/`.
 - **Outputs:** write under `.endorlabs-context/workspace/runs/auth-login-count/`
   (see [workspace-layout](../../rules/endor-workspace-layout.md)).

@@ -53,12 +53,12 @@ Generic entrypoints (no estate literals):
 - `client.ScanResult.get_logs()` — scan log lines (ScanLogRequest wire API)
 - `client.Finding.list_by_project()` / `list_for_context()` — generated relationship accessors
 - `client.ScanResult.list_by_project()` — scan results for a project
-- `client.<Resource>.count()` / `.list_groups()` / `.latest_created()` — list helpers (see [facade-helpers.md](../../docs/guides/facade-helpers.md))
-- `client.Query.Project.count_pv()` / `.count_findings_by_category()` / `.count_dm()` — validated count joins (see [query-recipes.md](../../docs/guides/query-recipes.md))
+- `client.<Resource>.count()` / `.list_groups()` / `.latest_created()` — list helpers (see [facade-helpers.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/facade-helpers.md))
+- `client.Query.Project.count_pv()` / `.count_findings_by_category()` / `.count_dm()` — validated count joins (see [query-recipes.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/query-recipes.md))
 - `endorlabs.query.discover_topology` / `TopologySnapshot.project_shards()` / `recommend` / `validate_sample` — estate routing plane
 - `endorlabs.filters` — canonical main-context and finding MQL fragments
 - `endorlabs.workflows.estate.fetch_online_dashboard_counts` — online Query tiles for estate dashboard
-- `client.Project.is_app()` / `.is_cli()` / `.is_sbom()` — project registration inventory (see [facade-helpers.md](../../docs/guides/facade-helpers.md))
+- `client.Project.is_app()` / `.is_cli()` / `.is_sbom()` — project registration inventory (see [facade-helpers.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/facade-helpers.md))
 - `endorlabs.filters` — canonical main-context and finding MQL fragments (replaces removed `workflows.findings.filters` submodule)
 - `endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis` — FindingLog CREATE/DELETE weekly chart data (online aggregated)
 - `endorlabs.workflows.logs.group_by_time.group_by_time_counts` — generic log `list_groups` + `group_by_time` aggregation
@@ -79,7 +79,7 @@ See `MANIFEST.json` → `workflows[].library_entrypoints` for the catalog row ti
 
 ## Anti-patterns
 
-- Run **`endor-estate pull`** (namespace-wide bulk collect) unless the user explicitly requests it — see [docs/estate/README.md](../../docs/estate/README.md).
+- Run **`endor-estate pull`** (namespace-wide bulk collect) unless the user explicitly requests it — see [docs/estate/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/estate/README.md).
 - Copy-paste a workflow CLI `main()` into a session script.
 - Unbounded re-fetch to "fix" empty rows (check namespace first).
 - Add triage code under `src/endorlabs/` during an investigation.

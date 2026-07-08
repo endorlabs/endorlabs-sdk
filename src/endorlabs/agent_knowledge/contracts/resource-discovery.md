@@ -164,4 +164,4 @@ When `.values` is populated, `for row in route` matches those rows; a single-row
 
 When `search_by_name` returns multiple projects (same URL in different namespaces), workflows must pick a row, narrow `namespace=`, or fail explicitly — not rely on facade cardinality enforcement.
 
-See bootstrap rule `endor-namespace-scoping` and [facade-helpers.md](../../docs/guides/facade-helpers.md).
+See bootstrap rule `endor-namespace-scoping` and [facade-helpers.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/facade-helpers.md).

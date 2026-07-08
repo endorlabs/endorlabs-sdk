@@ -365,3 +365,27 @@ class TestEdgeCases:
         expr = F("meta.name") == "x"
         with pytest.raises(TypeError, match="invert"):
             _ = ~expr
+
+    def test_invalid_field_path_rejected(self) -> None:
+        with pytest.raises(ValueError, match="Invalid filter field path"):
+            F("meta.name) or 1==1")
+
+    def test_invalid_date_value_rejected(self) -> None:
+        with pytest.raises(ValueError, match="Invalid date filter value"):
+            F.date("2024) or meta.name exists")
+
+    def test_invalid_now_offset_rejected(self) -> None:
+        with pytest.raises(ValueError, match="Invalid now\\(\\) offset"):
+            F.now("not-an-offset")
+
+    def test_enum_helper_emits_unquoted_constant(self) -> None:
+        expr = F("spec.level") == F.enum("FINDING_LEVEL_CRITICAL")
+        assert str(expr) == "spec.level == FINDING_LEVEL_CRITICAL"
+
+    def test_literal_helper_emits_unquoted_constant(self) -> None:
+        expr = F("spec.level") == F.literal("FINDING_LEVEL_CRITICAL")
+        assert str(expr) == "spec.level == FINDING_LEVEL_CRITICAL"
+
+    def test_invalid_dotted_field_segment_rejected(self) -> None:
+        with pytest.raises(ValueError, match="Invalid filter field path"):
+            F("spec..level")

@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
 from endorlabs.filters import MAIN_CONTEXT_LIST_FILTER
 from endorlabs.workflows.estate.analyze.cardinality.columns import (
     RISK_WEIGHTED_CARDINALITY_SCHEMA,
@@ -18,6 +20,7 @@ from endorlabs.workflows.estate.analyze.risk.cardinality import (
 )
 from endorlabs.workflows.estate.analyze.risk.scoring import (
     CriticalHighCountScorer,
+    EpssWeightedScorer,
     PackageRiskSummary,
     aggregate_families,
     aggregate_family_findings_by_version,
@@ -48,6 +51,71 @@ def _finding(
             "target_dependency_version": version,
         }
     }
+
+
+def test_epss_weighted_scorer_uses_prior_for_missing_epss() -> None:
+    scorer = EpssWeightedScorer()
+    missing = {
+        "spec": {
+            "level": "FINDING_LEVEL_CRITICAL",
+            "target_dependency_package_name": "pypi://a",
+        }
+    }
+    scored = {
+        "spec": {
+            "level": "FINDING_LEVEL_CRITICAL",
+            "target_dependency_package_name": "pypi://b",
+            "epss_score": {"score": 0.9},
+        }
+    }
+    assert scorer.score_finding(missing) == pytest.approx(4.0 * 0.05)
+    assert scorer.score_finding(scored) == pytest.approx(4.0 * 0.9)
+
+
+def test_epss_weighted_scorer_three_case_ordering() -> None:
+    scorer = EpssWeightedScorer()
+    high_epss = {
+        "spec": {
+            "level": "FINDING_LEVEL_CRITICAL",
+            "target_dependency_package_name": "pypi://high",
+            "epss_score": {"score": 0.9},
+        }
+    }
+    zero_epss = {
+        "spec": {
+            "level": "FINDING_LEVEL_CRITICAL",
+            "target_dependency_package_name": "pypi://zero",
+            "epss_score": {"score": 0.0},
+        }
+    }
+    missing_epss = {
+        "spec": {
+            "level": "FINDING_LEVEL_CRITICAL",
+            "target_dependency_package_name": "pypi://missing",
+        }
+    }
+    summaries = scorer.aggregate_packages([high_epss, zero_epss, missing_epss])
+    ranked = rank_packages(summaries)
+    assert [item.package_name for item in ranked] == [
+        "pypi://high",
+        "pypi://missing",
+        "pypi://zero",
+    ]
+    assert summaries["pypi://high"].risk_score == pytest.approx(3.6)
+    assert summaries["pypi://zero"].risk_score == 0.0
+    assert summaries["pypi://missing"].risk_score == pytest.approx(0.2)
+    assert summaries["pypi://missing"].findings_unscored == 1
+
+
+def test_epss_weighted_scorer_honors_explicit_zero() -> None:
+    scorer = EpssWeightedScorer()
+    finding = {
+        "spec": {
+            "level": "FINDING_LEVEL_HIGH",
+            "epss_score": {"score": 0.0},
+        }
+    }
+    assert scorer.score_finding(finding) == 0.0
 
 
 def test_critical_high_scorer_weights() -> None:

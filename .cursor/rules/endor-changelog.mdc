@@ -10,12 +10,12 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-changelog.md
-x-endor-source-sha256: ea9e71c0b73a459702a1deb2485ca68036e0e83f8fe1842fca41f47490e214b4
+x-endor-source-sha256: 23c20a96c090ed3f80ec0c4fd159ea6da00258d5d7689898e07c875e1195d13e
 ---
 
 # Changelog (maintainer)
 
-**Canonical file:** [`docs/changelog.md`](../../docs/changelog.md)
+**Canonical file:** [`docs/changelog.md`](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md)
 
 ## What belongs in the changelog
 
@@ -45,7 +45,7 @@ x-endor-source-sha256: ea9e71c0b73a459702a1deb2485ca68036e0e83f8fe1842fca41f4749
 | Removed resource, stricter validation, facade break | **Breaking** |
 | Payload tolerance / validation fixes callers saw | **Changed** |
 
-Detail stays in [`docs/contributing/docs-drift-workflow.md`](../docs/contributing/docs-drift-workflow.md) and `docs/generated-reference/` — do not replay every regen PR.
+Detail stays in [`docs/contributing/docs-drift-workflow.md`](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contributing/docs-drift-workflow.md) and `docs/generated-reference/` — do not replay every regen PR.
 
 ### Skills / workflows
 
@@ -76,9 +76,9 @@ Optional structured fields: [`agent-knowledge/schema/changelog-intake.schema.jso
 1. Stage under **`## Unreleased`** while work lands on `main`.
 2. At release, rename **Unreleased** → **`## X.Y.Z`** (keep subsections Added / Changed / Breaking).
 3. Leave a fresh empty **Unreleased** (subsection headers only until the next entry).
-4. Link from product docs (e.g. [estate/README.md](../../docs/estate/README.md)) to **`docs/changelog.md`** — not duplicate migration files.
+4. Link from product docs (e.g. [estate/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/estate/README.md)) to **`docs/changelog.md`** — not duplicate migration files.
 
-**Release cut checklist** (see also [release-publishing.md](../../docs/contributing/release-publishing.md)):
+**Release cut checklist** (see also [release-publishing.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contributing/release-publishing.md)):
 
 1. Collapse model-sync-only PRs into one **Changed** footnote or omit.
 2. Promote **Unreleased** → `## X.Y.Z`; reset **Unreleased** headers.
@@ -101,4 +101,4 @@ Layering and where to add new guards: rule **endor-maintainer-tooling**.
 - Put session reports or readiness assessments in the changelog (use workspace `notes/`).
 - Duplicate the same breaking table in skills, contributing guides, and changelog.
 
-When you add a **Breaking** entry, grep for old names/paths and update durable docs ([`docs/estate/`](../../docs/estate/), skills) to describe **current** behavior only; point upgraders at the changelog.
+When you add a **Breaking** entry, grep for old names/paths and update durable docs ([`docs/estate/`](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/estate/), skills) to describe **current** behavior only; point upgraders at the changelog.

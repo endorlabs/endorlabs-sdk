@@ -107,6 +107,6 @@ Canonical MQL: **`endorlabs.filters`**. Online estate dashboard: **`fetch_online
 
 - [resource-discovery.md](resource-discovery.md) — resolve `Project` first
 
-- [docs/guides/query-recipes.md](../../docs/guides/query-recipes.md)
+- [docs/guides/query-recipes.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/query-recipes.md)
 
 - Maintainer probes: `.tmp/query_workflow_map.md`

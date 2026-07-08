@@ -11,9 +11,10 @@ and ENDOR_API_CREDENTIALS_SECRET) for automated environments.
 import contextlib
 import logging
 import os
+import secrets
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, override
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 from webbrowser import get as get_browser
 
 from endorlabs.core.exceptions import ValidationError
@@ -45,6 +46,10 @@ _captured_token: str | None = None
 # Default environment
 DEFAULT_ENV = "endorlabs.com"
 
+# OAuth callback port range (aligned with endorctl CLI convention)
+OAUTH_CALLBACK_PORT_START = 30000
+OAUTH_CALLBACK_PORT_COUNT = 10
+
 # Authentication method URLs
 AUTH_METHODS = {
     "browser-auth": "https://api.{environment}/v1/auth/sso?tenant=endor-admin",
@@ -57,71 +62,119 @@ AUTH_METHODS = {
 }
 
 
-class TokenHandler(BaseHTTPRequestHandler):
-    """HTTP request handler for OAuth callback that captures the bearer token."""
+def _make_token_handler(expected_state: str) -> type[BaseHTTPRequestHandler]:
+    """Build a callback handler that validates OAuth CSRF state before capture."""
 
-    def do_GET(self) -> None:
-        """Handle GET request from OAuth redirect."""
-        global _captured_token
-        try:
-            # Ignore favicon requests
-            if self.path == "/favicon.ico":
-                self.send_response(404)
-                self.end_headers()
-                return
+    class TokenHandler(BaseHTTPRequestHandler):
+        """HTTP request handler for OAuth callback that captures the bearer token."""
 
-            parsed_url = urlparse(self.path)
-            if not parsed_url.query:
-                logger.warning("No query parameters in redirect: %s", self.path)
-                self.send_response(404)
-                self.end_headers()
-                return
+        def do_GET(self) -> None:
+            """Handle GET request from OAuth redirect."""
+            global _captured_token
+            try:
+                # Ignore favicon requests
+                if self.path == "/favicon.ico":
+                    self.send_response(404)
+                    self.end_headers()
+                    return
 
-            params = parse_qs(parsed_url.query, keep_blank_values=False)
-            tokens = params.get("token", [])
-            if len(tokens) == 1 and tokens[0]:
-                _captured_token = tokens[0]
-                logger.info("Token captured successfully")
-                # Return simple HTML page instead of redirect to prevent new tabs
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html")
-                self.end_headers()
-                with contextlib.suppress(Exception):
-                    redirect_url = f"https://app.{DEFAULT_ENV}"
-                    _ = self.wfile.write(
-                        b"<html><head><title>Authentication Successful</title>"
-                        b"<meta http-equiv='refresh' content='1;url="
-                        + redirect_url.encode()
-                        + b"'></head>"
-                        b"<body><h1>Authentication successful!</h1>"
-                        b"<p>Redirecting to Endor Labs...</p></body></html>"
+                parsed_url = urlparse(self.path)
+                if not parsed_url.query:
+                    logger.warning("No query parameters in redirect: %s", self.path)
+                    self.send_response(404)
+                    self.end_headers()
+                    return
+
+                params = parse_qs(parsed_url.query, keep_blank_values=False)
+                states = params.get("state", [])
+                if len(states) != 1 or states[0] != expected_state:
+                    logger.warning("OAuth state mismatch or missing in redirect")
+                    self.send_response(400)
+                    self.end_headers()
+                    return
+
+                tokens = params.get("token", [])
+                if len(tokens) == 1 and tokens[0]:
+                    _captured_token = tokens[0]
+                    logger.info("Token captured successfully")
+                    # Return simple HTML page instead of redirect to prevent new tabs
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/html")
+                    self.end_headers()
+                    with contextlib.suppress(Exception):
+                        redirect_url = f"https://app.{DEFAULT_ENV}"
+                        _ = self.wfile.write(
+                            b"<html><head><title>Authentication Successful</title>"
+                            b"<meta http-equiv='refresh' content='1;url="
+                            + redirect_url.encode()
+                            + b"'></head>"
+                            b"<body><h1>Authentication successful!</h1>"
+                            b"<p>Redirecting to Endor Labs...</p></body></html>"
+                        )
+                else:
+                    logger.warning("Token not found in redirect: %s", self.path)
+                    # Redirect to success page only if token not found
+                    self.send_response(302)
+                    self.send_header(
+                        "Location", f"https://app.{DEFAULT_ENV}/endorctl-success"
                     )
-            else:
-                logger.warning("Token not found in redirect: %s", self.path)
-                # Redirect to success page only if token not found
-                self.send_response(302)
-                self.send_header(
-                    "Location", f"https://app.{DEFAULT_ENV}/endorctl-success"
-                )
+                    self.end_headers()
+                self.close_connection = True
+            except Exception as e:
+                logger.error("Error handling OAuth callback: %s", e)
+                self.send_response(500)
                 self.end_headers()
-            self.close_connection = True
-        except Exception as e:
-            logger.error("Error handling OAuth callback: %s", e)
-            self.send_response(500)
-            self.end_headers()
-            self.close_connection = True
+                self.close_connection = True
 
-    def do_POST(self) -> None:
-        """Handle POST request from OAuth redirect (SSO may use POST)."""
-        # SSO auth may come back with POST, but we handle it the same as GET
-        self.do_GET()
+        def do_POST(self) -> None:
+            """Handle POST request from OAuth redirect (SSO may use POST)."""
+            self.do_GET()
 
-    @override
-    def log_message(self, format: str, *args: Any, **_kwargs: Any) -> None:
-        """Suppress default HTTP server logs."""
-        # Optionally enable in debug mode
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("HTTP Server: %s", format % args)
+        @override
+        def log_message(self, format: str, *args: Any, **_kwargs: Any) -> None:
+            """Suppress default HTTP server logs."""
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("HTTP Server: %s", format % args)
+
+    return TokenHandler
+
+
+# Backward-compatible default handler class for tests that import TokenHandler directly.
+TokenHandler = _make_token_handler("")
+
+
+def _append_query_params(url: str, params: dict[str, str]) -> str:
+    """Merge *params* into *url* using proper URL encoding."""
+    split = urlsplit(url)
+    existing = parse_qs(split.query, keep_blank_values=False)
+    merged: dict[str, str] = {
+        key: values[0] for key, values in existing.items() if values
+    }
+    merged.update(params)
+    query = urlencode(merged)
+    return urlunsplit((split.scheme, split.netloc, split.path, query, split.fragment))
+
+
+def _bind_callback_server(
+    expected_state: str,
+) -> tuple[HTTPServer, int]:
+    """Bind localhost callback server on the first free port in the CLI range."""
+    last_error: OSError | None = None
+    for offset in range(OAUTH_CALLBACK_PORT_COUNT):
+        port = OAUTH_CALLBACK_PORT_START + offset
+        try:
+            server = HTTPServer(
+                ("localhost", port),
+                _make_token_handler(expected_state),
+            )
+            return server, port
+        except OSError as exc:
+            last_error = exc
+            if "Address already in use" not in str(exc):
+                raise
+    if last_error is not None:
+        raise last_error
+    raise OSError("Unable to bind OAuth callback server")
 
 
 def get_token(
@@ -134,8 +187,8 @@ def get_token(
 ) -> str | None:
     """Get bearer token via browser OAuth flow.
 
-    Starts a local HTTP server on localhost:30000, opens a browser to the
-    OAuth URL, and captures the token from the redirect callback.
+    Starts a local HTTP server on localhost in the 30000-30009 range, opens a
+    browser to the OAuth URL, and captures the token from the redirect callback.
 
     ⚠️  WARNING: This function requires human interaction (opens browser window)
     and cannot be used in CI/CD environments. Use API key authentication instead.
@@ -162,13 +215,13 @@ def get_token(
 
     # Detect CI/CD environments and prevent browser auth
     ci_indicators = [
-        "CI",  # Generic CI flag (GitHub Actions, GitLab CI, etc.)
-        "CONTINUOUS_INTEGRATION",  # Travis CI
-        "GITHUB_ACTIONS",  # GitHub Actions
-        "GITLAB_CI",  # GitLab CI
-        "JENKINS_URL",  # Jenkins
-        "BUILDKITE",  # Buildkite
-        "CIRCLECI",  # CircleCI
+        "CI",
+        "CONTINUOUS_INTEGRATION",
+        "GITHUB_ACTIONS",
+        "GITLAB_CI",
+        "JENKINS_URL",
+        "BUILDKITE",
+        "CIRCLECI",
     ]
     is_ci = any(os.getenv(indicator) for indicator in ci_indicators)
 
@@ -196,57 +249,52 @@ def get_token(
     if normalized_method == "sso" and not auth_tenant:
         raise ValidationError("Tenant is required for sso authentication")
 
-    # Build OAuth URL
+    expected_state = secrets.token_urlsafe(32)
+
     auth_url_template = AUTH_METHODS[normalized_method]
     auth_url = auth_url_template.format(
         environment=environment,
         tenant=auth_tenant or "endor-admin",
     )
 
-    # Add email parameter for email auth
-    if normalized_method == "email":
-        auth_url = f"{auth_url}?email={email}"
-
-    # Add redirect parameter
-    redirect_param = "&" if "?" in auth_url else "?"
-    auth_url = f"{auth_url}{redirect_param}redirect=cli"
+    extra_params: dict[str, str] = {
+        "redirect": "cli",
+        "state": expected_state,
+    }
+    if normalized_method == "email" and email:
+        extra_params["email"] = email
+    auth_url = _append_query_params(auth_url, extra_params)
 
     try:
-        # Start local HTTP server
-        server = HTTPServer(("localhost", 30000), TokenHandler)
+        server, port = _bind_callback_server(expected_state)
         server.timeout = timeout
 
-        # Open browser (only once)
         browser = get_browser(browser_name)
         logger.info("Opening browser for %s authentication...", normalized_method)
         _ = browser.open_new_tab(auth_url)
 
-        # Wait for callback (blocks until request received or timeout)
         logger.info(
-            "Waiting for OAuth callback on localhost:30000 (timeout: %ss)...",
+            "Waiting for OAuth callback on localhost:%s (timeout: %ss)...",
+            port,
             timeout,
         )
 
-        # Handle request - this will block until ONE request is received
-        # or timeout. After handling one request, server stops listening
-        # (handle_request only processes one)
         _ = server.handle_request()
-
-        # Clean up server
         server.server_close()
 
         if _captured_token:
             logger.info("Browser authentication successful")
             return _captured_token
-        else:
-            logger.warning("No token received from OAuth callback")
-            return None
+        logger.warning("No token received from OAuth callback")
+        return None
 
     except OSError as e:
         if "Address already in use" in str(e):
             logger.error(
-                "Port 30000 is already in use. "
-                "Please close any other applications using this port."
+                "OAuth callback ports %s-%s are in use. "
+                "Close other applications using these ports.",
+                OAUTH_CALLBACK_PORT_START,
+                OAUTH_CALLBACK_PORT_START + OAUTH_CALLBACK_PORT_COUNT - 1,
             )
         else:
             logger.error("Unable to start OAuth server: %s", e)
