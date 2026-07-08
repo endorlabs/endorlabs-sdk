@@ -99,8 +99,8 @@ def recommend(
         if output_shape == OutputShape.TENANT_FINDING_TOTALS:
             notes = (
                 "No per-project grain: probe Query.at_namespace with "
-                "QuerySpec.root('Finding').count(...) at leaf namespace, or "
-                "facade Finding.count with selective filter and bounds.",
+                "QuerySpec.root('Finding').list_parameters(count=True) at leaf "
+                "namespace, or facade Finding.count with selective filter and bounds.",
                 "Per-project breakdown: Query.Project.collect after validate_sample.",
                 "Fallback: Finding.list or list_for_shards when rows needed.",
             )

@@ -58,7 +58,7 @@ shards = topo.project_shards()
 ```python
 from endorlabs.query import QuerySpec
 
-spec = QuerySpec.root("AgentHookEvent").count(filter=...)
+spec = QuerySpec.root("AgentHookEvent").list_parameters(count=True)
 client.Query.at_namespace(spec, namespace="<leaf>", parse=..., merge=...)
 ```
 

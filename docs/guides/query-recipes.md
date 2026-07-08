@@ -28,7 +28,8 @@ from endorlabs.query import QuerySpec
 
 spec = (
     QuerySpec.root("AgentHookEvent")
-    .count(filter=F("spec.agent_type") == "AGENT_CLAUDE")
+    .filter(F("spec.agent_type") == "AGENT_CLAUDE")
+    .list_parameters(count=True)
 )
 counts = client.Query.at_namespace(
     spec,
@@ -153,7 +154,7 @@ When Query reduces round-trips vs when facade/sharding stays correct. Status: **
 | Category counts × many projects | `Finding.count` × 3 × N | `Query.Project.count_findings_by_category` | Collapses HTTP round-trips | MALWARE may diverge — validate | **Validated** |
 | Severity counts × many projects | `Finding.count` × levels × N | `Query.Project.count_findings_by_severity` | Same join economics | Single project | **Validated** |
 | PRF ecosystem totals | `Finding.count` × 4 × N | `Query.Project.count_prf_by_ecosystem` | Multi-ref single POST | Per-finding RCA | **Probe** |
-| Tenant-wide totals (no per-project grain) | `Finding.count(traverse=True)` | `Query.at_namespace(QuerySpec.root("Finding").count(...))` | Scoped leaf NS vs silent-zero at wrong NS | Traverse semantics differ | **Probe** |
+| Tenant-wide totals (no per-project grain) | `Finding.count(traverse=True)` | `Query.at_namespace(QuerySpec.root("Finding").list_parameters(count=True), namespace=leaf)` | Scoped leaf NS vs silent-zero at wrong NS | Traverse semantics differ | **Probe** |
 | New vs resolved trends | `FindingLog.list_groups` + `group_by_time` | Root `FindingLog` + `group_by_time` | Fewer round-trips if backend plan is good | Large tenants: backend-bound | **Probe** |
 
 ### ScanResult

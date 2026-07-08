@@ -24,8 +24,8 @@ When the ask has **no per-project grain**, POST at the target wire namespace wit
 
 | Ask | Query path | Facade equivalent | Comparable? |
 | --- | ---------- | ----------------- | ----------- |
-| Count/filter at one namespace (e.g. `AgentHookEvent`) | `Query.at_namespace(QuerySpec.root("AgentHookEvent").count(...), namespace=…)` | `AgentHookEvent.count(filter=…)` at same namespace | **Probe** — same `list_parameters` |
-| Tenant-wide finding total (no per-project breakdown) | `Query.at_namespace(QuerySpec.root("Finding").count(...), namespace=leaf)` | `Finding.count(traverse=True)` | **Probe** — namespace + traverse semantics |
+| Count/filter at one namespace (e.g. `AgentHookEvent`) | `Query.at_namespace(QuerySpec.root("AgentHookEvent").list_parameters(count=True, filter=…), namespace=…)` | `AgentHookEvent.count(filter=…)` at same namespace | **Probe** — same `list_parameters` |
+| Tenant-wide finding total (no per-project breakdown) | `Query.at_namespace(QuerySpec.root("Finding").list_parameters(count=True, filter=…), namespace=leaf)` | `Finding.count(traverse=True)` | **Probe** — namespace + traverse semantics |
 | FindingLog time buckets | Root `FindingLog` + `group_by_time` | `FindingLog.list_groups` + `group_by_time` | **Probe** |
 
 Use `QueryScope(namespace=ns, keys=())` — empty `keys` skips UUID batching. `QuerySpec.root_has_uuid_keys()` is **Project only** today.
