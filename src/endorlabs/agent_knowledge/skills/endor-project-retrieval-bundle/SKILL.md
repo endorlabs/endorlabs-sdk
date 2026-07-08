@@ -21,7 +21,7 @@ Produce a **versioned, machine-readable retrieval bundle for one project** via *
 | **Client tenant** | `--tenant` on export — auth context for `endorlabs.Client`. |
 | **`--namespace` (optional)** | Disambiguates project lookup only; export remains **one project**. |
 | **`--project`** | Required — single repo (UUID or name). |
-| **Not namespace scope** | Multi-repo / blast-radius → [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md); bulk namespace pull → [docs/estate/README.md](../../../docs/estate/README.md) (user must request). |
+| **Not namespace scope** | Multi-repo / blast-radius → [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md); bulk namespace pull → [docs/estate/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/estate/README.md) (user must request). |
 
 ## Decision table
 
@@ -31,7 +31,7 @@ Produce a **versioned, machine-readable retrieval bundle for one project** via *
 | Findings/policies/repo-version **summaries in the bundle** | add `--session-summaries` | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) for scan RCA |
 | **Who consumes packages my repo produces** (breaking-change blast radius) | — | [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md) with `--focus-producer-project-uuid`, or `endor-estate analyze -n <namespace_scope> --only-relationships --focus-producer-project-uuid` |
 | Full namespace project graph (all edges) | — | namespace relationship map or `endor-estate analyze --only-relationships` |
-| Bulk pull/analyze under a **namespace scope** (explicit user request) | — | [docs/estate/README.md](../../../docs/estate/README.md) (`endor-estate`) |
+| Bulk pull/analyze under a **namespace scope** (explicit user request) | — | [docs/estate/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/estate/README.md) (`endor-estate`) |
 | Function-level call graph search | `--callgraph-export` + `--decode-zstd` | [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md) — **read manifest first**; do not decode arbitrary PVs before export |
 | Stitched vulnerable-function reachability | bundle as input | `endor-reachability-context` → [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) |
 
@@ -40,7 +40,7 @@ Produce a **versioned, machine-readable retrieval bundle for one project** via *
 ## Ordering
 
 1. **Credentials** — `uv run --env-file .env`. Never paste secrets into skills or logs.
-2. **Export** — `uv run endor-agent-context` with `--tenant`, `--project`, optional `--namespace`, `--output-dir`. **Done** when `context_manifest.json` exists. Ambiguous repo URL → **`--namespace`** or **24-hex project UUID** ([AGENTS.md](../../../AGENTS.md#agent-notes)).
+2. **Export** — `uv run endor-agent-context` with `--tenant`, `--project`, optional `--namespace`, `--output-dir`. **Done** when `context_manifest.json` exists. Ambiguous repo URL → **`--namespace`** or **24-hex project UUID** ([AGENTS.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/AGENTS.md#agent-notes)).
 3. **Optional session layer** — `--session-summaries` → `artifacts.session_summaries` in the manifest (counts + paths; read summaries only when needed).
 4. **Read manifest** — [multipass-llm-contract.md](multipass-llm-contract.md) for bounds (`inventory.truncated`, `--pv-limit`, session block).
 5. **Downstream** — relationship map for cross-repo impact, scan skills for posture, call-graph search as needed.
@@ -85,7 +85,7 @@ Pass 3 writes `artifacts.callgraph_export` in `context_manifest.json`. **Call-gr
 ## Linked skills
 
 - [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md) — namespace consumer→producer edges
-- [docs/estate/README.md](../../../docs/estate/README.md) — bulk namespace-scoped pull/analyze (`endor-estate`; not an agent skill)
+- [docs/estate/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/estate/README.md) — bulk namespace-scoped pull/analyze (`endor-estate`; not an agent skill)
 - [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md)
 - [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md)
 - [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md)

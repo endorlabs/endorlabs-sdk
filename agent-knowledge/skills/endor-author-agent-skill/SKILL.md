@@ -10,7 +10,7 @@ description: >-
 
 # Author or update an agent skill
 
-Canonical spec: [schema/README.md](../../schema/README.md) (frontmatter, `endorlabs.catalog`, composition, rules, contracts, `workflows.yaml`). Machine validation: [skill.schema.json](../../schema/skill.schema.json).
+Canonical spec: [schema/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/agent-knowledge/schema/README.md) (frontmatter, `endorlabs.catalog`, composition, rules, contracts, `workflows.yaml`). Machine validation: [skill.schema.json](https://github.com/endorlabs/endorlabs-sdk/blob/main/agent-knowledge/schema/skill.schema.json).
 
 **Write path:** edit `agent-knowledge/skills/<id>/` → run sync → commit authoring **and** `src/endorlabs/agent_knowledge/` bundle output. Do not hand-edit the shipped tree.
 
@@ -29,7 +29,7 @@ Canonical spec: [schema/README.md](../../schema/README.md) (frontmatter, `endorl
 **Out of scope**
 
 - Hand-editing `src/endorlabs/agent_knowledge/` (sync output)
-- New workflow Python modules or `[project.scripts]` CLIs without a contributor workflow PR — see [workflows.yaml](../../workflows.yaml) and [endor-workflow-composition](../../rules/endor-workflow-composition.md)
+- New workflow Python modules or `[project.scripts]` CLIs without a contributor workflow PR — see [workflows.yaml](https://github.com/endorlabs/endorlabs-sdk/blob/main/agent-knowledge/workflows.yaml) and [endor-workflow-composition](../../rules/endor-workflow-composition.md)
 - SDK resource / OpenAPI surface work → [endor-implement-sdk-resource](../endor-implement-sdk-resource/SKILL.md)
 - Runtime SDK or API errors → [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md)
 
@@ -83,7 +83,7 @@ When the skill is compositional, heuristic, or part of a multi-skill RCA path, a
 
 ### 4. Workflow rows without a skill
 
-Supplemental workflow catalog rows with `skill: null` (e.g. `context-bootstrap`) live in [workflows.yaml](../../workflows.yaml), not in a skill directory.
+Supplemental workflow catalog rows with `skill: null` (e.g. `context-bootstrap`) live in [workflows.yaml](https://github.com/endorlabs/endorlabs-sdk/blob/main/agent-knowledge/workflows.yaml), not in a skill directory.
 
 ### 5. Sync and verify
 
@@ -108,20 +108,20 @@ Grep `tests/` and `docs/` for the skill id and any script paths:
 
 - Update inline test loaders (e.g. `tests/unit/tooling/scripts/test_*.py`) — no shared path-helper modules
 - Update cross-links under `agent-knowledge/skills/` and durable docs that cite the skill
-- Add a row to [agent-knowledge/README.md](../../README.md) skill table
+- Add a row to [agent-knowledge/README.md](../../INDEX.md) skill table
 
 Do **not** hardcode skill or workflow counts in unit tests.
 
 ### 7. Changelog (user-facing skills)
 
-New shipped skills with distinct playbooks → **Added** under `docs/changelog.md` → **Unreleased**. See [endor-changelog](../../rules/endor-changelog.md).
+New shipped skills with distinct playbooks → **Added** under `docs/changelog.md` → **Unreleased**. See [endor-changelog](https://github.com/endorlabs/endorlabs-sdk/blob/main/agent-knowledge/rules/endor-changelog.md).
 
 ## Rules and contracts (related authoring)
 
 | Kind | Location | Schema |
 |------|----------|--------|
-| Bootstrap rules | `agent-knowledge/rules/<id>.md` | [rule.schema.json](../../schema/rule.schema.json) |
-| Reference contracts | `agent-knowledge/contracts/<id>.md` | [contract.schema.json](../../schema/contract.schema.json) |
+| Bootstrap rules | `agent-knowledge/rules/<id>.md` | [rule.schema.json](https://github.com/endorlabs/endorlabs-sdk/blob/main/agent-knowledge/schema/rule.schema.json) |
+| Reference contracts | `agent-knowledge/contracts/<id>.md` | [contract.schema.json](https://github.com/endorlabs/endorlabs-sdk/blob/main/agent-knowledge/schema/contract.schema.json) |
 
 Hand-maintained Cursor rules (not synced from `rules/`): `agent-knowledge-authoring`, `docs-skillbase-consistency`.
 

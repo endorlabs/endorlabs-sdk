@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
 from endorlabs.filters import MAIN_CONTEXT_LIST_FILTER
 from endorlabs.workflows.estate.analyze.cardinality.columns import (
     RISK_WEIGHTED_CARDINALITY_SCHEMA,
@@ -18,6 +20,7 @@ from endorlabs.workflows.estate.analyze.risk.cardinality import (
 )
 from endorlabs.workflows.estate.analyze.risk.scoring import (
     CriticalHighCountScorer,
+    EpssWeightedScorer,
     PackageRiskSummary,
     aggregate_families,
     aggregate_family_findings_by_version,
@@ -48,6 +51,36 @@ def _finding(
             "target_dependency_version": version,
         }
     }
+
+
+def test_epss_weighted_scorer_uses_prior_for_missing_epss() -> None:
+    scorer = EpssWeightedScorer()
+    missing = {
+        "spec": {
+            "level": "FINDING_LEVEL_CRITICAL",
+            "target_dependency_package_name": "pypi://a",
+        }
+    }
+    scored = {
+        "spec": {
+            "level": "FINDING_LEVEL_CRITICAL",
+            "target_dependency_package_name": "pypi://b",
+            "epss_score": {"score": 0.9},
+        }
+    }
+    assert scorer.score_finding(missing) == pytest.approx(4.0 * 0.004)
+    assert scorer.score_finding(scored) == pytest.approx(4.0 * 0.9)
+
+
+def test_epss_weighted_scorer_honors_explicit_zero() -> None:
+    scorer = EpssWeightedScorer()
+    finding = {
+        "spec": {
+            "level": "FINDING_LEVEL_HIGH",
+            "epss_score": {"score": 0.0},
+        }
+    }
+    assert scorer.score_finding(finding) == 0.0
 
 
 def test_critical_high_scorer_weights() -> None:

@@ -62,13 +62,10 @@ def collect_estate_findings(
     client: Client,
     estate_root: str,
     *,
-    max_workers: int = 16,
     max_pages: int | None = None,
-    page_size: int = 100,
     findings_output: Path | None = None,
 ) -> FindingCollectResult:
     """Collect main-context SCA/vulnerability findings for all estate projects."""
-    _ = max_workers, page_size
     topology = client.Query.Project.discover(estate_root, traverse=True)
     projects = topology.projects
     result = FindingCollectResult(project_count=len(projects))

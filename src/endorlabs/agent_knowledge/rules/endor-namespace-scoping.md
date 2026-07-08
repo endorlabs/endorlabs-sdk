@@ -36,7 +36,7 @@ widen the path.
 **empty results with no error** (the SDK may emit a `UserWarning` on empty tenant-root lists for
 these resources).
 
-**Do not confuse:** `Client(tenant=…)` (auth) with **`--namespace` scope** on bulk workflows (`endor-estate pull -n …`) — namespace scope may be tenant root **or** a child namespace; see [docs/estate/README.md](../../docs/estate/README.md). Do not run bulk pull unless the user explicitly requests it.
+**Do not confuse:** `Client(tenant=…)` (auth) with **`--namespace` scope** on bulk workflows (`endor-estate pull -n …`) — namespace scope may be tenant root **or** a child namespace; see [docs/estate/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/estate/README.md). Do not run bulk pull unless the user explicitly requests it.
 
 Alternatives:
 

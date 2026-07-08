@@ -26,7 +26,7 @@ Do **not** use `contains` for substring search on scalar strings —
 **Array fields:** use **`F("field").contains(...)`**, which emits bracket syntax
 (`field contains [VALUE]`).
 
-See also [docs/guides/examples.md](../../docs/guides/examples.md) (SDK examples).
+See also [docs/guides/examples.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/examples.md) (SDK examples).
 - **mask:** Which fields are returned in list responses.
 
 ## Return shape

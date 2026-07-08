@@ -297,5 +297,5 @@ When the user broadens context beyond MAIN, Resolved totals may also diverge fro
 
 ## Documentation hops
 
-- Generated resource: [FindingLog](../../../docs/generated-reference/resources/FindingLog.md)
+- Generated resource: [FindingLog](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/generated-reference/resources/FindingLog.md)
 - List performance (log resources): shipped rule `endor-list-query-performance`
