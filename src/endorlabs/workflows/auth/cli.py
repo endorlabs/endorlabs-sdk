@@ -6,6 +6,8 @@ import argparse
 import sys
 from pathlib import Path
 
+from endorlabs.auth_server import OAUTH_CALLBACK_PORT_COUNT, OAUTH_CALLBACK_PORT_START
+
 from .session import (
     BrowserAuthMethod,
     redact_sensitive_text,
@@ -120,22 +122,30 @@ def _run_refresh(args: argparse.Namespace) -> int:
 
     if method == "sso":
         tenant = resolve_sso_tenant(namespace=args.namespace, env_file=env_file)
+        port_range = (
+            f"localhost:{OAUTH_CALLBACK_PORT_START}-"
+            f"{OAUTH_CALLBACK_PORT_START + OAUTH_CALLBACK_PORT_COUNT - 1}"
+        )
         if tenant:
             print(
                 f"Opening browser for tenant SSO (tenant={tenant}). "
-                "Waiting for callback on localhost:30000...",
+                f"Waiting for callback on {port_range}...",
                 file=sys.stderr,
             )
         else:
             print(
-                "Opening browser for tenant SSO. "
-                "Waiting for callback on localhost:30000...",
+                f"Opening browser for tenant SSO. "
+                f"Waiting for callback on {port_range}...",
                 file=sys.stderr,
             )
     else:
+        port_range = (
+            f"localhost:{OAUTH_CALLBACK_PORT_START}-"
+            f"{OAUTH_CALLBACK_PORT_START + OAUTH_CALLBACK_PORT_COUNT - 1}"
+        )
         print(
             f"Opening browser for {method} authentication. "
-            "Waiting for callback on localhost:30000...",
+            f"Waiting for callback on {port_range}...",
             file=sys.stderr,
         )
 

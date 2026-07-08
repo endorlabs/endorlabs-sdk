@@ -37,6 +37,10 @@ from .utils.redaction import (
 _REPR_REDACT_RE: re.Pattern[str] = re.compile(redaction_pattern, re.IGNORECASE)
 _JSON_REDACT_RE: re.Pattern[str] = re.compile(json_redaction_pattern, re.IGNORECASE)
 
+DEFAULT_API_BASE_URL = "https://api.endorlabs.com"
+
+_NETWORK_RETRY_METHODS = frozenset({"GET", "HEAD", "PUT", "DELETE", "OPTIONS"})
+
 _GENERIC_ERROR_MESSAGES = frozenset(
     {
         "resource not found",
@@ -182,11 +186,7 @@ class APIClient:
 
         # Initialize API client parameters
         # Precedence: parameters > environment variables > defaults
-        if not os.getenv("ENDOR_API"):
-            os.environ["ENDOR_API"] = "https://api.endorlabs.com"
-        self.base_url: str = (
-            base_url or os.getenv("ENDOR_API") or "https://api.endorlabs.com"
-        )
+        self.base_url: str = base_url or os.getenv("ENDOR_API") or DEFAULT_API_BASE_URL
         self._allowed_api_hosts = self._build_allowed_api_hosts(allowed_api_hosts)
 
         # Get token if provided directly
@@ -775,9 +775,15 @@ class APIClient:
         url: str,
         **kwargs: Any,
     ) -> httpx.Response:
-        """Perform request with retry on connection/timeout and retryable status."""
+        """Perform request with retry on connection/timeout and retryable status.
+
+        Network-layer errors (connect/timeout) retry only for idempotent HTTP
+        methods to avoid duplicate side effects when a write commits but the
+        response never arrives.
+        """
         assert self.client is not None, "APIClient is closed"
         last_exc: BaseException | None = None
+        attempt = 0
         for attempt in range(self.max_retries + 1):
             try:
                 response = self.client.request(method, url, **kwargs)
@@ -817,7 +823,8 @@ class APIClient:
                 httpx.RequestError,
             ) as e:
                 last_exc = e
-                if attempt < self.max_retries:
+                retryable_network = method.upper() in _NETWORK_RETRY_METHODS
+                if retryable_network and attempt < self.max_retries:
                     backoff = self.backoff_factor * (2**attempt)
                     self.logger.warning(
                         "Network error, retrying in %.1fs (attempt %s/%s): %s",
@@ -830,15 +837,13 @@ class APIClient:
                     continue
                 break
         if last_exc:
+            attempts = min(attempt + 1, self.max_retries + 1)
             if isinstance(
                 last_exc,
                 (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError),
             ):
                 raise NetworkError(
-                    message=(
-                        f"Network error after {self.max_retries + 1} attempt(s): "
-                        f"{last_exc}"
-                    ),
+                    message=(f"Network error after {attempts} attempt(s): {last_exc}"),
                 ) from last_exc
             raise last_exc
         raise EndorAPIError("Retry loop exited without response or exception")
