@@ -9,12 +9,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from endorlabs.workflows.auth.dotenv import read_dotenv_value, upsert_dotenv_key
+from endorlabs.workflows.auth.env_resolution import sso_tenant_from_namespace
 from endorlabs.workflows.auth.session import (
     build_browser_auth_kwargs,
     refresh_token_to_dotenv,
     resolve_sso_tenant,
     scan_auth_env,
-    sso_tenant_from_namespace,
     verify_auth,
 )
 
@@ -103,7 +103,7 @@ def test_build_browser_auth_kwargs_missing_tenant_raises(
 ) -> None:
     monkeypatch.delenv("ENDOR_NAMESPACE", raising=False)
     monkeypatch.setattr(
-        "endorlabs.workflows.auth.session.read_endorctl_namespace",
+        "endorlabs.workflows.auth.env_resolution.read_endorctl_namespace",
         lambda: None,
     )
     with pytest.raises(ValueError, match="Tenant SSO requires"):
@@ -194,6 +194,45 @@ def test_redact_sensitive_text_scrubs_token_query() -> None:
     assert redacted is not None
     assert token_fragment not in redacted
     assert "token=***REDACTED***" in redacted
+
+
+def test_resolve_sso_tenant_ignores_init_auth_tenant_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ENDOR_INIT_AUTH_TENANT is init-only and must not resolve refresh tenant."""
+    monkeypatch.delenv("ENDOR_NAMESPACE", raising=False)
+    monkeypatch.setenv("ENDOR_INIT_AUTH_TENANT", "init-only-tenant")
+    monkeypatch.setattr(
+        "endorlabs.workflows.auth.env_resolution.read_endorctl_namespace",
+        lambda: None,
+    )
+    tenant = resolve_sso_tenant(namespace=None, env_file=Path("/nonexistent/.env"))
+    assert tenant is None
+
+
+def test_verify_auth_includes_resolved_fields(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ENDOR_TOKEN", "token")
+    monkeypatch.setenv("ENDOR_NAMESPACE", "tenant.child")
+    monkeypatch.delenv("ENDOR_API_CREDENTIALS_KEY", raising=False)
+    monkeypatch.delenv("ENDOR_API_CREDENTIALS_SECRET", raising=False)
+
+    from endorlabs.core.whoami import WhoamiResult
+
+    mock_client = MagicMock()
+    mock_client.whoami.return_value = WhoamiResult(
+        identity="user@example.com",
+        auth_type="browser",
+        expires_in_seconds=3600.0,
+    )
+
+    with patch("endorlabs.Client", return_value=mock_client):
+        result = verify_auth(tenant="tenant.child")
+
+    payload = result.to_dict()
+    assert payload["auth_mode_resolved"] == "bearer"
+    assert payload["sso_tenant_resolved"] == "tenant"
 
 
 def test_verify_auth_ready(monkeypatch: pytest.MonkeyPatch) -> None:

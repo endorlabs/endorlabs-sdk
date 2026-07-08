@@ -304,3 +304,33 @@ class TestGetToken:
         """SSO mode should require auth_tenant."""
         with pytest.raises(ValidationError, match="Tenant is required for sso"):
             get_token(method="sso")
+
+    def test_get_token_sso_endor_admin_matches_legacy_admin_url(self) -> None:
+        """SSO with auth_tenant=endor-admin should match legacy admin OAuth URL."""
+        legacy = AUTH_METHODS["admin"].format(environment="endorlabs.com")
+        sso = AUTH_METHODS["sso"].format(
+            environment="endorlabs.com",
+            tenant="endor-admin",
+        )
+        assert legacy == sso
+
+    @pytest.mark.interactive
+    @pytest.mark.writes
+    @patch("endorlabs.auth_server._bind_callback_server")
+    @patch("endorlabs.auth_server.get_browser")
+    def test_get_token_admin_normalizes_to_sso_tenant(
+        self, mock_get_browser, mock_bind
+    ) -> None:
+        """Legacy admin method should normalize to sso with endor-admin tenant."""
+        auth_server_mod._captured_token = None
+        mock_browser = Mock()
+        mock_browser.open_new_tab = Mock()
+        mock_get_browser.return_value = mock_browser
+        self._mock_bind_server(mock_bind)
+
+        token = get_token(timeout=20, environment="endorlabs.com", method="admin")
+
+        assert token == "test-bearer-token"
+        auth_url = mock_browser.open_new_tab.call_args[0][0]
+        assert "tenant=endor-admin" in auth_url
+        assert "/v1/auth/sso" in auth_url

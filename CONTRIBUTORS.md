@@ -47,7 +47,9 @@ Maintainer invariants (stdout, typing, `endorctl scan`, portable examples): [doc
 
 ## Environment
 
-The SDK uses environment variables only (no config file loading). Set these for local development:
+The SDK uses environment variables only (no config file loading). When extending the SDK, do not invent new `ENDOR_*` names — cite Endor Labs product docs and update [README.md](README.md) / [docs/contracts.md](docs/contracts.md); read with `os.getenv` and avoid mutating `os.environ` or `.env` unless the user explicitly requests it (rule `endor-environment-variables` in `agent-knowledge/rules/`).
+
+Set these for local development:
 
 - **Required:** `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`
 - **Optional:** `ENDOR_API` (defaults to `https://api.endorlabs.com`), `ENDOR_NAMESPACE` (tenant namespace for operations), `ENDOR_LOG_LEVEL`, `ENDOR_MAX_RETRIES`
