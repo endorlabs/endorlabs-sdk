@@ -2,16 +2,20 @@
 
 Released in endorlabs 0.5.0; see docs/changelog.md for 0.5.3+ notes.
 
-The platform Query service returns a root Resource Kind plus nested references
-in one HTTP call. ``list_parameters`` on each node support filter, mask,
-count, group, group_by_time, and pagination — same as facade list.
+The platform Query service is **kind-agnostic**: any root Resource Kind plus
+nested references in one HTTP call. ``list_parameters`` on each node support
+filter, mask, count, group, group_by_time, and pagination — same as facade list.
 
-Project-scoped recipes execute via ``client.Query.Project.*``. For masked
-lists, grouped rollups, or deeper nests, use ``QuerySpec`` with
-``client.Query.execute`` / ``at_namespace`` or ``create(payload=...)``.
+**Default:** ``QuerySpec`` + ``client.Query.execute`` / ``at_namespace`` for
+arbitrary root kinds at a wire namespace.
 
-POST URL namespace must match each project's wire namespace
-(``tenant_meta.namespace``); ``QueryScope`` carries namespace + optional UUID keys.
+**Estate recipes:** ``client.Query.Project.*`` — validated project-sharded
+dashboard patterns (counts, masked finding joins, topology discovery).
+
+POST URL namespace must match the target wire namespace
+(``tenant_meta.namespace``); ``QueryScope`` carries namespace + optional keys.
+UUID batching via ``keys`` applies when ``QuerySpec.root_has_uuid_keys()`` —
+Project only today.
 """
 
 from .execute import (

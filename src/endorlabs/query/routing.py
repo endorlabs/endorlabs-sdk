@@ -95,16 +95,27 @@ def recommend(
         OutputShape.FINDING_ROWS,
         OutputShape.TENANT_FINDING_TOTALS,
     ):
+        notes: tuple[str, ...]
+        if output_shape == OutputShape.TENANT_FINDING_TOTALS:
+            notes = (
+                "No per-project grain: probe Query.at_namespace with "
+                "QuerySpec.root('Finding').count(...) at leaf namespace, or "
+                "facade Finding.count with selective filter and bounds.",
+                "Per-project breakdown: Query.Project.collect after validate_sample.",
+                "Fallback: Finding.list or list_for_shards when rows needed.",
+            )
+        else:
+            notes = (
+                "Masked per-project row export: Query.Project.collect with estate "
+                "or PRF list specs after validate_sample.",
+                "Fallback: Finding.list_by_project or list_for_shards.",
+            )
         return QueryPlan(
             output_shape=output_shape,
             primary="query",
             shard_key="project",
             validate_recommended=True,
-            notes=(
-                "Masked per-project row export: Query.Project.collect with estate "
-                "or PRF list specs after validate_sample.",
-                "Fallback: Finding.list_by_project or list_for_shards.",
-            ),
+            notes=notes,
         )
 
     if output_shape == OutputShape.FINDING_CATEGORY_COUNTS:

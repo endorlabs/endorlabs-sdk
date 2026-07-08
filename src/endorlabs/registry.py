@@ -384,9 +384,9 @@ CUSTOM_FACADE_REGISTRY: list[CustomFacadeEntry] = [
         pyi_facade_class="QueryFacade",
         pyi_import_module="facade",
         pyi_attr_doc=(
-            "Query graph joins (counts, masked lists, nested refs). "
-            "Recipes: client.Query.Project.count_pv / count_findings_by_category / "
-            "count_dm; or create(payload=...) for custom joins."
+            "Kind-agnostic Query graph joins via execute / at_namespace / create. "
+            "Estate recipes: client.Query.Project.count_pv / "
+            "count_findings_by_category / count_dm; see docs/guides/query-recipes.md."
         ),
     ),
 ]

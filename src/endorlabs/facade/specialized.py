@@ -407,8 +407,11 @@ class CallGraphDataFacade:
 class QueryFacade:
     """Kind-agnostic Query graph join facade.
 
-    Generic execution via ``execute`` / ``at_namespace`` / ``create``.
-    Project-scoped recipes live on ``Query.Project``.
+    **Default:** ``execute`` / ``at_namespace`` / ``create`` with any root kind
+    via ``QuerySpec`` and ``QueryScope``.
+
+    **Estate recipes:** ``Query.Project`` — validated project-sharded dashboard
+    patterns (``count_pv``, ``collect_*``, ``discover``, ``validate_sample``).
     """
 
     def __init__(self, client: APIClient, default_namespace: str | None) -> None:
