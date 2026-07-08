@@ -12,7 +12,7 @@ FINDING_LEVEL_HIGH = "FINDING_LEVEL_HIGH"
 
 DEFAULT_CRITICAL_WEIGHT = 4.0
 DEFAULT_HIGH_WEIGHT = 2.0
-DEFAULT_MISSING_EPSS_PRIOR = 0.004
+DEFAULT_MISSING_EPSS_PRIOR = 0.05
 
 
 @dataclass
@@ -24,6 +24,7 @@ class PackageRiskSummary:
     findings_critical: int = 0
     findings_high: int = 0
     findings_total: int = 0
+    findings_unscored: int = 0
 
 
 @dataclass
@@ -155,21 +156,27 @@ class CriticalHighCountScorer:
 
 @dataclass
 class EpssWeightedScorer:
-    """Multiply base severity weights by EPSS score when present."""
+    """Multiply base severity weights by EPSS score when present.
+
+    Missing EPSS uses ``missing_epss_prior`` (default 0.05). Population median
+    EPSS is ~0.004; 0.05 is conservative so unscored findings do not rank above
+    most scored CVEs while remaining visibly distinct from max exploitability.
+    """
 
     name: str = "epss_weighted"
     critical_weight: float = DEFAULT_CRITICAL_WEIGHT
     high_weight: float = DEFAULT_HIGH_WEIGHT
     missing_epss_prior: float = DEFAULT_MISSING_EPSS_PRIOR
 
-    def _epss_multiplier(self, spec: dict[str, Any]) -> float:
+    def _epss_multiplier(self, spec: dict[str, Any]) -> tuple[float, bool]:
+        """Return (multiplier, used_prior)."""
         epss_block = spec.get("epss_score")
         if not isinstance(epss_block, dict):
-            return self.missing_epss_prior
+            return self.missing_epss_prior, True
         raw = epss_block.get("score")
         if raw is None:
-            return self.missing_epss_prior
-        return max(float(raw), 0.0)
+            return self.missing_epss_prior, True
+        return max(float(raw), 0.0), False
 
     def score_finding(self, finding: dict[str, Any]) -> float:
         spec = finding.get("spec") or {}
@@ -181,7 +188,8 @@ class EpssWeightedScorer:
             base = self.high_weight
         if base <= 0:
             return 0.0
-        return base * self._epss_multiplier(spec)
+        multiplier, _ = self._epss_multiplier(spec)
+        return base * multiplier
 
     def aggregate_packages(
         self, findings: list[dict[str, Any]]
@@ -202,6 +210,9 @@ class EpssWeightedScorer:
                 summary.findings_critical += 1
             elif level == FINDING_LEVEL_HIGH:
                 summary.findings_high += 1
+            _, used_prior = self._epss_multiplier(spec)
+            if used_prior:
+                summary.findings_unscored += 1
             summary.risk_score += self.score_finding(finding)
         return summaries
 

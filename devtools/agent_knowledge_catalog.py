@@ -27,6 +27,13 @@ PATH_REWRITES: tuple[tuple[str, str], ...] = (
     ("agent-knowledge/contracts/", "sdk/contracts/"),
     ("skills-src/", "sdk/skills/"),
 )
+_GITHUB_BLOB_ROOT = "https://github.com/endorlabs/endorlabs-sdk/blob/main/"
+_REPO_ONLY_LINK_RE = re.compile(
+    r"\]\(((?:\.\./)+)(docs/[^)#]+|AGENTS\.md|README\.md|devtools/[^)#]+)\)"
+)
+_REPO_ROOT_LINK_RE = re.compile(
+    r"\]\((docs/[^)#]+|AGENTS\.md|README\.md|devtools/[^)#]+)\)"
+)
 # Backward-compat for bodies that still mention legacy paths during migration.
 _LEGACY_PATH_REWRITES: tuple[tuple[str, str], ...] = (
     ("agent-skills/", "sdk/skills/"),
@@ -107,6 +114,14 @@ def rewrite_paths(content: str) -> str:
     updated = content
     for old, new in (*PATH_REWRITES, *_LEGACY_PATH_REWRITES):
         updated = updated.replace(old, new)
+    updated = _REPO_ONLY_LINK_RE.sub(
+        lambda match: f"]({_GITHUB_BLOB_ROOT}{match.group(2)})",
+        updated,
+    )
+    updated = _REPO_ROOT_LINK_RE.sub(
+        lambda match: f"]({_GITHUB_BLOB_ROOT}{match.group(1)})",
+        updated,
+    )
     return updated
 
 

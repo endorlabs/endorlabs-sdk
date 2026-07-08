@@ -456,10 +456,8 @@ class TestRequestDelegation:
         with patch.object(client, "_request_with_retry", mock_retry):
             client.get("/v1/namespaces", headers=custom)
 
-        sent_headers = mock_retry.call_args.kwargs.get("headers", {})
+        sent_headers = mock_retry.call_args.kwargs.get("_extra_headers", {})
         assert sent_headers.get("X-Custom") == "value"
-        # Session headers (e.g. Content-Type) are also present
-        assert "Content-Type" in sent_headers
 
     def test_params_forwarded(self) -> None:
         """Query params are forwarded to _request_with_retry."""

@@ -142,6 +142,7 @@ def build_risk_document(
             "findings_critical": summary.findings_critical,
             "findings_high": summary.findings_high,
             "findings_total": summary.findings_total,
+            "findings_unscored": summary.findings_unscored,
         }
         for index, summary in enumerate(ranked, start=1)
     ]

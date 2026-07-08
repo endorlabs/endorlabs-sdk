@@ -35,7 +35,7 @@ from typing import Any, Union, override
 
 # Pattern for enum-like constants: UPPER_CASE or UPPER_CASE_123
 _ENUM_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$")
-_FIELD_PATH_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_.]*$")
+_FIELD_PATH_RE = re.compile(r"^[A-Za-z_]\w*(\.[A-Za-z_]\w*)*$")
 _DATE_VALUE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}(?:T[^\)]*)?$")
 _NOW_OFFSET_RE = re.compile(r"^-?\d+[smhdw](?:\.\d+)?$")
 
@@ -52,7 +52,8 @@ def _validate_field_path(path: str) -> None:
 def _format_value(value: FilterValue) -> str:
     """Format a single value for the wire format.
 
-    - Enum-like strings (UPPER_CASE_WORDS): unquoted
+    - Enum-like strings (UPPER_CASE_WORDS): unquoted legacy heuristic;
+      prefer ``F.literal()``
     - Other strings: double-quoted with internal double-quotes escaped
     - Booleans: lowercase ``true`` / ``false``
     - Numbers: plain repr
@@ -363,9 +364,14 @@ class F(FieldRef):
     """
 
     @staticmethod
-    def enum(value: str) -> EnumValue:
-        """Create an unquoted enum constant for wire-format filters."""
+    def literal(value: str) -> EnumValue:
+        """Create an unquoted enum/literal constant for wire-format filters."""
         return EnumValue(value)
+
+    @staticmethod
+    def enum(value: str) -> EnumValue:
+        """Deprecated alias for :meth:`literal`."""
+        return F.literal(value)
 
     @staticmethod
     def date(value: str) -> DateValue:

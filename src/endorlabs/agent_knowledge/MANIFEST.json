@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-07T22:18:38.944080+00:00",
+  "generated_at": "2026-07-08T00:31:50.248569+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -147,7 +147,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.5.1.dev6",
+  "sdk_version": "0.5.1.dev8",
   "skills": [
     {
       "description": "Aggregate AuthenticationLog login activity by user identity over a configurable lookback window (default 90 days). Outputs a CSV with identity, user identifiers, last login, and login count. Shares workflow helpers with auth troubleshooting skills. Use for tenant login-activity audits\u2014not for SSO policy mapping or per-user auth RCA.",
@@ -432,14 +432,6 @@
       ],
       "module": "endorlabs.workflows.callgraph.search",
       "skill": "endor-fetch-and-search-call-graph"
-    },
-    {
-      "agent_visible": false,
-      "cli": null,
-      "default_output": ".endorlabs-context/workspace/runs/collect-strategy-spike/",
-      "id": "collect-strategy-spike",
-      "module": "endorlabs.workflows.estate.collect.benchmark",
-      "skill": null
     },
     {
       "agent_visible": true,

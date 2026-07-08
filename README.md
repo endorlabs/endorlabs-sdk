@@ -26,6 +26,8 @@
 
 Type-safe, resource-oriented Python client for the Endor Labs REST API. List, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and [the rest of the registry-backed resource set](docs/generated-reference/resources.md)) with consistent patterns for filtering, pagination, namespace traversal, and IDE-friendly typed facades.
 
+**API stability:** Core SDK surfaces (`endorlabs.Client`, resource facades, `F()` filters) are semver-stable. The [`endorlabs.workflows`](src/endorlabs/workflows/) package holds operational CLIs and estate analytics helpers that may evolve faster than core facades — pin versions in production automation if you depend on workflow modules directly.
+
 - **Python:** 3.12+ (CI gates run on 3.13 — see [CONTRIBUTORS.md](CONTRIBUTORS.md))
 - **API spec:** [OpenAPI (Swagger)](https://api.endorlabs.com/download/openapiv2.swagger.json)
 

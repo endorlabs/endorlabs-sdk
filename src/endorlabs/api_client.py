@@ -8,9 +8,11 @@ import html
 import logging
 import os
 import re
+import threading
 import time
 from collections.abc import Iterable, Iterator
 from datetime import UTC, datetime, timedelta
+from email.utils import parsedate_to_datetime
 from typing import Any, Literal, cast
 from urllib.parse import urlparse
 
@@ -39,7 +41,25 @@ _JSON_REDACT_RE: re.Pattern[str] = re.compile(json_redaction_pattern, re.IGNOREC
 
 DEFAULT_API_BASE_URL = "https://api.endorlabs.com"
 
-_NETWORK_RETRY_METHODS = frozenset({"GET", "HEAD", "PUT", "DELETE", "OPTIONS"})
+_IDEMPOTENT_RETRY_METHODS = frozenset({"GET", "HEAD", "PUT", "DELETE", "OPTIONS"})
+_MAX_RETRY_AFTER_SECONDS = 60.0
+
+
+def _parse_retry_after_seconds(value: str | None) -> float | None:
+    """Parse Retry-After as delta seconds or HTTP-date (RFC 9110)."""
+    if not value:
+        return None
+    stripped = value.strip()
+    if stripped.isdigit():
+        return float(stripped)
+    try:
+        retry_dt = parsedate_to_datetime(stripped)
+        if retry_dt.tzinfo is None:
+            retry_dt = retry_dt.replace(tzinfo=UTC)
+        return max((retry_dt - datetime.now(UTC)).total_seconds(), 0.0)
+    except (TypeError, ValueError, OverflowError):
+        return None
+
 
 _GENERIC_ERROR_MESSAGES = frozenset(
     {
@@ -88,9 +108,11 @@ class APIClient:
         specific HTTP status codes. Retries use exponential backoff.
 
         Retryable Errors:
-        - Network errors: ConnectionError, Timeout (all retried automatically)
-        - HTTP 429 (Rate Limit): Retried with exponential backoff, respects
-          Retry-After header
+        - ``ConnectError``: always retried (request never left the client)
+        - ``TimeoutException`` / other ``RequestError``: idempotent methods only
+          unless ``retry_non_idempotent=True`` (or ``ENDOR_RETRY_NON_IDEMPOTENT``)
+        - HTTP 429 (Rate Limit): Retried with localized ``Retry-After`` sleep
+          (capped at 60s) plus exponential backoff floor
         - HTTP 500, 502, 503, 504 (Server Errors): Retried as transient server issues
 
         Non-Retryable Errors (Graceful Exit):
@@ -130,6 +152,8 @@ class APIClient:
             "google", "github", "gitlab", "email"). If None, uses env/default.
         email: Email for auth. Required for ``auth_method="email"``.
         auth_tenant: SSO tenant. Required for ``auth_method="sso"``.
+        retry_non_idempotent: When True, retry timeout/request errors for POST/PATCH
+            too. Default False; override via ``ENDOR_RETRY_NON_IDEMPOTENT=1``.
 
     The client can be used as a context manager (with APIClient(...) as client:).
     When not using ``with``, call close() when done to release connections.
@@ -155,6 +179,7 @@ class APIClient:
         email: str | None = None,
         auth_tenant: str | None = None,
         allowed_api_hosts: list[str] | None = None,
+        retry_non_idempotent: bool | None = None,
     ) -> None:
         super().__init__()
         # Set up logging
@@ -270,6 +295,13 @@ class APIClient:
         self.max_retries = max_retries
         self.backoff_factor = backoff_factor
         self.status_forcelist = status_forcelist
+        if retry_non_idempotent is None:
+            env_retry = os.getenv("ENDOR_RETRY_NON_IDEMPOTENT", "").strip().lower()
+            retry_non_idempotent = env_retry in {"1", "true", "yes", "on"}
+        self.retry_non_idempotent = retry_non_idempotent
+        self._session_lock = threading.RLock()
+        self._reauth_lock = threading.Lock()
+        self._coalesced_reauth_token: str | None = None
 
         from .utils.request_timeout import resolve_request_timeout
 
@@ -295,16 +327,17 @@ class APIClient:
             timeout=self.timeout,
             headers=self._request_headers.copy(),
         )
-        self.rate_limit_delay = 0
-        self.last_request_time = 0
         self.logger_len = 25
 
         # Authenticate and set initial headers
         # Use token property to ensure fresh token with expiration tracking
         _ = self.token
         if self._token:
-            self._request_headers["Authorization"] = f"Bearer {self._token}"
-        self.default_headers = self._headers_copy()
+            with self._session_lock:
+                self._request_headers["Authorization"] = f"Bearer {self._token}"
+                self.default_headers = dict(self._request_headers)
+        else:
+            self.default_headers = self._headers_copy()
 
     def close(self) -> None:
         """Close the underlying HTTP client and release connections."""
@@ -322,21 +355,40 @@ class APIClient:
         self.close()
         return
 
-    def _rate_limit(self) -> None:
-        """Apply a delay if a rate limit was previously encountered."""
-        if self.rate_limit_delay > 0:
-            wait_time = self.rate_limit_delay - (time.time() - self.last_request_time)
-            if wait_time > 0:
-                self.logger.warning(
-                    "Rate limit encountered. Waiting for %.2f seconds.",
-                    wait_time,
-                )
-                time.sleep(wait_time)
-            self.rate_limit_delay = 0
-
     def _headers_copy(self) -> dict[str, str]:
         """Return a mutable copy of request headers with string values."""
-        return dict(self._request_headers)
+        with self._session_lock:
+            return dict(self._request_headers)
+
+    def _build_request_headers(
+        self, extra: dict[str, str] | None = None
+    ) -> dict[str, str]:
+        """Merge session headers with per-request extras; Authorization from session."""
+        with self._session_lock:
+            merged = dict(self._request_headers)
+        if extra:
+            merged.update(
+                {key: value for key, value in extra.items() if key != "Authorization"}
+            )
+        return merged
+
+    def _status_retry_backoff(
+        self, *, status_code: int, response: httpx.Response, attempt: int
+    ) -> float:
+        """Compute sleep before retrying a retryable HTTP status."""
+        exponential = self.backoff_factor * (2**attempt)
+        if status_code == 429:
+            parsed = _parse_retry_after_seconds(response.headers.get("Retry-After"))
+            if parsed is not None:
+                return min(max(parsed, exponential), _MAX_RETRY_AFTER_SECONDS)
+        return exponential
+
+    def _network_error_retryable(self, method: str, exc: BaseException) -> bool:
+        if isinstance(exc, httpx.ConnectError):
+            return True
+        if self.retry_non_idempotent:
+            return True
+        return method.upper() in _IDEMPOTENT_RETRY_METHODS
 
     def _normalize_url(self, url: str) -> str:
         """Normalize URL: use as-is if absolute, prepend base_url if relative."""
@@ -764,29 +816,34 @@ class APIClient:
         This method should be called before making API requests to ensure
         the token is valid and headers are up to date.
         """
-        # Access token property to trigger refresh if needed
-        current_token = self.token
-        if current_token:
-            self._request_headers["Authorization"] = f"Bearer {current_token}"
+        self._ensure_fresh_token()
 
     def _request_with_retry(
         self,
         method: str,
         url: str,
+        *,
+        _extra_headers: dict[str, str] | None = None,
+        _reauth_attempted: bool = False,
         **kwargs: Any,
     ) -> httpx.Response:
         """Perform request with retry on connection/timeout and retryable status.
 
-        Network-layer errors (connect/timeout) retry only for idempotent HTTP
-        methods to avoid duplicate side effects when a write commits but the
-        response never arrives.
+        Headers are rebuilt from live session state on every attempt so 401
+        reauthentication and proactive token refresh propagate to retries.
         """
         assert self.client is not None, "APIClient is closed"
         last_exc: BaseException | None = None
         attempt = 0
         for attempt in range(self.max_retries + 1):
             try:
-                response = self.client.request(method, url, **kwargs)
+                headers = self._build_request_headers(_extra_headers)
+                response = self.client.request(
+                    method,
+                    url,
+                    headers=headers,
+                    **kwargs,
+                )
                 self.logger.debug(
                     "%s response %s - %s",
                     method,
@@ -797,6 +854,8 @@ class APIClient:
                     response,
                     method=method,
                     url=url,
+                    _extra_headers=_extra_headers,
+                    _reauth_attempted=_reauth_attempted,
                     **kwargs,
                 )
             except httpx.HTTPStatusError as e:
@@ -806,29 +865,54 @@ class APIClient:
                     and attempt < self.max_retries
                 )
                 if retryable:
-                    if e.response.status_code == 429:
-                        self._handle_rate_limited(e.response)
-                        backoff = float(self.rate_limit_delay)
-                    else:
-                        backoff = self.backoff_factor * (2**attempt)
-                    self.logger.warning(
-                        "Retryable status %s, retrying in %.1fs (attempt %s/%s)",
-                        e.response.status_code,
-                        backoff,
-                        attempt + 1,
-                        self.max_retries + 1,
+                    backoff = self._status_retry_backoff(
+                        status_code=e.response.status_code,
+                        response=e.response,
+                        attempt=attempt,
                     )
+                    if e.response.status_code == 429:
+                        self.logger.warning(
+                            "Rate limited (429), retrying in %.1fs (attempt %s/%s)",
+                            backoff,
+                            attempt + 1,
+                            self.max_retries + 1,
+                        )
+                    else:
+                        self.logger.warning(
+                            "Retryable status %s, retrying in %.1fs (attempt %s/%s)",
+                            e.response.status_code,
+                            backoff,
+                            attempt + 1,
+                            self.max_retries + 1,
+                        )
                     time.sleep(backoff)
                     continue
                 raise
-            except (
-                httpx.ConnectError,
-                httpx.TimeoutException,
-                httpx.RequestError,
-            ) as e:
+            except httpx.ConnectError as e:
                 last_exc = e
-                retryable_network = method.upper() in _NETWORK_RETRY_METHODS
-                if retryable_network and attempt < self.max_retries:
+                retryable = (
+                    self._network_error_retryable(method, e)
+                    and attempt < self.max_retries
+                )
+                if retryable:
+                    backoff = self.backoff_factor * (2**attempt)
+                    self.logger.warning(
+                        "Network error, retrying in %.1fs (attempt %s/%s): %s",
+                        backoff,
+                        attempt + 1,
+                        self.max_retries + 1,
+                        e,
+                    )
+                    time.sleep(backoff)
+                    continue
+                break
+            except (httpx.TimeoutException, httpx.RequestError) as e:
+                last_exc = e
+                retryable = (
+                    self._network_error_retryable(method, e)
+                    and attempt < self.max_retries
+                )
+                if retryable:
                     backoff = self.backoff_factor * (2**attempt)
                     self.logger.warning(
                         "Network error, retrying in %.1fs (attempt %s/%s): %s",
@@ -852,23 +936,6 @@ class APIClient:
             raise last_exc
         raise EndorAPIError("Retry loop exited without response or exception")
 
-    def _handle_rate_limited(self, response: httpx.Response) -> None:
-        """Handle HTTP 429 responses by setting rate-limit delay."""
-        retry_info = response.headers.get("Retry-After", "no retry info")
-        self.logger.warning("Rate limited (429), retrying with backoff.")
-        self.logger.debug(
-            "Rate limit detail: Retry-After=%s, url=%s",
-            retry_info,
-            response.url,
-        )
-        retry_after = response.headers.get("Retry-After")
-        if retry_after and retry_after.isdigit():
-            self.rate_limit_delay = int(retry_after) + 1
-        else:
-            self.rate_limit_delay = (
-                self.rate_limit_delay if self.rate_limit_delay > 0 else 5
-            )
-
     def _handle_unauthorized(
         self,
         response: httpx.Response,
@@ -876,6 +943,7 @@ class APIClient:
         method: str | None,
         url: str | None,
         _reauth_attempted: bool,
+        _extra_headers: dict[str, str] | None = None,
         **kwargs: Any,
     ) -> httpx.Response | None:
         """Handle HTTP 401 responses with single reauth retry."""
@@ -890,28 +958,28 @@ class APIClient:
         )
         self.logger.debug("Authentication detail: url=%s", response.url)
         self.logger.info("Attempting to reauthenticate...")
-        new_token = self.authenticate()
-        if new_token:
-            self._request_headers["Authorization"] = f"Bearer {new_token}"
-            self.default_headers = self._headers_copy()
+        new_token: str | None = None
+        with self._reauth_lock:
+            if self._coalesced_reauth_token:
+                new_token = self._coalesced_reauth_token
+            else:
+                new_token = self.authenticate()
+                if new_token:
+                    self._coalesced_reauth_token = new_token
+            if new_token:
+                with self._session_lock:
+                    self._request_headers["Authorization"] = f"Bearer {new_token}"
+                    self.default_headers = dict(self._request_headers)
+        if new_token and method and url:
             self.logger.info("Reauthentication completed.")
-            if method and url:
-                self.logger.info("Retrying %s request to %s", method, url)
-                assert self.client is not None, "APIClient is closed"
-                retry_kwargs = dict(kwargs)
-                extra_headers = dict(retry_kwargs.pop("headers", {}) or {})
-                extra_headers.pop("Authorization", None)
-                retry_kwargs["headers"] = self._prepare_headers(extra_headers or None)
-                retry_response = self.client.request(
-                    method=method, url=url, **retry_kwargs
-                )
-                return self._handle_response(
-                    retry_response,
-                    method=method,
-                    url=url,
-                    _reauth_attempted=True,
-                    **kwargs,
-                )
+            self.logger.info("Retrying %s request to %s", method, url)
+            return self._request_with_retry(
+                method,
+                url,
+                _extra_headers=_extra_headers,
+                _reauth_attempted=True,
+                **kwargs,
+            )
         return None
 
     def _handle_not_implemented(
@@ -975,18 +1043,17 @@ class APIClient:
         url: str | None = None,
         *,
         _reauth_attempted: bool = False,
+        _extra_headers: dict[str, str] | None = None,
         **kwargs: Any,
     ) -> Any:
-        self.last_request_time = time.time()
         try:
             _ = response.raise_for_status()
             return response
         except httpx.HTTPStatusError as e:
             status_code = response.status_code
 
-            # Handle rate limiting (429) - retryable with backoff
+            # Handle rate limiting (429) - retryable with backoff in retry loop
             if status_code == 429:
-                self._handle_rate_limited(response)
                 raise
 
             # Handle authentication failure (401) - single retry after reauth
@@ -996,6 +1063,7 @@ class APIClient:
                     method=method,
                     url=url,
                     _reauth_attempted=_reauth_attempted,
+                    _extra_headers=_extra_headers,
                     **kwargs,
                 )
                 if retried is not None:
@@ -1083,11 +1151,8 @@ class APIClient:
     # -- Internal helpers for the public HTTP methods -----------------------
 
     def _prepare_headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
-        """Return session headers merged with *extra* (caller headers win)."""
-        merged = self._headers_copy()
-        if extra:
-            merged.update(extra)
-        return merged
+        """Return session headers merged with *extra* (Authorization from session)."""
+        return self._build_request_headers(extra)
 
     def _request(
         self,
@@ -1098,13 +1163,12 @@ class APIClient:
         json: Any | None = None,
         **kwargs: Any,
     ) -> httpx.Response:
-        """Shared pipeline: rate-limit, auth, normalize, headers, log, retry."""
-        self._rate_limit()
+        """Shared pipeline: auth, normalize, log, retry with per-attempt headers."""
         self._ensure_authenticated()
         normalized_url = self._normalize_url(url)
 
         request_kwargs = kwargs.copy()
-        request_kwargs["headers"] = self._prepare_headers(request_kwargs.get("headers"))
+        extra_headers = dict(request_kwargs.pop("headers", {}) or {})
 
         log_data = self._redact_log_data(data) if data else None
         log_json = self._redact_log_data(json) if json else None
@@ -1119,6 +1183,7 @@ class APIClient:
         return self._request_with_retry(
             method,
             normalized_url,
+            _extra_headers=extra_headers,
             params=params,
             data=data,
             json=json,
@@ -1443,18 +1508,19 @@ class APIClient:
         browser_validated: bool | None = None,
     ) -> None:
         """Store token, expiry metadata, and Authorization header."""
-        self._token = token
-        if expiration is not None:
-            self._token_expires = expiration
-            self._token_expiration_source = expiration_source
-        self._token_expiry_warning_sent = False
-        self._expiration_synced_in_threshold = False
-        self._request_headers["Authorization"] = f"Bearer {token}"
-        self.default_headers = self._headers_copy()
-        if browser_validated is not None:
-            self._browser_session_validated = browser_validated
-        elif self._auth_type == "browser":
-            self._browser_session_validated = True
+        with self._session_lock:
+            self._token = token
+            if expiration is not None:
+                self._token_expires = expiration
+                self._token_expiration_source = expiration_source
+            self._token_expiry_warning_sent = False
+            self._expiration_synced_in_threshold = False
+            self._request_headers["Authorization"] = f"Bearer {token}"
+            self.default_headers = dict(self._request_headers)
+            if browser_validated is not None:
+                self._browser_session_validated = browser_validated
+            elif self._auth_type == "browser":
+                self._browser_session_validated = True
 
     @property
     def is_expired(self) -> bool:
@@ -1493,9 +1559,9 @@ class APIClient:
             Bearer token string or None if authentication fails.
 
         """
-        if self._auth_type == "browser":
-            return self._authenticate_browser()
-        else:
+        with self._session_lock:
+            if self._auth_type == "browser":
+                return self._authenticate_browser()
             return self._authenticate_api_key()
 
     @property
