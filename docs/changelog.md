@@ -12,6 +12,21 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Breaking
 
+## 0.5.2
+
+Security and reliability hardening from OSS QA review.
+
+### Changed
+
+- Write `.env` bearer tokens with owner-only file permissions (`0o600`) during auth refresh workflows.
+- Do not retry POST/PATCH network timeouts by default — network-layer retries apply only to idempotent HTTP methods.
+- Stop setting `ENDOR_API` in the process environment from `APIClient` construction; read the default locally instead.
+- Browser OAuth: bind callback ports in the 30000–30009 range, validate CSRF `state` on redirect, and URL-encode email query parameters.
+- Cap call graph zstd decompression at 256 MiB to guard against decompression bombs from workspace artifacts.
+- Skip integration CI on fork pull requests when repository secrets are unavailable (avoids false-red CI for external contributors).
+
+### Breaking
+
 ## 0.5.1
 
 Auth workflows, workspace layout, and maintainer tooling. Generated models pinned to **endorctl `v1.7.1045`**.

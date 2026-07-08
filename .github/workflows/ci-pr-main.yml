@@ -327,6 +327,10 @@ jobs:
         needs.detect-changes.outputs.integration-tests == 'true' ||
         needs.detect-changes.outputs.config == 'true' ||
         needs.detect-changes.outputs.ci == 'true'
+      ) &&
+      (
+        github.event_name != 'pull_request' ||
+        github.event.pull_request.head.repo.full_name == github.repository
       )
     steps:
       - name: Checkout code

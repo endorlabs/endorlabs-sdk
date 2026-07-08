@@ -111,3 +111,19 @@ def test_request_with_retry_raises_network_error(authed_client: APIClient) -> No
 
     with pytest.raises(NetworkError, match="Network error after"):
         authed_client._request_with_retry("GET", "/v1/namespaces/t/x")
+
+
+def test_request_with_retry_skips_network_retry_for_post(
+    authed_client: APIClient,
+) -> None:
+    request = httpx.Request("POST", "https://api.endorlabs.com/v1/namespaces/t/x")
+    assert authed_client.client is not None
+    authed_client.max_retries = 3
+    authed_client.client.request.side_effect = httpx.TimeoutException(
+        "read timed out",
+        request=request,
+    )
+
+    with pytest.raises(NetworkError, match="Network error after 1 attempt"):
+        authed_client._request_with_retry("POST", "/v1/namespaces/t/x")
+    assert authed_client.client.request.call_count == 1
