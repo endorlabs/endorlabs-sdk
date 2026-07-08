@@ -75,6 +75,16 @@ class TestTokenHandler:
         assert status == 200
         assert token == "xyz-captured"
 
+    def test_token_handler_accepts_token_without_state(self) -> None:
+        """CLI redirect currently returns token only; capture must still work."""
+        handler = _make_token_handler(_TEST_STATE)
+        status, token = _run_handler_request(
+            handler,
+            "token=cli-redirect-token",
+        )
+        assert status == 200
+        assert token == "cli-redirect-token"
+
     def test_token_handler_decodes_urlencoded_token(self) -> None:
         """Token from query string should be URL-decoded."""
         handler = _make_token_handler(_TEST_STATE)

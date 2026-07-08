@@ -12,6 +12,7 @@ import contextlib
 import logging
 import os
 import secrets
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, override
 from urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
@@ -86,9 +87,12 @@ def _make_token_handler(expected_state: str) -> type[BaseHTTPRequestHandler]:
                     return
 
                 params = parse_qs(parsed_url.query, keep_blank_values=False)
+                # Endor CLI redirects (`redirect=cli`) currently return only
+                # `token` and do not echo `state`. Enforce CSRF only when the
+                # platform includes a state parameter on the callback.
                 states = params.get("state", [])
-                if len(states) != 1 or states[0] != expected_state:
-                    logger.warning("OAuth state mismatch or missing in redirect")
+                if states and (len(states) != 1 or states[0] != expected_state):
+                    logger.warning("OAuth state mismatch in redirect")
                     self.send_response(400)
                     self.end_headers()
                     return
@@ -279,7 +283,14 @@ def get_token(
             timeout,
         )
 
-        _ = server.handle_request()
+        # Keep accepting requests until timeout or a token is captured so a
+        # stale localhost tab / favicon cannot consume the single handle_request.
+        deadline = time.monotonic() + timeout
+        poll_timeout = min(2.0, float(timeout))
+        while time.monotonic() < deadline and not _captured_token:
+            remaining = deadline - time.monotonic()
+            server.timeout = min(poll_timeout, max(remaining, 0.1))
+            _ = server.handle_request()
         server.server_close()
 
         if _captured_token:
