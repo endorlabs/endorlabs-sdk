@@ -10,6 +10,14 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+### Breaking
+
+## 0.5.3
+
+Browser OAuth CLI-redirect capture fix.
+
+### Changed
+
 - Browser OAuth (`get_token` / `endor-auth refresh`): accept Endor CLI redirects that return `token` without echoing CSRF `state`, and keep the localhost callback open until timeout so stale tabs cannot abort capture.
 
 ### Breaking
