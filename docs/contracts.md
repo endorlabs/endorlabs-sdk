@@ -140,6 +140,20 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
   `endorlabs.core.exceptions`); resources may return `None` on 404 where documented.
 - Preserve full server error context in SDK error handling.
 
+<a id="concurrency-and-transport-retries"></a>
+## Concurrency and transport retries
+
+- Construct one `Client` / `APIClient` per credential set; instances are cheap.
+- `APIClient` is thread-safe for a single session: token refresh and header updates
+  use an internal lock; HTTP I/O is blocking and does not hold the lock.
+- In async code, call SDK methods via `asyncio.to_thread()` (or equivalent) — do not
+  share one client across concurrent coroutines on the event loop thread without offloading.
+- Do not multiplex multiple credential sets on one client instance.
+- Network retries: `ConnectError` is always retried; `TimeoutException` and other
+  `RequestError` types retry only for idempotent HTTP methods unless
+  `retry_non_idempotent=True` or `ENDOR_RETRY_NON_IDEMPOTENT=1`.
+- HTTP 429 retries sleep locally using `Retry-After` (delta or HTTP-date), capped at 60s.
+
 Exported from `endorlabs`: `EndorAPIError`, `UnauthorizedError`, `NotFoundError`,
 `PermissionDeniedError`, `ValidationError`, `ConflictError`, `RateLimitError`,
 `ServerError`, `NetworkError`, `AmbiguousError`, `MethodNotSupportedError`, and

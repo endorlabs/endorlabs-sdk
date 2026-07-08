@@ -381,3 +381,11 @@ class TestEdgeCases:
     def test_enum_helper_emits_unquoted_constant(self) -> None:
         expr = F("spec.level") == F.enum("FINDING_LEVEL_CRITICAL")
         assert str(expr) == "spec.level == FINDING_LEVEL_CRITICAL"
+
+    def test_literal_helper_emits_unquoted_constant(self) -> None:
+        expr = F("spec.level") == F.literal("FINDING_LEVEL_CRITICAL")
+        assert str(expr) == "spec.level == FINDING_LEVEL_CRITICAL"
+
+    def test_invalid_dotted_field_segment_rejected(self) -> None:
+        with pytest.raises(ValueError, match="Invalid filter field path"):
+            F("spec..level")

@@ -13,8 +13,10 @@ LINK_RE = re.compile(r"\]\(([^)]+)\)")
 SKIP_PREFIXES = ("http://", "https://", "mailto:", "#")
 
 
-def _iter_broken_relative_links(base: Path) -> list[tuple[Path, str]]:
-    broken: list[tuple[Path, str]] = []
+def _iter_invalid_relative_links(base: Path) -> list[tuple[Path, str, str]]:
+    """Return relative links that escape shipped root or resolve off-disk."""
+    invalid: list[tuple[Path, str, str]] = []
+    shipped_resolved = base.resolve()
     for md_path in sorted(base.rglob("*.md")):
         text = md_path.read_text(encoding="utf-8")
         for raw_target in LINK_RE.findall(text):
@@ -22,18 +24,37 @@ def _iter_broken_relative_links(base: Path) -> list[tuple[Path, str]]:
             if not target or target.startswith(SKIP_PREFIXES):
                 continue
             resolved = (md_path.parent / target).resolve()
+            try:
+                resolved.relative_to(shipped_resolved)
+            except ValueError:
+                invalid.append(
+                    (
+                        md_path.relative_to(REPO_ROOT),
+                        target,
+                        "escapes shipped agent_knowledge root",
+                    )
+                )
+                continue
             if not resolved.exists():
-                broken.append((md_path.relative_to(REPO_ROOT), target))
-    return broken
+                invalid.append(
+                    (
+                        md_path.relative_to(REPO_ROOT),
+                        target,
+                        "target missing on disk",
+                    )
+                )
+    return invalid
 
 
-def test_shipped_agent_knowledge_relative_links_resolve() -> None:
-    broken = _iter_broken_relative_links(SHIPPED_ROOT)
-    if broken:
-        lines = "\n".join(f"  {path}: {target}" for path, target in broken[:20])
+def test_shipped_agent_knowledge_relative_links_stay_in_bundle() -> None:
+    invalid = _iter_invalid_relative_links(SHIPPED_ROOT)
+    if invalid:
+        lines = "\n".join(
+            f"  {path}: {target} ({reason})" for path, target, reason in invalid[:20]
+        )
         extra = ""
-        if len(broken) > 20:
-            extra = f"\n  ... and {len(broken) - 20} more"
+        if len(invalid) > 20:
+            extra = f"\n  ... and {len(invalid) - 20} more"
         pytest.fail(
-            f"Broken relative markdown links in shipped bundle:\n{lines}{extra}"
+            f"Invalid relative markdown links in shipped bundle:\n{lines}{extra}"
         )

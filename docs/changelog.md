@@ -19,16 +19,16 @@ Security and reliability hardening from OSS QA review.
 ### Changed
 
 - Write `.env` bearer tokens with owner-only file permissions (`0o600`) during auth refresh workflows.
-- Do not retry POST/PATCH network timeouts by default — network-layer retries apply only to idempotent HTTP methods.
+- Structural transport fixes: per-attempt header build from live session state (401 reauth retries send refreshed bearer token), `threading.RLock` on token refresh, localized HTTP 429 `Retry-After` sleep (delta or HTTP-date, capped at 60s).
+- Network retries: `ConnectError` always retried; `TimeoutException` / other `RequestError` retried only for idempotent methods unless `retry_non_idempotent=True` or `ENDOR_RETRY_NON_IDEMPOTENT=1`. Documented in [docs/contracts.md](docs/contracts.md#concurrency-and-transport-retries).
 - Stop setting `ENDOR_API` in the process environment from `APIClient` construction; read the default locally instead.
 - Browser OAuth: bind callback ports in the 30000–30009 range, validate CSRF `state` on redirect, and URL-encode email query parameters.
 - Cap call graph zstd decompression at 256 MiB to guard against decompression bombs from workspace artifacts.
 - Skip integration CI on fork pull requests when repository secrets are unavailable (avoids false-red CI for external contributors).
-- Fix 401 reauth retry to send the refreshed bearer token instead of a stale Authorization header.
-- Honor HTTP `Retry-After` on 429 responses during the client retry loop (not only on the next unrelated request).
-- EPSS-weighted risk scoring uses a documented missing-data prior (~0.004) instead of treating absent EPSS as maximum exploitability.
-- Validate `F()` field paths and `date()` / `now()` arguments; add `F.enum()` for explicit enum constants.
-- Repair shipped agent-knowledge markdown links and add a CI unit test that rejects broken relative links in the wheel bundle.
+- EPSS-weighted risk scoring uses a visible missing-data prior (`0.05`; population median ~0.004) with `findings_unscored` on ranked output instead of treating absent EPSS as maximum exploitability.
+- Validate `F()` field paths and `date()` / `now()` arguments; add `F.literal()` for explicit enum constants (`F.enum()` remains as deprecated alias). Generated enum frozenset validation deferred to 0.6.
+- Shipped agent-knowledge link policy: relative links must stay under the wheel bundle; sync rewrites repo-only `docs/` / `AGENTS.md` paths to GitHub blob URLs.
+- Move collect-strategy benchmark spike to `devtools/estate_collect_benchmark.py` (not shipped in the wheel).
 - Remove no-op `max_workers` / `page_size` parameters from `collect_estate_findings`; guard `get_all` against repeated pagination cursors.
 
 ### Breaking

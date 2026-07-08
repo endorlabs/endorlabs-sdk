@@ -157,7 +157,7 @@ fail_under = 70
 omit = [
     "src/endorlabs/auth_server.py",  # Browser-interactive; cannot be meaningfully covered in CI
     "src/endorlabs/generated/*",  # OpenAPI-generated artifacts; validated via contract quality gates
-    "src/endorlabs/workflows/estate/collect/benchmark.py",  # Local collect-strategy spike; not shipped workflow
+    "devtools/estate_collect_benchmark.py",  # Local collect-strategy spike; not shipped
 ]
 exclude_lines = [
     "pragma: no cover",
@@ -344,7 +344,6 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 "src/endorlabs/workflows/estate/export/summarize.py" = ["T201", "D103", "PERF401"]
 "src/endorlabs/workflows/estate/analyze/graph_metrics/analytics.py" = ["D103", "E501"]
 "src/endorlabs/workflows/estate/analyze/compile_graph/enrich.py" = ["D103", "C901", "PLW2901", "E501"]
-"src/endorlabs/workflows/estate/collect/benchmark.py" = ["E501", "D103", "ARG001"]
 "src/endorlabs/workflows/troubleshooting_scans/summarize_scan_triage.py" = ["C901"]  # markdown builder
 # Skill-maintained CLI scripts (authoring tree; mirrored into agent_knowledge bundle).
 "agent-knowledge/skills/**/scripts/*.py" = [

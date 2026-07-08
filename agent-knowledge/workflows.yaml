@@ -7,12 +7,6 @@ workflows:
     skill: null
     default_output: .endorlabs-context/
     agent_visible: true
-  - id: collect-strategy-spike
-    cli: null
-    module: endorlabs.workflows.estate.collect.benchmark
-    skill: null
-    default_output: .endorlabs-context/workspace/runs/collect-strategy-spike/
-    agent_visible: false
   - id: estate-workspace
     cli: endor-estate
     module: endorlabs.workflows.estate.cli.main
