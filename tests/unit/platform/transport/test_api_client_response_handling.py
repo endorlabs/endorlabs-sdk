@@ -98,7 +98,33 @@ class TestAPIClientResponseHandling:
                 first,
                 method="GET",
                 url="/v1/projects",
+                headers={"Authorization": "Bearer OLD_TOKEN"},
             )
 
         assert result.status_code == 200
         assert authed_client.default_headers["Authorization"] == "Bearer new-token"
+        retry_headers = authed_client.client.request.call_args.kwargs["headers"]
+        assert retry_headers["Authorization"] == "Bearer new-token"
+
+    def test_429_retry_uses_retry_after_header(
+        self,
+        authed_client: APIClient,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        assert authed_client.client is not None
+        rate_limited = _response(429, headers={"Retry-After": "30"})
+        success = _response(200, text='{"ok":true}')
+        authed_client.client.request.side_effect = [rate_limited, success]
+        authed_client.max_retries = 1
+
+        sleeps: list[float] = []
+
+        def _record_sleep(seconds: float) -> None:
+            sleeps.append(seconds)
+
+        monkeypatch.setattr("endorlabs.api_client.time.sleep", _record_sleep)
+
+        result = authed_client._request_with_retry("GET", "/v1/projects")
+
+        assert result.status_code == 200
+        assert sleeps == [31.0]

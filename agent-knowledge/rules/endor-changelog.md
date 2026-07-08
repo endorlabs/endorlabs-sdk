@@ -69,7 +69,7 @@ Optional structured fields: [`agent-knowledge/schema/changelog-intake.schema.jso
 1. Stage under **`## Unreleased`** while work lands on `main`.
 2. At release, rename **Unreleased** → **`## X.Y.Z`** (keep subsections Added / Changed / Breaking).
 3. Leave a fresh empty **Unreleased** (subsection headers only until the next entry).
-4. Link from product docs (e.g. [estate/README.md](../../docs/estate/README.md)) to **`docs/changelog.md`** — not duplicate migration files.
+4. Link from product docs (e.g. [estate/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/estate/README.md)) to **`docs/changelog.md`** — not duplicate migration files.
 
 **Release cut checklist** (see also [release-publishing.md](../../docs/contributing/release-publishing.md)):
 

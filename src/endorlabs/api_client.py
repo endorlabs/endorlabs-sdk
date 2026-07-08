@@ -806,7 +806,11 @@ class APIClient:
                     and attempt < self.max_retries
                 )
                 if retryable:
-                    backoff = self.backoff_factor * (2**attempt)
+                    if e.response.status_code == 429:
+                        self._handle_rate_limited(e.response)
+                        backoff = float(self.rate_limit_delay)
+                    else:
+                        backoff = self.backoff_factor * (2**attempt)
                     self.logger.warning(
                         "Retryable status %s, retrying in %.1fs (attempt %s/%s)",
                         e.response.status_code,
@@ -894,7 +898,13 @@ class APIClient:
             if method and url:
                 self.logger.info("Retrying %s request to %s", method, url)
                 assert self.client is not None, "APIClient is closed"
-                retry_response = self.client.request(method=method, url=url, **kwargs)
+                retry_kwargs = dict(kwargs)
+                extra_headers = dict(retry_kwargs.pop("headers", {}) or {})
+                extra_headers.pop("Authorization", None)
+                retry_kwargs["headers"] = self._prepare_headers(extra_headers or None)
+                retry_response = self.client.request(
+                    method=method, url=url, **retry_kwargs
+                )
                 return self._handle_response(
                     retry_response,
                     method=method,
@@ -1253,6 +1263,7 @@ class APIClient:
         page_token: str | None = None
         page_id: str | None = None
         page_count = 0
+        seen_cursors: set[str] = set()
 
         # Start with provided params or empty dict
         request_params = dict(params) if params else {}
@@ -1271,12 +1282,25 @@ class APIClient:
             if page_id is not None:
                 request_params["list_parameters.page_id"] = page_id
                 request_params.pop("list_parameters.page_token", None)
+                cursor_key = f"id:{page_id}"
             elif page_token is not None:
                 request_params["list_parameters.page_token"] = str(page_token)
                 request_params.pop("list_parameters.page_id", None)
+                cursor_key = f"token:{page_token}"
             else:
                 request_params.pop("list_parameters.page_token", None)
                 request_params.pop("list_parameters.page_id", None)
+                cursor_key = None
+
+            if cursor_key is not None:
+                if cursor_key in seen_cursors:
+                    self.logger.warning(
+                        "Repeated pagination cursor %s on %s; stopping to avoid loop.",
+                        cursor_key,
+                        normalized_url,
+                    )
+                    break
+                seen_cursors.add(cursor_key)
 
             # Make request
             response = self.get(

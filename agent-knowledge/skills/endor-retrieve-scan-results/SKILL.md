@@ -14,7 +14,7 @@ description: >-
 
 For **scan pipeline** regressions (bounded scan window, heuristic or explicit scan pairs, embedded `spec.logs` search, aggregate diffs), use [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) first, then return here with scan UUIDs and `Finding.list_for_context(scan)` for finding-level drill-down.
 
-Human-oriented reference: [docs/guides/retrieving-scan-results.md](../../../docs/guides/retrieving-scan-results.md). General **`traverse`** mechanics: [docs/contributing/namespace-traversal.md](../../../docs/contributing/namespace-traversal.md).
+Human-oriented reference: [docs/guides/retrieving-scan-results.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/retrieving-scan-results.md). General **`traverse`** mechanics: [docs/contributing/namespace-traversal.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contributing/namespace-traversal.md).
 
 ## Concepts
 
@@ -118,7 +118,7 @@ findings = client.Finding.list(
 | **User explicitly requests tenant-wide report** | **Yes** — selective `filter`, cap `max_pages` |
 | **update / delete on a resource** | **No** — pass the resource object or correct namespace |
 
-After `list(traverse=True)`, pass the **resource object** to `get` / `update` / `delete` (unless the list used `mask=` → dict rows). See [namespace-traversal.md](../../../docs/contributing/namespace-traversal.md#namespace-scoping-after-traverse).
+After `list(traverse=True)`, pass the **resource object** to `get` / `update` / `delete` (unless the list used `mask=` → dict rows). See [namespace-traversal.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contributing/namespace-traversal.md#namespace-scoping-after-traverse).
 
 ## Per-Branch Finding Deduplication
 
@@ -129,7 +129,7 @@ Findings are generated **per RepositoryVersion** (branch). Two scanned branches 
 | `spec.source_code_version.ref` | Branch the finding came from |
 | `context.type` / `context.id` | Scan plane (MAIN, CI_RUN, REF, …) |
 
-> **Agent note — `ref` shape:** `spec.source_code_version.ref` may be a **short branch name** (`main`) rather than `refs/heads/main`. Branch filters that assume full ref strings can return **zero rows**. List findings **without** a branch filter first, or use `RepositoryVersion.list` for scanned refs. See [AGENTS.md](../../../AGENTS.md#agent-notes).
+> **Agent note — `ref` shape:** `spec.source_code_version.ref` may be a **short branch name** (`main`) rather than `refs/heads/main`. Branch filters that assume full ref strings can return **zero rows**. List findings **without** a branch filter first, or use `RepositoryVersion.list` for scanned refs. See [AGENTS.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/AGENTS.md#agent-notes).
 
 ```python
 main_findings = client.Finding.list(

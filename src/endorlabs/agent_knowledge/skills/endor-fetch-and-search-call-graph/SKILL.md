@@ -46,7 +46,7 @@ Do **not** skip to ad-hoc `CallGraphData.decode` on the first `PackageVersion` r
 
 3. **Discover paths** — read **`context_manifest.json`** → `artifacts.callgraph_export`. Nested `callgraph_export/callgraph_export_manifest.json` lists decoded file paths.
 4. **Reuse only when present** — if a prior bundle exists under `workspace/projects/`, read its manifest first; do not re-fetch unless stale or `force` requested.
-5. **Single-PV spot-check (last resort)** — `client.CallGraphData.decode(package_version)` only after [PackageVersion selection](#packageversion-selection). See [facade-helpers.md](../../../docs/guides/facade-helpers.md).
+5. **Single-PV spot-check (last resort)** — `client.CallGraphData.decode(package_version)` only after [PackageVersion selection](#packageversion-selection). See [facade-helpers.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/facade-helpers.md).
 6. **Search** — `uv run endor-callgraph-search` with `--callables`, `--edges`, and patterns; use `--path-from` / `--path-to` for multi-hop BFS. Follow [path search protocol](call-graph-format-and-search.md#path-search-protocol).
 7. **Reason** — join on `method_id`; record direct edges **and** transitive chains when wrappers sit in between.
 
@@ -175,5 +175,5 @@ Use this structure in the final result:
 ## Documentation hops
 
 - Deep reference: [call-graph-format-and-search.md](call-graph-format-and-search.md)
-- Facade helpers: [facade-helpers.md](../../../docs/guides/facade-helpers.md) (`CallGraphData.decode` / `.fetch`)
+- Facade helpers: [facade-helpers.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/facade-helpers.md) (`CallGraphData.decode` / `.fetch`)
 - Platform docs: [https://docs.endorlabs.com/llms.txt](https://docs.endorlabs.com/llms.txt)

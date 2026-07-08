@@ -183,9 +183,7 @@ def export_risk_ranked_version_cardinality(
     finding_result = collect_estate_findings(
         client,
         estate_root,
-        max_workers=max_workers,
         max_pages=max_pages,
-        page_size=page_size,
         findings_output=findings_output,
     )
     if finding_result.errors and not finding_result.findings:

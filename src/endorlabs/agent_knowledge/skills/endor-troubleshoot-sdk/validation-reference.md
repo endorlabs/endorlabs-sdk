@@ -7,7 +7,7 @@ Use this when deciding whether a report is a client bug, wrong namespace scope,
 backend behavior, or model-sync drift.
 
 **Normative semantics:** `contracts/` shards in the wheel. Repo clone:
-[`docs/contracts.md`](../../../docs/contracts.md). **Model shape drift:**
+[`docs/contracts.md`](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contracts.md). **Model shape drift:**
 **endor-model-sync-drift** — not hand-edits under `src/endorlabs/generated/`.
 
 ---
@@ -91,11 +91,11 @@ When pytest skips or integration tests disagree with manual API use:
    namespace as tests (`ENDOR_NAMESPACE` or default `auri`).
 2. Run pytest **without** `--disable-warnings` to see skip vs SDK warning source.
 3. Follow cleanup and CREATE/try/finally patterns in
-   [`docs/contributing/integration-resource-tests.md`](../../../docs/contributing/integration-resource-tests.md).
+   [`docs/contributing/integration-resource-tests.md`](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contributing/integration-resource-tests.md).
 
 **Leftover test resources** after interrupted runs — list with endorctl, delete only
 rows matching test name/tag patterns (policies need both test tag and test-only name
-prefix). Repo clone: [`docs/contributing/troubleshooting.md`](../../../docs/contributing/troubleshooting.md).
+prefix). Repo clone: [`docs/contributing/troubleshooting.md`](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contributing/troubleshooting.md).
 
 ---
 

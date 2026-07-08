@@ -40,4 +40,4 @@ if scans:
 dm = client.Finding.to_dependency_metadata(finding_row)
 ```
 
-See [facade-helpers.md](../guides/facade-helpers.md) and [contracts.md](../contracts.md#generated-accessor-helpers).
+See [facade-helpers.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/facade-helpers.md) and [contracts.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contracts.md#generated-accessor-helpers).

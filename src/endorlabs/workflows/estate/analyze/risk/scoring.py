@@ -12,6 +12,7 @@ FINDING_LEVEL_HIGH = "FINDING_LEVEL_HIGH"
 
 DEFAULT_CRITICAL_WEIGHT = 4.0
 DEFAULT_HIGH_WEIGHT = 2.0
+DEFAULT_MISSING_EPSS_PRIOR = 0.004
 
 
 @dataclass
@@ -159,6 +160,16 @@ class EpssWeightedScorer:
     name: str = "epss_weighted"
     critical_weight: float = DEFAULT_CRITICAL_WEIGHT
     high_weight: float = DEFAULT_HIGH_WEIGHT
+    missing_epss_prior: float = DEFAULT_MISSING_EPSS_PRIOR
+
+    def _epss_multiplier(self, spec: dict[str, Any]) -> float:
+        epss_block = spec.get("epss_score")
+        if not isinstance(epss_block, dict):
+            return self.missing_epss_prior
+        raw = epss_block.get("score")
+        if raw is None:
+            return self.missing_epss_prior
+        return max(float(raw), 0.0)
 
     def score_finding(self, finding: dict[str, Any]) -> float:
         spec = finding.get("spec") or {}
@@ -170,14 +181,7 @@ class EpssWeightedScorer:
             base = self.high_weight
         if base <= 0:
             return 0.0
-        epss_block = spec.get("epss_score")
-        epss = 0.0
-        if isinstance(epss_block, dict):
-            raw = epss_block.get("score")
-            if raw is not None:
-                epss = float(raw)
-        multiplier = epss if epss > 0 else 1.0
-        return base * multiplier
+        return base * self._epss_multiplier(spec)
 
     def aggregate_packages(
         self, findings: list[dict[str, Any]]
