@@ -104,6 +104,7 @@ When editing `src/endorlabs/**`:
 - **Security:** credentials via env; run `endorctl scan` before code changes.
 - **Examples in git:** canonical repo `endorlabs/endorlabs-sdk`; no customer tenants/UUIDs in tracked content.
 - **Maintainer tooling:** one home per pre-commit guard; shared staged-path helpers in `devtools/git_staged.py` and `endorlabs.utils.repo_paths` — rule `endor-maintainer-tooling`, [devtools/README.md](../../devtools/README.md).
+- **Environment variables:** do not invent `ENDOR_*` names; cite Endor Labs docs; read with `os.getenv`; never mutate `os.environ` or `.env` unless a human explicitly requests it — rule `endor-environment-variables`.
 
 CI, model-sync, and drift gates: [CONTRIBUTORS.md](../../CONTRIBUTORS.md), [docs-drift-workflow.md](docs-drift-workflow.md), [devtools/sync/README.md](../../devtools/sync/README.md).
 

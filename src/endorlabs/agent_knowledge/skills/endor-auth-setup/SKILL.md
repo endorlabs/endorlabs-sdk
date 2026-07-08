@@ -18,24 +18,53 @@ rules live in [errors-and-auth](../../contracts/errors-and-auth.md).
   see [README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/README.md#agent-bootstrap-discover-vs-init).
 - **Not for CI:** browser refresh opens localhost:30000 and requires a human present.
 
+## Environment variables (Tier A — ongoing sessions)
+
+| Variable | When to set | endorctl flag | SDK / `endor-auth` |
+|----------|-------------|---------------|---------------------|
+| `ENDOR_TOKEN` | After browser refresh | `--token` | Yes |
+| `ENDOR_API_CREDENTIALS_KEY` + `SECRET` | CI / automation | `--api-key` / `--api-secret` | Yes |
+| `ENDOR_NAMESPACE` | Tenant-scoped work; SSO tenant root (`<tenant>.<child>` → `<tenant>`) | `-n` / `--namespace` | Yes |
+| `ENDOR_API` | Non-default API host | `-a` / `--api` | Yes |
+| `ENDOR_CONFIG_PATH` | Non-default endorctl config dir | `--config-path` | Yes (namespace fallback) |
+
+**SSO tenant precedence** (refresh + reauth): `endor-auth refresh -n` → `ENDOR_NAMESPACE` (shell, then `.env`) → `ENDOR_NAMESPACE` in endorctl `config.yaml` (via `ENDOR_CONFIG_PATH`).
+
+**Single auth mode:** never set `ENDOR_TOKEN` and both API key vars (same rule as endorctl). No `ENDOR_AUTH_MODE` env — unset one credential set or pass `auth_method=` to `Client(...)` in code.
+
+**Do not document or invent:** `ENDOR_AUTH_TENANT`, `ENDOR_AUTH_MODE`, `ENDOR_AUTH_METHOD`, `ENDOR_BROWSER`, `ENDOR_AUTH_INTERACTIVE`, `ENDOR_AUTH_PERSIST_TOKEN`, `ENDOR_ADMIN_TOKEN`, `ENDOR_TOKEN_REFRESH_METHOD`.
+
+### `endorctl init` env vars (Tier B — init-time only)
+
+| Variable | Flag | Use |
+|----------|------|-----|
+| `ENDOR_INIT_AUTH_MODE` | `--auth-mode` | `sso`, `google`, `github`, `gitlab`, `azureadv2` |
+| `ENDOR_INIT_AUTH_TENANT` | `--auth-tenant` | Required for `sso` |
+| `ENDOR_INIT_AUTH_EMAIL` | `--auth-email` | Email-link login |
+| `ENDOR_INIT_HEADLESS_MODE` | `--headless-mode` | Headless init |
+
+*These apply only while running `endorctl init`. They are not read by `endor-auth refresh` or `Client()` for day-to-day API work. After init, use Tier A vars (or config file).*
+
 ## Quick start
 
 ```bash
 # 1. Probe env + whoami (no secret output)
-uv run endor-auth check --tenant <tenant>
+uv run endor-auth check --tenant <namespace>
 
 # 2. If missing or expired — interactive browser SSO into .env
 uv run endor-auth refresh --method sso -n <tenant>
 
 # 3. Re-check, then run workflows with --env-file
-uv run --env-file .env endor-auth check --tenant <tenant>
+uv run --env-file .env endor-auth check --tenant <namespace>
 ```
 
 JSON for agents:
 
 ```bash
-uv run endor-auth check --tenant <tenant> --json
+uv run endor-auth check --tenant <namespace> --json
 ```
+
+Fields include `auth_mode_resolved`, `sso_tenant_resolved`, `browser_auth_method_resolved`, and `whoami.expires_in_seconds`.
 
 ## CLI (`endor-auth`)
 
@@ -49,7 +78,7 @@ uv run endor-auth check --tenant <tenant> --json
 | Flag | Default | Meaning |
 |------|---------|---------|
 | **`--tenant`** | unset | Pass to `Client(tenant=…)`; falls back to `ENDOR_NAMESPACE` / endorctl config |
-| **`--json`** | off | Structured summary (`status`, `environment`, `endorctl`, `whoami`, `next_steps`) |
+| **`--json`** | off | Structured summary (`status`, `environment`, `endorctl`, `whoami`, `next_steps`, `auth_mode_resolved`, `sso_tenant_resolved`) |
 
 Exit **0** when `status=ready`; **1** otherwise.
 
@@ -66,11 +95,18 @@ Exit **0** when `status=ready`; **1** otherwise.
 
 Does **not** print the token — only confirms the file was updated.
 
+## endorctl entrypoint
+
+```bash
+endorctl init --auth-mode=sso --auth-tenant=<tenant>
+```
+
+Persists credentials and namespace under `~/.endorctl/` (or `ENDOR_CONFIG_PATH`).
+
 ## Library
 
 `verify_auth` bundles `scan_auth_env`, `probe_endorctl`, and `Client().whoami()`.
-Call pieces separately when you only need env or endorctl probes. Session layer map:
-`endorlabs.workflows.auth.session` module docstring.
+Call pieces separately when you only need env or endorctl probes.
 
 ```python
 from endorlabs.workflows.auth import (
@@ -81,7 +117,7 @@ from endorlabs.workflows.auth import (
 )
 
 scan = scan_auth_env()
-result = verify_auth(tenant="<tenant>")
+result = verify_auth(tenant="<namespace>")
 endorctl = probe_endorctl()
 ```
 
@@ -92,15 +128,23 @@ endorctl = probe_endorctl()
 | `dual_mode_conflict` | Unset `ENDOR_TOKEN` **or** both API key env vars — [errors-and-auth](../../contracts/errors-and-auth.md) |
 | No creds, `endorctl` on PATH | `endorctl init --auth-mode=sso --auth-tenant=<tenant>` (persists to `~/.endorctl/config.yaml`) |
 | No creds, SDK-only | API key in `.env` **or** `endor-auth refresh --method sso -n <tenant>` |
+| Bearer without `ENDOR_NAMESPACE` | Set `ENDOR_NAMESPACE` or pass `-n` / `--tenant` |
 | `whoami` fails / 401 | `endor-auth refresh` (token expired) |
 | `whoami` fails / 403 | Wrong tenant or insufficient scope — fix `ENDOR_NAMESPACE` / credential access |
 | Creds OK | Proceed to task skills (`endor-retrieve-scan-results`, …) with `uv run --env-file .env` |
 
 **Single auth mode:** SDK, endorctl, and MCP must not mix bearer token and API key in the same environment.
 
-## API key alternative (CI / automation)
+## `.env` primer
 
-Set in `.env` (never commit secrets):
+```bash
+ENDOR_TOKEN=...
+ENDOR_NAMESPACE=<tenant.namespace>
+```
+
+Use **one** credential mode per file (bearer **or** API key pair).
+
+## API key alternative (CI / automation)
 
 ```bash
 ENDOR_API_CREDENTIALS_KEY=...
@@ -110,8 +154,21 @@ ENDOR_NAMESPACE=<tenant.namespace>
 
 Verify: `uv run --env-file .env endor-auth check`.
 
-Platform reference (after `init(include_user_docs=True)`):
-`.endorlabs-context/platform/user-docs/developers-api/cli/install-and-configure.md`
+## Harness matrix
+
+| Harness | Auth behavior |
+|---------|----------------|
+| Human local | `endor-auth refresh` then `uv run --env-file .env` workflows |
+| Agent / sandbox (no browser) | Run `endor-auth check`; output `endor-auth refresh` for human — do not open browser |
+| Long scripted session | One `Client` instance; bearer sessions warn before expiry, then raise `UnauthorizedError` when expired |
+| Persist token | **Only** `endor-auth refresh` — `Client` never writes refreshed bearer state to disk |
+
+## Expired token mid-session
+
+- **In-memory only:** one `Client` instance holds the bearer until it expires; no `.env` or `os.environ` writes.
+- **Proactive:** when expiry is within 30 minutes, `Client` prints a **one-time stderr warning** (no token values) with the matching `endor-auth refresh --method …` command; `endor-auth check --json` also exposes `expires_in_seconds`.
+- **Expired / 401:** bearer auth fails closed with `UnauthorizedError`; rerun `endor-auth refresh` before continuing.
+- **Next process:** run `endor-auth refresh` (or pass `token=` again) — child shells do not inherit in-memory tokens.
 
 ## Related skills
 

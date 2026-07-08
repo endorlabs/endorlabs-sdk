@@ -34,6 +34,7 @@ from .authentication_log import (
     probe_auth_logs,
 )
 from .dotenv import read_dotenv_value, read_env_or_dotenv, upsert_dotenv_key
+from .env_resolution import resolve_sso_tenant, sso_tenant_from_namespace
 from .session import (
     AuthEnvironmentScan,
     AuthVerification,
@@ -43,9 +44,7 @@ from .session import (
     probe_endorctl,
     refresh_token_to_dotenv,
     resolve_api_environment,
-    resolve_sso_tenant,
     scan_auth_env,
-    sso_tenant_from_namespace,
     verify_auth,
 )
 

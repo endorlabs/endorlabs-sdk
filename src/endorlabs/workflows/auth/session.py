@@ -37,6 +37,11 @@ from endorlabs.utils.redaction import (
 )
 
 from .dotenv import read_env_or_dotenv, upsert_dotenv_key
+from .env_resolution import (
+    browser_method_from_auth_payload,
+    resolve_auth_mode_resolved,
+    resolve_sso_tenant,
+)
 
 if TYPE_CHECKING:
     from endorlabs.core.whoami import WhoamiResult
@@ -117,6 +122,9 @@ class AuthVerification:
     endorctl: EndorctlProbe
     whoami: WhoamiResult | None = None
     namespace_source: str | None = None
+    auth_mode_resolved: str | None = None
+    sso_tenant_resolved: str | None = None
+    browser_auth_method_resolved: str | None = None
     error: str | None = None
     next_steps: tuple[str, ...] = field(default_factory=tuple)
 
@@ -128,6 +136,12 @@ class AuthVerification:
             "endorctl": self.endorctl.to_dict(),
             "next_steps": list(self.next_steps),
         }
+        if self.auth_mode_resolved:
+            payload["auth_mode_resolved"] = self.auth_mode_resolved
+        if self.sso_tenant_resolved:
+            payload["sso_tenant_resolved"] = self.sso_tenant_resolved
+        if self.browser_auth_method_resolved:
+            payload["browser_auth_method_resolved"] = self.browser_auth_method_resolved
         if self.whoami is not None:
             payload["whoami"] = {
                 "identity": self.whoami.identity,
@@ -149,14 +163,6 @@ class AuthVerification:
     def to_json(self, *, indent: int = 2) -> str:
         """Return ``to_dict()`` as a JSON string."""
         return json.dumps(self.to_dict(), indent=indent, sort_keys=True)
-
-
-def sso_tenant_from_namespace(namespace: str) -> str:
-    """Use the root tenant segment for SSO (``tenant.child`` → ``tenant``)."""
-    cleaned = namespace.strip()
-    if not cleaned:
-        return ""
-    return cleaned.split(".", 1)[0]
 
 
 def scan_auth_env() -> AuthEnvironmentScan:
@@ -215,27 +221,6 @@ def resolve_api_environment(env_file: Path | None = None) -> str:
     if environment == api_base:
         environment = "endorlabs.com"
     return environment
-
-
-def resolve_sso_tenant(
-    *,
-    namespace: str | None,
-    env_file: Path | None = None,
-) -> str | None:
-    """Resolve SSO tenant from explicit namespace, env, dotenv, or endorctl config."""
-    if namespace and namespace.strip():
-        return sso_tenant_from_namespace(namespace)
-
-    path = env_file or Path(".env")
-    for source in (
-        read_env_or_dotenv(_NAMESPACE_ENV_KEY, path),
-        read_endorctl_namespace(),
-    ):
-        if source:
-            tenant = sso_tenant_from_namespace(source)
-            if tenant:
-                return tenant
-    return None
 
 
 def build_browser_auth_kwargs(
@@ -340,6 +325,12 @@ def _build_next_steps(
         )
         return tuple(steps)
 
+    if scan.has_bearer_token and not scan.has_namespace_env:
+        steps.append(
+            "Set ENDOR_NAMESPACE (or pass -n / --tenant) for SSO tenant resolution "
+            "and Client namespace defaults."
+        )
+
     if not scan.has_any_credentials:
         if endorctl.on_path:
             steps.append(
@@ -396,9 +387,34 @@ def verify_auth(
     scan = scan_auth_env()
     endorctl = probe_endorctl()
     ns_source = _namespace_resolution_label(tenant)
+    auth_mode = resolve_auth_mode_resolved(
+        has_bearer_token=scan.has_bearer_token,
+        has_api_key_pair=scan.has_api_key_pair,
+        dual_mode_conflict=scan.dual_mode_conflict,
+    )
+    sso_tenant = resolve_sso_tenant(namespace=tenant)
+
+    def _verification(
+        **kwargs: object,
+    ) -> AuthVerification:
+        whoami = kwargs.get("whoami")
+        resolved_browser: str | None = None
+        if whoami is not None:
+            resolved_browser = browser_method_from_auth_payload(
+                {
+                    "authentication_source": whoami.authentication_source,
+                    "user": {"spec": {"email": whoami.identity}},
+                }
+            )
+        return AuthVerification(
+            auth_mode_resolved=auth_mode,
+            sso_tenant_resolved=sso_tenant,
+            browser_auth_method_resolved=resolved_browser,
+            **kwargs,
+        )
 
     if scan.dual_mode_conflict:
-        return AuthVerification(
+        return _verification(
             status="dual_mode_conflict",
             environment=scan,
             endorctl=endorctl,
@@ -407,7 +423,7 @@ def verify_auth(
         )
 
     if not scan.has_any_credentials:
-        return AuthVerification(
+        return _verification(
             status="missing_credentials",
             environment=scan,
             endorctl=endorctl,
@@ -423,7 +439,7 @@ def verify_auth(
         client.close()
     except ValidationError as exc:
         message = redact_sensitive_text(str(exc)) or str(exc)
-        return AuthVerification(
+        return _verification(
             status="verification_failed",
             environment=scan,
             endorctl=endorctl,
@@ -433,7 +449,7 @@ def verify_auth(
         )
     except Exception as exc:
         message = redact_sensitive_text(str(exc)) or str(exc)
-        return AuthVerification(
+        return _verification(
             status="verification_failed",
             environment=scan,
             endorctl=endorctl,
@@ -443,7 +459,7 @@ def verify_auth(
         )
 
     if not whoami.identity:
-        return AuthVerification(
+        return _verification(
             status="verification_failed",
             environment=scan,
             endorctl=endorctl,
@@ -453,7 +469,7 @@ def verify_auth(
             next_steps=_build_next_steps(scan, endorctl, error="no identity"),
         )
 
-    return AuthVerification(
+    return _verification(
         status="ready",
         environment=scan,
         endorctl=endorctl,

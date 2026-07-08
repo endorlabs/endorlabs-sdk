@@ -245,6 +245,7 @@ class TestTokenExpirationTracking:
         future_time = datetime.now(UTC) + timedelta(hours=4)
         expiration_str = future_time.strftime("%Y-%m-%dT%H:%M:%SZ")
         verify_response = _v1_auth_get_response(expiration_str)
+        verify_response.json.return_value["authentication_source"] = "google"
 
         with _patch_httpx_client(get_return=verify_response):
             client = APIClient(token="direct-bearer-token")
@@ -259,20 +260,14 @@ class TestTokenExpirationTracking:
         assert not any("meta/version" in url for url in get_urls)
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
-    @patch("endorlabs.auth_server.get_token")
-    def test_bearer_expired_triggers_reauthentication(
-        self, mock_get_token: Mock
-    ) -> None:
-        """Expired bearer sessions call authenticate() on token access."""
+    def test_bearer_expired_raises_refresh_hint(self) -> None:
+        """Expired bearer sessions should fail closed on token access."""
+        from endorlabs.core.exceptions import UnauthorizedError
+
         expired = datetime.now(UTC) - timedelta(minutes=5)
         near_expired = _v1_auth_get_response(expired.strftime("%Y-%m-%dT%H:%M:%SZ"))
-        fresh_exp = (datetime.now(UTC) + timedelta(hours=4)).strftime(
-            "%Y-%m-%dT%H:%M:%SZ"
-        )
-        refreshed = _v1_auth_get_response(fresh_exp)
-        mock_get_token.return_value = "fresh-browser-token"
 
-        with _patch_httpx_client(get_return=[near_expired, refreshed]):
+        with _patch_httpx_client(get_return=near_expired):
             client = APIClient(auth_method="browser-auth")
             client._apply_session_token(
                 "stale-token",
@@ -280,10 +275,8 @@ class TestTokenExpirationTracking:
                 expiration_source="v1_auth",
                 browser_validated=True,
             )
-            token = client.token
-
-        assert token == "fresh-browser-token"
-        assert mock_get_token.call_count == 2
+            with pytest.raises(UnauthorizedError, match="endor-auth refresh"):
+                _ = client.token
 
 
 @pytest.mark.writes
@@ -295,17 +288,19 @@ class TestBrowserAuthentication:
     def test_browser_auth_alias_normalizes_to_browser_auth(
         self, mock_get_token: Mock
     ) -> None:
-        """`browser` alias should normalize to canonical browser-auth mode."""
+        """`browser` alias should normalize to sso with insider tenant."""
         mock_get_token.return_value = "browser-token-123"
 
         with _patch_httpx_client(get_return=_auth_get_response()):
             client = APIClient(auth_method="browser")
 
-        assert client.auth_method == "browser-auth"
+        assert client.auth_method == "sso"
+        assert client._auth_tenant == "endor-admin"
         assert client._auth_type == "browser"
         assert client._token == "browser-token-123"
         mock_get_token.assert_called_once()
-        assert mock_get_token.call_args.kwargs["method"] == "browser-auth"
+        assert mock_get_token.call_args.kwargs["method"] == "sso"
+        assert mock_get_token.call_args.kwargs["auth_tenant"] == "endor-admin"
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
@@ -352,27 +347,10 @@ class TestBrowserAuthentication:
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
-    def test_browser_auth_with_invalid_provided_token_falls_back(
+    def test_browser_auth_with_invalid_provided_token_fails_closed(
         self, mock_get_token: Mock
     ) -> None:
-        """Invalid provided token should trigger one browser fallback attempt."""
-        invalid_response = _v1_auth_get_response(status_code=401)
-        valid_response = _v1_auth_get_response()
-        mock_get_token.return_value = "browser-token-123"
-
-        with _patch_httpx_client(get_return=[invalid_response, valid_response]):
-            client = APIClient(token="invalid-token", auth_method="browser")
-
-        assert client._auth_type == "browser"
-        assert client._token == "browser-token-123"
-        mock_get_token.assert_called_once()
-
-    @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
-    @patch("endorlabs.auth_server.get_token")
-    def test_browser_auth_with_invalid_provided_token_and_no_fallback_token(
-        self, mock_get_token: Mock
-    ) -> None:
-        """Invalid provided token with failed fallback should return no token."""
+        """Invalid provided token should not trigger browser fallback."""
         invalid_response = _v1_auth_get_response(status_code=401)
 
         with _patch_httpx_client(get_return=invalid_response):
@@ -380,17 +358,123 @@ class TestBrowserAuthentication:
 
         assert client._auth_type == "browser"
         assert client._token is None
-        mock_get_token.assert_called_once()
+        mock_get_token.assert_not_called()
 
-    @patch.dict(os.environ, {"ENDOR_TOKEN": "env-token-789"}, clear=True)
-    def test_token_from_env_uses_token_validation_flow(self) -> None:
-        """ENDOR_TOKEN alone should trigger token validation auth path."""
-        with _patch_httpx_client(get_return=_auth_get_response()):
-            client = APIClient()
+    @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
+    @patch("endorlabs.auth_server.get_token")
+    def test_browser_auth_with_invalid_provided_token_keeps_browser_closed(
+        self, mock_get_token: Mock
+    ) -> None:
+        """Invalid provided token should return no token and not open browser."""
+        invalid_response = _v1_auth_get_response(status_code=401)
+
+        with _patch_httpx_client(get_return=invalid_response):
+            client = APIClient(token="invalid-token", auth_method="browser")
 
         assert client._auth_type == "browser"
-        assert client.auth_method == "browser-auth"
-        assert client._token == "env-token-789"
+        assert client._token is None
+        mock_get_token.assert_not_called()
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_TOKEN": "env-token-789",
+            "ENDOR_NAMESPACE": "customer.child",
+        },
+        clear=True,
+    )
+    def test_token_from_env_learns_method_from_authentication_source(self) -> None:
+        """Bearer method should persist from GET /v1/auth when env method unset."""
+        auth_response = _v1_auth_get_response()
+        auth_response.json.return_value["authentication_source"] = "google"
+
+        with _patch_httpx_client(get_return=auth_response):
+            client = APIClient()
+
+        assert client.auth_method == "google"
+        assert client._auth_method_pending_resolution is False
+
+    @patch.dict(os.environ, {"ENDOR_TOKEN": "env-token-789"}, clear=True)
+    @patch(
+        "endorlabs.workflows.auth.env_resolution.resolve_sso_tenant",
+        return_value=None,
+    )
+    def test_token_from_env_without_learnable_method_raises(
+        self, mock_resolve: Mock
+    ) -> None:
+        """Bearer without /v1/auth provider hints or namespace should fail."""
+        assert mock_resolve.return_value is None
+        auth_response = _v1_auth_get_response()
+        auth_response.json.return_value["authentication_source"] = "unknown-provider"
+
+        with (
+            pytest.raises(
+                ValidationError, match="Cannot determine bearer refresh hint"
+            ),
+            _patch_httpx_client(get_return=auth_response),
+        ):
+            _ = APIClient()
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_TOKEN": "env-token-789",
+            "ENDOR_NAMESPACE": "customer.child",
+        },
+        clear=True,
+    )
+    def test_expired_bearer_raises_refresh_hint_with_learned_google_method(
+        self,
+    ) -> None:
+        """Expired bearer tokens fail closed with a method-specific refresh hint."""
+        from endorlabs.core.exceptions import UnauthorizedError
+
+        past = datetime.now(UTC) - timedelta(hours=1)
+
+        initial_valid = _v1_auth_get_response()
+        initial_valid.json.return_value["user"] = {
+            "spec": {"email": "user@corp@google"}
+        }
+
+        with _patch_httpx_client(get_return=initial_valid):
+            client = APIClient()
+            client._token_expires = past
+            with pytest.raises(
+                UnauthorizedError,
+                match=r"endor-auth refresh --method google",
+            ):
+                _ = client.token
+
+        assert client.auth_method == "google"
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_TOKEN": "env-token-789",
+            "ENDOR_NAMESPACE": "customer.child",
+        },
+        clear=True,
+    )
+    def test_bearer_expiry_warning_prints_to_stderr_once(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Proactive bearer expiry should warn on stderr without printing the token."""
+        future = datetime.now(UTC) + timedelta(minutes=20)
+        expiration_str = future.strftime("%Y-%m-%dT%H:%M:%SZ")
+        auth_response = _v1_auth_get_response(expiration_str)
+        auth_response.json.return_value["user"] = {
+            "spec": {"email": "user@corp@google"}
+        }
+
+        with _patch_httpx_client(get_return=auth_response):
+            client = APIClient()
+            _ = client.token
+            _ = client.token
+
+        err = capsys.readouterr().err
+        assert err.count("warning: Bearer token expires in") == 1
+        assert "endor-auth refresh" in err
+        assert "env-token-789" not in err
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
@@ -410,48 +494,28 @@ class TestBrowserAuthentication:
         mock_get_token.assert_called_once()
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
-    @patch("endorlabs.auth_server.get_token")
-    def test_browser_401_triggers_single_browser_reauth_and_recovers(
-        self, mock_get_token: Mock
-    ) -> None:
-        """401 should trigger one browser fallback reauth for browser auth mode."""
-        initial_valid = _v1_auth_get_response()
-        invalid_direct = _v1_auth_get_response(status_code=401)
-        fallback_valid = _v1_auth_get_response()
-        mock_get_token.return_value = "browser-token-reauth"
+    def test_browser_401_raises_refresh_hint_without_browser_reauth(self) -> None:
+        """Bearer/browser sessions fail closed on 401 instead of reopening browser auth."""
+        from endorlabs.core.exceptions import UnauthorizedError
 
-        with _patch_httpx_client(
-            get_return=[initial_valid, invalid_direct, fallback_valid]
-        ):
+        initial_valid = _v1_auth_get_response()
+
+        with _patch_httpx_client(get_return=initial_valid):
             client = APIClient(token="direct-token", auth_method="browser")
-            assert client.client is not None
-            client.client.request.return_value = Mock(
-                status_code=200,
-                raise_for_status=Mock(),
-                text='{"ok":true}',
-                url="https://api.endorlabs.com/v1/projects",
-                headers={},
-            )
 
             unauthorized = Mock()
             unauthorized.status_code = 401
             unauthorized.url = "https://api.endorlabs.com/v1/projects"
             unauthorized.headers = {}
             unauthorized.text = "Unauthorized"
-
             unauthorized.raise_for_status.side_effect = httpx.HTTPStatusError(
                 "401 Unauthorized",
                 request=Mock(),
                 response=unauthorized,
             )
 
-            result = client._handle_response(
-                unauthorized, method="GET", url="/v1/projects"
-            )
-
-        assert result.status_code == 200
-        assert client._token == "browser-token-reauth"
-        mock_get_token.assert_called_once()
+            with pytest.raises(UnauthorizedError, match="endor-auth refresh"):
+                client._handle_response(unauthorized, method="GET", url="/v1/projects")
 
 
 class TestAuthenticationBackwardCompatibility:
@@ -512,8 +576,12 @@ class TestAuthenticationBackwardCompatibility:
         clear=True,
     )
     def test_sso_mode_requires_auth_tenant(self) -> None:
-        """SSO mode should require explicit auth_tenant."""
+        """SSO mode should require explicit or resolvable auth_tenant."""
         with (
+            patch(
+                "endorlabs.workflows.auth.env_resolution.resolve_sso_tenant",
+                return_value=None,
+            ),
             pytest.raises(ValidationError, match="requires auth_tenant"),
             _patch_httpx_client(get_return=_auth_get_response()),
         ):
@@ -628,19 +696,24 @@ class TestDualAuthEnv:
     @patch.dict(
         os.environ,
         {
-            "ENDOR_TOKEN": "env-token-789",
-            "ENDOR_API_CREDENTIALS_KEY": "key",
-            "ENDOR_API_CREDENTIALS_SECRET": "secret",
+            "ENDOR_TOKEN": "env-token",
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_NAMESPACE": "tenant.ns",
         },
         clear=True,
     )
     def test_dual_auth_logs_info_and_prefers_token(
         self, caplog: pytest.LogCaptureFixture
     ) -> None:
+        auth_response = _auth_get_response()
+        auth_response.json.return_value["user"] = {
+            "spec": {"email": "user@corp@google"}
+        }
         with caplog.at_level("INFO", logger="endorlabs.api_client"):
-            with _patch_httpx_client(get_return=_auth_get_response()):
+            with _patch_httpx_client(get_return=auth_response):
                 client = APIClient()
-        assert client.auth_method == "browser-auth"
+        assert client.auth_method == "google"
         assert client._auth_type == "browser"
         messages = " ".join(record.message for record in caplog.records)
         assert "ENDOR_TOKEN" in messages
