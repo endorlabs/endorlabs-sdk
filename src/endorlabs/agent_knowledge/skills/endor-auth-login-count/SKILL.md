@@ -189,6 +189,7 @@ Report total identities, total login events, top identities by count, and the CS
 | Need | Skill |
 | ---- | ----- |
 | Login count / activity audit | **This skill** |
+| API key expiration audit | [endor-auth-credential-expiry](../endor-auth-credential-expiry/SKILL.md) |
 | Single-user SSO failure or policy correlation | [endor-troubleshoot-authlog](../endor-troubleshoot-authlog/SKILL.md) |
 | SSO integration validation | [endor-sso-integration-validation-troubleshooting](../endor-sso-integration-validation-troubleshooting/SKILL.md) |
 | SDK list / traverse errors | [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md) |

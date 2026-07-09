@@ -17,6 +17,21 @@
     "agent_visible": true,
     "cli": null,
     "default_output": null,
+    "id": "auth-credential-expiry",
+    "library_entrypoints": [
+      "endorlabs.workflows.auth.audit_api_key_expiry",
+      "endorlabs.workflows.auth.list_api_keys",
+      "endorlabs.workflows.auth.classify_expiration",
+      "endorlabs.workflows.auth.build_credential_expiry_row",
+      "endorlabs.workflows.auth.expiry_upper_bound_filter"
+    ],
+    "module": "endorlabs.workflows.auth.credential_expiry",
+    "skill": "endor-auth-credential-expiry"
+  },
+  {
+    "agent_visible": true,
+    "cli": null,
+    "default_output": null,
     "id": "auth-login-count",
     "library_entrypoints": [
       "endorlabs.workflows.auth.count_logins_from_groups",
