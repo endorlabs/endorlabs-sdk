@@ -41,6 +41,7 @@ Each skill is a directory with `SKILL.md` plus optional reference files. Format:
 | [endor-troubleshoot-authlog](endor-troubleshoot-authlog/) | AuthenticationLog / AuthorizationPolicy / SSO login troubleshooting | Skill-owned |
 | [endor-auth-setup](endor-auth-setup/) | Probe, verify, and refresh SDK credentials (`endor-auth check` / `refresh`) | `endorlabs.workflows.auth` |
 | [endor-auth-login-count](endor-auth-login-count/) | AuthenticationLog login counts by identity (CSV; default 90-day window; tenant list path) | `endorlabs.workflows.auth` |
+| [endor-auth-credential-expiry](endor-auth-credential-expiry/) | Tenant APIKey expiration audit (expired / expiring-soon CSV; default 30-day lookahead) | `endorlabs.workflows.auth` |
 | [endor-reachability-provenance](endor-reachability-provenance/) | Triaging conflicting reachability signals on findings | `endor-reachability-context` |
 | [endor-sso-integration-validation-troubleshooting](endor-sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, and claims-to-namespace troubleshooting | Skill-owned |
 | [endor-validate-policy](endor-validate-policy/) | Validate exception policies vs project findings (PolicyValidation API + endorctl parity) | `endorlabs.workflows.policies.validate` |
