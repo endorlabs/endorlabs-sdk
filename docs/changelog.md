@@ -8,12 +8,23 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- Agent skill `endor-auth-credential-expiry`: tenant APIKey expiration audit with CSV report and workflow helpers in `endorlabs.workflows.auth.credential_expiry`.
+- `parse_query_root_count()` — read integer totals from root count-only `Query.create` responses (`count_response` wire shape).
+- `reference_next_page_cursor()` / `wire_spec_with_reference_page_cursor()` — nested reference list pagination helpers for custom Query joins.
+
 ### Changed
 
 - Auth env parity: removed `ENDOR_AUTH_TENANT` / `ENDOR_INIT_AUTH_TENANT` reads from `Client`; no new auth env vars. Bearer refresh hints are learned in-memory from `GET /v1/auth` (not from namespace), but bearer sessions no longer reauthenticate mid-run. `Client` never writes `ENDOR_TOKEN` or mutates `os.environ`; bearer expiry/401 now fail closed with refresh guidance, while API-key auth retains transport-level reauthentication. Proactive expiry prints a one-time stderr warning (no secrets). `endor-auth check --json` adds `auth_mode_resolved`, `sso_tenant_resolved`, `browser_auth_method_resolved`. Disk persistence remains `endor-auth refresh` only.
 - Browser OAuth (`get_token` / `endor-auth refresh`): accept CLI redirects without CSRF `state`; poll callback until timeout (0.5.3).
+- Query docs: correct `list_parameters` support matrix; nested join mask and `count_dm` vs `list_groups` traps. Guide: [guides/query-recipes.md](guides/query-recipes.md).
+
+### Fixed
+
+- `client.Query.Project.collect_estate_findings` / `collect_prf_findings` now paginate nested reference lists via `meta.references[ref].list.response.next_page_token` on follow-up `Query.create` calls (previously returned only the first ~100 rows per project). Optional `max_reference_pages` caps continuation depth (parallel to `max_root_pages` on the root Project list).
 
 ### Breaking
+
+- Removed non-functional Query `group_by_time` builders (`QuerySpec.group_by_time`, `Reference.group_by_time`, `group_by_time_query_wire`). Time-bucket aggregation: `client.<LogKind>.list_groups(..., list_params=ListParameters(group_by_time=True))` or `endorlabs.workflows.logs.group_by_time.group_by_time_counts`.
 
 ## 0.5.3
 

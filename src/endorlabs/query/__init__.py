@@ -2,16 +2,22 @@
 
 Released in endorlabs 0.5.0; see docs/changelog.md for 0.5.3+ notes.
 
-The platform Query service returns a root Resource Kind plus nested references
-in one HTTP call. ``list_parameters`` on each node support filter, mask,
-count, group, group_by_time, and pagination — same as facade list.
+The platform Query service is **kind-agnostic**: any root Resource Kind plus
+nested references in one HTTP call. Supported ``list_parameters`` per node:
+``filter``, ``mask``, ``count``, root ``group`` (limited), pagination, and
+``traverse``. Time-bucket aggregation is **not** on Query — use facade
+``list_groups`` (e.g. ``FindingLog.list_groups``).
 
-Project-scoped recipes execute via ``client.Query.Project.*``. For masked
-lists, grouped rollups, or deeper nests, use ``QuerySpec`` with
-``client.Query.execute`` / ``at_namespace`` or ``create(payload=...)``.
+**Default:** ``QuerySpec`` + ``client.Query.execute`` / ``at_namespace`` for
+validated join shapes at a wire namespace.
 
-POST URL namespace must match each project's wire namespace
-(``tenant_meta.namespace``); ``QueryScope`` carries namespace + optional UUID keys.
+**Estate recipes:** ``client.Query.Project.*`` — validated project-sharded
+dashboard patterns (counts, masked finding joins, topology discovery).
+
+POST URL namespace must match the target wire namespace
+(``tenant_meta.namespace``); ``QueryScope`` carries namespace + optional keys.
+UUID batching via ``keys`` applies when ``QuerySpec.root_has_uuid_keys()`` —
+Project only today.
 """
 
 from .execute import (
@@ -35,9 +41,14 @@ from .parse import (
     parse_project_multi_reference_counts,
     parse_project_reference_counts,
     parse_project_reference_list_totals,
+    parse_query_root_count,
     reference_count,
     reference_list_total,
+    reference_next_page_cursor,
+    reference_next_page_token,
     reference_total,
+    wire_spec_with_reference_page_cursor,
+    wire_spec_with_reference_page_token,
 )
 from .preflight import preflight_count
 from .recipes import (
@@ -61,7 +72,7 @@ from .topology import (
     query_scopes_from_topology,
 )
 from .validate import ValidationResult, validate_sample
-from .wire import group_by_time_query_wire, group_query_wire
+from .wire import group_query_wire
 
 __all__ = [
     "UUID_BATCH_SIZE",
@@ -83,7 +94,6 @@ __all__ = [
     "extract_query_response",
     "finding_category_count_spec",
     "finding_severity_count_spec",
-    "group_by_time_query_wire",
     "group_projects_by_namespace",
     "group_query_wire",
     "infer_archetype",
@@ -95,6 +105,7 @@ __all__ = [
     "parse_project_multi_reference_counts",
     "parse_project_reference_counts",
     "parse_project_reference_list_totals",
+    "parse_query_root_count",
     "preflight_count",
     "prf_ecosystem_count_spec",
     "prf_findings_list_spec",
@@ -107,7 +118,11 @@ __all__ = [
     "recommend",
     "reference_count",
     "reference_list_total",
+    "reference_next_page_cursor",
+    "reference_next_page_token",
     "reference_total",
     "scopes_from_projects",
     "validate_sample",
+    "wire_spec_with_reference_page_cursor",
+    "wire_spec_with_reference_page_token",
 ]

@@ -13,11 +13,21 @@ summary: Classify OutputShape and discover topology before estate-scale list or 
 
 Before any **multi-project** or **tenant-wide** fetch:
 
-1. **`discover_topology(client, namespace)`** — bounded project geometry
-2. **`recommend(OutputShape, topology=...)`** — Query vs facade plan (non-executing)
-3. **`validate_sample(..., recipe="pv"|"findings"|"dm")`** — parity gate for **count** recipes
+1. **Classify grain** — per-project (estate dashboard) vs namespace-scoped (no Project root)
+2. **`discover_topology(client, namespace)`** — when per-project grain is needed
+3. **`recommend(OutputShape, topology=...)`** — Query vs facade plan (non-executing)
+4. **`validate_sample(..., recipe="pv"|"findings"|"dm")`** — parity gate for **Project-root count** recipes
 
-## Validated count joins → Query recipes
+## Generic graph joins (any root kind)
+
+Query is **kind-agnostic**. Use when the ask does not need per-project breakdown:
+
+- `client.Query.at_namespace(QuerySpec.root("<Kind>").count(...), namespace=…)`
+- `client.Query.execute(spec, [QueryScope(namespace=…)], parse=…)`
+
+See [query-recipes.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/query-recipes.md) counterexamples for Finding, ScanResult, PackageVersion, DependencyMetadata.
+
+## Validated Project-root count joins
 
 | OutputShape | Recipe |
 | ----------- | ------ |
@@ -31,8 +41,9 @@ Use **`fetch_online_dashboard_counts`** for estate HTML tiles without pulling fi
 
 | Pattern | Query shape | Workflow probe |
 | ------- | ----------- | -------------- |
-| PRF ecosystem totals | Project → Finding **count** refs × ecosystem | `.tmp/query_workflow_probes` `prf-counts` |
+| PRF ecosystem totals | Project → Finding **count** refs × ecosystem | `prf-counts` |
 | Masked findings per project | Project → Finding **list** ref | `finding-list-join` |
+| Latest scan metadata per project | Project → ScanResult **list** ref | `scan-latest-join` |
 | Nested RV + Metric | Project → RepositoryVersion → Metric **lists** | `nested-list` |
 
 See `.tmp/query_workflow_map.md` for join fields and filters.
@@ -41,9 +52,10 @@ See `.tmp/query_workflow_map.md` for join fields and filters.
 
 | OutputShape | Path |
 | ----------- | ---- |
-| `FINDING_ROWS` | `Finding.list_by_project` / `list_for_shards` |
-| `FINDING_LOG_TRENDS` | `FindingLog.list_groups` + `group_by_time` (Query `group_by_time` experimental) |
-| `DM_VERSION_CARDINALITY` | `DependencyMetadata.list_groups` per leaf namespace |
+| `FINDING_ROWS` | `Finding.list_by_project` / `list_for_shards` (Query collect only after join validated) |
+| `TENANT_FINDING_TOTALS` | Probe `Query.at_namespace` with `Finding` root; or facade `count` with bounds |
+| `FINDING_LOG_TRENDS` | `FindingLog.list_groups` + `group_by_time` |
+| `DM_VERSION_CARDINALITY` | `DependencyMetadata.list_groups` per leaf namespace — **not** `count_dm` |
 | Bulk IR / graph | `endor-estate pull` (explicit opt-in) |
 
 **`TopologySnapshot.project_shards()`** is the canonical list-plane shard source after `discover_topology` or `client.Query.Project.discover`.

@@ -1,0 +1,10 @@
+{
+  "uuid": "query-count-uuid",
+  "spec": {
+    "query_response": {
+      "count_response": {
+        "count": 917
+      }
+    }
+  }
+}

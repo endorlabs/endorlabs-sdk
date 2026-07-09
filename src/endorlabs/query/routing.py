@@ -65,7 +65,7 @@ def recommend(
             validate_recommended=False,
             notes=(
                 "No shipped SDK recipe; FindingLog.list_groups is workflow default.",
-                "Query list_parameters support group_by_time — probe before migrating.",
+                "Query.create does not support group_by_time; use facade list_groups.",
                 "Aggregate-first; shard per project on timeout.",
             ),
         )
@@ -77,8 +77,11 @@ def recommend(
             validate_recommended=False,
             notes=(
                 "Per-project DM count joins differ from version-bucket group rollups.",
-                "Use DependencyMetadata.list_groups per child namespace today.",
-                "Query list_parameters support group — probe for join-based rollups.",
+                "Root QuerySpec.root('DependencyMetadata').group(...) "
+                "validated for buckets.",
+                "Use DependencyMetadata.list_groups per child namespace, "
+                "or root Query group.",
+                "Do not use Query.Project.count_dm for version cardinality.",
             ),
         )
     if output_shape == OutputShape.OSS_COORDINATE_LOOKUP:
@@ -95,16 +98,27 @@ def recommend(
         OutputShape.FINDING_ROWS,
         OutputShape.TENANT_FINDING_TOTALS,
     ):
+        notes: tuple[str, ...]
+        if output_shape == OutputShape.TENANT_FINDING_TOTALS:
+            notes = (
+                "No per-project grain: probe Query.at_namespace with "
+                "QuerySpec.root('Finding').list_parameters(count=True) at leaf "
+                "namespace, or facade Finding.count with selective filter and bounds.",
+                "Per-project breakdown: Query.Project.collect after validate_sample.",
+                "Fallback: Finding.list or list_for_shards when rows needed.",
+            )
+        else:
+            notes = (
+                "Masked per-project row export: Query.Project.collect with estate "
+                "or PRF list specs after validate_sample.",
+                "Fallback: Finding.list_by_project or list_for_shards.",
+            )
         return QueryPlan(
             output_shape=output_shape,
             primary="query",
             shard_key="project",
             validate_recommended=True,
-            notes=(
-                "Masked per-project row export: Query.Project.collect with estate "
-                "or PRF list specs after validate_sample.",
-                "Fallback: Finding.list_by_project or list_for_shards.",
-            ),
+            notes=notes,
         )
 
     if output_shape == OutputShape.FINDING_CATEGORY_COUNTS:

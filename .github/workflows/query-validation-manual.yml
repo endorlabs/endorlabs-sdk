@@ -1,0 +1,104 @@
+name: Query validation (manual)
+
+# Live Query facade validation against a tenant with API key credentials.
+# Does not run on every PR — use workflow_dispatch or the weekly schedule.
+#
+# Required repository configuration (same as ci-pr-main integration tests):
+#   Variables: ENDOR_API, ENDOR_NAMESPACE
+#   Secrets: ENDOR_API_CREDENTIALS_KEY, ENDOR_API_CREDENTIALS_SECRET
+
+on:
+  workflow_dispatch:
+    inputs:
+      namespace:
+        description: "Tenant namespace (defaults to ENDOR_NAMESPACE variable)"
+        required: false
+        type: string
+      max_projects:
+        description: "Max projects for facade validation sample"
+        required: false
+        default: "8"
+        type: string
+      run_full_probes:
+        description: "Also run probe_workflows.py all (slower)"
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "0 6 * * 1"  # Mondays 06:00 UTC
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.13"
+  UV_VERSION: "0.9.3"
+
+jobs:
+  query-validation:
+    name: Query facade validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          uv-version: ${{ env.UV_VERSION }}
+
+      - name: Validate required secrets
+        run: |
+          set -euo pipefail
+          for name in ENDOR_API ENDOR_NAMESPACE ENDOR_API_CREDENTIALS_KEY ENDOR_API_CREDENTIALS_SECRET; do
+            if [ -z "${!name:-}" ]; then
+              echo "ERROR: $name is not set"
+              exit 1
+            fi
+          done
+        env:
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+
+      - name: Run query recipe integration tests
+        run: |
+          uv run pytest tests/integration/client/test_query_recipes.py -m integration -v --tb=short
+        env:
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+
+      - name: Run validate_query_facade probe
+        run: |
+          NS="${INPUT_NAMESPACE:-$ENDOR_NAMESPACE}"
+          MAX_PROJECTS="${INPUT_MAX_PROJECTS:-8}"
+          uv run python devtools/query_workflow_probes/validate_query_facade.py \
+            -n "$NS" \
+            --max-projects "$MAX_PROJECTS" \
+            --out /tmp/query_probe_results
+        env:
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          INPUT_NAMESPACE: ${{ inputs.namespace }}
+          INPUT_MAX_PROJECTS: ${{ inputs.max_projects }}
+
+      - name: Run full probe_workflows suite
+        if: github.event_name == 'workflow_dispatch' && inputs.run_full_probes == true
+        run: |
+          NS="${INPUT_NAMESPACE:-$ENDOR_NAMESPACE}"
+          uv run python devtools/query_workflow_probes/probe_workflows.py all \
+            -n "$NS" \
+            --max-projects 5 \
+            --out /tmp/query_probe_results
+        env:
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          INPUT_NAMESPACE: ${{ inputs.namespace }}

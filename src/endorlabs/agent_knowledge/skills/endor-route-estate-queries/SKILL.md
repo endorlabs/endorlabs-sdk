@@ -8,7 +8,7 @@ description: Routes estate-scale data pulls between Query graph joins and facade
 
 # Route estate queries (Query vs facade)
 
-**Default path:** classify the ask → discover topology → pick shard grain → validate on a sample → scale.
+**Default path:** classify the ask → pick grain (project vs namespace) → discover if needed → validate on a sample → scale.
 
 Normative parity: [query-vs-list-semantics contract](../../contracts/query-vs-list-semantics.md). Guide: [docs/guides/query-recipes.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/query-recipes.md).
 
@@ -19,21 +19,22 @@ Normative parity: [query-vs-list-semantics contract](../../contracts/query-vs-li
 | Dashboard **counts** across many projects | Single-project finding RCA |
 | Query graph joins vs `count()` / `list_groups` | Unvalidated custom joins at full tenant |
 | Topology discovery (bounded `Project.list`) | `endor-estate pull` unless user asks |
-| Sample validation before estate-wide Query | Policy validation |
+| Namespace-scoped Query (non-Project roots) | Policy validation |
+| Sample validation before estate-wide Query | |
 
 **Handoffs:** [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) (one repo rows) · [endor-project-retrieval-bundle](../endor-project-retrieval-bundle/SKILL.md) (single-project bundle) · [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md) (consumer graph).
 
-## Step 0 — Classify output
+## Step 0 — Classify output and grain
+
+### Per-project grain (estate dashboard)
 
 | User wants | `OutputShape` | Primary path |
 | ---------- | ------------- | ------------ |
-| PV / finding category counts per project | `COUNT_BY_PROJECT` / `FINDING_CATEGORY_COUNTS` | Query recipes after validation |
+| PV / finding category counts per project | `COUNT_BY_PROJECT` / `FINDING_CATEGORY_COUNTS` | `Query.Project.*` after validation |
 | DM count per importer project | (dashboard) | `client.Query.Project.count_dm` after `recipe="dm"` validation |
 | Online estate dashboard tiles (no pull) | — | `fetch_online_dashboard_counts` → `ir/online_dashboard_counts.json` |
 | Finding rows for one scan | `FINDING_ROWS` | `Finding.list_by_project` |
-| New vs resolved over time | `FINDING_LOG_TRENDS` | `FindingLog.list_groups` (probe Query `group_by_time`) |
 | Package usage by version | `DM_VERSION_CARDINALITY` | `DependencyMetadata.list_groups` |
-| OSS CVE/coordinate lookup | `OSS_COORDINATE_LOOKUP` | `QueryVulnerability` / `QueryMalware` |
 
 ```python
 from endorlabs.query import OutputShape, discover_topology, recommend
@@ -41,10 +42,27 @@ from endorlabs.query import OutputShape, discover_topology, recommend
 topo = discover_topology(client, "<tenant>", traverse=True, max_pages=...)
 plan = recommend(OutputShape.COUNT_BY_PROJECT, topology=topo)
 shards = topo.project_shards()
-# plan.primary, plan.shard_key, plan.validate_recommended, plan.notes
 ```
 
-## Step 1 — Discover topology
+### Namespace grain (no Project root)
+
+| User wants | Primary path |
+| ---------- | ------------ |
+| Count/filter at one namespace (e.g. agent hook events) | `client.Query.at_namespace(QuerySpec.root("<Kind>").count(...), namespace=…)` or facade `count()` |
+| Tenant-wide finding total (no per-project breakdown) | Probe `Query.at_namespace` with `Finding` root; compare to `Finding.count` |
+| New vs resolved over time | `FindingLog.list_groups` (probe Query `group_by_time`) |
+| OSS CVE/coordinate lookup | `QueryVulnerability` / `QueryMalware` |
+
+```python
+from endorlabs.query import QuerySpec
+
+spec = QuerySpec.root("AgentHookEvent").list_parameters(count=True)
+client.Query.at_namespace(spec, namespace="<leaf>", parse=..., merge=...)
+```
+
+Do **not** force `Query.Project.discover` when the ask has no project grain.
+
+## Step 1 — Discover topology (per-project grain only)
 
 ```python
 from endorlabs.query import discover_topology
@@ -55,50 +73,39 @@ topo = discover_topology(
     traverse=True,
     max_pages=...,  # bound cost during discovery
 )
-# topo.archetype: single_repo | monorepo_hub | managed_platform | estate_sprawl | mixed
-# topo.namespace_geometry — project counts per leaf namespace
-# topo.duplicate_name_groups — disambiguate meta.name
 ```
 
-Resolve **`Project`** rows first; pass **resource objects** or discovery list into Query recipes.
+Resolve **`Project`** rows first; pass resource objects into `Query.Project` recipes.
 
 ## Step 2 — Correctness gate (before scale)
 
 ```python
 from endorlabs.query import validate_sample
 
-sample = topo.projects[:10]  # mix namespace sizes when possible
+sample = topo.projects[:10]
 result = validate_sample(client, sample, recipe="pv", sample_size=5)
 assert result.matched, result.to_dict()
-dm_result = validate_sample(client, sample, recipe="dm", sample_size=5)
 counts = client.Query.Project.count_pv(topo.projects)
 dm_counts = client.Query.Project.count_dm(topo.projects)
 ```
 
-Canonical MQL: **`endorlabs.filters`** (not `workflows/findings/filters`).
-
-Or via facade sugar:
-
-```python
-counts = client.Query.Project.count_pv(topo.projects)
-```
+Canonical MQL: **`endorlabs.filters`**.
 
 ## Step 3 — Execute
 
 | Archetype | Shard key | Query? |
 | --------- | --------- | ------ |
-| `single_repo` | project | Optional; `recommend()` may prefer `facade_count` — use `list_by_project` for rows |
+| `single_repo` | project | Optional; `recommend()` may prefer `facade_count` |
 | `monorepo_hub` | leaf namespace + pagination | Yes for validated count joins |
 | `managed_platform` / `estate_sprawl` | leaf namespace batches | Yes if sample validated |
 
-**Row materialization** (findings/DM JSONL): `topo.project_shards()` → `tools/list_sharding`. **Online-only dashboard:** `endorlabs.workflows.estate.fetch_online_dashboard_counts` (no `endor-estate pull`).
-
-Parallel row materialization: [`tools/list_sharding`](https://github.com/endorlabs/endorlabs-sdk/blob/main/src/endorlabs/tools/list_sharding.py). Query executor supports `max_workers` for namespace fan-out (default sequential).
+**Row materialization:** `topo.project_shards()` → `tools/list_sharding`. **Online-only dashboard:** `fetch_online_dashboard_counts`.
 
 ## Anti-patterns
 
+- Treat **`Query.Project`** as the only Query API — use `execute` / `at_namespace` for other root kinds
 - POST `Query` at **tenant root** when projects live in child namespaces
-- Assume **count** is the only Query output shape without probing list/group joins
+- Use `Query.Project.count_dm` when the ask needs **DM version buckets** (`list_groups` semantics differ)
 - Skip sample validation because Query was faster on another customer
 - `traverse=True` on findings after `Project` is already resolved
 

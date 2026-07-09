@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 from endorlabs.filters import project_uuid_in_filter
 from endorlabs.filters.query_wire import to_query_filter
 
-from .wire import group_by_time_query_wire, group_query_wire
+from .wire import group_query_wire
 
 if TYPE_CHECKING:
     from endorlabs.core.filter import FilterExpression
@@ -58,27 +58,8 @@ class Reference:
         return self
 
     def group(self, *aggregation_paths: str) -> Reference:
-        """Request grouped aggregation on the referenced kind."""
+        """Request field ``group`` aggregation on the referenced kind."""
         self._list_params["group"] = group_query_wire(*aggregation_paths)
-        return self
-
-    def group_by_time(
-        self,
-        *,
-        aggregation_paths: str,
-        interval: str,
-        start_time: str,
-        end_time: str,
-        mode: str = "count",
-    ) -> Reference:
-        """Request ``group_by_time`` aggregation on the referenced kind."""
-        self._list_params["group_by_time"] = group_by_time_query_wire(
-            aggregation_paths=aggregation_paths,
-            interval=interval,
-            start_time=start_time,
-            end_time=end_time,
-            mode=mode,
-        )
         return self
 
     def reference(self, ref: Reference) -> Reference:
@@ -148,27 +129,8 @@ class QuerySpec:
         return self
 
     def group(self, *aggregation_paths: str) -> QuerySpec:
-        """Request grouped aggregation on the root kind."""
+        """Request field ``group`` aggregation on the root kind."""
         self._list_params["group"] = group_query_wire(*aggregation_paths)
-        return self
-
-    def group_by_time(
-        self,
-        *,
-        aggregation_paths: str,
-        interval: str,
-        start_time: str,
-        end_time: str,
-        mode: str = "count",
-    ) -> QuerySpec:
-        """Request ``group_by_time`` on the root kind."""
-        self._list_params["group_by_time"] = group_by_time_query_wire(
-            aggregation_paths=aggregation_paths,
-            interval=interval,
-            start_time=start_time,
-            end_time=end_time,
-            mode=mode,
-        )
         return self
 
     def reference(self, ref: Reference) -> QuerySpec:

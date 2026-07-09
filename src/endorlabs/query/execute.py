@@ -7,9 +7,16 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Any
 
+from endorlabs.operations.pagination import PageCursor, iter_paginated_pages
 from endorlabs.resources.query import CreateQueryPayload
 
-from .parse import next_page_token
+from .parse import (
+    extract_query_objects,
+    next_page_token,
+    reference_list_objects,
+    reference_next_page_cursor,
+    wire_spec_with_reference_page_cursor,
+)
 from .row_fields import project_namespace, project_uuid
 
 if TYPE_CHECKING:
@@ -70,16 +77,16 @@ def query_create_pages(
     max_pages: int | None = None,
 ) -> list[Any]:
     """POST Query.create repeatedly while ``next_page_token`` is set."""
-    pages: list[Any] = []
-    page_token: int | None = None
     page_index = 0
-    while True:
+
+    def fetch_page(cursor: PageCursor | None) -> Any:
+        nonlocal page_index
         spec = dict(query_spec)
         lp = dict(spec.get("list_parameters") or {})
-        if page_token is None:
+        if cursor is None or cursor.page_token is None:
             lp.pop("page_token", None)
         else:
-            lp["page_token"] = page_token
+            lp["page_token"] = cursor.page_token
         spec["list_parameters"] = lp
         suffix = f"-p{page_index}" if page_index else ""
         result = query_create(
@@ -88,12 +95,23 @@ def query_create_pages(
             name=f"{name}{suffix}",
             query_spec=spec,
         )
-        pages.append(result)
-        page_token = next_page_token(result)
         page_index += 1
-        if page_token is None or (max_pages is not None and page_index >= max_pages):
-            break
-    return pages
+        return result
+
+    def next_cursor(result: Any) -> PageCursor | None:
+        token = next_page_token(result)
+        if token is None:
+            return None
+        return PageCursor(page_token=token)
+
+    return list(
+        iter_paginated_pages(
+            fetch_page,
+            next_cursor=next_cursor,
+            max_pages=max_pages,
+            label=f"Query.create:{name}",
+        )
+    )
 
 
 def _uuid_batches(
@@ -116,6 +134,7 @@ class QueryExecutor:
         max_workers: int = 1,
         uuid_batch_size: int = UUID_BATCH_SIZE,
         max_root_pages: int | None = None,
+        max_reference_pages: int | None = None,
     ) -> None:
         super().__init__()
         self._query_resource = query_resource
@@ -123,6 +142,7 @@ class QueryExecutor:
         self._max_workers = max(1, max_workers)
         self._uuid_batch_size = max(1, uuid_batch_size)
         self._max_root_pages = max_root_pages
+        self._max_reference_pages = max_reference_pages
 
     def _execute_scope[T](
         self,
@@ -223,6 +243,106 @@ class QueryExecutor:
             )
             pages.extend(parse_page(page) for page in scope_pages)
         return merge_pages(pages)
+
+    def _collect_reference_for_project(
+        self,
+        spec: QuerySpec,
+        *,
+        namespace: str,
+        project_id: str,
+        ref_key: str,
+        first_obj: dict[str, Any],
+        max_reference_pages: int | None,
+        name_suffix: str,
+    ) -> list[dict[str, Any]]:
+        """Collect all pages for one nested list reference on a project row."""
+        rows = list(reference_list_objects(first_obj, ref_key))
+        first_cursor = reference_next_page_cursor(first_obj, ref_key)
+        if first_cursor is None:
+            return rows
+
+        def fetch_page(cursor: PageCursor | None) -> dict[str, Any]:
+            page_cursor = first_cursor if cursor is None else cursor
+            wire = wire_spec_with_reference_page_cursor(
+                spec.for_scope_batch((project_id,)),
+                ref_key,
+                page_cursor,
+            )
+            result = query_create(
+                self._query_resource,
+                namespace=namespace,
+                name=f"{self._name_prefix}-{name_suffix}",
+                query_spec=wire,
+            )
+            objs = extract_query_objects(result)
+            return objs[0] if objs else {}
+
+        def next_cursor(obj: dict[str, Any]) -> PageCursor | None:
+            return reference_next_page_cursor(obj, ref_key)
+
+        for page_obj in iter_paginated_pages(
+            fetch_page,
+            next_cursor=next_cursor,
+            max_pages=max_reference_pages,
+            label=f"Query.ref:{ref_key}:{project_id}",
+        ):
+            rows.extend(reference_list_objects(page_obj, ref_key))
+        return rows
+
+    def collect_reference_rows(
+        self,
+        spec: QuerySpec,
+        *,
+        scopes: list[QueryScope],
+        ref_keys: tuple[str, ...],
+        max_reference_pages: int | None = None,
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Collect nested list reference rows with per-reference pagination."""
+        ref_cap = (
+            max_reference_pages
+            if max_reference_pages is not None
+            else self._max_reference_pages
+        )
+        merged: dict[str, list[dict[str, Any]]] = {}
+
+        for scope in scopes:
+            namespace = scope.namespace
+            keys = list(scope.keys)
+            batches: list[list[str]] = (
+                _uuid_batches(keys, self._uuid_batch_size) if keys else [[]]
+            )
+            slug = namespace.rsplit(".", maxsplit=1)[-1] if namespace else "root"
+            for batch_index, batch in enumerate(batches):
+                suffix = f"-{batch_index}" if len(keys) > self._uuid_batch_size else ""
+                wire = spec.for_scope_batch(tuple(batch))
+                for page_index, result in enumerate(
+                    query_create_pages(
+                        self._query_resource,
+                        namespace=namespace,
+                        name=f"{self._name_prefix}-{slug}{suffix}",
+                        query_spec=wire,
+                        max_pages=self._max_root_pages,
+                    )
+                ):
+                    page_suffix = f"{suffix}-p{page_index}" if page_index else suffix
+                    for obj in extract_query_objects(result):
+                        pid = project_uuid(obj)
+                        if not pid:
+                            continue
+                        bucket = merged.setdefault(pid, [])
+                        for ref_key in ref_keys:
+                            bucket.extend(
+                                self._collect_reference_for_project(
+                                    spec,
+                                    namespace=namespace,
+                                    project_id=pid,
+                                    ref_key=ref_key,
+                                    first_obj=obj,
+                                    max_reference_pages=ref_cap,
+                                    name_suffix=f"{slug}{page_suffix}-{ref_key}",
+                                )
+                            )
+        return merged
 
     def run_at_namespace[T](
         self,

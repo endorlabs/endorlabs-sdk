@@ -1,0 +1,33 @@
+{
+  "uuid": "query-list-page2",
+  "spec": {
+    "query_response": {
+      "list": {
+        "objects": [
+          {
+            "uuid": "proj-a",
+            "meta": {
+              "references": {
+                "Finding": {
+                  "list": {
+                    "objects": [
+                      {"uuid": "f-101"},
+                      {"uuid": "f-102"}
+                    ],
+                    "response": {
+                      "next_page_token": null,
+                      "total": 250
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "response": {
+          "next_page_token": null
+        }
+      }
+    }
+  }
+}

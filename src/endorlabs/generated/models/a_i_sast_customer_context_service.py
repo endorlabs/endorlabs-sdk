@@ -138,12 +138,25 @@ class GoogleprotobufAny(BaseModel):
 
 class V1AISastCustomerContextSpec(BaseModel):
     """
-    Customer-provided context payload for this scope.
+    Customer-provided context payload.
     """
 
     context: str
     """
-    Human-authored guidance text for this scope; consumed as-is by the summary pipeline.
+    Human-authored guidance text consumed as-is by the summary pipeline.
+    """
+    disable: bool | None = None
+    """
+    Disables this context without deleting the object.
+    """
+    project_exceptions: list[str] | None = None
+    """
+    Project tag selectors or $uuid=<project_uuid> selectors that exclude matching projects from this context.
+    """
+    project_selector: list[str] | None = None
+    """
+    Project tag selectors or $uuid=<project_uuid> selectors that select where this context applies.
+    Empty applies to all projects in the namespace.
     """
 
 
@@ -322,11 +335,14 @@ class V1UpdateRequest(BaseModel):
 
 class AISastCustomerContextServiceCreateAISastCustomerContextBody(BaseModel):
     """
-    Per-scope, customer-provided context, attaching at tenant or project scope.
-    Namespace-level context uses the tenant parent and is scoped by tenant_meta.namespace.
+    Customer-provided context scoped to projects using policy-style selectors.
     """
 
     meta: V1Meta
+    propagate: bool | None = None
+    """
+    Propagates system-level context settings to child namespaces when enabled.
+    """
     spec: V1AISastCustomerContextSpec
     tenant_meta: dict[str, Any] | None = None
     """
@@ -341,6 +357,10 @@ class Object(BaseModel):
     """
 
     meta: V1Meta | None = None
+    propagate: bool | None = None
+    """
+    Propagates system-level context settings to child namespaces when enabled.
+    """
     spec: V1AISastCustomerContextSpec | None = None
     tenant_meta: dict[str, Any] | None = None
     """
@@ -397,11 +417,14 @@ class GroupResponseGroupData(BaseModel):
 
 class V1AISastCustomerContext(BaseModel):
     """
-    Per-scope, customer-provided context, attaching at tenant or project scope.
-    Namespace-level context uses the tenant parent and is scoped by tenant_meta.namespace.
+    Customer-provided context scoped to projects using policy-style selectors.
     """
 
     meta: V1Meta
+    propagate: bool | None = None
+    """
+    Propagates system-level context settings to child namespaces when enabled.
+    """
     spec: V1AISastCustomerContextSpec
     tenant_meta: V1TenantMeta | None = None
     uuid: str | None = None
@@ -422,11 +445,14 @@ class V1GroupResponse(BaseModel):
 
 class Object1(BaseModel):
     """
-    Per-scope, customer-provided context, attaching at tenant or project scope.
-    Namespace-level context uses the tenant parent and is scoped by tenant_meta.namespace.
+    Customer-provided context scoped to projects using policy-style selectors.
     """
 
     meta: V1Meta
+    propagate: bool | None = None
+    """
+    Propagates system-level context settings to child namespaces when enabled.
+    """
     spec: V1AISastCustomerContextSpec
     tenant_meta: V1TenantMeta | None = None
     uuid: str | None = None

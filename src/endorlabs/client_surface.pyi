@@ -679,6 +679,7 @@ class _InstallationFacade(ResourceRuntimeFacade[Installation]):
         installation_error_message: Any | None = None,
         scm_app_uuid: Any | None = None,
         cleanup_stale_namespaces: Any | None = None,
+        exclude_project_regexes: Any | None = None,
         **kwargs: Any,
     ) -> Installation: ...
 
@@ -1426,6 +1427,7 @@ class _QueryMalwareFacade(ResourceRuntimeFacade[QueryMalware]):
         namespace: str | None = None,
         package_version_name: Any | None = None,
         package_version_names: Any | None = None,
+        package_names: Any | None = None,
         purls: Any | None = None,
         mask: Any | None = None,
         **kwargs: Any,
