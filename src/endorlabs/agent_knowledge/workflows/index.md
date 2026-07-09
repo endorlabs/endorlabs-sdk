@@ -5,6 +5,7 @@ Thin index of SDK workflow entry points. See `MANIFEST.json` for machine-readabl
 | ID | CLI | Module | Skill | Default output |
 |----|-----|--------|-------|----------------|
 | agent-context | `endor-agent-context` | `endorlabs.workflows.agent_context.cli` | endor-project-retrieval-bundle | .endorlabs-context/workspace/projects/<slug>_<timestamp>/ |
+| auth-credential-expiry | `—` | `endorlabs.workflows.auth.credential_expiry` | endor-auth-credential-expiry | — |
 | auth-login-count | `—` | `endorlabs.workflows.auth.authentication_log` | endor-auth-login-count | — |
 | auth-setup | `endor-auth` | `endorlabs.workflows.auth.cli` | endor-auth-setup | — |
 | callgraph-path | `endor-callgraph-path` | `endorlabs.workflows.callgraph.path_cli` | — | stdout or caller path |

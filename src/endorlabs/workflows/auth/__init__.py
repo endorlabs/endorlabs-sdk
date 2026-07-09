@@ -1,9 +1,11 @@
 """Authentication workflow helpers for login counts, auth RCA, and session setup.
 
-See :mod:`endorlabs.workflows.auth.authentication_log` and
+See :mod:`endorlabs.workflows.auth.authentication_log`,
+:mod:`endorlabs.workflows.auth.credential_expiry`, and
 :mod:`endorlabs.workflows.auth.session` module docstrings for composition layers
 and tenant-scoping callouts. Skill playbooks: ``endor-auth-setup``,
-``endor-auth-login-count``, ``endor-troubleshoot-authlog``.
+``endor-auth-login-count``, ``endor-auth-credential-expiry``,
+``endor-troubleshoot-authlog``.
 """
 
 from __future__ import annotations
@@ -33,6 +35,15 @@ from .authentication_log import (
     primary_identity,
     probe_auth_logs,
 )
+from .credential_expiry import (
+    CredentialExpiryRow,
+    audit_api_key_expiry,
+    build_credential_expiry_row,
+    classify_expiration,
+    expiry_upper_bound_filter,
+    list_api_keys,
+    parse_expiration_time,
+)
 from .dotenv import read_dotenv_value, read_env_or_dotenv, upsert_dotenv_key
 from .env_resolution import resolve_sso_tenant, sso_tenant_from_namespace
 from .session import (
@@ -57,24 +68,31 @@ __all__ = [
     "AuthEnvironmentScan",
     "AuthVerification",
     "BrowserAuthMethod",
+    "CredentialExpiryRow",
     "EndorctlProbe",
     "LoginActivityRow",
+    "audit_api_key_expiry",
     "auth_log_filter",
     "auth_log_snapshot",
     "build_browser_auth_kwargs",
+    "build_credential_expiry_row",
+    "classify_expiration",
     "count_logins_from_groups",
     "count_logins_from_rows",
     "create_time_lower_bound_filter",
+    "expiry_upper_bound_filter",
     "extract_user_identifiers",
     "fetch_last_logins_for_identities",
     "filter_auth_logs_by_email",
     "interactive_uri_filter",
     "is_api_key_noise",
     "is_sso_login_uri",
+    "list_api_keys",
     "list_auth_logs",
     "normalize_auth_log",
     "parse_claims_from_group_bucket",
     "parse_create_time",
+    "parse_expiration_time",
     "primary_identity",
     "probe_auth_logs",
     "probe_endorctl",

@@ -32,7 +32,7 @@ rules live in [errors-and-auth](../../contracts/errors-and-auth.md).
 
 **Single auth mode:** never set `ENDOR_TOKEN` and both API key vars (same rule as endorctl). No `ENDOR_AUTH_MODE` env — unset one credential set or pass `auth_method=` to `Client(...)` in code.
 
-**Do not document or invent:** `ENDOR_AUTH_TENANT`, `ENDOR_AUTH_MODE`, `ENDOR_AUTH_METHOD`, `ENDOR_BROWSER`, `ENDOR_AUTH_INTERACTIVE`, `ENDOR_AUTH_PERSIST_TOKEN`, `ENDOR_ADMIN_TOKEN`, `ENDOR_TOKEN_REFRESH_METHOD`.
+**Do not document or invent:** `ENDOR_AUTH_TENANT`, `ENDOR_AUTH_MODE`, `ENDOR_AUTH_METHOD`, `ENDOR_BROWSER`, `ENDOR_AUTH_INTERACTIVE`, `ENDOR_AUTH_PERSIST_TOKEN`, `ENDOR_TOKEN_REFRESH_METHOD`.
 
 ### `endorctl init` env vars (Tier B — init-time only)
 
@@ -176,5 +176,6 @@ Verify: `uv run --env-file .env endor-auth check`.
 | ---- | ----- |
 | Auth setup / refresh | **This skill** |
 | Login activity CSV | [endor-auth-login-count](../endor-auth-login-count/SKILL.md) |
+| API key expiration audit | [endor-auth-credential-expiry](../endor-auth-credential-expiry/SKILL.md) |
 | SSO / login RCA | [endor-troubleshoot-authlog](../endor-troubleshoot-authlog/SKILL.md) |
 | SDK list / traverse errors | [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md) |

@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-08T00:31:50.248569+00:00",
+  "generated_at": "2026-07-09T20:24:32.896970+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -147,8 +147,17 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.5.1.dev8",
+  "sdk_version": "0.5.3.dev0",
   "skills": [
+    {
+      "description": "Audit tenant APIKey resources for expired or soon-to-expire credentials. Lists API keys on a namespace path, classifies expiration status, and writes a CSV report (default 30-day lookahead). Use for tenant credential hygiene and rotation planning\u2014not for bearer ENDOR_TOKEN refresh, SSO policy mapping, or AuthenticationLog RCA.",
+      "id": "endor-auth-credential-expiry",
+      "name": "endor-auth-credential-expiry",
+      "path": "skills/endor-auth-credential-expiry/SKILL.md",
+      "refs": [
+        "skills/endor-auth-credential-expiry/scripts/credential_expiry_report.py"
+      ]
+    },
     {
       "description": "Aggregate AuthenticationLog login activity by user identity over a configurable lookback window (default 90 days). Outputs a CSV with identity, user identifiers, last login, and login count. Shares workflow helpers with auth troubleshooting skills. Use for tenant login-activity audits\u2014not for SSO policy mapping or per-user auth RCA.",
       "id": "endor-auth-login-count",
@@ -372,6 +381,21 @@
       ],
       "module": "endorlabs.workflows.agent_context.cli",
       "skill": "endor-project-retrieval-bundle"
+    },
+    {
+      "agent_visible": true,
+      "cli": null,
+      "default_output": null,
+      "id": "auth-credential-expiry",
+      "library_entrypoints": [
+        "endorlabs.workflows.auth.audit_api_key_expiry",
+        "endorlabs.workflows.auth.list_api_keys",
+        "endorlabs.workflows.auth.classify_expiration",
+        "endorlabs.workflows.auth.build_credential_expiry_row",
+        "endorlabs.workflows.auth.expiry_upper_bound_filter"
+      ],
+      "module": "endorlabs.workflows.auth.credential_expiry",
+      "skill": "endor-auth-credential-expiry"
     },
     {
       "agent_visible": true,
