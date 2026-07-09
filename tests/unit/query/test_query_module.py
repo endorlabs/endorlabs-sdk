@@ -13,6 +13,7 @@ from endorlabs.query import (
     QuerySpec,
     Reference,
     dm_count_spec,
+    estate_findings_list_spec,
     extract_query_objects,
     group_projects_by_namespace,
     next_page_token,
@@ -20,10 +21,14 @@ from endorlabs.query import (
     parse_project_multi_reference_counts,
     parse_project_reference_counts,
     parse_project_reference_list_totals,
+    parse_query_root_count,
     pv_count_spec,
     query_create_pages,
+    reference_next_page_cursor,
+    reference_next_page_token,
     reference_total,
     scopes_from_projects,
+    wire_spec_with_reference_page_token,
 )
 from endorlabs.query.project_facade import ProjectQueryFacade
 
@@ -206,6 +211,11 @@ def test_next_page_token_from_fixture() -> None:
     assert next_page_token(payload) == 100
 
 
+def test_parse_query_root_count_from_fixture() -> None:
+    payload = _load_fixture("finding_root_count_response.json")
+    assert parse_query_root_count(payload) == 917
+
+
 def test_query_create_pages_stops_at_last_token() -> None:
     calls: list[dict[str, Any]] = []
 
@@ -231,3 +241,95 @@ def test_query_create_pages_stops_at_last_token() -> None:
     )
     assert len(pages) == 2
     assert calls[1]["list_parameters"]["page_token"] == 100
+
+
+def test_reference_next_page_token_from_fixture() -> None:
+    payload = _load_fixture("finding_list_ref_page1.json")
+    objs = extract_query_objects(payload)
+    assert reference_next_page_token(objs[0], "Finding") == 100
+
+
+def test_wire_spec_with_reference_page_token() -> None:
+    wire = estate_findings_list_spec().for_scope_batch(("proj-a",))
+    updated = wire_spec_with_reference_page_token(wire, "Finding", 100)
+    ref = updated["references"][0]["query_spec"]["list_parameters"]
+    assert ref["page_token"] == 100
+
+
+def test_reference_next_page_cursor_prefers_token_over_page_id() -> None:
+    obj = {
+        "meta": {
+            "references": {
+                "Finding": {
+                    "list": {
+                        "response": {
+                            "next_page_token": 100,
+                            "next_page_id": "page-id-1",
+                        }
+                    }
+                }
+            }
+        }
+    }
+    from endorlabs.operations.pagination import PageCursor
+
+    cursor = reference_next_page_cursor(obj, "Finding")
+    assert cursor == PageCursor(page_token=100)
+
+
+def test_reference_next_page_cursor_falls_back_to_page_id() -> None:
+    obj = {
+        "meta": {
+            "references": {
+                "Finding": {
+                    "list": {
+                        "response": {
+                            "next_page_id": "page-id-1",
+                        }
+                    }
+                }
+            }
+        }
+    }
+    from endorlabs.operations.pagination import PageCursor
+
+    cursor = reference_next_page_cursor(obj, "Finding")
+    assert cursor == PageCursor(page_id="page-id-1")
+
+
+def test_collect_reference_rows_paginates_nested_list() -> None:
+    calls: list[dict[str, Any]] = []
+
+    class _CollectClient:
+        def __init__(self) -> None:
+            super().__init__()
+            self.Query = self
+
+        def create(self, *, payload: Any, namespace: str) -> dict[str, Any]:
+            _ = namespace
+            spec = payload.spec["query_spec"]
+            calls.append(spec)
+            refs = spec.get("references") or []
+            ref_lp = refs[0]["query_spec"]["list_parameters"] if refs else {}
+            token = ref_lp.get("page_token")
+            if token is None:
+                return _load_fixture("finding_list_ref_page1.json")
+            if token == 100:
+                return _load_fixture("finding_list_ref_page2.json")
+            raise AssertionError(f"unexpected page_token {token!r}")
+
+    spec = estate_findings_list_spec()
+    scope = scopes_from_projects(
+        [SimpleNamespace(uuid="proj-a", namespace="tenant.leaf")]
+    )[0]
+    merged = QueryExecutor(_CollectClient()).collect_reference_rows(
+        spec,
+        scopes=[scope],
+        ref_keys=("Finding",),
+    )
+    rows = merged["proj-a"]
+    assert [row["uuid"] for row in rows] == ["f-001", "f-002", "f-101", "f-102"]
+    assert len(calls) == 2
+    assert (
+        calls[1]["references"][0]["query_spec"]["list_parameters"]["page_token"] == 100
+    )

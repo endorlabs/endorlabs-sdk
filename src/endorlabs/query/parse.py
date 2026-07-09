@@ -11,6 +11,7 @@ from endorlabs.operations.list_response import (
     count_from_wire,
     iter_group_buckets_from_pages,
 )
+from endorlabs.operations.pagination import PageCursor
 
 from .normalize import normalize_reference_rows
 
@@ -82,6 +83,24 @@ def next_page_token(result: Any) -> int | None:
     return int(raw)
 
 
+def parse_query_root_count(result: Any) -> int:
+    """Return integer count from a root count-only ``Query.create`` response."""
+    qr = extract_query_response(result)
+    if not qr:
+        return 0
+    if "count_response" in qr or qr.get("count") is not None:
+        return count_from_wire(qr)
+    objects = extract_query_response_objects(qr)
+    if objects:
+        return count_from_wire(objects[0])
+    lst = wire_dict(qr.get("list"))
+    resp = wire_dict(lst.get("response"))
+    total = resp.get("total")
+    if total is not None:
+        return int(total)
+    return 0
+
+
 def iter_group_buckets(result: Any) -> Iterator[GroupBucket]:
     """Yield grouped buckets from one Query.create page."""
     grp = extract_group_response(result)
@@ -150,6 +169,80 @@ def reference_list_objects(
         return []
     typed_objects = cast("list[Any]", objects)
     return [wire_dict(item) for item in typed_objects if item is not None]
+
+
+def reference_list_response_meta(
+    project_obj: dict[str, Any], ref_key: str
+) -> dict[str, Any]:
+    """Read ``list.response`` from a nested reference list block."""
+    block_dict = reference_block(project_obj, ref_key)
+    lst = wire_dict(block_dict.get("list"))
+    return wire_dict(lst.get("response"))
+
+
+def reference_next_page_token(project_obj: dict[str, Any], ref_key: str) -> int | None:
+    """Return nested ``list.response.next_page_token`` for a reference key."""
+    raw = reference_list_response_meta(project_obj, ref_key).get("next_page_token")
+    if raw is None:
+        return None
+    return int(raw)
+
+
+def reference_next_page_cursor(
+    project_obj: dict[str, Any], ref_key: str
+) -> PageCursor | None:
+    """Return the next reference list cursor (``page_token`` over ``page_id``)."""
+    meta = reference_list_response_meta(project_obj, ref_key)
+    token = meta.get("next_page_token")
+    if token is not None:
+        return PageCursor(page_token=int(token))
+    page_id = meta.get("next_page_id")
+    if page_id is not None:
+        return PageCursor(page_id=str(page_id))
+    return None
+
+
+def wire_spec_with_reference_page_token(
+    wire: dict[str, Any],
+    ref_key: str,
+    page_token: int | str | None,
+) -> dict[str, Any]:
+    """Return a copy of wire with ``page_token`` set on the matching reference."""
+    from endorlabs.operations.pagination import PageCursor
+
+    cursor = PageCursor(page_token=page_token) if page_token is not None else None
+    return wire_spec_with_reference_page_cursor(wire, ref_key, cursor)
+
+
+def wire_spec_with_reference_page_cursor(
+    wire: dict[str, Any],
+    ref_key: str,
+    cursor: PageCursor | None,
+) -> dict[str, Any]:
+    """Return a copy of wire with reference list pagination cursor fields set."""
+    import copy
+    from typing import cast
+
+    spec = copy.deepcopy(wire)
+    refs = cast("list[dict[str, Any]]", spec.get("references") or [])
+    for ref in refs:
+        child = wire_dict(ref.get("query_spec"))
+        kind = child.get("kind")
+        return_as = child.get("return_as")
+        if ref_key not in (kind, return_as):
+            continue
+        lp = dict(child.get("list_parameters") or {})
+        lp.pop("page_token", None)
+        lp.pop("page_id", None)
+        if cursor is not None:
+            if cursor.page_id is not None:
+                lp["page_id"] = cursor.page_id
+            elif cursor.page_token is not None:
+                lp["page_token"] = cursor.page_token
+        child["list_parameters"] = lp
+        ref["query_spec"] = child
+        break
+    return spec
 
 
 def reference_total(project_obj: dict[str, Any], ref_key: str) -> int:
@@ -232,11 +325,16 @@ __all__ = [
     "parse_project_multi_reference_counts",
     "parse_project_reference_counts",
     "parse_project_reference_list_totals",
+    "parse_query_root_count",
     "project_uuid_from_object",
     "reference_block",
     "reference_count",
     "reference_list_objects",
     "reference_list_total",
+    "reference_next_page_cursor",
+    "reference_next_page_token",
     "reference_total",
     "wire_dict",
+    "wire_spec_with_reference_page_cursor",
+    "wire_spec_with_reference_page_token",
 ]

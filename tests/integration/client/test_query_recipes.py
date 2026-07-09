@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from endorlabs.core.exceptions import ServerError
+from endorlabs.filters import estate_findings_filter, to_query_filter
 from endorlabs.query import discover_topology, validate_sample
 from tests.conftest import TEST_MAX_PAGES_TRAVERSE
 from tests.integration.client.conftest import require_first_project
@@ -104,6 +105,43 @@ class TestQueryRecipes:
                 )
             pytest.fail(f"Query vs facade finding count mismatch: {mismatches}")
 
+    def test_validate_sample_dm_matches_facade_count(self) -> None:
+        projects = _sample_projects(self.client, limit=2)
+        try:
+            result = validate_sample(
+                self.client,
+                projects,
+                recipe="dm",
+                sample_size=2,
+            )
+        except ServerError as err:
+            pytest.skip(f"Query DM validation unavailable: {err}")
+        assert result.recipe == "dm"
+        assert result.sample_size <= 2
+        if not result.matched:
+            pytest.fail(
+                f"Query vs facade DM count mismatch: {result.to_dict()['mismatches']}"
+            )
+
+    def test_validate_sample_severity_matches_facade_count(self) -> None:
+        projects = _sample_projects(self.client, limit=2)
+        try:
+            result = validate_sample(
+                self.client,
+                projects,
+                recipe="severity",
+                sample_size=2,
+            )
+        except ServerError as err:
+            pytest.skip(f"Query severity validation unavailable: {err}")
+        assert result.recipe == "severity"
+        assert result.sample_size <= 2
+        if not result.matched:
+            pytest.fail(
+                f"Query vs facade severity count mismatch: "
+                f"{result.to_dict()['mismatches']}"
+            )
+
     def test_discover_topology_returns_geometry(self, root_namespace: str) -> None:
         project = require_first_project(self.client)
         ns = getattr(getattr(project, "tenant_meta", None), "namespace", None)
@@ -125,3 +163,52 @@ class TestQueryRecipes:
         except ServerError as err:
             pytest.skip(f"count_pv unavailable: {err}")
         assert isinstance(counts, dict)
+
+    def test_collect_estate_findings_row_parity_on_large_project(self) -> None:
+        """Collect returns all rows when a project has >100 estate findings."""
+        projects = _sample_projects(self.client, limit=25)
+        target: object | None = None
+        facade_total = 0
+        for project in projects:
+            uid = str(getattr(project, "uuid", None))
+            ns = getattr(getattr(project, "tenant_meta", None), "namespace", None)
+            if not ns:
+                continue
+            filt = to_query_filter(
+                f"{estate_findings_filter()} and spec.project_uuid=={uid!r}"
+            )
+            try:
+                count = int(
+                    self.client.Finding.count(
+                        namespace=ns,
+                        filter=filt,
+                        traverse=False,
+                    )
+                )
+            except ServerError as err:
+                pytest.skip(f"Finding count unavailable: {err}")
+            if count > 100:
+                target = project
+                facade_total = count
+                break
+        if target is None:
+            pytest.skip("No project with >100 estate findings in sample")
+
+        mask = "uuid,spec.level,spec.finding_categories"
+        try:
+            rows = self.client.Query.Project.collect_estate_findings(
+                [target],
+                mask=mask,
+            )
+        except ServerError as err:
+            pytest.skip(f"collect_estate_findings unavailable: {err}")
+
+        row_uuids = {
+            str(getattr(row, "uuid", None) or row.get("uuid"))
+            for row in rows
+            if getattr(row, "uuid", None) or (isinstance(row, dict) and row.get("uuid"))
+        }
+        assert len(rows) == facade_total, (
+            f"expected {facade_total} rows, got {len(rows)}"
+        )
+        assert len(row_uuids) == facade_total

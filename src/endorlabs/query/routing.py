@@ -65,7 +65,7 @@ def recommend(
             validate_recommended=False,
             notes=(
                 "No shipped SDK recipe; FindingLog.list_groups is workflow default.",
-                "Query list_parameters support group_by_time — probe before migrating.",
+                "Query.create does not support group_by_time; use facade list_groups.",
                 "Aggregate-first; shard per project on timeout.",
             ),
         )
@@ -77,8 +77,11 @@ def recommend(
             validate_recommended=False,
             notes=(
                 "Per-project DM count joins differ from version-bucket group rollups.",
-                "Use DependencyMetadata.list_groups per child namespace today.",
-                "Query list_parameters support group — probe for join-based rollups.",
+                "Root QuerySpec.root('DependencyMetadata').group(...) "
+                "validated for buckets.",
+                "Use DependencyMetadata.list_groups per child namespace, "
+                "or root Query group.",
+                "Do not use Query.Project.count_dm for version cardinality.",
             ),
         )
     if output_shape == OutputShape.OSS_COORDINATE_LOOKUP:
