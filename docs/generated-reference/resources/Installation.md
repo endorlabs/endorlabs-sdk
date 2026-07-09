@@ -41,6 +41,7 @@ Optional:
 - `bitbucket_config`
 - `cleanup_stale_namespaces`
 - `enabled_features`
+- `exclude_project_regexes`
 - `external_id`
 - `github_config`
 - `gitlab_config`

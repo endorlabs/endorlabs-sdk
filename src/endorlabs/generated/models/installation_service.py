@@ -638,6 +638,15 @@ class V1InstallationSpec(BaseModel):
     enabled_features: list[SpecEnabledFeatureType] | None = Field(
         None, title='Enabled features. The valid values are "git, github"'
     )
+    exclude_project_regexes: list[str] | None = None
+    """
+    exclude_project_regexes is a list of RE2 regular expression patterns used
+    to exclude repositories from ingestion during SCM integration
+    reconciliation. A repository is excluded if its name (leaf name only, not
+    the full URL or path) matches any pattern in this list. Matching is
+    case-sensitive. An empty list means no filtering is applied. Supports a
+    maximum of 20 patterns.
+    """
     external_id: str | None = None
     """
     The external ID of the installation.
