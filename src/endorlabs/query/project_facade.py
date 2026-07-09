@@ -9,10 +9,8 @@ from endorlabs.filters import CATEGORY_QUERY_REFS
 from .execute import QueryExecutor
 from .normalize import normalize_reference_rows
 from .parse import (
-    extract_query_objects,
     parse_project_multi_reference_counts,
     parse_project_reference_counts,
-    reference_list_objects,
 )
 from .recipes import (
     DM_REFERENCE_KEY,
@@ -27,7 +25,6 @@ from .recipes import (
     pv_count_spec,
 )
 from .routing import OutputShape
-from .row_fields import project_uuid
 from .scope import scopes_from_projects
 from .topology import TopologySnapshot, discover_topology
 from .validate import RecipeKind, ValidationResult, validate_sample
@@ -99,11 +96,13 @@ class ProjectQueryFacade:
         *,
         name_prefix: str = "endor-query",
         max_root_pages: int | None = None,
+        max_reference_pages: int | None = None,
     ) -> QueryExecutor:
         return QueryExecutor(
             self._query,
             name_prefix=name_prefix,
             max_root_pages=max_root_pages,
+            max_reference_pages=max_reference_pages,
         )
 
     def discover(
@@ -266,44 +265,28 @@ class ProjectQueryFacade:
         normalize: bool = False,
         name_prefix: str = "endor-query-collect",
         max_root_pages: int | None = None,
+        max_reference_pages: int | None = None,
     ) -> list[dict[str, Any]]:
-        """Return flattened rows from nested list reference(s) across projects."""
+        """Return flattened rows from nested list reference(s) across projects.
+
+        Nested reference lists paginate via reference ``next_page_token`` on
+        follow-up ``Query.create`` calls (not root ``page_token``).
+        """
         keys = (ref_keys,) if isinstance(ref_keys, str) else ref_keys
-        rows: list[dict[str, Any]] = []
-
-        def _parse_page(result: Any) -> dict[str, list[dict[str, Any]]]:
-            page_rows: dict[str, list[dict[str, Any]]] = {}
-            for obj in extract_query_objects(result):
-                pid = project_uuid(obj)
-                if not pid:
-                    continue
-                items: list[dict[str, Any]] = []
-                for ref_key in keys:
-                    items.extend(reference_list_objects(obj, ref_key))
-                page_rows[pid] = items
-            return page_rows
-
-        def _merge(
-            pages: list[dict[str, list[dict[str, Any]]]],
-        ) -> dict[str, list[dict[str, Any]]]:
-            out: dict[str, list[dict[str, Any]]] = {}
-            for page in pages:
-                for pid, items in page.items():
-                    out.setdefault(pid, []).extend(items)
-            return out
-
         scopes = scopes_from_projects(projects)
-        for scope in scopes:
-            merged_pages = self._executor(
-                name_prefix=name_prefix, max_root_pages=max_root_pages
-            ).execute_pages(
-                spec,
-                scopes=[scope],
-                parse_page=_parse_page,
-                merge_pages=_merge,
-            )
-            for items in merged_pages.values():
-                rows.extend(items)
+        merged = self._executor(
+            name_prefix=name_prefix,
+            max_root_pages=max_root_pages,
+            max_reference_pages=max_reference_pages,
+        ).collect_reference_rows(
+            spec,
+            scopes=scopes,
+            ref_keys=keys,
+            max_reference_pages=max_reference_pages,
+        )
+        rows: list[dict[str, Any]] = []
+        for items in merged.values():
+            rows.extend(items)
         if normalize:
             return normalize_reference_rows(rows)
         return rows
@@ -314,6 +297,7 @@ class ProjectQueryFacade:
         *,
         mask: str | None = None,
         max_root_pages: int | None = None,
+        max_reference_pages: int | None = None,
     ) -> list[dict[str, Any]]:
         """Collect main-context SCA/vulnerability finding rows via Query join."""
         return self.collect(
@@ -321,6 +305,7 @@ class ProjectQueryFacade:
             projects,
             ref_keys="Finding",
             max_root_pages=max_root_pages,
+            max_reference_pages=max_reference_pages,
         )
 
     def collect_prf_findings(
@@ -329,6 +314,7 @@ class ProjectQueryFacade:
         *,
         mask: str | None = None,
         max_root_pages: int | None = None,
+        max_reference_pages: int | None = None,
     ) -> list[dict[str, Any]]:
         """Collect PRF vulnerability finding rows via Query join."""
         ref_keys = tuple(f"Prf{eco}Findings" for eco in ECOSYSTEMS)
@@ -337,4 +323,5 @@ class ProjectQueryFacade:
             projects,
             ref_keys=ref_keys,
             max_root_pages=max_root_pages,
+            max_reference_pages=max_reference_pages,
         )

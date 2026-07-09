@@ -205,10 +205,13 @@ List-plane sharding (`list_for_shards`, estate DM collect) and query-plane joins
 
 ### When to use Query vs facade
 
+Query is **kind-agnostic** at the wire level. **`client.Query.Project.*`** is one validated recipe family for estate dashboard patterns.
+
 | Ask | Path |
 | --- | ---- |
+| Namespace-scoped count/filter (any kind) | `Query.at_namespace` + `QuerySpec.root("<Kind>")` or facade `count()` — probe parity |
 | Dashboard counts across many projects | `client.Query.Project.count_*` after `validate_sample` |
-| Masked finding rows (estate collect) | `client.Query.Project.collect_estate_findings` |
+| Masked finding rows (estate collect) | `client.Query.Project.collect_estate_findings` after probe |
 | One project RCA / full finding rows | `Finding.list_by_project` |
 | FindingLog trends, DM version buckets | Facade `list_groups` today (Query `group` / `group_by_time` = probe) |
 | Custom graph join | `QuerySpec` + `client.Query.execute` |

@@ -27,6 +27,7 @@ from .core.exceptions import (
     map_status_code_to_exception,
 )
 from .core.types import ErrorResponse
+from .operations.pagination import PageCursor, iter_paginated_pages
 from .utils.redaction import (
     JSON_REDACTION_REPLACEMENT,
     RedactingFilter,
@@ -1353,81 +1354,46 @@ class APIClient:
 
         """
         normalized_url = self._normalize_url(url)
-        page_token: str | None = None
-        page_id: str | None = None
-        page_count = 0
-        seen_cursors: set[str] = set()
-
-        # Start with provided params or empty dict
         request_params = dict(params) if params else {}
 
-        while True:
-            # Check max_pages limit before fetching page
-            if max_pages is not None and page_count >= max_pages:
-                self.logger.warning(
-                    "Reached max_pages limit (%s). Stopping pagination after %s pages.",
-                    max_pages,
-                    page_count,
-                )
-                break
-
-            # Set pagination params: page_id takes precedence when both are used
-            if page_id is not None:
-                request_params["list_parameters.page_id"] = page_id
-                request_params.pop("list_parameters.page_token", None)
-                cursor_key = f"id:{page_id}"
-            elif page_token is not None:
-                request_params["list_parameters.page_token"] = str(page_token)
-                request_params.pop("list_parameters.page_id", None)
-                cursor_key = f"token:{page_token}"
+        def fetch_page(cursor: PageCursor | None) -> Any:
+            page_params = dict(request_params)
+            if cursor is not None:
+                if cursor.page_id is not None:
+                    page_params["list_parameters.page_id"] = cursor.page_id
+                    page_params.pop("list_parameters.page_token", None)
+                elif cursor.page_token is not None:
+                    page_params["list_parameters.page_token"] = str(cursor.page_token)
+                    page_params.pop("list_parameters.page_id", None)
             else:
-                request_params.pop("list_parameters.page_token", None)
-                request_params.pop("list_parameters.page_id", None)
-                cursor_key = None
-
-            if cursor_key is not None:
-                if cursor_key in seen_cursors:
-                    self.logger.warning(
-                        "Repeated pagination cursor %s on %s; stopping to avoid loop.",
-                        cursor_key,
-                        normalized_url,
-                    )
-                    break
-                seen_cursors.add(cursor_key)
-
-            # Make request
+                page_params.pop("list_parameters.page_token", None)
+                page_params.pop("list_parameters.page_id", None)
             response = self.get(
                 normalized_url,
-                params=request_params,
+                params=page_params,
                 data=data,
                 json=json,
                 **kwargs,
             )
-            response_data = response.json()
+            return response.json()
 
-            # Extract and yield items from this page
-            items = self._extract_items_from_response(response_data)
-            yield from items
-
-            page_count += 1
-
+        def next_cursor(response_data: Any) -> PageCursor | None:
             next_page_id = self._extract_next_page_id(response_data)
             next_page_token = self._extract_next_page_token(response_data)
-            # Prefer page_id when API returns both (spec supports both)
             if next_page_id is not None:
-                page_id = next_page_id
-                page_token = None
-            elif next_page_token is not None:
-                page_token = next_page_token
-                page_id = None
-            else:
-                break
+                return PageCursor(page_id=next_page_id)
+            if next_page_token is not None:
+                return PageCursor(page_token=next_page_token)
+            return None
 
-        self.logger.debug(
-            "Fetched all items from %s across %s pages",
-            normalized_url,
-            page_count,
-        )
+        for page_data in iter_paginated_pages(
+            fetch_page,
+            next_cursor=next_cursor,
+            max_pages=max_pages,
+            label=normalized_url,
+            logger=self.logger,
+        ):
+            yield from self._extract_items_from_response(page_data)
 
     @property
     def token(self) -> str | None:

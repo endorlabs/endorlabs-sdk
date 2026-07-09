@@ -183,6 +183,7 @@ INSTALLATION_SPEC_FIELDS = (
     "installation_error_message",
     "scm_app_uuid",
     "cleanup_stale_namespaces",
+    "exclude_project_regexes",
 )
 INSTALLATION_SPEC_REQUIRED = ()
 INSTALLATION_META_FIELDS = ()
@@ -401,6 +402,7 @@ QUERY_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
 QUERY_MALWARE_SPEC_FIELDS = (
     "package_version_name",
     "package_version_names",
+    "package_names",
     "purls",
     "mask",
 )

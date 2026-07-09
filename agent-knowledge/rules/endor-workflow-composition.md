@@ -52,7 +52,8 @@ Generic entrypoints (no estate literals):
 - `client.Finding.list_by_project()` / `list_for_context()` — generated relationship accessors
 - `client.ScanResult.list_by_project()` — scan results for a project
 - `client.<Resource>.count()` / `.list_groups()` / `.latest_created()` — list helpers (see [facade-helpers.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/facade-helpers.md))
-- `client.Query.Project.count_pv()` / `.count_findings_by_category()` / `.count_dm()` — validated count joins (see [query-recipes.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/query-recipes.md))
+- `client.Query.execute()` / `.at_namespace()` — kind-agnostic graph joins (`QuerySpec` + `QueryScope`); see [query-recipes.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/query-recipes.md)
+- `client.Query.Project.count_pv()` / `.count_findings_by_category()` / `.count_dm()` — validated **estate** count joins (same guide)
 - `endorlabs.query.discover_topology` / `TopologySnapshot.project_shards()` / `recommend` / `validate_sample` — estate routing plane
 - `endorlabs.filters` — canonical main-context and finding MQL fragments
 - `endorlabs.workflows.estate.fetch_online_dashboard_counts` — online Query tiles for estate dashboard
