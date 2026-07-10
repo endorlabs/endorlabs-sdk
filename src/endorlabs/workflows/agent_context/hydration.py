@@ -10,21 +10,21 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from endorlabs.core.exceptions import NotFoundError
-from endorlabs.utils.artifact_io import slugify, write_json
-from endorlabs.utils.logging_config import get_resource_logger
-from endorlabs.workflows.callgraph.fetch import (
+from endorlabs.tools.callgraph_artifacts import (
     generate_call_graph_analysis_md,
     render_call_graph_summary_md,
     summarize_call_graph,
 )
+from endorlabs.tools.dependency_metadata import (
+    retrieve_dep_metadata_full,
+    summarize_dep_metadata,
+)
+from endorlabs.utils.artifact_io import slugify, write_json
+from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.dependencies.bom_graph import (
     extract_direct_deps,
     render_slim_dependencies,
     retrieve_bom_full,
-)
-from endorlabs.workflows.dependencies.metadata_fetch import (
-    retrieve_dep_metadata_full,
-    summarize_dep_metadata,
 )
 
 if TYPE_CHECKING:

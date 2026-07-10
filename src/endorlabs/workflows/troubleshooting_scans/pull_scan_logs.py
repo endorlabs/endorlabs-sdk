@@ -17,10 +17,11 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.workflows.estate.collect.bounds import (
+from endorlabs.tools.list_bounds import (
     is_list_truncated,
     resolve_max_pages,
 )
+from endorlabs.utils.namespace import resource_namespace
 
 from .common import (
     root_tenant,
@@ -102,12 +103,6 @@ def _project_name(project: Any) -> str:
     return getattr(meta, "name", "") or str(getattr(project, "uuid", ""))
 
 
-def _project_namespace(project: Any) -> str | None:
-    tenant_meta = getattr(project, "tenant_meta", None)
-    ns = getattr(tenant_meta, "namespace", None)
-    return str(ns) if ns else None
-
-
 def _select_project(
     client: endorlabs.Client,
     tenant: str,
@@ -116,6 +111,34 @@ def _select_project(
     list_max_pages: int | None,
     page_size: int,
 ) -> tuple[Any, bool]:
+    """Resolve a single project that has at least one ScanResult.
+
+    Prefers :func:`~endorlabs.workflows.projects.discovery.resolve_project_candidate`
+    for UUID/name paths; falls back to a bounded traverse substring match for
+    fuzzy CLI queries.
+    """
+    from endorlabs.core.exceptions import NotFoundError as EndorNotFoundError
+    from endorlabs.workflows.projects.discovery import resolve_project_candidate
+
+    q = query.strip()
+    if not q:
+        raise ValueError("project query must be non-empty")
+
+    try:
+        project = resolve_project_candidate(
+            client,
+            q,
+            namespace=tenant,
+            traverse=True,
+            max_pages=list_max_pages or 0,
+            page_size=page_size,
+        )
+        scans = client.ScanResult.list_by_project(project, limit=1)
+        if scans:
+            return project, False
+    except (ValueError, EndorNotFoundError):
+        pass
+
     projects = client.Project.list(
         namespace=tenant,
         traverse=True,
@@ -125,11 +148,11 @@ def _select_project(
     truncated = is_list_truncated(
         len(projects), max_pages=list_max_pages, page_size=page_size
     )
-    q = query.strip().lower()
+    q_lower = q.lower()
     for project in projects[:80]:
         name = _project_name(project).lower()
         uuid = str(getattr(project, "uuid", "")).lower()
-        if q and q not in name and q not in uuid:
+        if q_lower not in name and q_lower not in uuid:
             continue
         scans = client.ScanResult.list_by_project(project, limit=1)
         if scans:
@@ -250,7 +273,7 @@ def main() -> int:
                     list_max_pages=resolve_max_pages(args.project_list_max_pages),
                     page_size=args.project_list_page_size,
                 )
-            resolved_namespace = resolved_namespace or _project_namespace(project)
+            resolved_namespace = resolved_namespace or resource_namespace(project)
             if not resolved_namespace:
                 raise ValueError("Could not resolve namespace from project.")
             scan = _resolve_latest_scan_for_project(client, project)

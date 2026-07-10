@@ -16,17 +16,17 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from endorlabs.filters import main_context_filter
 from endorlabs.query import OutputShape, preflight_count
+from endorlabs.tools.list_bounds import (
+    count_for_progress,
+    format_progress,
+    is_list_truncated,
+    truncation_message,
+)
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.dependencies.coordinates import parse_dep_name
 from endorlabs.workflows.estate.analyze.project_map.core import (
     add_producer_indices,
     aggregate_package_anchored_edges,
-)
-from endorlabs.workflows.estate.collect.bounds import (
-    count_for_progress,
-    format_progress,
-    is_list_truncated,
-    truncation_message,
 )
 from endorlabs.workflows.estate.contracts.ir_artifacts import (
     COMPILE_DEPENDENCY_GRAPH_SCHEMA,

@@ -2,14 +2,7 @@
 
 from __future__ import annotations
 
-from endorlabs.tools.list_sharding import (
-    ProjectShard,
-    parallel_map_shards,
-    project_dict_to_shard,
-    project_model_to_shard,
-)
-
-from .bounds import (
+from endorlabs.tools.list_bounds import (
     count_for_progress,
     count_list_delta_check,
     format_progress,
@@ -18,6 +11,13 @@ from .bounds import (
     resolve_max_pages,
     truncation_message,
 )
+from endorlabs.tools.list_sharding import (
+    ProjectShard,
+    parallel_map_shards,
+    project_dict_to_shard,
+    project_model_to_shard,
+)
+
 from .dependency_metadata import (
     aggregate_consumers_by_version,
     aggregate_usage_by_package_version,

@@ -9,9 +9,9 @@ import os
 from pathlib import Path
 
 import endorlabs
+from endorlabs.tools.list_bounds import resolve_collect_max_workers
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.workspace import analyze_workspace
-from endorlabs.workflows.estate.collect.bounds import resolve_collect_max_workers
 from endorlabs.workflows.estate.collect.runner import collect_workspace
 from endorlabs.workflows.estate.contracts.resources import (
     ANALYZE_LOG_FILENAME,

@@ -31,9 +31,21 @@ Guidance for SDK users and contributors when choosing **namespace scope**, **`tr
 
 Related: [troubleshooting.md](troubleshooting.md) (list `ServerError`, 404 after traverse), [guides/retrieving-scan-results.md](../guides/retrieving-scan-results.md) (Project → ScanResult → Finding workflow).
 
+## Parallel fan-out grains (do not merge)
+
+Three intentional grains — pick by use case; do **not** force-unify into one API:
+
+| Grain | Use case | Primitive |
+| ----- | -------- | --------- |
+| **Namespace traverse** | Interactive tenant discovery | `list(traverse=True, concurrent=True)` → `_list_concurrent` / [`execute_across_namespaces`](../../src/endorlabs/utils/parallel.py) |
+| **Per-project shards** | Estate collect, PRF, FindingLog trends fallback | [`parallel_map_shards`](../../src/endorlabs/tools/list_sharding.py) / `ProjectShard` → [`parallel_over`](../../src/endorlabs/tools/parallel_scopes.py) |
+| **Query batching** | Estate counts / validated collect joins | [`QueryScope`](../../src/endorlabs/query/) + `QueryExecutor` pools |
+
+Route estate-scale asks with [`query/routing.py`](../../src/endorlabs/query/routing.py) `OutputShape` + `recommend()` before choosing a grain. See also [query-recipes.md](../guides/query-recipes.md) and rule `endor-output-shape-routing`.
+
 ## Sharded parallel lists
 
-For large **project-scoped** resources (`DependencyMetadata`, `Finding`, `ScanResult`, grouped DM shards), one namespace-wide `list()` can return the same rows but force a long sequential pagination chain. Prefer **discover shard keys** (usually `Project` rows in the target namespace) → **parallel `list()` per shard** with a selective filter (`spec.importer_data.project_uuid==…`, `spec.project_uuid==…`) and **`namespace=project.namespace`**.
+For large **project-scoped** resources (`DependencyMetadata`, `Finding`, `ScanResult`, grouped DM shards), one namespace-wide `list()` can return the same rows but force a long sequential pagination chain. Prefer **discover shard keys** (usually `Project` rows in the target namespace) → **parallel `list()` per shard** with a selective filter (`spec.importer_data.project_uuid==…`, `spec.project_uuid==…`) and **`namespace=project.namespace`**. Prefer generated accessors (`Finding.list_by_project`, `ScanResult.list_by_project`) when the route exists.
 
 Use `ThreadPoolExecutor` / `--max-workers` (typical 8–16), `facade.count()` or `count_for_progress()` per shard for progress denominators, and spike with [`estate/collect/benchmark.py`](../../src/endorlabs/workflows/estate/collect/benchmark.py) before changing defaults. Do **not** assume namespace-wide list is faster — benchmark when row counts are high. Still prefer **one** `traverse=True` list when the resource is not naturally project-sharded or row counts are small.
 
@@ -54,7 +66,7 @@ rows = list_for_shards(
 
 Estate-scale bulk collect remains in `endor-estate` workflows; see `AGENTS.md` for measured speedup notes.
 
-**Primitives:** [`endorlabs.tools.list_sharding`](../../src/endorlabs/tools/list_sharding.py) (`ProjectShard`, `parallel_map_shards`, `topology_to_project_shards`), [`endorlabs.query`](../../src/endorlabs/query/__init__.py) (`discover_topology`, `preflight_count`), [`client.Query.Project`](../../src/endorlabs/query/project_facade.py) (count/collect recipes), [`facade.count()`](../../src/endorlabs/facade.py) / [`count_for_progress()`](../../src/endorlabs/tools/list_bounds.py), [`format_progress()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`execute_across_namespaces()`](../../src/endorlabs/utils/parallel.py), [`endorlabs.filters`](../../src/endorlabs/filters/__init__.py). Catalog: [facade-helpers.md](../guides/facade-helpers.md), [query-recipes.md](../guides/query-recipes.md). Estate context: [estate/README.md](../estate/README.md).
+**Primitives:** [`endorlabs.tools.list_sharding`](../../src/endorlabs/tools/list_sharding.py) (`ProjectShard`, `parallel_map_shards`, `topology_to_project_shards`), [`endorlabs.query`](../../src/endorlabs/query/__init__.py) (`discover_topology`, `preflight_count`), [`client.Query.Project`](../../src/endorlabs/query/project_facade.py) (count/collect recipes), [`facade.count()`](../../src/endorlabs/facade/) / [`count_for_progress()`](../../src/endorlabs/tools/list_bounds.py), [`format_progress()`](../../src/endorlabs/tools/list_bounds.py), [`execute_across_namespaces()`](../../src/endorlabs/utils/parallel.py), [`endorlabs.filters`](../../src/endorlabs/filters/__init__.py). Catalog: [facade-helpers.md](../guides/facade-helpers.md), [query-recipes.md](../guides/query-recipes.md). Estate context: [estate/README.md](../estate/README.md).
 
 ### Workflow applicability
 

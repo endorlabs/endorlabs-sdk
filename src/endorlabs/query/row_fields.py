@@ -1,8 +1,15 @@
-"""Project row field accessors for query-plane helpers."""
+"""Project row field accessors for query-plane helpers.
+
+For typed resource models outside the Query plane, prefer
+:func:`endorlabs.utils.namespace.resource_namespace`. This module's
+``project_namespace`` is the Query-join row accessor (dict or model).
+"""
 
 from __future__ import annotations
 
 from typing import Any, cast
+
+from endorlabs.utils.namespace import resource_namespace as _resource_namespace
 
 
 def project_uuid(project: Any) -> str:
@@ -14,24 +21,8 @@ def project_uuid(project: Any) -> str:
 
 
 def project_namespace(project: Any) -> str | None:
-    """Return wire namespace from a model or dict row."""
-    ns = getattr(project, "namespace", None)
-    if ns:
-        return str(ns)
-    if isinstance(project, dict):
-        project_dict = cast("dict[str, Any]", project)
-        tm = project_dict.get("tenant_meta")
-        if isinstance(tm, dict):
-            tenant_meta = cast("dict[str, Any]", tm)
-            raw = tenant_meta.get("namespace")
-            return str(raw) if raw else None
-        return None
-    tenant_meta = getattr(project, "tenant_meta", None)
-    if tenant_meta is None:
-        return None
-    if isinstance(tenant_meta, dict):
-        tenant_meta_dict = cast("dict[str, Any]", tenant_meta)
-        raw = tenant_meta_dict.get("namespace")
-        return str(raw) if raw else None
-    raw = getattr(tenant_meta, "namespace", None)
-    return str(raw) if raw else None
+    """Return wire namespace from a model or dict row.
+
+    Delegates to :func:`endorlabs.utils.namespace.resource_namespace`.
+    """
+    return _resource_namespace(project)

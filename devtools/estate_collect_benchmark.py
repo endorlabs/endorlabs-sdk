@@ -25,7 +25,7 @@ from endorlabs.workflows.estate.analyze.compile_graph.pipeline import (
     project_refs,
     project_rows_from_models,
 )
-from endorlabs.workflows.estate.collect.bounds import (
+from endorlabs.tools.list_bounds import (
     count_for_progress,
     format_progress,
     is_list_truncated,

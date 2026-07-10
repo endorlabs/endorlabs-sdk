@@ -16,13 +16,13 @@ from typing import Any
 
 import endorlabs
 from endorlabs.context.paths import workflow_artifacts_root
-from endorlabs.utils.logging_config import get_resource_logger
-from endorlabs.utils.path_safety import safe_write_text
-from endorlabs.workflows.estate.collect.bounds import (
+from endorlabs.tools.list_bounds import (
     is_list_truncated,
     resolve_max_pages,
     truncation_message,
 )
+from endorlabs.utils.logging_config import get_resource_logger
+from endorlabs.utils.path_safety import safe_write_text
 
 LOGGER = get_resource_logger(__name__)
 

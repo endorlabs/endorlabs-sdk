@@ -47,6 +47,60 @@ repos:
         pass_filenames: false
         always_run: true
 
+      - id: pre-commit-guards-layer-imports
+        name: block forbidden cross-layer imports
+        entry: uv
+        args: [run, python, devtools/pre_commit_guards.py, layer-imports]
+        language: system
+        pass_filenames: false
+        always_run: true
+        files: ^src/endorlabs/.*\.py$
+
+      - id: pre-commit-guards-bounds-shim
+        name: block estate.collect.bounds imports
+        entry: uv
+        args: [run, python, devtools/pre_commit_guards.py, bounds-shim]
+        language: system
+        pass_filenames: false
+        always_run: true
+        files: ^(src/|tests/).*\.py$
+
+      - id: pre-commit-guards-deprecated-api-strings
+        name: block deprecated API strings in agent/docs
+        entry: uv
+        args: [run, python, devtools/pre_commit_guards.py, deprecated-api-strings]
+        language: system
+        pass_filenames: false
+        always_run: true
+        files: ^(agent-knowledge/|\.cursor/rules/|docs/).*\.(md|mdc)$
+
+      - id: pre-commit-guards-accessor-nudge
+        name: accessor-first nudge (warning; hand-built project_uuid filters)
+        entry: uv
+        args: [run, python, devtools/pre_commit_guards.py, accessor-nudge]
+        language: system
+        pass_filenames: false
+        always_run: true
+        files: ^src/endorlabs/workflows/.*\.py$
+
+      - id: pre-commit-guards-portable-examples
+        name: portable-examples nudge (warning; estate literals in agent/docs)
+        entry: uv
+        args: [run, python, devtools/pre_commit_guards.py, portable-examples]
+        language: system
+        pass_filenames: false
+        always_run: true
+        files: ^(agent-knowledge/|\.cursor/rules/|docs/).*\.(md|mdc)$
+
+      - id: pre-commit-guards-agent-knowledge-sync
+        name: agent-knowledge sync reminder (authoring without shipped mirror)
+        entry: uv
+        args: [run, python, devtools/pre_commit_guards.py, agent-knowledge-sync]
+        language: system
+        pass_filenames: false
+        always_run: true
+        files: ^agent-knowledge/
+
       - id: refresh-local-context-and-skills
         name: refresh local context + skill mirrors
         entry: uv

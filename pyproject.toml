@@ -261,6 +261,7 @@ select = [
     "FURB",  # refurb: modern Python idioms
     "FLY",   # flynt: prefer f-strings
     "PIE",   # flake8-pie: misc cleanness
+    "TID251",  # flake8-tidy-imports banned-api only (not TID252 relative-import rewrite)
 ]
 
 # Ignore rules that conflict with SDK patterns
@@ -304,6 +305,10 @@ max-statements = 50
 
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field names
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"endorlabs.workflows.estate.collect.bounds" = { msg = "use endorlabs.tools.list_bounds" }
+"endorlabs.workflows.findings.filters" = { msg = "use endorlabs.filters" }
 
 # Per-file ignores — grouped by reason
 [tool.ruff.lint.per-file-ignores]

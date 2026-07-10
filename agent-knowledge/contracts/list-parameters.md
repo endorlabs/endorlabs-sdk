@@ -45,6 +45,16 @@ Common list params are flat kwargs on `client.<ResourceKind>.list(...)`. Use
 - **sort_by**, **desc**
 - **traverse:** tenant-wide discovery (`list_parameters.traverse=true`)
 
+### GET list vs Query POST cursors
+
+| Plane | Cursor field | Where |
+| ----- | ------------ | ----- |
+| **GET list** (`client.<Kind>.list` / `list_iter`) | **`next_page_id`** in the list response | Facade pagination (`operations/list_response`) |
+| **Query POST** (`client.Query.execute` / `at_namespace`) | **`page_token`** on the Query root (nested refs may use `page_token` / `page_id`) | `query/execute`, `query/parse` |
+
+Do not pass a GET `next_page_id` as a Query `page_token` (or the reverse). See also
+[query-vs-list-semantics](query-vs-list-semantics.md).
+
 **Performance:** Do not set **`page_size`** unless explicitly requested. Prefer
 defaults, selective **`filter`**, and **`max_pages`** caps. See bootstrap contract
 `rules/endor-list-query-performance.md`.

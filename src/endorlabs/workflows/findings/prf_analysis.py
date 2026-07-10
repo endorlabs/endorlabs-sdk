@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from collections.abc import Sequence
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
 
 from endorlabs.tools.list_sharding import (
     ProjectShard,
     parallel_map_shards,
-    project_scoped_filter,
     single_shard_namespace,
 )
 from endorlabs.workflows.wire_access import (
@@ -182,10 +182,15 @@ def list_findings_sharded(
         list_kwargs["max_pages"] = max_pages
 
     def _worker(shard: ProjectShard) -> list[dict[str, Any]]:
-        rows = client.Finding.list_iter(
+        # Prefer generated accessor (spec.project_uuid + source namespace).
+        project = SimpleNamespace(
+            uuid=shard.project_uuid,
             namespace=shard.namespace,
-            traverse=False,
-            filter=project_scoped_filter(filt, shard.project_uuid),
+            tenant_meta=SimpleNamespace(namespace=shard.namespace),
+        )
+        rows = client.Finding.list_by_project(
+            project,
+            filter=filt,
             **list_kwargs,
         )
         return [finding_row_to_dict(row) for row in rows]

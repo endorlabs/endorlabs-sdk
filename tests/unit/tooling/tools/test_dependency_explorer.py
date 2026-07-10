@@ -40,6 +40,7 @@ from endorlabs.resources.call_graph_data_proto import (
     _unwrap_int,
     _unwrap_string,
 )
+from endorlabs.tools.callgraph_artifacts import _clean_source_path, summarize_call_graph
 from endorlabs.utils.artifact_io import slugify, write_json
 from endorlabs.workflows.agent_context.hydration import (
     ProjectResult,
@@ -47,7 +48,6 @@ from endorlabs.workflows.agent_context.hydration import (
     _render_pv_section,
     build_dependency_callgraph_summary,
 )
-from endorlabs.workflows.callgraph.fetch import _clean_source_path, summarize_call_graph
 from endorlabs.workflows.callgraph.render import (
     _build_call_tree,
     _infer_profile,
