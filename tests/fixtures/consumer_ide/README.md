@@ -50,7 +50,7 @@ After stub generator changes in this repo:
 |-------|--------|
 | `uv run pyright tests/fixtures/consumer_ide/main.py --project pyproject.toml` | **0 errors** |
 | Committed stub | `_ProjectFacade(ProjectFacade)`, explicit `list()`, `Client.__init__` docstring, no orphan attr docstrings, no untyped `list_by_project(*args)` on `_FindingFacade` |
-| `uv run python devtools/smoke_test_wheel.py` | **pass** — `py.typed` and `client_surface.pyi` present in installed wheel |
+| `uv run python devtools/ship/smoke_test_wheel.py` | **pass** — `py.typed` and `client_surface.pyi` present in installed wheel |
 | `from endorlabs import ListParameters` | Exported from `endorlabs.__init__` (SDK repo) |
 
 **opengrep-experiments note:** `uv run` in that project re-syncs `endorlabs>=0.4.0` from PyPI unless you add `[tool.uv.sources]` with an editable path. Use `uv pip install -e ../endorlabs-sdk` and run scripts with `.venv\Scripts\python.exe` directly (not `uv run`) for a quick hover check, or add the path source and `uv sync` for a durable setup.

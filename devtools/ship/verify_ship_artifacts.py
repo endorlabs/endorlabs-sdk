@@ -2,8 +2,8 @@
 
 Run from repo root::
 
-    uv run python devtools/verify_ship_artifacts.py --fetch-spec
-    uv run python devtools/verify_ship_artifacts.py --verify-changelog 0.1.2
+    uv run python devtools/ship/verify_ship_artifacts.py --fetch-spec
+    uv run python devtools/ship/verify_ship_artifacts.py --verify-changelog 0.1.2
 
 Used by pre-commit (local regen + drift), pre-push/CI/release (``--fetch-spec``),
 and TestPyPI workflows to ensure published wheels match the tagged commit (no silent
@@ -24,7 +24,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SPEC_URL = "https://api.endorlabs.com/download/openapiv2.swagger.json"
 SPEC_REL = Path(".endorlabs-context/platform/openapi/openapiv2.swagger.json")
 CHANGELOG_REL = Path("docs/changelog.md")
@@ -110,8 +110,8 @@ def git_diff_dirty(paths: tuple[str, ...], *, root: Path) -> str | None:
     detail = (stat.stdout or stat.stderr or "").strip()
     return (
         "Committed ship artifacts are out of date after regeneration.\n"
-        "Fix: uv run python devtools/verify_ship_artifacts.py --fetch-spec\n"
-        "Or: uv run python devtools/model_sync.py --fetch-spec "
+        "Fix: uv run python devtools/ship/verify_ship_artifacts.py --fetch-spec\n"
+        "Or: uv run python devtools/codegen/model_sync.py --fetch-spec "
         "--generate-stubs --generate-reference-docs\n"
         "Then: git add src/endorlabs/generated/ src/endorlabs/client_surface.pyi "
         "docs/generated-reference/ && re-commit\n"
@@ -152,7 +152,11 @@ def run_verify(
 
     if not skip_upstream:
         upstream = _run(
-            [sys.executable, "devtools/model_sync.py", "--verify-upstream-only"],
+            [
+                sys.executable,
+                "devtools/codegen/model_sync.py",
+                "--verify-upstream-only",
+            ],
             cwd=base,
         )
         if upstream.returncode != 0:
@@ -163,7 +167,7 @@ def run_verify(
     regen = _run(
         [
             sys.executable,
-            "devtools/model_sync.py",
+            "devtools/codegen/model_sync.py",
             "--generate-stubs",
             "--generate-reference-docs",
         ],
@@ -175,7 +179,7 @@ def run_verify(
         return regen.returncode
 
     route_regen = _run(
-        [sys.executable, "devtools/generate_route_contract.py"],
+        [sys.executable, "devtools/codegen/generate_route_contract.py"],
         cwd=base,
     )
     if route_regen.returncode != 0:
@@ -184,7 +188,7 @@ def run_verify(
         return route_regen.returncode
 
     filter_regen = _run(
-        [sys.executable, "devtools/generate_filter_enum_reference.py"],
+        [sys.executable, "devtools/codegen/generate_filter_enum_reference.py"],
         cwd=base,
     )
     if filter_regen.returncode != 0:
@@ -206,7 +210,7 @@ def run_verify(
         return 1
 
     agents = _run(
-        [sys.executable, "devtools/sync_agent_knowledge.py", "--verify"],
+        [sys.executable, "devtools/codegen/sync_agent_knowledge.py", "--verify"],
         cwd=base,
     )
     if agents.returncode != 0:

@@ -76,7 +76,7 @@ Auth workflows, workspace layout, and maintainer tooling. Generated models pinne
 - Agent-knowledge e2e tests split: `tests/unit/platform/context/test_agent_knowledge_init_e2e.py` (init, no API) and `tests/integration/workflows/test_retrieve_scan_results_skill.py` (live API); integration test taxonomy and credential gating refined.
 - CODEOWNERS default review owner → `@endorlabs/solutions` (Customer Solutions).
 - Version cardinality CLI default output → `workspace/runs/version-cardinality/`; `verify_auth` next-steps use `endor-auth refresh --method sso`.
-- Pre-commit: block staged `.env` / `.endorlabs-context/`; stderr **Unreleased** changelog reminder on user-facing diffs; shared helpers in `devtools/git_staged.py` and `endorlabs.utils.repo_paths` (rule `endor-maintainer-tooling`).
+- Pre-commit: block staged `.env` / `.endorlabs-context/`; stderr **Unreleased** changelog reminder on user-facing diffs; shared helpers in `devtools/precommit/git_staged.py` and `endorlabs.utils.repo_paths` (rule `endor-maintainer-tooling`).
 - Pyright: drive workflow/operations unknown-type warnings to zero via `workflows.wire_access` helpers, import-cycle breaks, and typed wire-dict narrowing (no user-visible API change).
 - Models aligned to platform OpenAPI snapshot (endorctl v1.7.1045).
 
@@ -150,7 +150,7 @@ V1 consumer facade cutover: package split, contract-driven routes, `search_by_*`
 ### Added
 
 - **Scan-plane partition accessors** — `{Kind}.list_for_context(source)` and `context_partition_filter()` list rows sharing `context.type` + `context.id` with a source row (e.g. `ScanResult`). See [facade-helpers.md](guides/facade-helpers.md) and [resource-routes.md](generated-reference/resource-routes.md).
-- **Generated accessor helpers** — `Finding.list_by_project`, `Finding.to_dependency_metadata`, `ScanResult.list_by_project`, `PackageVersion.list_by_project` return `RouteResult`; relationship map in [resource-routes.md](generated-reference/resource-routes.md). Regenerate with `devtools/generate_route_contract.py`.
+- **Generated accessor helpers** — `Finding.list_by_project`, `Finding.to_dependency_metadata`, `ScanResult.list_by_project`, `PackageVersion.list_by_project` return `RouteResult`; relationship map in [resource-routes.md](generated-reference/resource-routes.md). Regenerate with `devtools/codegen/generate_route_contract.py`.
 - **Identity lane** — `Project.search_by_name`, `VectorStore.search_by_name`, `AuthorizationPolicy.search_by_claims`, `Vulnerability.search_by_vuln_alias` (bounded list discovery; forwards `list()` kwargs including `mask` and `filter` / `F()`). Contract: [resource-discovery.md](../agent-knowledge/contracts/resource-discovery.md).
 - **Facade package** — `facade/` split (`base`, `runtime`, `route_host`, `specialized`, `search`) replacing monolithic `facade.py`.
 - **Facade list helpers** — `count()`, `list_groups()`, `latest()` / `latest_created()` / `latest_updated()`, `parent()` on listable facades; catalog in [facade-helpers.md](guides/facade-helpers.md).
@@ -196,7 +196,7 @@ First release candidate validated via TestPyPI; consolidates estate workflow uni
 
 ### Added
 
-- **`devtools/verify_ship_artifacts.py`** — canonical CI/release gate: upstream OpenAPI SHA verify, model-sync regen, committed-artifact `git diff`, and agent-knowledge `--verify`.
+- **`devtools/ship/verify_ship_artifacts.py`** — canonical CI/release gate: upstream OpenAPI SHA verify, model-sync regen, committed-artifact `git diff`, and agent-knowledge `--verify`.
 - **`.github/actions/release-build-gate`** — shared quality + ship-artifact + wheel build for production and TestPyPI releases.
 - **`endorlabs.tools.list_sharding`** — `ParentShard`, `parallel_map_shards`, and `list_for_shards` for per-project parallel SDK lists.
 
@@ -296,13 +296,13 @@ First public pre-release on TestPyPI.
 - **Shipped agent bundle** — `src/endorlabs/agent_knowledge/` (skills, contracts, workflow index) materialized to `.endorlabs-context/sdk/` on every `endorlabs.init()`; helpers `agent_knowledge_dir()`, `agent_knowledge_index_path()`, `agent_knowledge_manifest()`.
 - **`context.json` init manifest** — written under `.endorlabs-context/` with sdk/platform paths and bootstrap flags.
 - **`agent-knowledge/skills/` authorship region** — renamed from `skills-src/`; `schema/` (JSON schemas + authoring guide), `workflows.yaml`, contract frontmatter, and `endorlabs.catalog` skill extension metadata.
-- **`devtools/agent_knowledge_catalog.py`** — schema validation, portable `SKILL.md` normalization, workflow catalog merge, pyproject CLI cross-check.
-- **`devtools/sync_agent_knowledge.py`** — sync `agent-knowledge/skills/` into the wheel bundle; CI/pre-push `--verify` drift gate (skills, contracts, INDEX, workflows, MANIFEST).
+- **`devtools/codegen/agent_knowledge_catalog.py`** — schema validation, portable `SKILL.md` normalization, workflow catalog merge, pyproject CLI cross-check.
+- **`devtools/codegen/sync_agent_knowledge.py`** — sync `agent-knowledge/skills/` into the wheel bundle; CI/pre-push `--verify` drift gate (skills, contracts, INDEX, workflows, MANIFEST).
 - **Agent bundle integration e2e** — `tests/integration/platform/context/test_agent_knowledge_e2e.py` validates init materialization and retrieve-scan-results workflow against tenant data.
 
 ### Breaking
 
-- **Naming coherence** — authoring `agent-knowledge/` (kebab); shipped module `endorlabs.agent_knowledge` (snake); sync `devtools/sync_agent_knowledge.py`. Public API: `agent_knowledge_dir()`, `agent_knowledge_manifest()`, `agent_knowledge_rule_ids()`, `agent_knowledge_bootstrap_paths()`; `InitStatus.agent_knowledge_path`; `init(include_agent_knowledge=...)`. Removed `agent_bundle_*` / `include_sdk_bundle` names (no shims).
+- **Naming coherence** — authoring `agent-knowledge/` (kebab); shipped module `endorlabs.agent_knowledge` (snake); sync `devtools/codegen/sync_agent_knowledge.py`. Public API: `agent_knowledge_dir()`, `agent_knowledge_manifest()`, `agent_knowledge_rule_ids()`, `agent_knowledge_bootstrap_paths()`; `InitStatus.agent_knowledge_path`; `init(include_agent_knowledge=...)`. Removed `agent_bundle_*` / `include_sdk_bundle` names (no shims).
 - **Authoring root** — `agent-skills/` → `agent-knowledge/`; skill directories under `agent-knowledge/skills/`.
 - **Bootstrap content** — moved from `contracts/` to `rules/` in authoring and shipped bundle.
 - **Manifest** — `schema_version` 2; `bootstrap.contract_ids` → `bootstrap.rule_ids`; bootstrap rows removed from `contracts[]`.

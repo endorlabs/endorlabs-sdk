@@ -101,7 +101,7 @@ jobs:
 
       - name: Smoke test published install
         run: >-
-          uv run python devtools/smoke_test_published_install.py
+          uv run python devtools/ship/smoke_test_published_install.py
           --version ${{ needs.build.outputs.version }}
 
       - name: Publish TestPyPI summary

@@ -1,7 +1,7 @@
 """Generate reference docs from SDK registry/facades and OpenAPI spec.
 
 Run from repo root:
-    uv run python devtools/generate_reference_docs.py
+    uv run python devtools/codegen/generate_reference_docs.py
 """
 
 from __future__ import annotations

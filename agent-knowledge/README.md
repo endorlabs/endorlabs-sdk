@@ -12,7 +12,7 @@ Modular, on-demand workflow packages for AI agents working with the Endor Labs S
 | **`.endorlabs-context/sdk/`** | Runtime mirror after `init()` / `endor-context` (gitignored in consumer repos) |
 | **`.cursor/skills/`** | Optional IDE mirror from materialized sdk (`sync_skills=…`; gitignored here) |
 
-After any skill edit: `uv run python devtools/sync_agent_knowledge.py` (CI `--verify` enforces parity).
+After any skill edit: `uv run python devtools/codegen/sync_agent_knowledge.py` (CI `--verify` enforces parity).
 
 Each skill is a directory with `SKILL.md` plus optional reference files. Format: [Cursor](https://docs.cursor.com) and [Anthropic Agent Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview).
 
@@ -25,10 +25,10 @@ Each skill is a directory with `SKILL.md` plus optional reference files. Format:
 | [endor-custom-sast-rules](endor-custom-sast-rules/) | SemgrepRule YAML authoring, validation, import | Canonical (skill-owned) |
 | [endor-dependency-provenance](endor-dependency-provenance/) | Resolve exact package lineage by manifest path/ref and direct-vs-transitive introduction routes | Skill-owned |
 | [endor-dependency-finding-provenance](endor-dependency-finding-provenance/) | Trace vulnerability/dependency lineage and commit-scoped presence across findings, package versions, and artifacts | Skill-owned |
-| [endor-author-agent-skill](endor-author-agent-skill/) | Author or update shipped agent skills: frontmatter, sync, composition handoffs | [schema/README.md](schema/README.md), `devtools/sync_agent_knowledge.py` |
+| [endor-author-agent-skill](endor-author-agent-skill/) | Author or update shipped agent skills: frontmatter, sync, composition handoffs | [schema/README.md](schema/README.md), `devtools/codegen/sync_agent_knowledge.py` |
 | [endor-fetch-and-search-call-graph](endor-fetch-and-search-call-graph/) | Fetch/decode call graphs; direct-edge and multi-hop path search (customer PV plane) | `endorlabs.workflows.callgraph` |
 | [endor-implement-sdk-resource](endor-implement-sdk-resource/) | Model-sync-first surface extension, overlay, integration tests | `docs/contributing/architecture.md`, `integration-resource-tests.md` |
-| [endor-model-sync-drift](endor-model-sync-drift/) | OpenAPI/provenance drift; regen `registry_contract`, stubs, reference docs; CI/pre-push verify failures | `docs/contributing/docs-drift-workflow.md`, `devtools/sync/` |
+| [endor-model-sync-drift](endor-model-sync-drift/) | OpenAPI/provenance drift; regen `registry_contract`, stubs, reference docs; CI/pre-push verify failures | `docs/contributing/docs-drift-workflow.md`, `devtools/codegen/sync/` |
 | [endor-duplicate-projects](endor-duplicate-projects/) | Tenant-wide duplicate Project audit (exact name default; opt-in `--name-strip-tokens`); excludes SBOM (`spec.sbom`); CSV + canvas | Skill-owned |
 | [endor-potentially-reachable-analysis](endor-potentially-reachable-analysis/) | Tenant-wide PRF approximation + PackageVersion resolution error report (JSON, canvas, HTML/PDF) | Skill-owned |
 | [endor-chart-new-vs-resolved-findings](endor-chart-new-vs-resolved-findings/) | Cumulative weekly new vs resolved Critical/High reachable vuln trends from FindingLog CREATE/DELETE (SDK `finding_log_trends` + canvas) | Skill-owned |
@@ -59,7 +59,7 @@ Skills use progressive disclosure to minimize context window usage:
 
 Authoring → shipped bundle → runtime mirror flow: [docs/contributing/repository-layout.md](../../docs/contributing/repository-layout.md). **Runtime rule:** agents read the wheel or `.endorlabs-context/sdk/skills/` — not repo `agent-knowledge/skills/` directly.
 
-After editing skills, run `uv run python devtools/sync_agent_knowledge.py` (see [schema/README.md](schema/README.md) for authoring rules, including [skill composition and handoffs](schema/README.md#skill-composition-and-handoffs)). Optional IDE mirrors: `init(sync_skills=...)` or the `endor-context` command below.
+After editing skills, run `uv run python devtools/codegen/sync_agent_knowledge.py` (see [schema/README.md](schema/README.md) for authoring rules, including [skill composition and handoffs](schema/README.md#skill-composition-and-handoffs)). Optional IDE mirrors: `init(sync_skills=...)` or the `endor-context` command below.
 
 To refresh runtime mirrors from materialized context:
 

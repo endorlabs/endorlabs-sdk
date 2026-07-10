@@ -7,12 +7,14 @@
 #   uv run pytest tests/unit/ -m "not interactive and not long"
 #   uv run ruff check --select E,F,I,UP <CI-critical scripts>
 #   uv run pyright --project pyproject.toml <same scripts>
-#   uv run python devtools/verify_ship_artifacts.py --fetch-spec  (pre-push; CI lint)
+#   uv run python devtools/ship/verify_ship_artifacts.py --fetch-spec  (pre-push; CI lint)
 #
 # Ship-artifact verify runs before ruff/pyright on commit (local spec, regen + git
 # diff) so linters typecheck regenerated surfaces. Pre-push runs only the upstream
 # full gate (--fetch-spec), model-sync contract validate, and bandit — not a second
 # pass of ruff/pyright/pytest or skip-upstream ship verify.
+#
+# Layout: devtools/precommit/ | codegen/ | ship/ — see devtools/README.md.
 #
 # default_stages: pre-commit only — hooks without explicit stages do not rerun on
 # push (pre-commit 4.x otherwise defaults to all stages).
@@ -23,7 +25,7 @@ default_stages: [pre-commit]
 # (including devtools/) even when those files are staged — diverging from CI.
 #
 # Install: uv run pre-commit install && uv run pre-commit install --hook-type pre-push
-# Guards: devtools/pre_commit_guards.py (policy) + devtools/git_staged.py (staged listing);
+# Guards: devtools/precommit/pre_commit_guards.py (policy) + devtools/precommit/git_staged.py (staged listing);
 #   rule endor-maintainer-tooling — block .env / .endorlabs-context/ staged;
 #   changelog Unreleased reminder (stderr, non-blocking) on user-facing diffs.
 # Run manually: uv run pre-commit run --all-files
@@ -34,7 +36,7 @@ repos:
       - id: pre-commit-guards-blocked-paths
         name: block gitignored runtime paths (.endorlabs-context, .env)
         entry: uv
-        args: [run, python, devtools/pre_commit_guards.py, blocked-paths]
+        args: [run, python, devtools/precommit/pre_commit_guards.py, blocked-paths]
         language: system
         pass_filenames: false
         always_run: true
@@ -42,7 +44,7 @@ repos:
       - id: pre-commit-guards-changelog-reminder
         name: changelog Unreleased reminder (user-facing staged paths)
         entry: uv
-        args: [run, python, devtools/pre_commit_guards.py, changelog-reminder]
+        args: [run, python, devtools/precommit/pre_commit_guards.py, changelog-reminder]
         language: system
         pass_filenames: false
         always_run: true
@@ -50,7 +52,7 @@ repos:
       - id: pre-commit-guards-layer-imports
         name: block forbidden cross-layer imports
         entry: uv
-        args: [run, python, devtools/pre_commit_guards.py, layer-imports]
+        args: [run, python, devtools/precommit/pre_commit_guards.py, layer-imports]
         language: system
         pass_filenames: false
         always_run: true
@@ -59,7 +61,7 @@ repos:
       - id: pre-commit-guards-bounds-shim
         name: block estate.collect.bounds imports
         entry: uv
-        args: [run, python, devtools/pre_commit_guards.py, bounds-shim]
+        args: [run, python, devtools/precommit/pre_commit_guards.py, bounds-shim]
         language: system
         pass_filenames: false
         always_run: true
@@ -68,7 +70,7 @@ repos:
       - id: pre-commit-guards-deprecated-api-strings
         name: block deprecated API strings in agent/docs
         entry: uv
-        args: [run, python, devtools/pre_commit_guards.py, deprecated-api-strings]
+        args: [run, python, devtools/precommit/pre_commit_guards.py, deprecated-api-strings]
         language: system
         pass_filenames: false
         always_run: true
@@ -77,7 +79,7 @@ repos:
       - id: pre-commit-guards-accessor-nudge
         name: accessor-first nudge (warning; hand-built project_uuid filters)
         entry: uv
-        args: [run, python, devtools/pre_commit_guards.py, accessor-nudge]
+        args: [run, python, devtools/precommit/pre_commit_guards.py, accessor-nudge]
         language: system
         pass_filenames: false
         always_run: true
@@ -86,16 +88,24 @@ repos:
       - id: pre-commit-guards-portable-examples
         name: portable-examples nudge (warning; estate literals in agent/docs)
         entry: uv
-        args: [run, python, devtools/pre_commit_guards.py, portable-examples]
+        args: [run, python, devtools/precommit/pre_commit_guards.py, portable-examples]
         language: system
         pass_filenames: false
         always_run: true
         files: ^(agent-knowledge/|\.cursor/rules/|docs/).*\.(md|mdc)$
 
+      - id: pre-commit-guards-external-pii-urls
+        name: block emails and non-Endor Labs URLs in staged added lines
+        entry: uv
+        args: [run, python, devtools/precommit/pre_commit_guards.py, external-pii-urls]
+        language: system
+        pass_filenames: false
+        always_run: true
+
       - id: pre-commit-guards-agent-knowledge-sync
         name: agent-knowledge sync reminder (authoring without shipped mirror)
         entry: uv
-        args: [run, python, devtools/pre_commit_guards.py, agent-knowledge-sync]
+        args: [run, python, devtools/precommit/pre_commit_guards.py, agent-knowledge-sync]
         language: system
         pass_filenames: false
         always_run: true
@@ -104,7 +114,7 @@ repos:
       - id: pre-commit-guards-context-root-literals
         name: block hard-coded .endorlabs-context path constants
         entry: uv
-        args: [run, python, devtools/pre_commit_guards.py, context-root-literals]
+        args: [run, python, devtools/precommit/pre_commit_guards.py, context-root-literals]
         language: system
         pass_filenames: false
         always_run: true
@@ -125,12 +135,12 @@ repos:
         args:
           - run
           - python
-          - devtools/verify_ship_artifacts.py
+          - devtools/ship/verify_ship_artifacts.py
           - --skip-upstream
         language: system
         pass_filenames: false
         require_serial: true
-        files: (^pyproject\.toml$|^devtools/(model_sync\.py|model_sync_profiles/|sync/|generate_client_stub\.py|generate_reference_docs\.py|verify_ship_artifacts\.py)|^src/endorlabs/(generated/|registry_overlay\.py|registry\.py|client_surface\.pyi)|^docs/generated-reference/)
+        files: (^pyproject\.toml$|^devtools/(codegen/(model_sync\.py|model_sync_profiles/|sync/|generate_client_stub\.py|generate_reference_docs\.py)|ship/verify_ship_artifacts\.py)|^src/endorlabs/(generated/|registry_overlay\.py|registry\.py|client_surface\.pyi)|^docs/generated-reference/)
 
       - id: ruff-check
         name: ruff check (repo-wide)
@@ -177,11 +187,11 @@ repos:
       - id: consumer-wire-fixtures-verify
         name: consumer wire fixtures verify
         entry: uv
-        args: [run, python, devtools/audit_consumer_surfaces.py, --check]
+        args: [run, python, devtools/precommit/audit_consumer_surfaces.py, --check]
         language: system
         pass_filenames: false
         require_serial: true
-        files: (^tests/fixtures/models/.*|^src/endorlabs/resources/.*|^devtools/audit_consumer_surfaces\.py$)
+        files: (^tests/fixtures/models/.*|^src/endorlabs/resources/.*|^devtools/precommit/audit_consumer_surfaces\.py$)
 
       # Paths must stay aligned with ci-pr-main.yml "Validate CI-critical automation scripts".
       - id: ruff-check-ci-critical-automation
@@ -193,21 +203,21 @@ repos:
           - check
           - --select
           - E,F,I,UP
-          - devtools/model_sync.py
-          - devtools/generate_client_stub.py
-          - devtools/generate_reference_docs.py
-          - devtools/sync_agent_knowledge.py
-          - devtools/agent_knowledge_catalog.py
-          - devtools/sync/cli.py
-          - devtools/sync/upstream_verify.py
-          - devtools/verify_ship_artifacts.py
-          - devtools/git_staged.py
-          - devtools/pre_commit_guards.py
+          - devtools/codegen/model_sync.py
+          - devtools/codegen/generate_client_stub.py
+          - devtools/codegen/generate_reference_docs.py
+          - devtools/codegen/sync_agent_knowledge.py
+          - devtools/codegen/agent_knowledge_catalog.py
+          - devtools/codegen/sync/cli.py
+          - devtools/codegen/sync/upstream_verify.py
+          - devtools/ship/verify_ship_artifacts.py
+          - devtools/precommit/git_staged.py
+          - devtools/precommit/pre_commit_guards.py
           - .github/scripts/check_endorctl_version.py
         language: system
         pass_filenames: false
         require_serial: true
-        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync_agent_knowledge\.py|agent_knowledge_catalog\.py|sync/cli\.py|sync/upstream_verify\.py|verify_ship_artifacts\.py)|\.github/scripts/check_endorctl_version\.py)$)
+        files: (^pyproject\.toml$|^(devtools/(codegen/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync_agent_knowledge\.py|agent_knowledge_catalog\.py|sync/cli\.py|sync/upstream_verify\.py)|ship/verify_ship_artifacts\.py|precommit/(git_staged\.py|pre_commit_guards\.py))|\.github/scripts/check_endorctl_version\.py)$)
 
       - id: pyright-ci-critical-automation
         name: pyright (CI-critical automation scripts)
@@ -217,21 +227,21 @@ repos:
           - pyright
           - --project
           - pyproject.toml
-          - devtools/model_sync.py
-          - devtools/generate_client_stub.py
-          - devtools/generate_reference_docs.py
-          - devtools/sync_agent_knowledge.py
-          - devtools/agent_knowledge_catalog.py
-          - devtools/sync/cli.py
-          - devtools/sync/upstream_verify.py
-          - devtools/verify_ship_artifacts.py
-          - devtools/git_staged.py
-          - devtools/pre_commit_guards.py
+          - devtools/codegen/model_sync.py
+          - devtools/codegen/generate_client_stub.py
+          - devtools/codegen/generate_reference_docs.py
+          - devtools/codegen/sync_agent_knowledge.py
+          - devtools/codegen/agent_knowledge_catalog.py
+          - devtools/codegen/sync/cli.py
+          - devtools/codegen/sync/upstream_verify.py
+          - devtools/ship/verify_ship_artifacts.py
+          - devtools/precommit/git_staged.py
+          - devtools/precommit/pre_commit_guards.py
           - .github/scripts/check_endorctl_version.py
         language: system
         pass_filenames: false
         require_serial: true
-        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync_agent_knowledge\.py|agent_knowledge_catalog\.py|sync/cli\.py|sync/upstream_verify\.py|verify_ship_artifacts\.py)|\.github/scripts/check_endorctl_version\.py)$)
+        files: (^pyproject\.toml$|^(devtools/(codegen/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync_agent_knowledge\.py|agent_knowledge_catalog\.py|sync/cli\.py|sync/upstream_verify\.py)|ship/verify_ship_artifacts\.py|precommit/(git_staged\.py|pre_commit_guards\.py))|\.github/scripts/check_endorctl_version\.py)$)
 
       - id: model-sync-contract-validate
         name: model-sync contract validation
@@ -245,7 +255,7 @@ repos:
         pass_filenames: false
         require_serial: true
         stages: [pre-push]
-        files: (^pyproject\.toml$|^src/endorlabs/registry\.py$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/.*\.py))$)
+        files: (^pyproject\.toml$|^src/endorlabs/registry\.py$|^(devtools/codegen/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/.*\.py))$)
 
       - id: ship-artifacts-verify-upstream
         name: ship artifacts verify (upstream + full gate; CI parity)
@@ -253,7 +263,7 @@ repos:
         args:
           - run
           - python
-          - devtools/verify_ship_artifacts.py
+          - devtools/ship/verify_ship_artifacts.py
           - --fetch-spec
         language: system
         pass_filenames: false

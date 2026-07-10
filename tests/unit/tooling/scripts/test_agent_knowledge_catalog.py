@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from devtools.agent_knowledge_catalog import (
+from devtools.codegen.agent_knowledge_catalog import (
     build_workflow_catalog,
     list_skill_refs,
     load_supplemental_workflows,

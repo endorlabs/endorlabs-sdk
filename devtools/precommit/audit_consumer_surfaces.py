@@ -10,7 +10,7 @@ import re
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 RESOURCES_DIR = REPO_ROOT / "src" / "endorlabs" / "resources"
 FIXTURES_ROOT = REPO_ROOT / "tests" / "fixtures" / "models"
 FIXTURE_NAME = "list_row_min.json"

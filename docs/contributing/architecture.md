@@ -45,7 +45,7 @@ flowchart TD
    - Enforces supported operations from registry metadata; unsupported methods raise `NotImplementedError`.
 
 4. **Registry adapter** — generated-contract + overlay source of truth for `Client`
-   - Runtime contract is generated at `src/endorlabs/generated/registry_contract.py` by `devtools/model_sync.py`.
+   - Runtime contract is generated at `src/endorlabs/generated/registry_contract.py` by `devtools/codegen/model_sync.py`.
    - `registry.py` adapts generated contract rows into `ResourceEntry(...)` objects, applies explicit overrides from `registry_overlay.py`, and appends narrowly scoped experimental facades when needed.
    - Prefer model-sync inputs plus the minimal overlay. Use experimental facades only as explicit, lightweight stopgaps instead of hand-authoring a large registry table.
 
@@ -60,7 +60,7 @@ flowchart TD
 
 New API resources are **modeled by model sync**, not hand-added to `Client` one at a time. The default workflow:
 
-1. **Regenerate** — `uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs` (see [docs-drift-workflow.md](docs-drift-workflow.md)).
+1. **Regenerate** — `uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs` (see [docs-drift-workflow.md](docs-drift-workflow.md)).
 2. **Verify contract** — Resource appears in `src/endorlabs/generated/registry_contract.py`; facade is attached at runtime from the registry adapter (no entry in `Client.__init__`).
 3. **Validate API shape** — [api-validation.md](api-validation.md) (OpenAPI + optional endorctl list/get).
 4. **Diverge only when needed** — [registry_overlay.py](../../src/endorlabs/registry_overlay.py) for scope, ops, or metadata the generator cannot express; keep overrides minimal.
@@ -85,7 +85,7 @@ New API resources are **modeled by model sync**, not hand-added to `Client` one 
 
 Two model planes: **wire truth** in `generated/models/` and **consumer runtime** in
 `resources/`. Wire golden tests: `tests/fixtures/models/{module}/list_row_min.json`
-(gated by `devtools/audit_consumer_surfaces.py --check`).
+(gated by `devtools/precommit/audit_consumer_surfaces.py --check`).
 
 | Plane | Location | Role |
 | ----- | -------- | ---- |
@@ -201,7 +201,7 @@ List-plane sharding (`list_for_shards`, estate DM collect) and query-plane joins
 
 ### Validation before scale
 
-`validate_sample` compares Query recipe output to facade `count()` on a bounded project sample (`recipe="pv"|"dm"|"findings"`). Estate dashboard and online counts call `client.Query.Project.validate_sample` before full `count_*` runs. Maintainer live checks: `.tmp/query_workflow_probes/validate_query_facade.py`.
+`validate_sample` compares Query recipe output to facade `count()` on a bounded project sample (`recipe="pv"|"dm"|"findings"`). Estate dashboard and online counts call `client.Query.Project.validate_sample` before full `count_*` runs. Live coverage: `tests/integration/client/test_query_recipes.py` (see [guides/query-recipes.md](../guides/query-recipes.md)).
 
 ### When to use Query vs facade
 

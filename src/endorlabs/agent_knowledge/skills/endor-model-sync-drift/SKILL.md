@@ -14,7 +14,7 @@ When **OpenAPI SHA-256** in live upstream differs from `src/endorlabs/generated/
 ## Quick diagnose
 
 ```bash
-uv run python devtools/model_sync.py --verify-upstream-only
+uv run python devtools/codegen/model_sync.py --verify-upstream-only
 ```
 
 Exit `0` = committed artifacts match upstream. Non-zero = regen required (message includes committed vs upstream digests).
@@ -30,19 +30,19 @@ uv run python .github/scripts/check_endorctl_version.py
 From repo root (public spec download):
 
 ```bash
-uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
+uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
 ```
 
 **Spec already in `.endorlabs-context/platform/openapi/openapiv2.swagger.json`:**
 
 ```bash
-uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
+uv run python devtools/codegen/model_sync.py --generate-stubs --generate-reference-docs
 ```
 
 **Refresh only if verify failed:**
 
 ```bash
-uv run python devtools/model_sync.py --verify-and-sync-if-stale
+uv run python devtools/codegen/model_sync.py --verify-and-sync-if-stale
 ```
 
 Provenance watermark (`endorctl_version`, `spec_sha256`) comes from **`GET /meta/version`** and the downloaded OpenAPI file during generation—not from a stale local `endorctl` binary.
@@ -54,7 +54,7 @@ Provenance watermark (`endorctl_version`, `spec_sha256`) comes from **`GET /meta
 | `src/endorlabs/generated/` | `registry_contract.py`, `models/`, `create_convenience.py`, provenance headers |
 | `src/endorlabs/client_surface.pyi` | Stub drift after registry/facade changes |
 | `docs/generated-reference/` | Per-resource pages if generator touched resources |
-| Overlays | `src/endorlabs/registry_overlay.py`, `devtools/model_sync_profiles/` only if API introduced new resources or scope fixes |
+| Overlays | `src/endorlabs/registry_overlay.py`, `devtools/codegen/model_sync_profiles/` only if API introduced new resources or scope fixes |
 
 Run locally before push:
 
@@ -81,5 +81,5 @@ SDK model-sync does **not** require a matching local `endorctl` for regen. To up
 ## References
 
 - [docs/contributing/docs-drift-workflow.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contributing/docs-drift-workflow.md)
-- [devtools/sync/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/devtools/sync/README.md)
+- [devtools/codegen/sync/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/devtools/codegen/sync/README.md)
 - [docs/contributing/docs-drift-workflow.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contributing/docs-drift-workflow.md) — Model-sync drift enforcement

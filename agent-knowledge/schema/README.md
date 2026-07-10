@@ -19,7 +19,7 @@ agent-knowledge/
     *.md, scripts/
 ```
 
-Run `uv run python devtools/sync_agent_knowledge.py` after edits. CI `--verify` enforces drift (`tests/unit/platform/context/test_agent_knowledge_drift.py`).
+Run `uv run python devtools/codegen/sync_agent_knowledge.py` after edits. CI `--verify` enforces drift (`tests/unit/platform/context/test_agent_knowledge_drift.py`).
 
 **Schema files:** [`skill.schema.json`](skill.schema.json), [`rule.schema.json`](rule.schema.json), [`contract.schema.json`](contract.schema.json), [`workflows.schema.json`](workflows.schema.json), [`changelog-intake.schema.json`](changelog-intake.schema.json) (optional PR intake fields; reference only).
 
@@ -159,9 +159,9 @@ summary: >-
 
 Validated by [`rule.schema.json`](rule.schema.json). Every rule `id` **must** use the `endor-*` prefix (same namespace as skills and workflow CLIs). Shipped rules are listed in `MANIFEST.json` → `rules[]` and `bootstrap.rule_ids`; generates `.cursor/rules/<id>.mdc` with tooling-only provenance (`x-endor-generated`, `x-endor-source`, `x-endor-source-sha256`). Stale generated rules are pruned via the `x-endor-generated` marker.
 
-**Maintainer-only rules** (`MAINTAINER_ONLY_RULE_IDS` in `devtools/agent_knowledge_catalog.py`, e.g. `endor-changelog`): remain under `agent-knowledge/rules/` and sync to `.cursor/rules/`, but are **not** copied into the wheel bundle.
+**Maintainer-only rules** (`MAINTAINER_ONLY_RULE_IDS` in `devtools/codegen/agent_knowledge_catalog.py`, e.g. `endor-changelog`): remain under `agent-knowledge/rules/` and sync to `.cursor/rules/`, but are **not** copied into the wheel bundle.
 
-**Cursor apply mode** (see `CURSOR_ALWAYS_APPLY_RULE_IDS` / `CURSOR_BOOTSTRAP_RULE_GLOBS` in `devtools/sync_agent_knowledge.py`):
+**Cursor apply mode** (see `CURSOR_ALWAYS_APPLY_RULE_IDS` / `CURSOR_BOOTSTRAP_RULE_GLOBS` in `devtools/codegen/sync_agent_knowledge.py`):
 
 - **Always-on footguns:** `endor-namespace-scoping`, `endor-list-query-performance`
 - **Glob-scoped (maintainer / automation paths):** the other bootstrap rules — `src/endorlabs/**`, `**/*.py`, `.endorlabs-context/**`, `agent-knowledge/**`, `docs/**`, `devtools/**`

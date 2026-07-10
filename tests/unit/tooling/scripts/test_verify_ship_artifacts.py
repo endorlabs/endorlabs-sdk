@@ -1,4 +1,4 @@
-"""Unit tests for devtools/verify_ship_artifacts.py."""
+"""Unit tests for devtools/ship/verify_ship_artifacts.py."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
-_DEVTOOLS = _REPO_ROOT / "devtools"
+_DEVTOOLS = _REPO_ROOT / "devtools" / "ship"
 if str(_DEVTOOLS) not in sys.path:
     sys.path.insert(0, str(_DEVTOOLS))
 

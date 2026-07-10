@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DEVTOOLS = _REPO_ROOT / "devtools"
+_DEVTOOLS = _REPO_ROOT / "devtools" / "codegen"
 if str(_DEVTOOLS) not in sys.path:
     sys.path.insert(0, str(_DEVTOOLS))
 

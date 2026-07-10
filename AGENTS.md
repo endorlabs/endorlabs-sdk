@@ -37,7 +37,7 @@ Prefer these before assuming full-tenant sweeps or hand-built relationship filte
 - **Finding branch field:** `spec.source_code_version.ref` may be a short branch name, not `refs/heads/main`. List findings without a branch filter first, or use `RepositoryVersion.list`.
 - **Tenant-wide scan fetch:** `fetch_scan_results --all-projects` is O(projects × scans). Prefer `--project-name` / `--project-uuid` for interactive RCA.
 - **Relationship map:** `estate.analyze.project_map.map` uses a bounded `PackageVersion` list — distinguish wrong namespace / unscanned consumers from pagination truncation before raising caps.
-- **List deserialization vs API drift:** Pydantic validation failures on `list()` → model-sync / payload tolerance (**endor-troubleshoot-sdk**, `devtools/sync/`), not query-parameter tweaks alone.
+- **List deserialization vs API drift:** Pydantic validation failures on `list()` → model-sync / payload tolerance (**endor-troubleshoot-sdk**, `devtools/codegen/sync/`), not query-parameter tweaks alone.
 - **List field masks:** non-empty `mask=` → `dict` rows from `list()` / `list_iter()` and from `search_by_*`. See [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md), [docs/contracts.md](docs/contracts.md), shipped `contracts/list-parameters.md`.
 - **Sharded parallel lists:** for large project-scoped resources, prefer per-project parallel `list()` with selective filters — [docs/contributing/list-query-performance.md](docs/contributing/list-query-performance.md#sharded-parallel-lists).
 - **Graph joins (kind-agnostic):** `client.Query.execute` / `at_namespace` with `QuerySpec.root(any_kind)` — POST at the resource wire namespace; see [docs/guides/query-recipes.md](docs/guides/query-recipes.md).
@@ -72,7 +72,7 @@ Consumer projects should **gitignore** `.endorlabs-context/`. Print the entry: `
 | Shipped (wheel) | `src/endorlabs/agent_knowledge/` → `endorlabs.agent_knowledge` |
 | Materialized (runtime) | `.endorlabs-context/sdk/` |
 
-Maintainers editing authoring: `uv run python devtools/sync_agent_knowledge.py` — see [repository-layout.md](docs/contributing/repository-layout.md).
+Maintainers editing authoring: `uv run python devtools/codegen/sync_agent_knowledge.py` — see [repository-layout.md](docs/contributing/repository-layout.md).
 
 ## SDK behavior (quick reference)
 

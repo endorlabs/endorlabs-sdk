@@ -68,8 +68,8 @@ API or endpoint behavior changes → [contracts.md](contracts.md) and [generated
 Regenerate from repo root:
 
 ```bash
-uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
-uv run python devtools/generate_route_contract.py
+uv run python devtools/codegen/model_sync.py --generate-stubs --generate-reference-docs
+uv run python devtools/codegen/generate_route_contract.py
 ```
 
-CI validates ship artifacts via `devtools/verify_ship_artifacts.py` (registry, route contract, reference docs, agent knowledge).
+CI validates ship artifacts via `devtools/ship/verify_ship_artifacts.py` (registry, route contract, reference docs, agent knowledge).

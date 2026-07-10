@@ -1,4 +1,4 @@
-"""Unit tests for devtools/pre_commit_guards.py."""
+"""Unit tests for devtools/precommit/pre_commit_guards.py."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
-_DEVTOOLS = _REPO_ROOT / "devtools"
+_DEVTOOLS = _REPO_ROOT / "devtools" / "precommit"
 if str(_DEVTOOLS) not in sys.path:
     sys.path.insert(0, str(_DEVTOOLS))
 
@@ -19,8 +19,11 @@ from pre_commit_guards import (  # noqa: E402
     check_changelog_reminder,
     check_context_root_literals,
     check_deprecated_api_strings,
+    check_external_pii_urls,
     check_layer_imports,
     check_portable_examples,
+    is_allowed_email,
+    is_allowed_url,
     is_blocked_staged_path,
     is_user_facing_staged_path,
 )
@@ -232,7 +235,7 @@ def test_check_layer_imports_blocks_devtools(tmp_path: Path, monkeypatch) -> Non
     monkeypatch.setattr("pre_commit_guards._REPO_ROOT", tmp_path)
     bad = tmp_path / "src" / "endorlabs" / "client.py"
     bad.parent.mkdir(parents=True)
-    bad.write_text("import devtools.git_staged\n", encoding="utf-8")
+    bad.write_text("import devtools.precommit.git_staged\n", encoding="utf-8")
     assert check_layer_imports(paths=["src/endorlabs/client.py"]) == 1
 
 
@@ -326,3 +329,47 @@ def test_check_context_root_literals_scans_skill_scripts(
         )
         == 1
     )
+
+
+def test_is_allowed_email_placeholders_and_endor() -> None:
+    assert is_allowed_email("user@example.com")
+    assert is_allowed_email("ops@endorlabs.com")
+    customer = "user@" + "customer.com"
+    short = "a@" + "b.com"
+    assert not is_allowed_email(customer)
+    assert not is_allowed_email(short)
+
+
+def test_is_allowed_url_endor_and_placeholders() -> None:
+    assert is_allowed_url("https://docs.endorlabs.com/foo")
+    assert is_allowed_url("https://api.endorlabs.com/v1/x")
+    assert is_allowed_url("https://github.com/endorlabs/endorlabs-sdk")
+    assert is_allowed_url("https://example.com/attack")
+    assert is_allowed_url("https://github.com/org/repo.git")
+    customer_gh = "https://" + "github.com/customer/repo"
+    astral = "https://" + "docs.astral.sh/uv/"
+    assert not is_allowed_url(customer_gh)
+    assert not is_allowed_url(astral)
+
+
+def test_check_external_pii_urls_blocks_email_and_url(capsys) -> None:
+    bad_email = "user@" + "customer.com"
+    bad_url = "https://" + "github.com/customer/repo"
+    lines = [
+        ("docs/guides/examples.md", 1, f"contact {bad_email} for access"),
+        ("README.md", 2, f"See {bad_url}"),
+        ("docs/guides/examples.md", 3, "ok https://docs.endorlabs.com/x"),
+        ("docs/guides/examples.md", 4, "ok user@example.com"),
+    ]
+    assert check_external_pii_urls(lines=lines) == 1
+    err = capsys.readouterr().err
+    assert bad_email in err
+    assert bad_url in err
+
+
+def test_check_external_pii_urls_allows_clean_lines() -> None:
+    lines = [
+        ("docs/guides/examples.md", 1, "https://github.com/endorlabs/endorlabs-sdk"),
+        ("tests/unit/foo.py", 2, 'identity="user@example.com"'),
+    ]
+    assert check_external_pii_urls(lines=lines) == 0

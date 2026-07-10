@@ -71,7 +71,7 @@ project = client.Project.get(project_uuid, namespace="tenant.child")
 
 From `route_contract_overlay.yaml` + `route_partition_targets.yaml` → [resource-routes.md](../generated-reference/resource-routes.md) and [api-surfaces.md](../generated-reference/api-surfaces.md).
 
-Regenerate: `uv run python devtools/generate_route_contract.py`.
+Regenerate: `uv run python devtools/codegen/generate_route_contract.py`.
 
 **When to use:** Prefer generated accessors over hand-built `spec.project_uuid==…` or `context.scan_uuid==…` filters when the edge exists in the contract. Return-type semantics and stitch `RouteResult` protocol: [resource-discovery contract](../../agent-knowledge/contracts/resource-discovery.md).
 

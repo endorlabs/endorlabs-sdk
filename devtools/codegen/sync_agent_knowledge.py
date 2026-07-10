@@ -4,9 +4,9 @@ Run from repo root::
 
 
 
-    uv run python devtools/sync_agent_knowledge.py
+    uv run python devtools/codegen/sync_agent_knowledge.py
 
-    uv run python devtools/sync_agent_knowledge.py --verify
+    uv run python devtools/codegen/sync_agent_knowledge.py --verify
 
 
 
@@ -25,13 +25,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 
-from devtools.agent_knowledge_catalog import (
+from devtools.codegen.agent_knowledge_catalog import (
     AGENT_CONTRACTS_SUBDIR,
     AGENT_DIRNAME,
     AGENT_RULES_SUBDIR,
@@ -492,7 +492,7 @@ def verify_cursor_rules() -> list[str]:
     for mdc_path in CURSOR_RULES_DIR.glob("*.mdc"):
         if _cursor_rule_is_generated(mdc_path) and mdc_path.stem not in expected:
             errors.append(
-                f".cursor/rules/{mdc_path.name} stale (run devtools/sync_agent_knowledge.py)"
+                f".cursor/rules/{mdc_path.name} stale (run devtools/codegen/sync_agent_knowledge.py)"
             )
 
     return errors
@@ -795,18 +795,18 @@ def verify_bundle() -> int:
     errors.extend(verify_cursor_rules())
 
     if snapshot_skills != regen_skills:
-        errors.append("agent_knowledge/skills drift (run devtools/sync_agent_knowledge.py)")
+        errors.append("agent_knowledge/skills drift (run devtools/codegen/sync_agent_knowledge.py)")
 
     if snapshot_rules != regen_rules:
-        errors.append("agent_knowledge/rules drift (run devtools/sync_agent_knowledge.py)")
+        errors.append("agent_knowledge/rules drift (run devtools/codegen/sync_agent_knowledge.py)")
 
     if snapshot_contracts != regen_contracts:
         errors.append(
-            "agent_knowledge/contracts drift (run devtools/sync_agent_knowledge.py)"
+            "agent_knowledge/contracts drift (run devtools/codegen/sync_agent_knowledge.py)"
         )
 
     if snapshot_index != regen_index_hash:
-        errors.append("agent_knowledge/INDEX.md drift (run devtools/sync_agent_knowledge.py)")
+        errors.append("agent_knowledge/INDEX.md drift (run devtools/codegen/sync_agent_knowledge.py)")
 
     if snapshot_manifest != regen_manifest:
         errors.append("agent_knowledge/MANIFEST.json drift")

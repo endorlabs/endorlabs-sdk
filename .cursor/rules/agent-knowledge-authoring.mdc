@@ -14,7 +14,7 @@ When editing files under `agent-knowledge/`, follow the canonical authoring spec
 
 For multi-step or narrow-scope skills, document **Scope**, **Related skills** (with reciprocal links on peers), and optional **Optional stops** / routing tables — see [Skill composition and handoffs](../../agent-knowledge/schema/README.md#skill-composition-and-handoffs). Every skill id must use the **`endor-*`** prefix (see [schema/README.md](../../agent-knowledge/schema/README.md)).
 
-After changes, run `uv run python devtools/sync_agent_knowledge.py`. Shipped `SKILL.md` files must contain **only** portable frontmatter (`name`, `description`, optional `disable-model-invocation`).
+After changes, run `uv run python devtools/codegen/sync_agent_knowledge.py`. Shipped `SKILL.md` files must contain **only** portable frontmatter (`name`, `description`, optional `disable-model-invocation`).
 
 ## Path consistency (tests and docs)
 
@@ -27,6 +27,6 @@ When renaming a skill directory, script, or cited runtime path, **keep tests and
 
 ## Tests (manifest and drift)
 
-- **Drift gate:** `tests/unit/platform/context/test_agent_knowledge_drift.py` runs `devtools/sync_agent_knowledge.py --verify`. That is the authoritative check that authoring, shipped bundle, INDEX, workflows, and `MANIFEST.json` stay aligned.
+- **Drift gate:** `tests/unit/platform/context/test_agent_knowledge_drift.py` runs `devtools/codegen/sync_agent_knowledge.py --verify`. That is the authoritative check that authoring, shipped bundle, INDEX, workflows, and `MANIFEST.json` stay aligned.
 - **Do not hardcode skill or workflow counts** in unit tests (same principle as [docs-skillbase-consistency.mdc](docs-skillbase-consistency.mdc): no brittle “complete inventory” assertions). Adding or removing a skill should not require bumping a magic number.
 - Prefer **structural** manifest checks: unique ids, required fields, on-disk paths under `agent_knowledge_dir()`, bootstrap `rule_ids` matches `rules[]`, and targeted presence/absence for the change under test (e.g. workflow row with `skill: null`).

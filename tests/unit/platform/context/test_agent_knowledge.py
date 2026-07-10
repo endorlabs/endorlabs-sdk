@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 import endorlabs
-from devtools.sync_agent_knowledge import MANIFEST_SCHEMA_VERSION
+from devtools.codegen.sync_agent_knowledge import MANIFEST_SCHEMA_VERSION
 from endorlabs.agent_knowledge import (
     agent_knowledge_dir,
     agent_knowledge_index_path,

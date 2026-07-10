@@ -19,14 +19,14 @@ There is no committed `workspace/model-sync/` staging directory; the runtime con
 - `__init__.py` may be created/updated by sync automation for package wiring.
 - Any human-authored behavior changes should happen outside this package:
   - `src/endorlabs/registry_overlay.py` for explicit runtime policy overrides,
-  - `devtools/model_sync_profiles/*.json` for sync profiles/overlays.
+  - `devtools/codegen/model_sync_profiles/*.json` for sync profiles/overlays.
 
 ## Safe-edit policy
 
 - Never hand-edit `registry_contract.py`.
 - Never hand-edit files in `models/**`.
 - Regenerate with:
-  - `uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs`
+  - `uv run python devtools/codegen/model_sync.py --generate-stubs --generate-reference-docs`
 
 ## Cutover boundary
 
@@ -40,6 +40,6 @@ There is no committed `workspace/model-sync/` staging directory; the runtime con
 2. Verify `registry.py` resolves model and builder imports from generated
    contract metadata.
 3. Verify parity/quality gates in unit tests and CI pass.
-4. Update `devtools/model_sync_profiles/resource_descriptions.json` when adding a
+4. Update `devtools/codegen/model_sync_profiles/resource_descriptions.json` when adding a
    new resource description.
 5. Keep this package generated-only; do not introduce handwritten runtime logic.

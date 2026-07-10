@@ -5,14 +5,14 @@ These files are generated. Do not hand-edit.
 ## Regenerate
 
 ```bash
-uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
-uv run python devtools/generate_route_contract.py
+uv run python devtools/codegen/model_sync.py --generate-stubs --generate-reference-docs
+uv run python devtools/codegen/generate_route_contract.py
 ```
 
 Or standalone:
 
-- `uv run python devtools/generate_reference_docs.py` — matrices, `api-surfaces.md`, per-resource pages
-- `uv run python devtools/generate_route_contract.py` — `route_contract.py`, `resource-routes.md`
+- `uv run python devtools/codegen/generate_reference_docs.py` — matrices, `api-surfaces.md`, per-resource pages
+- `uv run python devtools/codegen/generate_route_contract.py` — `route_contract.py`, `resource-routes.md`
 
 ## Contents
 
@@ -27,4 +27,4 @@ Or standalone:
 
 Normative usage patterns: [guides/facade-helpers.md](../guides/facade-helpers.md).
 
-CI drift gate: `devtools/verify_ship_artifacts.py`.
+CI drift gate: `devtools/ship/verify_ship_artifacts.py`.

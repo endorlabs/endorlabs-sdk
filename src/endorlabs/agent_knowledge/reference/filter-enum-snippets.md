@@ -1,7 +1,7 @@
 # Filter enum snippets (generated)
 
 Illustrative wire enum strings for **`filter=`** on list and accessor calls.
-Regenerate with `uv run python devtools/generate_filter_enum_reference.py`.
+Regenerate with `uv run python devtools/codegen/generate_filter_enum_reference.py`.
 Values are sourced from generated model-sync enums — not hand-maintained.
 
 ## ScanResult status (`spec.status`)
