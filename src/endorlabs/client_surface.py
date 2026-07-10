@@ -7,19 +7,18 @@ All facades are built from the registries in endorlabs.registry.
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 from .api_client import APIClient
 from .core.exceptions import ValidationError
 from .core.filter import F
-from .core.whoami import WhoamiResult
+from .core.whoami import WhoamiResult, identity_from_auth_payload
 from .facade import FACADE_CLASS_BY_ATTR, ResourceRuntimeFacade
 from .registry import CUSTOM_FACADE_REGISTRY, RESOURCE_REGISTRY, ResourceEntry
 from .utils.bearer_token import (
+    expiration_from_auth_payload,
     expires_in_seconds,
     jwt_expiration_unverified,
-    parse_iso_datetime,
 )
 from .utils.endorctl_config import (
     endorctl_config_path,
@@ -155,20 +154,15 @@ class Client:
 
     def _whoami_from_user_info(self, user_info: dict[str, object]) -> WhoamiResult:
         """Build WhoamiResult from ``/v1/auth`` payload."""
-        identity = self._identity_from_user_info(user_info)
+        identity = identity_from_auth_payload(user_info)
         auth_source = user_info.get("authentication_source")
         authentication_source = (
             str(auth_source) if isinstance(auth_source, str) and auth_source else None
         )
-        expiration_time: datetime | None = None
-        expiration_source: Literal["v1_auth", "jwt", "api_key_exchange"] | None = None
-        for key in ("expiration_time", "expirationTime"):
-            raw = user_info.get(key)
-            if isinstance(raw, str) and raw:
-                expiration_time = parse_iso_datetime(raw)
-                if expiration_time is not None:
-                    expiration_source = "v1_auth"
-                break
+        expiration_time = expiration_from_auth_payload(user_info)
+        expiration_source: Literal["v1_auth", "jwt", "api_key_exchange"] | None = (
+            "v1_auth" if expiration_time is not None else None
+        )
         remaining = expires_in_seconds(expiration_time)
         is_expired = remaining <= 0 if remaining is not None else None
         auth_type: Literal["api-key", "browser"] | None = None
@@ -218,27 +212,6 @@ class Client:
             auth_type="api-key",
             expiration_source="api_key_exchange",
         )
-
-    def _identity_from_user_info(self, user_info: dict[str, object]) -> str | None:
-        """Extract an identity string from ``/v1/auth`` response payload."""
-        user = user_info.get("user")
-        if not isinstance(user, dict):
-            return None
-        user_dict = cast("dict[str, object]", user)
-        spec = user_dict.get("spec")
-        if isinstance(spec, dict):
-            spec_dict = cast("dict[str, object]", spec)
-            for key in ("email", "user_name"):
-                value = spec_dict.get(key)
-                if isinstance(value, str) and value:
-                    return value
-        meta = user_dict.get("meta")
-        if isinstance(meta, dict):
-            meta_dict = cast("dict[str, object]", meta)
-            name = meta_dict.get("name")
-            if isinstance(name, str) and name:
-                return name
-        return None
 
     def _whoami_from_auth_policy_fallback(self, api_key: str) -> str | None:
         """Best-effort compatibility fallback via AuthorizationPolicy."""

@@ -25,20 +25,21 @@ Environment variables and `.env` layout: [README — Configuration](../../README
 
 ### Browser auth
 
-Browser auth via `APIClient(auth_method='browser-auth')`: validates an existing token first, then falls back to interactive login. Session tokens are reused until a `401` response.
-
-```bash
-uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_method='browser-auth'); print(c.token)"
-```
-
-To persist a bearer token in `.env` after browser SSO:
+Interactive browser login is **opt-in**. Documented methods: **`sso`** (requires
+`auth_tenant=` / `ENDOR_NAMESPACE`), **`google`**, **`github`**, **`gitlab`**,
+and **`email`** (requires `--email` / `auth_email=`). If a valid `ENDOR_TOKEN`
+is already set, it is used and no browser opens. Bare `Client()` without
+credentials raises `ValidationError` and does not open a browser.
 
 ```bash
 uv run endor-auth refresh --method sso -n <tenant>
-uv run --env-file .env endor-auth check --tenant <tenant>
+# or: --method google | github | gitlab
+# or: --method email --email <addr>
+# refresh prints whoami + TTL; then run workflows with --env-file
+uv run --env-file .env …
 ```
 
-See skill **endor-auth-setup** (shipped under `skills/endor-auth-setup/SKILL.md` after `init()`).
+See skill **endor-auth-setup** and contract `errors-and-auth` (supported methods table).
 
 ### SSO / login investigations
 

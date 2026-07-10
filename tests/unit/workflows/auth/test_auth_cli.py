@@ -62,3 +62,35 @@ def test_run_refresh_failure(capsys) -> None:
         )
     assert code == 1
     assert "timed out" in capsys.readouterr().err
+
+
+def test_run_refresh_prints_whoami(capsys, tmp_path) -> None:
+    from endorlabs.workflows.auth.session import TokenRefreshResult
+
+    env_file = tmp_path / ".env"
+    with patch(
+        "endorlabs.workflows.auth.cli.refresh_token_to_dotenv",
+        return_value=TokenRefreshResult(
+            env_file=env_file,
+            identity="user@example.com",
+            auth_source="endor",
+            expires_in_label="3h 45m",
+        ),
+    ):
+        code = _run_refresh(
+            Namespace(
+                env_file=str(env_file),
+                method="email",
+                namespace=None,
+                email="user@example.com",
+                environment=None,
+                timeout=120,
+            )
+        )
+    assert code == 0
+    captured = capsys.readouterr()
+    assert "whoami: user@example.com" in captured.out
+    assert "auth_source: endor" in captured.out
+    assert "expires_in: 3h 45m" in captured.out
+    assert "ENDOR_TOKEN set" in captured.err
+    assert "user@example.com" not in captured.err or "whoami" not in captured.err

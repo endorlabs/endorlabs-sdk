@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: a230e3aae8447bc67859b464881c0acdbce820364147e90494065ff37ce04f81
+x-endor-source-sha256: 7f8821893fb65fd492a2c5075ab97c38ff3423eabc6eeec47f9e96033c58ced4
 ---
 
 # Workflow composition
@@ -72,6 +72,8 @@ Generic entrypoints (no estate literals):
 - `endorlabs.workflows.auth.probe_auth_logs` — tenant list-path auth-log RCA rows
 - `endorlabs.workflows.auth.count_logins_from_groups` — server-side login counts (`list_groups`)
 - `endorlabs.workflows.auth.list_auth_logs` / `count_logins_from_rows` — client-side fallback only
+- `endorlabs.workflows.auth.list_authorization_policies` / `build_claim_namespace_map` — AuthPolicy normalize + claim→namespace map
+- `endorlabs.workflows.auth.audit_authorization_policy_forms` — AuthPolicy claim/namespace form heuristics
 - `endorlabs.workflows.projects.inventory.fetch_installation_lookup` — Installation external_id lookup for CLI vs app classification
 - `endorlabs.workflows.common.WorkflowResult`
 - `endorlabs.workflows.policies.run_validate_policy`

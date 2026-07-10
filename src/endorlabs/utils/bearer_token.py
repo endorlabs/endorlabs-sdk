@@ -55,6 +55,26 @@ def expires_in_seconds(expiration: datetime | None) -> float | None:
     return (exp - datetime.now(UTC)).total_seconds()
 
 
+def format_ttl_label(seconds: float) -> str:
+    """Human-readable remaining lifetime (e.g. ``3h 45m``)."""
+    if seconds <= 0:
+        return "expired"
+    total = int(seconds)
+    hours, rem = divmod(total, 3600)
+    minutes, secs = divmod(rem, 60)
+    if hours:
+        return f"{hours}h {minutes}m"
+    if minutes:
+        return f"{minutes}m {secs}s"
+    return f"{secs}s"
+
+
+def format_expiration_utc(expiration: datetime) -> str:
+    """Format *expiration* as ``YYYY-MM-DD HH:MM:SS UTC``."""
+    exp = expiration.replace(tzinfo=UTC) if expiration.tzinfo is None else expiration
+    return exp.astimezone(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+
 def expiration_from_auth_payload(payload: dict[str, Any]) -> datetime | None:
     """Parse ``expiration_time`` / ``expirationTime`` from auth API payloads."""
     for key in ("expiration_time", "expirationTime"):

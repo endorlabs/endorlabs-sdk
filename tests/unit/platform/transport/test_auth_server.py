@@ -7,10 +7,13 @@ Run locally: pytest tests/unit/platform/transport/test_auth_server.py -m interac
 For a real browser token, use `uv run endor-auth refresh` — not pytest.
 """
 
+import contextlib
 import os
 import threading
+import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import UTC
 from http.server import HTTPServer
 from unittest.mock import Mock, patch
 
@@ -32,8 +35,8 @@ _TEST_STATE = "expected-oauth-state"
 def _run_handler_request(
     handler_cls: type,
     query: str,
-) -> tuple[int | None, str | None]:
-    """Start a one-shot server and return (HTTP status, captured token)."""
+) -> tuple[int | None, str | None, bytes]:
+    """Start a one-shot server and return (HTTP status, captured token, body)."""
     auth_server_mod._captured_token = None
     server = HTTPServer(("localhost", 0), handler_cls)
     port = server.server_address[1]
@@ -44,6 +47,7 @@ def _run_handler_request(
         handled.set()
 
     status: int | None = None
+    body = b""
     thread = threading.Thread(target=handle_one)
     try:
         thread.start()
@@ -52,43 +56,54 @@ def _run_handler_request(
             timeout=5,
         ) as resp:
             status = resp.status
+            body = resp.read()
         handled.wait(timeout=5)
     except urllib.error.HTTPError as exc:
         status = exc.code
+        with contextlib.suppress(Exception):
+            body = exc.read()
         handled.wait(timeout=5)
     finally:
         thread.join(timeout=5)
         server.server_close()
-    return status, auth_server_mod._captured_token
+    return status, auth_server_mod._captured_token, body
 
 
 class TestTokenHandler:
     """Test TokenHandler for OAuth callback processing."""
 
-    def test_token_handler_do_get_via_http_request(self) -> None:
+    @patch("endorlabs.auth_server.fetch_auth_session", return_value=None)
+    def test_token_handler_do_get_via_http_request(self, mock_fetch: Mock) -> None:
         """Test handler captures token when state matches."""
+        _ = mock_fetch
         handler = _make_token_handler(_TEST_STATE)
-        status, token = _run_handler_request(
+        status, token, body = _run_handler_request(
             handler,
             f"token=xyz-captured&state={_TEST_STATE}",
         )
         assert status == 200
         assert token == "xyz-captured"
+        assert b"Authentication successful" in body
+        assert b"xyz-captured" not in body
 
-    def test_token_handler_accepts_token_without_state(self) -> None:
+    @patch("endorlabs.auth_server.fetch_auth_session", return_value=None)
+    def test_token_handler_accepts_token_without_state(self, mock_fetch: Mock) -> None:
         """CLI redirect currently returns token only; capture must still work."""
+        _ = mock_fetch
         handler = _make_token_handler(_TEST_STATE)
-        status, token = _run_handler_request(
+        status, token, _body = _run_handler_request(
             handler,
             "token=cli-redirect-token",
         )
         assert status == 200
         assert token == "cli-redirect-token"
 
-    def test_token_handler_decodes_urlencoded_token(self) -> None:
+    @patch("endorlabs.auth_server.fetch_auth_session", return_value=None)
+    def test_token_handler_decodes_urlencoded_token(self, mock_fetch: Mock) -> None:
         """Token from query string should be URL-decoded."""
+        _ = mock_fetch
         handler = _make_token_handler(_TEST_STATE)
-        status, token = _run_handler_request(
+        status, token, _body = _run_handler_request(
             handler,
             f"token=abc%2Bdef%3D%3D&state={_TEST_STATE}",
         )
@@ -98,7 +113,7 @@ class TestTokenHandler:
     def test_token_handler_rejects_state_mismatch(self) -> None:
         """Callback with wrong state must not capture token."""
         handler = _make_token_handler(_TEST_STATE)
-        status, token = _run_handler_request(
+        status, token, _body = _run_handler_request(
             handler,
             "token=ignored&state=wrong-state",
         )
@@ -108,11 +123,65 @@ class TestTokenHandler:
     def test_token_handler_rejects_multiple_token_values(self) -> None:
         """Ambiguous token query should not capture a token."""
         handler = _make_token_handler(_TEST_STATE)
-        _status, token = _run_handler_request(
+        _status, token, _body = _run_handler_request(
             handler,
             f"token=first&token=second&state={_TEST_STATE}",
         )
         assert token is None
+
+    @patch("endorlabs.auth_server.fetch_auth_session")
+    def test_token_handler_success_page_includes_whoami(
+        self,
+        mock_fetch: Mock,
+    ) -> None:
+        """Success page should show identity and TTL without the bearer token."""
+        mock_fetch.return_value = {
+            "authentication_source": "endor",
+            "expiration_time": "2099-01-01T12:00:00Z",
+            "tenants": [{"name": "demo"}],
+            "user": {
+                "meta": {"name": "timmy166@hotmail.com@endor"},
+                "spec": {"email": "timmy166@hotmail.com"},
+            },
+        }
+        handler = _make_token_handler(_TEST_STATE, environment="endorlabs.com")
+        status, token, body = _run_handler_request(
+            handler,
+            f"token=secret-bearer&state={_TEST_STATE}",
+        )
+        assert status == 200
+        assert token == "secret-bearer"
+        assert b"timmy166@hotmail.com" in body
+        assert b"Token TTL" in body
+        assert b"secret-bearer" not in body
+        mock_fetch.assert_called_once_with(
+            "secret-bearer",
+            environment="endorlabs.com",
+        )
+
+
+class TestSuccessPageSummary:
+    """Unit tests for callback whoami summary helpers."""
+
+    def test_session_summary_from_auth_payload(self) -> None:
+        from datetime import datetime
+
+        from endorlabs.auth_server import session_summary_from_auth_payload
+
+        summary = session_summary_from_auth_payload(
+            {
+                "authentication_source": "endor",
+                "expiration_time": "2099-01-01T12:00:00Z",
+                "tenants": [{"name": "a"}, {"name": "b"}],
+                "user": {"spec": {"email": "user@example.com"}},
+            },
+            now=datetime(2099, 1, 1, 10, 0, tzinfo=UTC),
+        )
+        assert summary.identity == "user@example.com"
+        assert summary.auth_source == "endor"
+        assert summary.expires_in_label == "2h 0m"
+        assert summary.tenant_count == 2
+        assert summary.expiration_time == "2099-01-01 12:00:00 UTC"
 
 
 class TestAuthUrlHelpers:
@@ -165,7 +234,8 @@ class TestGetToken:
         assert token == "alias-token"
         mock_browser.open_new_tab.assert_called_once()
         auth_url = mock_browser.open_new_tab.call_args[0][0]
-        assert "state=" in auth_url
+        assert auth_url.endswith("/auth-selector")
+        assert "localhost:" in auth_url
 
     @pytest.mark.interactive
     @pytest.mark.writes
@@ -183,6 +253,8 @@ class TestGetToken:
 
         assert token == "test-bearer-token"
         mock_browser.open_new_tab.assert_called_once()
+        auth_url = mock_browser.open_new_tab.call_args[0][0]
+        assert auth_url.endswith("/auth-selector")
         mock_server.handle_request.assert_called_once()
         mock_server.server_close.assert_called_once()
 
@@ -252,16 +324,17 @@ class TestGetToken:
     def test_auth_methods_defined(self) -> None:
         """Test that all expected auth methods are defined."""
         expected_methods = [
-            "browser-auth",
             "sso",
-            "admin",
             "google",
             "github",
             "gitlab",
+            "azureadv2",
             "email",
         ]
         for method in expected_methods:
             assert method in AUTH_METHODS, f"Auth method '{method}' not defined"
+        assert "browser-auth" not in AUTH_METHODS
+        assert "admin" not in AUTH_METHODS
 
     @pytest.mark.interactive
     @pytest.mark.writes
@@ -270,7 +343,7 @@ class TestGetToken:
         """Test get_token handles port already in use error."""
         mock_bind.side_effect = OSError("Address already in use")
 
-        token = get_token(method="admin")
+        token = get_token(method="google")
 
         assert token is None
 
@@ -288,7 +361,7 @@ class TestGetToken:
         with pytest.raises(
             ValidationError, match="Browser authentication cannot be used in CI"
         ):
-            get_token(method="admin")
+            get_token(method="google")
 
     @patch.dict(os.environ, {"GITHUB_ACTIONS": "true"}, clear=False)
     def test_get_token_prevents_github_actions_usage(self) -> None:
@@ -305,23 +378,22 @@ class TestGetToken:
         with pytest.raises(ValidationError, match="Tenant is required for sso"):
             get_token(method="sso")
 
-    def test_get_token_sso_endor_admin_matches_legacy_admin_url(self) -> None:
-        """SSO with auth_tenant=endor-admin should match legacy admin OAuth URL."""
-        legacy = AUTH_METHODS["admin"].format(environment="endorlabs.com")
+    def test_get_token_sso_url_includes_tenant(self) -> None:
+        """SSO URL template requires an explicit tenant."""
         sso = AUTH_METHODS["sso"].format(
             environment="endorlabs.com",
-            tenant="endor-admin",
+            tenant="acme",
         )
-        assert legacy == sso
+        assert sso == "https://api.endorlabs.com/v1/auth/sso?tenant=acme"
 
     @pytest.mark.interactive
     @pytest.mark.writes
     @patch("endorlabs.auth_server._bind_callback_server")
     @patch("endorlabs.auth_server.get_browser")
-    def test_get_token_admin_normalizes_to_sso_tenant(
+    def test_get_token_admin_alias_opens_selector(
         self, mock_get_browser, mock_bind
     ) -> None:
-        """Legacy admin method should normalize to sso with endor-admin tenant."""
+        """Legacy admin/browser aliases open the local auth-selector."""
         auth_server_mod._captured_token = None
         mock_browser = Mock()
         mock_browser.open_new_tab = Mock()
@@ -332,5 +404,6 @@ class TestGetToken:
 
         assert token == "test-bearer-token"
         auth_url = mock_browser.open_new_tab.call_args[0][0]
-        assert "tenant=endor-admin" in auth_url
-        assert "/v1/auth/sso" in auth_url
+        assert auth_url.endswith("/auth-selector")
+        assert "localhost:" in auth_url
+        assert "endor-admin" not in auth_url

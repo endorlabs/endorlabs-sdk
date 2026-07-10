@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from endorlabs.auth_server import OAUTH_CALLBACK_PORT_COUNT, OAUTH_CALLBACK_PORT_START
+from endorlabs.utils.bearer_token import format_ttl_label
 
 from .session import (
     BrowserAuthMethod,
@@ -51,9 +52,22 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     _ = refresh.add_argument(
         "--method",
-        choices=["sso", "google", "github", "gitlab", "email"],
+        choices=[
+            "sso",
+            "google",
+            "github",
+            "gitlab",
+            "email",
+            "azureadv2",
+            "browser-auth",
+        ],
         default="sso",
-        help="Browser auth provider (default: sso).",
+        help=(
+            "Browser auth provider (default: sso). "
+            "Documented/supported: sso (requires -n / ENDOR_NAMESPACE), "
+            "google, github, gitlab, email (requires --email). "
+            "Other choices are experimental — see errors-and-auth."
+        ),
     )
     _ = refresh.add_argument(
         "-n",
@@ -103,7 +117,9 @@ def _run_check(args: argparse.Namespace) -> int:
         if result.whoami and result.whoami.identity:
             print(f"whoami: {result.whoami.identity}")
             if result.whoami.expires_in_seconds is not None:
-                print(f"expires_in_seconds: {result.whoami.expires_in_seconds:.0f}")
+                print(
+                    f"expires_in: {format_ttl_label(result.whoami.expires_in_seconds)}"
+                )
         if result.error:
             print(f"error: {redact_sensitive_text(result.error)}", file=sys.stderr)
         if result.next_steps:
@@ -150,7 +166,7 @@ def _run_refresh(args: argparse.Namespace) -> int:
         )
 
     try:
-        updated = refresh_token_to_dotenv(
+        result = refresh_token_to_dotenv(
             env_file,
             method=method,
             namespace=args.namespace,
@@ -162,7 +178,15 @@ def _run_refresh(args: argparse.Namespace) -> int:
         print(redact_sensitive_text(str(exc)) or str(exc), file=sys.stderr)
         return 1
 
-    print(f"Updated {updated} (ENDOR_TOKEN set)", file=sys.stderr)
+    if result.identity:
+        print(f"whoami: {result.identity}")
+    if result.auth_source:
+        print(f"auth_source: {result.auth_source}")
+    if result.expires_in_label:
+        print(f"expires_in: {result.expires_in_label}")
+    elif result.expiration_time:
+        print(f"expires: {result.expiration_time}")
+    print(f"Updated {result.env_file} (ENDOR_TOKEN set)", file=sys.stderr)
     return 0
 
 

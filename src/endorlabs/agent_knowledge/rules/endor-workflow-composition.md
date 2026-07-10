@@ -67,6 +67,8 @@ Generic entrypoints (no estate literals):
 - `endorlabs.workflows.auth.probe_auth_logs` — tenant list-path auth-log RCA rows
 - `endorlabs.workflows.auth.count_logins_from_groups` — server-side login counts (`list_groups`)
 - `endorlabs.workflows.auth.list_auth_logs` / `count_logins_from_rows` — client-side fallback only
+- `endorlabs.workflows.auth.list_authorization_policies` / `build_claim_namespace_map` — AuthPolicy normalize + claim→namespace map
+- `endorlabs.workflows.auth.audit_authorization_policy_forms` — AuthPolicy claim/namespace form heuristics
 - `endorlabs.workflows.projects.inventory.fetch_installation_lookup` — Installation external_id lookup for CLI vs app classification
 - `endorlabs.workflows.common.WorkflowResult`
 - `endorlabs.workflows.policies.run_validate_policy`

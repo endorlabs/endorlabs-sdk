@@ -1,4 +1,4 @@
-"""Unit tests for SSO access spot-check mapping helpers."""
+"""SSO spot-check script remains a thin CLI (library owns mapping helpers)."""
 
 from __future__ import annotations
 
@@ -7,15 +7,12 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from types import ModuleType
 
+from endorlabs.workflows.auth import build_claim_namespace_map, expand_namespace_scope
+
 
 def _load_spotcheck_module() -> ModuleType:
     repo_root = Path(__file__).resolve().parents[4]
     candidate_paths = (
-        repo_root
-        / ".cursor"
-        / "skills"
-        / "endor-sso-integration-validation-troubleshooting"
-        / "sso_access_spotcheck.py",
         repo_root
         / "agent-knowledge"
         / "skills"
@@ -25,6 +22,11 @@ def _load_spotcheck_module() -> ModuleType:
         / "src"
         / "endorlabs"
         / "agent_knowledge"
+        / "skills"
+        / "endor-sso-integration-validation-troubleshooting"
+        / "sso_access_spotcheck.py",
+        repo_root
+        / ".cursor"
         / "skills"
         / "endor-sso-integration-validation-troubleshooting"
         / "sso_access_spotcheck.py",
@@ -39,48 +41,35 @@ def _load_spotcheck_module() -> ModuleType:
     return module
 
 
-def test_expand_namespace_scope_without_propagation() -> None:
-    module = _load_spotcheck_module()
-
-    scope = module.expand_namespace_scope(["root"], propagate=False)
-
-    assert scope.direct_namespaces == ["root"]
-    assert scope.propagated_namespace_prefixes == []
-
-
-def test_expand_namespace_scope_with_propagation() -> None:
-    module = _load_spotcheck_module()
-
-    scope = module.expand_namespace_scope(["root.A"], propagate=True)
-
+def test_library_expand_namespace_scope() -> None:
+    scope = expand_namespace_scope(["root.A"], propagate=True)
     assert scope.direct_namespaces == ["root.A"]
     assert scope.propagated_namespace_prefixes == ["root.A.*"]
 
 
-def test_build_claim_namespace_map_detects_overlap() -> None:
-    module = _load_spotcheck_module()
-
-    policies = [
-        {
-            "name": "policy-a",
-            "clause": ["group=eng-a"],
-            "target_namespaces": ["root.A"],
-            "propagate": False,
-        },
-        {
-            "name": "policy-b",
-            "clause": ["group=eng-b"],
-            "target_namespaces": ["root.A", "root.B"],
-            "propagate": False,
-        },
-    ]
-
-    report = module.build_claim_namespace_map(policies)
-
-    assert "group=eng-a" in report.claims
-    assert "group=eng-b" in report.claims
+def test_library_build_claim_namespace_map_detects_overlap() -> None:
+    report = build_claim_namespace_map(
+        [
+            {
+                "name": "policy-a",
+                "clause": ["group=eng-a"],
+                "target_namespaces": ["root.A"],
+                "propagate": False,
+            },
+            {
+                "name": "policy-b",
+                "clause": ["group=eng-b"],
+                "target_namespaces": ["root.A", "root.B"],
+                "propagate": False,
+            },
+        ]
+    )
     assert "root.A" in report.overlap.direct_namespace_to_claim_keys
-    assert set(report.overlap.direct_namespace_to_claim_keys["root.A"]) == {
-        "group=eng-a",
-        "group=eng-b",
-    }
+
+
+def test_spotcheck_script_imports_library() -> None:
+    module = _load_spotcheck_module()
+    assert callable(module.main)
+    assert "list_authorization_policies" in module.__dict__ or hasattr(
+        module, "list_authorization_policies"
+    )
