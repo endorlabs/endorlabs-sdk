@@ -20,6 +20,7 @@ from .specialized import (
 )
 
 _ListableFacade = ListableFacade
+# Compat alias; prefer ResourceRuntimeFacade in new code.
 ResourceFacade = ResourceRuntimeFacade
 
 __all__ = [

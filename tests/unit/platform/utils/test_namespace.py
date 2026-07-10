@@ -80,3 +80,17 @@ def test_resolve_namespace_for_resource_prefers_resource_namespace() -> None:
         tenant_meta=TenantMeta(namespace="tenant.child"),
     )
     assert resolve_namespace_for_resource(resource, "tenant.root") == "tenant.child"
+
+
+def test_resource_namespace_from_attr_property() -> None:
+    from types import SimpleNamespace
+
+    obj = SimpleNamespace(namespace="tenant.child", tenant_meta=None)
+    assert resource_namespace(obj) == "tenant.child"
+
+
+def test_resource_namespace_missing() -> None:
+    from types import SimpleNamespace
+
+    assert resource_namespace(SimpleNamespace()) is None
+    assert resource_namespace({}) is None

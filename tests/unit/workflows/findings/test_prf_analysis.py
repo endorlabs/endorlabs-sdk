@@ -100,7 +100,7 @@ def test_findings_by_parent_counts() -> None:
 
 def test_list_findings_sharded_scopes_by_project_uuid() -> None:
     client = MagicMock()
-    client.Finding.list_iter.return_value = [
+    client.Finding.list_by_project.return_value = [
         {"meta": {"parent_uuid": "pv-1"}, "spec": {"ecosystem": "ECOSYSTEM_NPM"}}
     ]
     shards = [
@@ -115,11 +115,13 @@ def test_list_findings_sharded_scopes_by_project_uuid() -> None:
     )
 
     assert len(rows) == 1
-    client.Finding.list_iter.assert_called_once()
-    kwargs = client.Finding.list_iter.call_args.kwargs
-    assert kwargs["namespace"] == "tenant.child"
-    assert kwargs["traverse"] is False
-    assert 'spec.project_uuid=="proj-1"' in kwargs["filter"]
+    client.Finding.list_by_project.assert_called_once()
+    args, kwargs = client.Finding.list_by_project.call_args
+    project = args[0]
+    assert project.uuid == "proj-1"
+    assert project.namespace == "tenant.child"
+    assert kwargs["filter"] == "context.type==CONTEXT_TYPE_MAIN"
+    assert kwargs["mask"] == "meta.parent_uuid"
 
 
 def test_list_findings_tenant_uses_traverse_when_namespace_shared() -> None:
@@ -151,7 +153,7 @@ def test_list_findings_tenant_uses_traverse_when_namespace_shared() -> None:
 
 def test_list_findings_tenant_defaults_to_sharded() -> None:
     client = MagicMock()
-    client.Finding.list_iter.return_value = []
+    client.Finding.list_by_project.return_value = []
     client.Query.Project.discover.return_value = SimpleNamespace(
         project_shards=lambda: [
             ProjectShard(project_uuid="p-1", namespace="tenant.child-a", label="a"),
@@ -167,10 +169,10 @@ def test_list_findings_tenant_defaults_to_sharded() -> None:
     )
 
     assert rows == []
-    assert client.Finding.list_iter.call_count == 2
-    first_kwargs = client.Finding.list_iter.call_args_list[0].kwargs
-    assert first_kwargs["traverse"] is False
-    assert 'spec.project_uuid=="p-1"' in first_kwargs["filter"]
+    assert client.Finding.list_by_project.call_count == 2
+    first_project = client.Finding.list_by_project.call_args_list[0].args[0]
+    assert first_project.uuid == "p-1"
+    assert first_project.namespace == "tenant.child-a"
 
 
 def test_fetch_parent_package_versions_groups_by_namespace() -> None:

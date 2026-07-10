@@ -8,6 +8,11 @@ from pathlib import Path
 from typing import Any
 
 from endorlabs import F
+from endorlabs.tools.list_bounds import (
+    format_progress,
+    is_list_truncated,
+    resolve_max_pages,
+)
 from endorlabs.tools.list_sharding import (
     ProjectShard,
     parallel_map_shards,
@@ -21,11 +26,6 @@ from endorlabs.workflows.estate.analyze.project_map.core import (
     aggregate_project_edges,
     indirect_paths_bfs,
     row_to_supporting_tuples,
-)
-from endorlabs.workflows.estate.collect.bounds import (
-    format_progress,
-    is_list_truncated,
-    resolve_max_pages,
 )
 
 LOGGER = get_resource_logger(__name__)

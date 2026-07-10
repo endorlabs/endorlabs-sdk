@@ -6,12 +6,12 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from endorlabs.utils.logging_config import get_resource_logger
-from endorlabs.workflows.estate.collect.bounds import (
+from endorlabs.tools.list_bounds import (
     count_for_progress,
     is_list_truncated,
     truncation_message,
 )
+from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.contracts import RESOURCE_PROJECT
 from endorlabs.workflows.estate.filters.masks import PROJECT_LIST_MASK
 from endorlabs.workflows.estate.workspace.paths import resource_path

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from endorlabs.utils.serialization import object_to_dict
 from endorlabs.workflows.troubleshooting_scans.common import (
-    object_to_dict,
     parallel_collect_for_projects,
 )
 
