@@ -8,12 +8,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
-- Agent skill `endor-workflow-reports`: routes tenant/namespace audit and report requests to script-backed workflow report playbooks without shipping each report as a top-level discovery skill.
-
 ### Changed
-
-- Product user-docs scrape removed: prefer Docs MCP (`https://docs.endorlabs.com/mcp`; unsupported harnesses: `https://docs.endorlabs.com/llms.txt`). Removed `include_user_docs` / `--sync-user-docs` / `sync_user_docs()`, the `[docs]` extra, and `InitStatus` user-docs fields.
-- Marked `REMOVE_BY_0_7_0` on remaining 0.6.x compat: `InitStatus.openapi_path` alias, flat-OpenAPI reconcile, `session_workspace_dir`, and `workflow_artifacts_root`.
 
 ### Fixed
 
@@ -25,10 +20,13 @@ Repository history starts from a single clean root; sdists ship package content 
 
 ### Added
 
+- Agent skill `endor-workflow-reports`: routes tenant/namespace audit and report requests to script-backed workflow report playbooks without shipping each report as a top-level discovery skill.
 - Always-on CI Security Content Guards and expanded pre-commit portable-examples / content checks (emails, non-Endor URLs, estate `-n` literals). Shipped `src/endorlabs` requires placeholder-only `-n` / `--namespace` / `--tenant` values.
 
 ### Changed
 
+- Product user-docs scrape removed: prefer Docs MCP (`https://docs.endorlabs.com/mcp`; unsupported harnesses: `https://docs.endorlabs.com/llms.txt`). Removed `include_user_docs` / `--sync-user-docs` / `sync_user_docs()`, the `[docs]` extra, and `InitStatus` user-docs fields.
+- Marked `REMOVE_BY_0_7_0` on remaining 0.6.x compat: `InitStatus.openapi_path` alias, flat-OpenAPI reconcile, `session_workspace_dir`, and `workflow_artifacts_root`.
 - Hatch sdist target uses `only-packages = true` (aligned with the wheel: `src/endorlabs` only). Historical note: some 0.5.x sdists could include `tests/`; those dirty artifacts were removed from PyPI.
 - Portable-examples and fixture scrubbing: customer estate paths and personal emails replaced with placeholders across skills, docs, and unit tests.
 
