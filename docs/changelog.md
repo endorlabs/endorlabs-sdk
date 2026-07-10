@@ -8,6 +8,20 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Breaking
+
+## 0.5.4
+
+Supersedes **0.5.2** and **0.5.3** (those releases are withdrawn). Prefer **0.5.4+** and the **wheel** (`pip install endorlabs` / `uv add endorlabs`), not an sdist / `--no-binary` build.
+
+Auth hardening, Query collect pagination, credential/AuthorizationPolicy audit skills, plus the 0.5.2–0.5.3 transport/OAuth fixes below.
+
+### Added
+
 - Agent skill `endor-audit-authorization-policies`: AuthorizationPolicy form audit (comma-separated namespace blobs, IdP claim shape) with heuristic script and shared `endorlabs.workflows.auth.authorization_policy` / `authorization_policy_form` helpers.
 - Agent skill `endor-auth-credential-expiry`: tenant APIKey expiration audit with CSV report and workflow helpers in `endorlabs.workflows.auth.credential_expiry`.
 - `parse_query_root_count()` — read integer totals from root count-only `Query.create` responses (`count_response` wire shape).
@@ -18,8 +32,20 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - Auth env parity: removed `ENDOR_AUTH_TENANT` / `ENDOR_INIT_AUTH_TENANT` reads from `Client`; no new auth env vars. Bearer refresh hints are learned in-memory from `GET /v1/auth` (not from namespace), but bearer sessions no longer reauthenticate mid-run. `Client` never writes `ENDOR_TOKEN` or mutates `os.environ`; bearer expiry/401 now fail closed with refresh guidance, while API-key auth retains transport-level reauthentication. Proactive expiry prints a one-time stderr warning (no secrets). `endor-auth check --json` adds `auth_mode_resolved`, `sso_tenant_resolved`, `browser_auth_method_resolved`. Disk persistence remains `endor-auth refresh` only.
 - Browser OAuth: live-verified interactive methods are `sso` (explicit tenant required; no silent `endor-admin`), `google`, `github`, `gitlab`, and `email` (requires `--email`). `azureadv2` and `browser-auth` remain experimental. Bare `Client()` without credentials does not open a browser. Only SSO hard-requires `-n` at refresh; social/email tenant access comes from AuthorizationPolicy grants on the resulting token.
 - Browser OAuth UX: localhost callback success page and `endor-auth refresh` stdout show whoami identity + token TTL (never the bearer). Shared helpers: `identity_from_auth_payload`, `format_ttl_label` / `expiration_from_auth_payload` in `bearer_token`. Refresh-hint mapping covers `authentication_source=endor` → `email` and IdP object ids → `sso`.
-- Browser OAuth (`get_token` / `endor-auth refresh`): accept CLI redirects without CSRF `state`; poll callback until timeout (0.5.3).
+- Browser OAuth (`get_token` / `endor-auth refresh`): accept Endor CLI redirects that return `token` without echoing CSRF `state`, and keep the localhost callback open until timeout so stale tabs cannot abort capture.
+- Browser OAuth: bind callback ports in the 30000–30009 range, validate CSRF `state` on redirect, and URL-encode email query parameters.
 - Query docs: correct `list_parameters` support matrix; nested join mask and `count_dm` vs `list_groups` traps. Guide: [guides/query-recipes.md](guides/query-recipes.md).
+- Write `.env` bearer tokens with owner-only file permissions (`0o600`) during auth refresh workflows.
+- Structural transport fixes: per-attempt header build from live session state (401 reauth retries send refreshed bearer token), `threading.RLock` on token refresh, localized HTTP 429 `Retry-After` sleep (delta or HTTP-date, capped at 60s).
+- Network retries: `ConnectError` always retried; `TimeoutException` / other `RequestError` retried only for idempotent methods unless `retry_non_idempotent=True` or `ENDOR_RETRY_NON_IDEMPOTENT=1`. Documented in [docs/contracts.md](docs/contracts.md#concurrency-and-transport-retries).
+- Stop setting `ENDOR_API` in the process environment from `APIClient` construction; read the default locally instead.
+- Cap call graph zstd decompression at 256 MiB to guard against decompression bombs from workspace artifacts.
+- Skip integration CI on fork pull requests when repository secrets are unavailable (avoids false-red CI for external contributors).
+- EPSS-weighted risk scoring uses a visible missing-data prior (`0.05`; population median ~0.004) with `findings_unscored` on ranked output instead of treating absent EPSS as maximum exploitability.
+- Validate `F()` field paths and `date()` / `now()` arguments; add `F.literal()` for explicit enum constants (`F.enum()` remains as deprecated alias). Generated enum frozenset validation deferred to 0.6.
+- Shipped agent-knowledge link policy: relative links must stay under the wheel bundle; sync rewrites repo-only `docs/` / `AGENTS.md` paths to GitHub blob URLs.
+- Local collect-strategy benchmark spike is not shipped in the wheel.
+- Remove no-op `max_workers` / `page_size` parameters from `collect_estate_findings`; guard `get_all` against repeated pagination cursors.
 
 ### Fixed
 
@@ -28,37 +54,6 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 ### Breaking
 
 - Removed non-functional Query `group_by_time` builders (`QuerySpec.group_by_time`, `Reference.group_by_time`, `group_by_time_query_wire`). Time-bucket aggregation: `client.<LogKind>.list_groups(..., list_params=ListParameters(group_by_time=True))` or `endorlabs.workflows.logs.group_by_time.group_by_time_counts`.
-
-## 0.5.3
-
-Browser OAuth CLI-redirect capture fix.
-
-### Changed
-
-- Browser OAuth (`get_token` / `endor-auth refresh`): accept Endor CLI redirects that return `token` without echoing CSRF `state`, and keep the localhost callback open until timeout so stale tabs cannot abort capture.
-
-### Breaking
-
-## 0.5.2
-
-Security and reliability hardening from OSS QA review.
-
-### Changed
-
-- Write `.env` bearer tokens with owner-only file permissions (`0o600`) during auth refresh workflows.
-- Structural transport fixes: per-attempt header build from live session state (401 reauth retries send refreshed bearer token), `threading.RLock` on token refresh, localized HTTP 429 `Retry-After` sleep (delta or HTTP-date, capped at 60s).
-- Network retries: `ConnectError` always retried; `TimeoutException` / other `RequestError` retried only for idempotent methods unless `retry_non_idempotent=True` or `ENDOR_RETRY_NON_IDEMPOTENT=1`. Documented in [docs/contracts.md](docs/contracts.md#concurrency-and-transport-retries).
-- Stop setting `ENDOR_API` in the process environment from `APIClient` construction; read the default locally instead.
-- Browser OAuth: bind callback ports in the 30000–30009 range, validate CSRF `state` on redirect, and URL-encode email query parameters.
-- Cap call graph zstd decompression at 256 MiB to guard against decompression bombs from workspace artifacts.
-- Skip integration CI on fork pull requests when repository secrets are unavailable (avoids false-red CI for external contributors).
-- EPSS-weighted risk scoring uses a visible missing-data prior (`0.05`; population median ~0.004) with `findings_unscored` on ranked output instead of treating absent EPSS as maximum exploitability.
-- Validate `F()` field paths and `date()` / `now()` arguments; add `F.literal()` for explicit enum constants (`F.enum()` remains as deprecated alias). Generated enum frozenset validation deferred to 0.6.
-- Shipped agent-knowledge link policy: relative links must stay under the wheel bundle; sync rewrites repo-only `docs/` / `AGENTS.md` paths to GitHub blob URLs.
-- Move collect-strategy benchmark spike to `devtools/estate_collect_benchmark.py` (not shipped in the wheel).
-- Remove no-op `max_workers` / `page_size` parameters from `collect_estate_findings`; guard `get_all` against repeated pagination cursors.
-
-### Breaking
 
 ## 0.5.1
 
