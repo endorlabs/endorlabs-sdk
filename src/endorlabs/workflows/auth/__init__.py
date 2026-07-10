@@ -1,11 +1,14 @@
 """Authentication workflow helpers for login counts, auth RCA, and session setup.
 
 See :mod:`endorlabs.workflows.auth.authentication_log`,
+:mod:`endorlabs.workflows.auth.authorization_policy`,
+:mod:`endorlabs.workflows.auth.authorization_policy_form`,
 :mod:`endorlabs.workflows.auth.credential_expiry`, and
 :mod:`endorlabs.workflows.auth.session` module docstrings for composition layers
 and tenant-scoping callouts. Skill playbooks: ``endor-auth-setup``,
 ``endor-auth-login-count``, ``endor-auth-credential-expiry``,
-``endor-troubleshoot-authlog``.
+``endor-audit-authorization-policies``, ``endor-troubleshoot-authlog``,
+``endor-sso-integration-validation-troubleshooting``.
 """
 
 from __future__ import annotations
@@ -35,6 +38,24 @@ from .authentication_log import (
     primary_identity,
     probe_auth_logs,
 )
+from .authorization_policy import (
+    AuthorizationPolicyRecord,
+    ClaimNamespaceReport,
+    ClaimScopeEntry,
+    NamespaceScope,
+    OverlapReport,
+    build_claim_namespace_map,
+    expand_namespace_scope,
+    list_authorization_policies,
+    normalize_authorization_policy,
+)
+from .authorization_policy_form import (
+    FormFinding,
+    audit_authorization_policy_forms,
+    audit_clause,
+    audit_policy_record,
+    audit_target_namespaces,
+)
 from .credential_expiry import (
     CredentialExpiryRow,
     audit_api_key_expiry,
@@ -51,6 +72,7 @@ from .session import (
     AuthVerification,
     BrowserAuthMethod,
     EndorctlProbe,
+    TokenRefreshResult,
     build_browser_auth_kwargs,
     probe_endorctl,
     refresh_token_to_dotenv,
@@ -67,19 +89,32 @@ __all__ = [
     "SSO_URI_FRAGMENTS",
     "AuthEnvironmentScan",
     "AuthVerification",
+    "AuthorizationPolicyRecord",
     "BrowserAuthMethod",
+    "ClaimNamespaceReport",
+    "ClaimScopeEntry",
     "CredentialExpiryRow",
     "EndorctlProbe",
+    "FormFinding",
     "LoginActivityRow",
+    "NamespaceScope",
+    "OverlapReport",
+    "TokenRefreshResult",
     "audit_api_key_expiry",
+    "audit_authorization_policy_forms",
+    "audit_clause",
+    "audit_policy_record",
+    "audit_target_namespaces",
     "auth_log_filter",
     "auth_log_snapshot",
     "build_browser_auth_kwargs",
+    "build_claim_namespace_map",
     "build_credential_expiry_row",
     "classify_expiration",
     "count_logins_from_groups",
     "count_logins_from_rows",
     "create_time_lower_bound_filter",
+    "expand_namespace_scope",
     "expiry_upper_bound_filter",
     "extract_user_identifiers",
     "fetch_last_logins_for_identities",
@@ -89,7 +124,9 @@ __all__ = [
     "is_sso_login_uri",
     "list_api_keys",
     "list_auth_logs",
+    "list_authorization_policies",
     "normalize_auth_log",
+    "normalize_authorization_policy",
     "parse_claims_from_group_bucket",
     "parse_create_time",
     "parse_expiration_time",

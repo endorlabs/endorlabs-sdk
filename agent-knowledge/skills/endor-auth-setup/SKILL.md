@@ -50,7 +50,7 @@ rules live in [errors-and-auth](../../contracts/errors-and-auth.md).
 
 | Variable | Flag | Use |
 |----------|------|-----|
-| `ENDOR_INIT_AUTH_MODE` | `--auth-mode` | `sso`, `google`, `github`, `gitlab`, `azureadv2` |
+| `ENDOR_INIT_AUTH_MODE` | `--auth-mode` | Exact endorctl enum: `github`, `google`, `gitlab`, `azureadv2`, `sso`, `browser-auth` |
 | `ENDOR_INIT_AUTH_TENANT` | `--auth-tenant` | Required for `sso` |
 | `ENDOR_INIT_AUTH_EMAIL` | `--auth-email` | Email-link login |
 | `ENDOR_INIT_HEADLESS_MODE` | `--headless-mode` | Headless init |
@@ -60,17 +60,21 @@ rules live in [errors-and-auth](../../contracts/errors-and-auth.md).
 ## Quick start
 
 ```bash
-# 1. Probe env + whoami (no secret output)
+# Probe when unsure whether creds work (no secret output)
 uv run endor-auth check --tenant <namespace>
 
-# 2. If missing or expired — interactive browser SSO into .env
+# If missing or expired — interactive browser into .env
+# (prints whoami + TTL on success; errors on stderr / error logs — no token)
+#    SSO (tenant required):  --method sso -n <tenant>
+#    Google / GitHub / GitLab / email:
+#      --method google | github | gitlab | email --email <addr>
 uv run endor-auth refresh --method sso -n <tenant>
 
-# 3. Re-check, then run workflows with --env-file
-uv run --env-file .env endor-auth check --tenant <namespace>
+# Then run workflows with --env-file
+uv run --env-file .env …
 ```
 
-JSON for agents:
+JSON probe for agents:
 
 ```bash
 uv run endor-auth check --tenant <namespace> --json
@@ -83,7 +87,7 @@ Fields include `auth_mode_resolved`, `sso_tenant_resolved`, `browser_auth_method
 | Subcommand | Purpose |
 |------------|---------|
 | **`check`** | Scan env keys (booleans only), probe endorctl, run `Client().whoami()` when creds exist |
-| **`refresh`** | Browser OAuth → upsert `ENDOR_TOKEN` in a dotenv file |
+| **`refresh`** | Browser OAuth → upsert `ENDOR_TOKEN`; prints whoami + TTL (never the token) |
 
 ### `endor-auth check`
 
@@ -99,13 +103,13 @@ Exit **0** when `status=ready`; **1** otherwise.
 | Flag | Default | Meaning |
 |------|---------|---------|
 | **`--env-file`** | `.env` | Dotenv path to create or update |
-| **`--method`** | `sso` | `sso`, `google`, `github`, `gitlab`, or `email` |
-| **`-n` / `--namespace`** | unset | SSO tenant (root segment). Fallback: `ENDOR_NAMESPACE`, dotenv, `~/.endorctl/config.yaml` |
+| **`--method`** | `sso` | Documented: `sso` (requires `-n` / `ENDOR_NAMESPACE`), `google`, `github`, `gitlab`, `email` (requires `--email`). Other values are experimental — see `errors-and-auth`. |
+| **`-n` / `--namespace`** | unset | Required for `sso` (tenant root). Fallback: `ENDOR_NAMESPACE`, dotenv, `~/.endorctl/config.yaml` |
 | **`--email`** | unset | Required when `--method=email` |
 | **`--environment`** | from `ENDOR_API` | API host segment for auth URLs |
 | **`--timeout`** | `120` | OAuth callback wait (seconds) |
 
-Does **not** print the token — only confirms the file was updated.
+Does **not** print the token. On success prints `whoami` / `auth_source` / `expires_in` to stdout and confirms the dotenv update on stderr. Validation failures raise and are logged at error level.
 
 ## endorctl entrypoint
 
@@ -170,7 +174,7 @@ Verify: `uv run --env-file .env endor-auth check`.
 
 | Harness | Auth behavior |
 |---------|----------------|
-| Human local | `endor-auth refresh` then `uv run --env-file .env` workflows |
+| Human local | `endor-auth refresh` (whoami on stdout) then `uv run --env-file .env` workflows |
 | Agent / sandbox (no browser) | Run `endor-auth check`; output `endor-auth refresh` for human — do not open browser |
 | Long scripted session | One `Client` instance; bearer sessions warn before expiry, then raise `UnauthorizedError` when expired |
 | Persist token | **Only** `endor-auth refresh` — `Client` never writes refreshed bearer state to disk |
@@ -187,6 +191,7 @@ Verify: `uv run --env-file .env endor-auth check`.
 | Need | Skill |
 | ---- | ----- |
 | Auth setup / refresh | **This skill** |
+| AuthPolicy form audit | [endor-audit-authorization-policies](../endor-audit-authorization-policies/SKILL.md) |
 | Login activity CSV | [endor-auth-login-count](../endor-auth-login-count/SKILL.md) |
 | API key expiration audit | [endor-auth-credential-expiry](../endor-auth-credential-expiry/SKILL.md) |
 | SSO / login RCA | [endor-troubleshoot-authlog](../endor-troubleshoot-authlog/SKILL.md) |

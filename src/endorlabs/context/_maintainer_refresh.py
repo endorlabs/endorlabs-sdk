@@ -11,11 +11,12 @@ from pathlib import Path
 from typing import Literal
 
 import endorlabs
+from endorlabs.context.paths import DEFAULT_CONTEXT_DIR
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.repo_paths import normalize_repo_paths
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-CONTEXT_DIR = REPO_ROOT / ".endorlabs-context"
+CONTEXT_DIR = REPO_ROOT / DEFAULT_CONTEXT_DIR
 AGENT_PREFIX = "agent-knowledge/"
 AGENT_KNOWLEDGE_SKILLS = REPO_ROOT / "src" / "endorlabs" / "agent_knowledge" / "skills"
 AGENT_KNOWLEDGE_PREFIX = "src/endorlabs/agent_knowledge/"

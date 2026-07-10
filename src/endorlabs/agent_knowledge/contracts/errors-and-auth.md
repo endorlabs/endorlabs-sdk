@@ -30,7 +30,7 @@ Monorepo-backed variables for SDK, `endor-auth`, and `endorctl` day-to-day use:
 
 | Variable | Flag | Notes |
 |----------|------|-------|
-| `ENDOR_INIT_AUTH_MODE` | `--auth-mode` | `sso`, `google`, `github`, `gitlab`, `azureadv2`, … |
+| `ENDOR_INIT_AUTH_MODE` | `--auth-mode` | Exact endorctl enum: `github`, `google`, `gitlab`, `azureadv2`, `sso`, `browser-auth` |
 | `ENDOR_INIT_AUTH_TENANT` | `--auth-tenant` | Required when `auth-mode=sso` |
 | `ENDOR_INIT_AUTH_EMAIL` | `--auth-email` | Email-link login |
 | `ENDOR_INIT_HEADLESS_MODE` | `--headless-mode` | No browser during init |
@@ -67,7 +67,25 @@ When **both** `ENDOR_TOKEN` and API key env vars are set:
 
 1. `ENDOR_TOKEN` (bearer; validated at `Client()` startup)
 2. `ENDOR_API_CREDENTIALS_KEY` + `ENDOR_API_CREDENTIALS_SECRET`
-3. `Client(auth_method='google'|'sso'|…)` when browser reauth routing must be explicit
+3. `Client(auth_method=…)` when browser login must be explicit (see below)
+
+### Interactive browser methods (opt-in)
+
+Documented as supported for SDK / `endor-auth refresh` only when live-verified:
+
+| `auth_method` / `--method` | Behavior |
+|----------------------------|----------|
+| `sso` | SSO URL; **requires** `auth_tenant=` / `-n` / `ENDOR_NAMESPACE` (tenant root) — no silent `endor-admin`. `/v1/auth` often reports `authentication_source` as the IdP object id (mapped to `sso`). |
+| `google` | Direct `/v1/auth/google?redirect=cli` |
+| `github` | Direct `/v1/auth/github?redirect=cli` |
+| `gitlab` | Direct `/v1/auth/gitlab?redirect=cli` |
+| `email` | Email magic-link; **requires** `--email` / `auth_email=`. `/v1/auth` reports `authentication_source=endor` |
+
+Other endorctl-style modes (`azureadv2`, `browser-auth`) may exist in code for parity experiments; **do not treat them as supported** until listed here after a live check.
+
+Bare `Client()` / `APIClient()` **does not** open a browser when credentials are missing.
+
+Use `endor-auth refresh --method sso -n <tenant>`, `--method google`, `--method github`, `--method gitlab`, or `--method email --email <addr>` to persist `ENDOR_TOKEN` to `.env`.
 
 ## Bearer session (in-memory only)
 
@@ -90,7 +108,8 @@ Before task skills or live API calls:
    values), optional endorctl probe, `Client().whoami()` when creds exist. JSON includes
    `auth_mode_resolved`, `sso_tenant_resolved`, `browser_auth_method_resolved`, `expires_in_seconds`.
 2. **Refresh (interactive):** `uv run endor-auth refresh --method sso -n <tenant>` —
-   browser OAuth; upserts `ENDOR_TOKEN` in `.env` (not for CI).
+   browser OAuth; upserts `ENDOR_TOKEN` in `.env`; prints whoami + TTL (not for CI).
+   No separate post-refresh `check` is required — failures surface on stderr / error logs.
 3. **endorctl-native:** `endorctl init --auth-mode=sso --auth-tenant=<tenant>` persists
    to `~/.endorctl/config.yaml` (SDK reads `ENDOR_NAMESPACE` from that file when env unset).
 

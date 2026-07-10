@@ -8,6 +8,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- Agent skill `endor-audit-authorization-policies`: AuthorizationPolicy form audit (comma-separated namespace blobs, IdP claim shape) with heuristic script and shared `endorlabs.workflows.auth.authorization_policy` / `authorization_policy_form` helpers.
 - Agent skill `endor-auth-credential-expiry`: tenant APIKey expiration audit with CSV report and workflow helpers in `endorlabs.workflows.auth.credential_expiry`.
 - `parse_query_root_count()` — read integer totals from root count-only `Query.create` responses (`count_response` wire shape).
 - `reference_next_page_cursor()` / `wire_spec_with_reference_page_cursor()` — nested reference list pagination helpers for custom Query joins.
@@ -15,6 +16,8 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 ### Changed
 
 - Auth env parity: removed `ENDOR_AUTH_TENANT` / `ENDOR_INIT_AUTH_TENANT` reads from `Client`; no new auth env vars. Bearer refresh hints are learned in-memory from `GET /v1/auth` (not from namespace), but bearer sessions no longer reauthenticate mid-run. `Client` never writes `ENDOR_TOKEN` or mutates `os.environ`; bearer expiry/401 now fail closed with refresh guidance, while API-key auth retains transport-level reauthentication. Proactive expiry prints a one-time stderr warning (no secrets). `endor-auth check --json` adds `auth_mode_resolved`, `sso_tenant_resolved`, `browser_auth_method_resolved`. Disk persistence remains `endor-auth refresh` only.
+- Browser OAuth: live-verified interactive methods are `sso` (explicit tenant required; no silent `endor-admin`), `google`, `github`, `gitlab`, and `email` (requires `--email`). `azureadv2` and `browser-auth` remain experimental. Bare `Client()` without credentials does not open a browser. Only SSO hard-requires `-n` at refresh; social/email tenant access comes from AuthorizationPolicy grants on the resulting token.
+- Browser OAuth UX: localhost callback success page and `endor-auth refresh` stdout show whoami identity + token TTL (never the bearer). Shared helpers: `identity_from_auth_payload`, `format_ttl_label` / `expiration_from_auth_payload` in `bearer_token`. Refresh-hint mapping covers `authentication_source=endor` → `email` and IdP object ids → `sso`.
 - Browser OAuth (`get_token` / `endor-auth refresh`): accept CLI redirects without CSRF `state`; poll callback until timeout (0.5.3).
 - Query docs: correct `list_parameters` support matrix; nested join mask and `count_dm` vs `list_groups` traps. Guide: [guides/query-recipes.md](guides/query-recipes.md).
 

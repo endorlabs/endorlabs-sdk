@@ -17,6 +17,7 @@ from pre_commit_guards import (  # noqa: E402
     check_blocked_staged_paths,
     check_bounds_shim,
     check_changelog_reminder,
+    check_context_root_literals,
     check_deprecated_api_strings,
     check_layer_imports,
     check_portable_examples,
@@ -274,3 +275,54 @@ def test_check_agent_knowledge_sync_silent_when_shipped(
         == 0
     )
     assert capsys.readouterr().err == ""
+
+
+def test_check_context_root_literals_blocks(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("pre_commit_guards._REPO_ROOT", tmp_path)
+    bad = tmp_path / "src" / "endorlabs" / "workflows" / "foo.py"
+    bad.parent.mkdir(parents=True)
+    bad.write_text(
+        'from pathlib import Path\nroot = Path(".endorlabs-context")\n',
+        encoding="utf-8",
+    )
+    assert check_context_root_literals(paths=["src/endorlabs/workflows/foo.py"]) == 1
+
+
+def test_check_context_root_literals_allows_paths_module(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setattr("pre_commit_guards._REPO_ROOT", tmp_path)
+    ok = tmp_path / "src" / "endorlabs" / "context" / "paths.py"
+    ok.parent.mkdir(parents=True)
+    ok.write_text('DEFAULT_CONTEXT_DIR = ".endorlabs-context"\n', encoding="utf-8")
+    assert check_context_root_literals(paths=["src/endorlabs/context/paths.py"]) == 0
+
+
+def test_check_context_root_literals_allows_prose_mention(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setattr("pre_commit_guards._REPO_ROOT", tmp_path)
+    ok = tmp_path / "src" / "endorlabs" / "workflows" / "foo.py"
+    ok.parent.mkdir(parents=True)
+    ok.write_text(
+        '"""Write under .endorlabs-context/workspace/ after init."""\n',
+        encoding="utf-8",
+    )
+    assert check_context_root_literals(paths=["src/endorlabs/workflows/foo.py"]) == 0
+
+
+def test_check_context_root_literals_scans_skill_scripts(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setattr("pre_commit_guards._REPO_ROOT", tmp_path)
+    bad = (
+        tmp_path / "agent-knowledge" / "skills" / "endor-foo" / "scripts" / "report.py"
+    )
+    bad.parent.mkdir(parents=True)
+    bad.write_text('OUT = ".endorlabs-context/workspace/runs/foo"\n', encoding="utf-8")
+    assert (
+        check_context_root_literals(
+            paths=["agent-knowledge/skills/endor-foo/scripts/report.py"],
+        )
+        == 1
+    )

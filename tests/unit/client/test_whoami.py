@@ -13,7 +13,31 @@ import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
 from endorlabs.core.exceptions import ValidationError
+from endorlabs.core.whoami import identity_from_auth_payload
 from tests.conftest import TEST_NAMESPACE_DEFAULT
+
+
+def test_identity_from_auth_payload_prefers_email() -> None:
+    assert (
+        identity_from_auth_payload(
+            {
+                "user": {
+                    "meta": {"name": "fallback@endor"},
+                    "spec": {"email": "user@example.com", "user_name": "u"},
+                }
+            }
+        )
+        == "user@example.com"
+    )
+
+
+def test_identity_from_auth_payload_meta_name() -> None:
+    assert (
+        identity_from_auth_payload(
+            {"user": {"meta": {"name": "timmy166@hotmail.com@endor"}}}
+        )
+        == "timmy166@hotmail.com@endor"
+    )
 
 
 @pytest.fixture

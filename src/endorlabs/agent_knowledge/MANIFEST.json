@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-09T20:24:32.896970+00:00",
+  "generated_at": "2026-07-10T13:48:55.720254+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -147,8 +147,18 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.5.3.dev0",
+  "sdk_version": "0.5.4.dev4",
   "skills": [
+    {
+      "description": "Audit AuthorizationPolicy wire shape and claim/namespace form for common misconfigurations (comma-separated namespace blobs, wrong IdP claim keys, double provider suffixes). Use when reviewing Auth Policy setup, \"no authorized tenant\" after successful IdP login, or customer policy imports\u2014 not for credential refresh (endor-auth-setup), Enterprise SSO planning (endor-sso-integration-validation-troubleshooting), or AuthenticationLog RCA (endor-troubleshoot-authlog).",
+      "id": "endor-audit-authorization-policies",
+      "name": "endor-audit-authorization-policies",
+      "path": "skills/endor-audit-authorization-policies/SKILL.md",
+      "refs": [
+        "skills/endor-audit-authorization-policies/claim-and-namespace-forms.md",
+        "skills/endor-audit-authorization-policies/scripts/audit_authorization_policies.py"
+      ]
+    },
     {
       "description": "Audit tenant APIKey resources for expired or soon-to-expire credentials. Lists API keys on a namespace path, classifies expiration status, and writes a CSV report (default 30-day lookahead). Use for tenant credential hygiene and rotation planning\u2014not for bearer ENDOR_TOKEN refresh, SSO policy mapping, or AuthenticationLog RCA.",
       "id": "endor-auth-credential-expiry",

@@ -54,11 +54,27 @@ Collect these inputs before proposing configuration changes:
 
 ## Step 4: Spot-Check With Script
 
-Use `sso_access_spotcheck.py` to collect evidence and produce a normalized mapping:
+Use `sso_access_spotcheck.py` (thin CLI) or library helpers
+`list_authorization_policies` / `build_claim_namespace_map` to collect evidence:
 
 - claim predicates -> target namespaces -> propagation -> implied scope
 - direct grants vs propagated subtree grants
 - root-context aggregate visibility note
+
+```python
+from endorlabs import Client
+from endorlabs.workflows.auth import (
+    build_claim_namespace_map,
+    list_authorization_policies,
+)
+
+client = Client(tenant="<tenant>")
+records = list_authorization_policies(
+    client, namespace="<tenant>", traverse=True, max_pages=20
+)
+report = build_claim_namespace_map(records)
+client.close()
+```
 
 Run:
 
@@ -108,5 +124,6 @@ Always return:
 
 | Need | Skill |
 | ---- | ----- |
+| AuthPolicy claim/namespace form audit | [endor-audit-authorization-policies](../endor-audit-authorization-policies/SKILL.md) |
 | Login activity / login count CSV | [endor-auth-login-count](../endor-auth-login-count/SKILL.md) |
 | Per-user auth RCA | [endor-troubleshoot-authlog](../endor-troubleshoot-authlog/SKILL.md) |

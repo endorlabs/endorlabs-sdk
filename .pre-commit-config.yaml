@@ -101,6 +101,15 @@ repos:
         always_run: true
         files: ^agent-knowledge/
 
+      - id: pre-commit-guards-context-root-literals
+        name: block hard-coded .endorlabs-context path constants
+        entry: uv
+        args: [run, python, devtools/pre_commit_guards.py, context-root-literals]
+        language: system
+        pass_filenames: false
+        always_run: true
+        files: ^(src/endorlabs/.*\.py|agent-knowledge/.*/scripts/.*\.py)$
+
       - id: refresh-local-context-and-skills
         name: refresh local context + skill mirrors
         entry: uv

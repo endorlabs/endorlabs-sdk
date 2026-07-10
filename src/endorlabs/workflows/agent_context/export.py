@@ -147,7 +147,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--output-dir",
         default=str(workflow_projects_root()),
-        help="Base output directory. Default: .endorlabs-context/workspace/projects",
+        help=(f"Base output directory. Default: {workflow_projects_root().as_posix()}"),
     )
     p.add_argument(
         "--pv-limit",

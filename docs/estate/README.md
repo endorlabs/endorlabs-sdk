@@ -32,14 +32,14 @@ uv run endor-estate summarize --namespace tenant.example.child --workspace .endo
 
 ```python
 import endorlabs
+from endorlabs.context.paths import workspace_dir_for
 from endorlabs.workflows.estate import (
     analyze_workspace,
     collect_workspace,
-    workspace_dir_for,
 )
 
 client = endorlabs.Client(tenant="tenant")
-workspace = workspace_dir_for(".endorlabs-context", "tenant.example.child")
+workspace = workspace_dir_for("tenant.example.child")
 collect_workspace(client, namespace="tenant.example.child", workspace=workspace)
 analyze_workspace(workspace, namespace="tenant.example.child")
 ```

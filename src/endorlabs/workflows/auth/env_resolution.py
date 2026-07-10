@@ -10,6 +10,7 @@ SSO tenant for refresh and Client reauth uses the root segment of a namespace
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 from endorlabs.utils.endorctl_config import read_endorctl_namespace
@@ -18,13 +19,18 @@ from .dotenv import read_env_or_dotenv
 
 _NAMESPACE_ENV_KEY = "ENDOR_NAMESPACE"
 _SUPPORTED_BROWSER_REFRESH_METHODS = frozenset(
-    {"sso", "google", "github", "gitlab", "email"}
+    {"browser-auth", "sso", "google", "github", "gitlab", "email", "azureadv2"}
 )
 _BROWSER_METHOD_ALIASES: dict[str, str] = {
-    "browser-auth": "sso",
-    "admin": "sso",
-    "browser": "sso",
+    "browser": "browser-auth",
+    "admin": "browser-auth",
 }
+# Custom SSO IdPs report authentication_source as a 24-char hex object id.
+_IDP_OBJECT_ID_RE = re.compile(r"^[0-9a-f]{24}$")
+
+
+def _looks_like_idp_object_id(value: str) -> bool:
+    return bool(_IDP_OBJECT_ID_RE.fullmatch(value.strip().lower()))
 
 
 def normalize_browser_auth_method(method: str | None) -> str | None:
@@ -52,9 +58,13 @@ def browser_method_from_authentication_source(source: str | None) -> str | None:
         return "github"
     if "gitlab" in cleaned:
         return "gitlab"
-    if "email" in cleaned:
+    # Email magic-link sessions report ``authentication_source=endor``.
+    if cleaned == "endor" or "email" in cleaned:
         return "email"
     if any(marker in cleaned for marker in ("sso", "saml", "oidc")):
+        return "sso"
+    # Tenant SSO often uses the IdP config object id as authentication_source.
+    if _looks_like_idp_object_id(cleaned):
         return "sso"
     return None
 
@@ -67,6 +77,14 @@ def browser_method_from_user_identity(identity: str | None) -> str | None:
     for provider in ("google", "github", "gitlab"):
         if f"@{provider}" in cleaned:
             return provider
+    # Email magic-link identities use ``addr@endor`` (e.g. ``a@b.com@endor``).
+    if cleaned.endswith("@endor") or "@endor@" in cleaned:
+        return "email"
+    # Custom SSO identities append ``@<idp-object-id>``.
+    if "@" in cleaned:
+        suffix = cleaned.rsplit("@", 1)[-1]
+        if _looks_like_idp_object_id(suffix):
+            return "sso"
     return None
 
 
@@ -80,6 +98,13 @@ def browser_method_from_auth_payload(payload: dict[str, object]) -> str | None:
 
     user = payload.get("user")
     if isinstance(user, dict):
+        meta = user.get("meta")
+        if isinstance(meta, dict):
+            name = meta.get("name")
+            if isinstance(name, str):
+                resolved = browser_method_from_user_identity(name)
+                if resolved:
+                    return resolved
         spec = user.get("spec")
         if isinstance(spec, dict):
             email = spec.get("email")

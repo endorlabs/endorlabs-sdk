@@ -285,22 +285,20 @@ class TestBrowserAuthentication:
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
-    def test_browser_auth_alias_normalizes_to_browser_auth(
-        self, mock_get_token: Mock
-    ) -> None:
-        """`browser` alias should normalize to sso with insider tenant."""
+    def test_browser_auth_alias_opens_selector(self, mock_get_token: Mock) -> None:
+        """`browser` / `browser-auth` open the local provider picker (not SSO)."""
         mock_get_token.return_value = "browser-token-123"
 
         with _patch_httpx_client(get_return=_auth_get_response()):
             client = APIClient(auth_method="browser")
 
-        assert client.auth_method == "sso"
-        assert client._auth_tenant == "endor-admin"
+        assert client.auth_method == "browser-auth"
+        assert client._auth_tenant is None
         assert client._auth_type == "browser"
         assert client._token == "browser-token-123"
         mock_get_token.assert_called_once()
-        assert mock_get_token.call_args.kwargs["method"] == "sso"
-        assert mock_get_token.call_args.kwargs["auth_tenant"] == "endor-admin"
+        assert mock_get_token.call_args.kwargs["method"] == "browser-auth"
+        assert mock_get_token.call_args.kwargs.get("auth_tenant") in (None, "")
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
@@ -594,13 +592,19 @@ class TestAuthenticationBackwardCompatibility:
         },
         clear=True,
     )
-    def test_azureadv2_mode_fails_fast_until_supported(self) -> None:
-        """azureadv2 is recognized but intentionally not yet implemented."""
-        with (
-            pytest.raises(ValidationError, match="not implemented"),
-            _patch_httpx_client(get_return=_auth_get_response()),
-        ):
-            _ = APIClient(auth_method="azureadv2")
+    @patch("endorlabs.auth_server.get_token")
+    def test_azureadv2_mode_routes_to_browser_token_flow(
+        self, mock_get_token: Mock
+    ) -> None:
+        """azureadv2 should open browser OAuth like other social providers."""
+        mock_get_token.return_value = "browser-token-123"
+
+        with _patch_httpx_client(get_return=_auth_get_response()):
+            client = APIClient(auth_method="azureadv2")
+
+        assert client.auth_method == "azureadv2"
+        mock_get_token.assert_called_once()
+        assert mock_get_token.call_args.kwargs["method"] == "azureadv2"
 
     @patch.dict(
         os.environ,

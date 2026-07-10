@@ -90,7 +90,6 @@ AUTH_METHOD_ALIASES: dict[str, str] = {
     "browser": "browser-auth",
     "admin": "browser-auth",
 }
-_LEGACY_BROWSER_METHODS: frozenset[str] = frozenset({"browser-auth", "admin"})
 SUPPORTED_AUTH_METHODS: tuple[str, ...] = (
     "api-key",
     "browser-auth",
@@ -152,9 +151,15 @@ class APIClient:
         key: API credentials key. If None, uses ENDOR_API_CREDENTIALS_KEY env var.
         secret: API credentials secret. If None, uses ENDOR_API_CREDENTIALS_SECRET.
         token: Bearer token. If None, uses ENDOR_TOKEN env var.
-        auth_method: Auth method (e.g. "api-key", "browser-auth", "sso",
-            "google", "github", "gitlab", "email"). If None, uses env/default.
-        email: Email for auth. Required for ``auth_method="email"``.
+        auth_method: Auth method. Documented interactive modes: ``sso``
+            (requires ``auth_tenant``), ``google``, ``github``, ``gitlab``, and
+            ``email`` (requires ``email``). Also ``api-key`` and bearer via
+            ``token`` / ``ENDOR_TOKEN``. Other browser provider strings may be
+            accepted for experiments but are not documented as supported. If
+            omitted: use ``token`` / ``ENDOR_TOKEN`` (bearer), else API key
+            env/params; bare construction without credentials raises
+            ``ValidationError`` and does **not** open a browser.
+        email: Address for ``auth_method="email"`` (magic-link).
         auth_tenant: SSO tenant. Required for ``auth_method="sso"``.
         retry_non_idempotent: When True, retry timeout/request errors for POST/PATCH
             too. Default False; override via ``ENDOR_RETRY_NON_IDEMPOTENT=1``.
@@ -230,17 +235,15 @@ class APIClient:
         # - explicit auth_method wins
         # - constructor key/secret → api-key
         # - ENDOR_TOKEN → bearer; method learned from GET /v1/auth on first validation
+        # - no credentials → ValidationError (does not open a browser by default)
         normalized_auth_method = "api-key"
         if auth_method:
             normalized_auth_method = self._normalize_auth_method(auth_method)
-            if normalized_auth_method in _LEGACY_BROWSER_METHODS:
-                normalized_auth_method = "sso"
-                if not self._auth_tenant:
-                    self._auth_tenant = "endor-admin"
         elif key is not None or secret is not None:
             normalized_auth_method = "api-key"
         elif token is not None or self._provided_token:
-            normalized_auth_method = "sso"
+            # Pending until /v1/auth; treat as browser-family for credential path.
+            normalized_auth_method = "browser-auth"
             self._auth_method_pending_resolution = True
         self.auth_method = normalized_auth_method
 
@@ -251,12 +254,11 @@ class APIClient:
             self.auth_method == "sso"
             and not self._auth_tenant
             and not self._auth_method_pending_resolution
-            and (token is not None or self._provided_token)
         ):
             raise ValidationError(
-                "Bearer SSO refresh hint requires ENDOR_NAMESPACE (or auth_tenant= on "
-                "Client/APIClient). For Google/GitHub/GitLab tokens pass "
-                "Client(auth_method='google') or rely on /v1/auth identity hints."
+                "auth_method='sso' requires auth_tenant=... or ENDOR_NAMESPACE "
+                "(tenant root). Browser login is opt-in: pass auth_method= explicitly; "
+                "bare Client() without credentials does not open a browser."
             )
 
         self._validate_auth_method()
@@ -292,6 +294,7 @@ class APIClient:
                     "  - Environment variables: ENDOR_API_CREDENTIALS_KEY and "
                     "ENDOR_API_CREDENTIALS_SECRET\n"
                     "  - Or use browser authentication: "
+                    "APIClient(auth_method='browser-auth') or "
                     "APIClient(auth_method='sso', auth_tenant='...')"
                 )
                 self.logger.error(error_msg)
@@ -1766,13 +1769,6 @@ class APIClient:
                 "auth_method='sso' requires auth_tenant=... or ENDOR_NAMESPACE."
             )
 
-        if self.auth_method == "azureadv2":
-            raise ValidationError(
-                "auth_method='azureadv2' is recognized for parity but is not "
-                "implemented in SDK browser OAuth routing yet. "
-                "Use 'sso', 'google', 'github', 'gitlab', or 'email'."
-            )
-
     def _resolve_bearer_auth_method_from_session(self, payload: dict[str, Any]) -> None:
         """Persist bearer refresh-hint routing in-memory from ``/v1/auth`` metadata."""
         from endorlabs.workflows.auth.env_resolution import (
@@ -1854,10 +1850,14 @@ class APIClient:
     def _authenticate_browser(self) -> str | None:
         """Authenticate using browser-based OAuth flow.
 
-        ⚠️  WARNING: This method requires human interaction and cannot be used
-        in CI/CD environments. It opens a browser window and waits for user
-        authentication. Use API key authentication (ENDOR_API_CREDENTIALS_KEY
-        and ENDOR_API_CREDENTIALS_SECRET) for automated environments.
+        Called only when ``auth_method`` is a browser-family mode (not bare
+        ``Client()`` without credentials). Validates an existing bearer token
+        first when present; otherwise opens a browser (local auth-selector for
+        ``browser-auth``, or the provider URL for ``sso`` / social modes).
+
+        ⚠️  WARNING: Interactive path requires a human and cannot be used in
+        CI/CD. Prefer API key auth (``ENDOR_API_CREDENTIALS_KEY`` /
+        ``ENDOR_API_CREDENTIALS_SECRET``) for automation.
 
         Returns:
             Bearer token string or None if authentication fails.

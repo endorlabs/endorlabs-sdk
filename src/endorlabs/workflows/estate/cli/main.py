@@ -9,6 +9,11 @@ import os
 from pathlib import Path
 
 import endorlabs
+from endorlabs.context.paths import (
+    DEFAULT_CONTEXT_DIR,
+    workspace_date_suffix,
+    workspace_dir_for,
+)
 from endorlabs.tools.list_bounds import resolve_collect_max_workers
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.workspace import analyze_workspace
@@ -22,8 +27,6 @@ from endorlabs.workflows.estate.workspace.paths import (
     ensure_workspace_layout,
     logs_dir,
     resolve_workspace_root,
-    workspace_date_suffix,
-    workspace_dir_for,
 )
 
 LOGGER = get_resource_logger(__name__)
@@ -48,9 +51,7 @@ def _resolve_workspace(args: argparse.Namespace) -> Path:
         date_suffix = (
             args.date if getattr(args, "date", None) else workspace_date_suffix()
         )
-        return workspace_dir_for(
-            ".endorlabs-context", args.namespace, date_suffix=date_suffix
-        )
+        return workspace_dir_for(args.namespace, date_suffix=date_suffix)
     raise ValueError("Provide --workspace or --namespace")
 
 
@@ -64,7 +65,10 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--workspace",
         "-w",
-        help="Workspace directory (default: .endorlabs-context/workspace/<slug>-<YYYYMMDD>/)",
+        help=(
+            f"Workspace directory (default: {DEFAULT_CONTEXT_DIR}/workspace/"
+            "<slug>-<YYYYMMDD>/)"
+        ),
     )
     parser.add_argument(
         "--date",

@@ -123,18 +123,95 @@ def test_refresh_token_to_dotenv_writes_token(
     env_file = tmp_path / ".env"
     monkeypatch.setenv("ENDOR_NAMESPACE", "tenant-one")
 
-    with patch(
-        "endorlabs.auth_server.get_token",
-        return_value="fresh-token",
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"authentication_source": "sso"}
+
+    with (
+        patch(
+            "endorlabs.auth_server.get_token",
+            return_value="fresh-token",
+        ),
+        patch("httpx.Client") as mock_client_cls,
     ):
+        mock_client = MagicMock()
+        mock_client.__enter__.return_value = mock_client
+        mock_client.__exit__.return_value = None
+        mock_client.get.return_value = mock_response
+        mock_client_cls.return_value = mock_client
         updated = refresh_token_to_dotenv(
             env_file,
             method="sso",
             environment="endorlabs.com",
         )
 
-    assert updated == env_file.resolve()
+    assert updated.env_file == env_file.resolve()
     assert read_dotenv_value(env_file, "ENDOR_TOKEN") == "fresh-token"
+
+
+def test_refresh_token_to_dotenv_rejects_invalid_token(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    env_file = tmp_path / ".env"
+    monkeypatch.setenv("ENDOR_NAMESPACE", "tenant-one")
+
+    mock_response = MagicMock()
+    mock_response.status_code = 401
+
+    with (
+        patch(
+            "endorlabs.auth_server.get_token",
+            return_value="bogus-token",
+        ),
+        patch("httpx.Client") as mock_client_cls,
+    ):
+        mock_client = MagicMock()
+        mock_client.__enter__.return_value = mock_client
+        mock_client.__exit__.return_value = None
+        mock_client.get.return_value = mock_response
+        mock_client_cls.return_value = mock_client
+        with pytest.raises(RuntimeError, match="failed /v1/auth"):
+            refresh_token_to_dotenv(
+                env_file,
+                method="google",
+                environment="endorlabs.com",
+            )
+
+    assert not env_file.exists()
+
+
+def test_refresh_token_to_dotenv_rejects_provider_mismatch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    env_file = tmp_path / ".env"
+    monkeypatch.setenv("ENDOR_NAMESPACE", "tenant-one")
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"authentication_source": "google"}
+
+    with (
+        patch(
+            "endorlabs.auth_server.get_token",
+            return_value="fresh-token",
+        ),
+        patch("httpx.Client") as mock_client_cls,
+    ):
+        mock_client = MagicMock()
+        mock_client.__enter__.return_value = mock_client
+        mock_client.__exit__.return_value = None
+        mock_client.get.return_value = mock_response
+        mock_client_cls.return_value = mock_client
+        with pytest.raises(RuntimeError, match="Expected authentication via gitlab"):
+            refresh_token_to_dotenv(
+                env_file,
+                method="gitlab",
+                environment="endorlabs.com",
+            )
+
+    assert not env_file.exists()
 
 
 def test_verify_auth_missing_credentials(

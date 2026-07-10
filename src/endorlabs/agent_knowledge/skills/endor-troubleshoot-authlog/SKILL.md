@@ -107,6 +107,7 @@ SSO claim-to-namespace mapping: [endor-sso-integration-validation-troubleshootin
 | Need | Skill |
 | ---- | ----- |
 | Credential setup / refresh | [endor-auth-setup](../endor-auth-setup/SKILL.md) |
+| AuthPolicy claim/namespace form audit | [endor-audit-authorization-policies](../endor-audit-authorization-policies/SKILL.md) |
 | Login activity CSV (server `list_groups`) | [endor-auth-login-count](../endor-auth-login-count/SKILL.md) |
 | SSO setup / claim-to-namespace spot-check | [endor-sso-integration-validation-troubleshooting](../endor-sso-integration-validation-troubleshooting/SKILL.md) |
 | Broader SDK debugging | [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md) |

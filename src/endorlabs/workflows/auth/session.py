@@ -20,13 +20,14 @@ import shutil
 import subprocess
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from endorlabs.core.exceptions import ValidationError
 from endorlabs.utils.endorctl_config import (
     endorctl_config_path,
     read_endorctl_namespace,
 )
+from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.redaction import (
     JSON_REDACTION_REPLACEMENT,
     REDACTION_DEFAULT_REPLACEMENT,
@@ -44,9 +45,12 @@ from .env_resolution import (
 )
 
 if TYPE_CHECKING:
+    from endorlabs.auth_server import CallbackSessionSummary
     from endorlabs.core.whoami import WhoamiResult
 
-BrowserAuthMethod = Literal["sso", "google", "github", "gitlab", "email"]
+BrowserAuthMethod = Literal[
+    "browser-auth", "sso", "google", "github", "gitlab", "email", "azureadv2"
+]
 AuthStatus = Literal[
     "ready",
     "missing_credentials",
@@ -55,13 +59,17 @@ AuthStatus = Literal[
 ]
 
 _NAMESPACE_ENV_KEY = "ENDOR_NAMESPACE"
-_SUPPORTED_BROWSER_METHODS = frozenset({"sso", "google", "github", "gitlab", "email"})
+_SUPPORTED_BROWSER_METHODS = frozenset(
+    {"browser-auth", "sso", "google", "github", "gitlab", "email", "azureadv2"}
+)
 
 _REDACTION_PATTERNS: tuple[tuple[str, str], ...] = (
     (redaction_pattern, REDACTION_DEFAULT_REPLACEMENT),
     (json_redaction_pattern, JSON_REDACTION_REPLACEMENT),
     (url_token_redaction_pattern, url_token_redaction_replacement),
 )
+
+logger = get_resource_logger(__name__)
 
 
 def redact_sensitive_text(message: str | None) -> str | None:
@@ -268,6 +276,17 @@ def build_browser_auth_kwargs(
     return kwargs
 
 
+@dataclass(frozen=True)
+class TokenRefreshResult:
+    """Result of browser refresh: dotenv path plus whoami summary (no token)."""
+
+    env_file: Path
+    identity: str | None = None
+    auth_source: str | None = None
+    expires_in_label: str | None = None
+    expiration_time: str | None = None
+
+
 def refresh_token_to_dotenv(
     env_file: Path,
     *,
@@ -276,11 +295,16 @@ def refresh_token_to_dotenv(
     environment: str | None = None,
     timeout: int = 120,
     email: str | None = None,
-) -> Path:
+) -> TokenRefreshResult:
     """Run interactive browser OAuth and upsert ``ENDOR_TOKEN`` in *env_file*.
 
-    Does not print the token. Requires a human for the browser callback unless
-    CI uses API keys instead (see skill ``endor-auth-setup``).
+    Does not print or return the token. Requires a human for the browser callback
+    unless CI uses API keys instead (see skill ``endor-auth-setup``).
+
+    After capture, validates the token with ``GET /v1/auth`` before writing so a
+    stale localhost callback cannot be treated as success. For direct provider
+    methods, also requires ``authentication_source`` to match the requested
+    method. Returns whoami identity / TTL for CLI stdout (audit-safe fields only).
     """
     from endorlabs.auth_server import get_token
 
@@ -296,9 +320,88 @@ def refresh_token_to_dotenv(
     )
     token = get_token(**token_kwargs)
     if not token:
-        raise RuntimeError("Browser authentication failed or timed out.")
+        message = "Browser authentication failed or timed out."
+        logger.error(message)
+        raise RuntimeError(message)
+    summary = _validate_captured_bearer(
+        token,
+        environment=api_environment,
+        expected_method=str(token_kwargs["method"]),
+    )
     upsert_dotenv_key(env_file, "ENDOR_TOKEN", token)
-    return env_file
+    return TokenRefreshResult(
+        env_file=env_file,
+        identity=summary.identity if summary else None,
+        auth_source=summary.auth_source if summary else None,
+        expires_in_label=summary.expires_in_label if summary else None,
+        expiration_time=summary.expiration_time if summary else None,
+    )
+
+
+def _validate_captured_bearer(
+    token: str,
+    *,
+    environment: str,
+    expected_method: str,
+) -> CallbackSessionSummary | None:
+    """Fail closed if the callback token is invalid or from the wrong provider.
+
+    Returns a session summary when ``/v1/auth`` JSON is usable.
+    """
+    import httpx
+
+    from endorlabs.auth_server import (
+        session_summary_from_auth_payload,
+    )
+
+    api_base = f"https://api.{environment}"
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            response = client.get(
+                f"{api_base}/v1/auth",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+    except httpx.HTTPError as exc:
+        message = (
+            "Could not validate browser token via /v1/auth. "
+            f"Retry the refresh. ({exc.__class__.__name__})"
+        )
+        logger.error(message)
+        raise RuntimeError(message) from exc
+
+    if response.status_code != 200:
+        message = (
+            "Browser callback returned a token that failed /v1/auth "
+            f"(HTTP {response.status_code}). Complete login in the opened "
+            "browser tab (wait for the localhost redirect) and retry."
+        )
+        logger.error(message)
+        raise RuntimeError(message)
+
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = None
+    if not isinstance(payload, dict):
+        logger.error("Callback /v1/auth returned a non-JSON body")
+        return None
+
+    auth_payload = cast("dict[str, object]", payload)
+
+    # Provider picker can yield any source; only pin direct provider methods.
+    if expected_method in {"google", "github", "gitlab", "azureadv2", "sso", "email"}:
+        resolved = browser_method_from_auth_payload(auth_payload)
+        if resolved is not None and resolved != expected_method:
+            message = (
+                f"Expected authentication via {expected_method}, but /v1/auth "
+                f"reports {resolved}. A stale localhost tab may have completed "
+                "the callback — close extra auth tabs and retry."
+            )
+            logger.error(message)
+            raise RuntimeError(message)
+
+    summary: CallbackSessionSummary = session_summary_from_auth_payload(auth_payload)
+    return summary
 
 
 def _namespace_resolution_label(tenant: str | None) -> str | None:

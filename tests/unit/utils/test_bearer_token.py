@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from endorlabs.utils.bearer_token import (
     expiration_from_auth_payload,
     expires_in_seconds,
+    format_ttl_label,
     jwt_expiration_unverified,
     parse_iso_datetime,
     should_refresh_before_expiry,
@@ -50,3 +51,11 @@ def test_expires_in_seconds_negative_when_past() -> None:
     remaining = expires_in_seconds(past)
     assert remaining is not None
     assert remaining < 0
+
+
+def test_format_ttl_label() -> None:
+    assert format_ttl_label(0) == "expired"
+    assert format_ttl_label(-1) == "expired"
+    assert format_ttl_label(45) == "45s"
+    assert format_ttl_label(125) == "2m 5s"
+    assert format_ttl_label(7380) == "2h 3m"
