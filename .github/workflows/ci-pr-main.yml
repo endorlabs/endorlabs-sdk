@@ -309,6 +309,10 @@ jobs:
   # Domain buckets live under tests/integration/{client,resources,workflows}.
   # Uses always() because unit-tests may be correctly skipped (e.g. only
   # integration test files changed) while this job still needs to run.
+  #
+  # Opt-out only: do not use `inputs.run_integration != false` — on pull_request
+  # / push, unset inputs are null/'' and Actions loose-equality treats those as
+  # equal to false, which would skip this job on every PR.
   # ---------------------------------------------------------------------------
   test-integration:
     name: Integration Test Suite
@@ -321,7 +325,11 @@ jobs:
       needs.lint.result == 'success' &&
       needs.detect-changes.result == 'success' &&
       needs.unit-tests.result != 'failure' &&
-      (inputs.run_integration != false && github.event.inputs.run_integration != 'false' && github.event.client_payload.run_integration != 'false') &&
+      !(
+        inputs.run_integration == false ||
+        github.event.inputs.run_integration == 'false' ||
+        github.event.client_payload.run_integration == 'false'
+      ) &&
       (
         needs.detect-changes.outputs.src == 'true' ||
         needs.detect-changes.outputs.integration-tests == 'true' ||
