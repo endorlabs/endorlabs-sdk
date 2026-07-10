@@ -11,6 +11,7 @@ name: CI PR Main
 #
 # Noop strategy (first principles — a job runs only when its inputs change):
 #   Layer 1: paths-ignore skips the entire workflow for universal noops (docs, IDE config, etc.).
+#     Caveat: with a required gate check, docs-only PRs stay pending (workflow never reports).
 #   Layer 2: detect-changes categorises changed paths; downstream jobs check their category.
 #   Layer 3: ci-success gate job is the single required status check for branch protection.
 
