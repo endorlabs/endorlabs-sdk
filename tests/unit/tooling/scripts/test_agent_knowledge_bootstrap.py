@@ -156,14 +156,16 @@ def test_emit_cursor_rules_maintainer_rules_glob_scoped() -> None:
 
 def test_emit_cursor_rules_list_query_performance_content() -> None:
     contents = build_cursor_rule_contents()
-    mdc = contents["endor-list-query-performance"]
+    rule_id = "endor-list-query-performance"
+    mdc = contents[rule_id]
+    assert rule_id in mdc
     assert "alwaysApply: true" in mdc
-    assert (
-        "x-endor-source: agent-knowledge/rules/endor-list-query-performance.md" in mdc
-    )
+    assert "globs:" not in mdc
+    assert "x-endor-generated: true" in mdc
+    assert f"x-endor-source: agent-knowledge/rules/{rule_id}.md" in mdc
     assert "x-endor-source-sha256: " in mdc
-    assert "# List query performance" in mdc
-    assert "Do not set `page_size`" in mdc
+    assert mdc.startswith("---\n")
+    assert "\n---\n" in mdc
 
 
 def test_portable_examples_rule_has_summary() -> None:

@@ -15,7 +15,6 @@ from endorlabs.resources.pr_comment_config import (
     PRCommentConfigSpec,
     PRCommentsTemplate,
 )
-from tests.conftest import TEST_MAX_PAGES
 
 
 @pytest.mark.integration
@@ -32,20 +31,6 @@ class TestPRCommentConfig:
             with suppress(Exception):
                 self.client.PRCommentConfig.delete(uuid)
         self.created_uuids.clear()
-
-    def test_pr_comment_config_list(self) -> None:
-        """LIST should return a list result."""
-        result = self.client.PRCommentConfig.list(max_pages=TEST_MAX_PAGES)
-        assert isinstance(result, list)
-
-    def test_pr_comment_config_get(self) -> None:
-        """GET first item from LIST when available."""
-        items = self.client.PRCommentConfig.list(max_pages=TEST_MAX_PAGES)
-        if not items:
-            pytest.skip("No PRCommentConfig resources in scope.")
-        got = self.client.PRCommentConfig.get(items[0].uuid)
-        assert got is not None
-        assert got.uuid == items[0].uuid
 
     @pytest.mark.writes
     def test_pr_comment_config_create_update_delete(self) -> None:

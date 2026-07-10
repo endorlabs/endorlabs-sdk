@@ -226,25 +226,6 @@ def test_client_namespace_list_convenience_kwargs(
     assert args[2] == TEST_MAX_PAGES
 
 
-def test_client_projects_present_and_delegates(
-    client_with_mock_transport: Client,
-) -> None:
-    """client.Project is present and list(traverse=True, max_pages=1) delegates."""
-    client = client_with_mock_transport
-    mock_list = Mock(return_value=[])
-    client.Project._ops.list = mock_list
-    result = client.Project.list(
-        traverse=True, concurrent=False, max_pages=TEST_MAX_PAGES
-    )
-    assert result == []
-    mock_list.assert_called_once()
-    args, _ = mock_list.call_args
-    assert args[0] == TEST_NAMESPACE_DEFAULT
-    assert args[1] is not None
-    assert args[1].traverse is True
-    assert args[2] == TEST_MAX_PAGES
-
-
 def test_client_exposes_all_registry_resources(
     client_with_mock_transport: Client,
 ) -> None:
@@ -329,45 +310,43 @@ class TestBuildFacade:
             pytest.skip("No tenant-scoped resource in registry")
 
 
-def test_authentication_log_facade_get_uses_tenant_namespace(
+@pytest.mark.parametrize(
+    ("attr_name", "uuid", "expected_ns"),
+    [
+        ("Malware", "mal-456", "oss"),
+        ("AuthenticationLog", "log-123", TEST_NAMESPACE_DEFAULT),
+    ],
+)
+def test_facade_get_uses_scope_namespace(
     client_with_mock_transport: Client,
+    attr_name: str,
+    uuid: str,
+    expected_ns: str,
 ) -> None:
-    """AuthenticationLog get resolves through tenant namespace in SDK."""
+    """get(id) delegates using the facade's scope namespace (oss or tenant default)."""
     client = client_with_mock_transport
-    client.AuthenticationLog._ops.get = Mock(return_value=Mock(uuid="log-123"))
-    result = client.AuthenticationLog.get("log-123")
-    assert result.uuid == "log-123"
-    client.AuthenticationLog._ops.get.assert_called_once()
-    args, _ = client.AuthenticationLog._ops.get.call_args
-    assert args[0] == TEST_NAMESPACE_DEFAULT
-    assert args[1] == "log-123"
+    facade = getattr(client, attr_name)
+    facade._ops.get = Mock(return_value=Mock(uuid=uuid))
+    result = facade.get(uuid)
+    assert result.uuid == uuid
+    facade._ops.get.assert_called_once()
+    args, _ = facade._ops.get.call_args
+    assert args[0] == expected_ns
+    assert args[1] == uuid
 
 
-def test_malware_facade_get_uses_oss_namespace(
+@pytest.mark.parametrize("attr_name", ["Malware", "Vulnerability"])
+def test_oss_scoped_facade_list_uses_oss_namespace(
     client_with_mock_transport: Client,
+    attr_name: str,
 ) -> None:
-    """OSS-scoped get(id) always uses the oss namespace path."""
+    """OSS-scoped list() always hits the oss namespace path."""
     client = client_with_mock_transport
-    client.Malware._ops.get = Mock(
-        return_value=Mock(uuid="mal-456", tenant_meta=Mock(namespace="oss"))
-    )
-    result = client.Malware.get("mal-456")
-    assert result.uuid == "mal-456"
-    client.Malware._ops.get.assert_called_once()
-    args, _ = client.Malware._ops.get.call_args
-    assert args[0] == "oss"
-    assert args[1] == "mal-456"
-
-
-def test_malware_facade_list_uses_oss_namespace(
-    client_with_mock_transport: Client,
-) -> None:
-    """OSS-scoped list() always uses the oss namespace path."""
-    client = client_with_mock_transport
-    client.Malware._ops.list = Mock(return_value=[])
-    client.Malware.list(max_pages=TEST_MAX_PAGES)
-    client.Malware._ops.list.assert_called_once()
-    args, _ = client.Malware._ops.list.call_args
+    facade = getattr(client, attr_name)
+    facade._ops.list = Mock(return_value=[])
+    facade.list(max_pages=TEST_MAX_PAGES)
+    facade._ops.list.assert_called_once()
+    args, _ = facade._ops.list.call_args
     assert args[0] == "oss"
 
 
@@ -387,51 +366,6 @@ def test_dependency_metadata_facade_get_uses_tenant_namespace(
     args, _ = client.DependencyMetadata._ops.get.call_args
     assert args[0] == "tenant.child"
     assert args[1] == "dep-456"
-
-
-def test_dependency_metadata_facade_list_uses_tenant_namespace(
-    client_with_mock_transport: Client,
-) -> None:
-    """DependencyMetadata list uses the customer namespace path, not oss."""
-    client = client_with_mock_transport
-    client.DependencyMetadata._ops.list = Mock(return_value=[])
-    client.DependencyMetadata.list(namespace="tenant.child", max_pages=TEST_MAX_PAGES)
-    client.DependencyMetadata._ops.list.assert_called_once()
-    args, _ = client.DependencyMetadata._ops.list.call_args
-    assert args[0] == "tenant.child"
-
-
-def test_dependency_metadata_registry_scope_is_tenant() -> None:
-    """DependencyMetadata is tenant-scoped in the effective registry contract."""
-    from endorlabs.registry import RESOURCE_REGISTRY
-
-    entry = next(
-        item for item in RESOURCE_REGISTRY if item.attr_name == "DependencyMetadata"
-    )
-    assert entry.scope is None
-
-
-def test_vulnerability_facade_list_uses_oss_namespace(
-    client_with_mock_transport: Client,
-) -> None:
-    """OSS-scoped vulnerability list() always uses the oss namespace path."""
-    client = client_with_mock_transport
-    client.Vulnerability._ops.list = Mock(return_value=[])
-    client.Vulnerability.list(max_pages=TEST_MAX_PAGES)
-    client.Vulnerability._ops.list.assert_called_once()
-    args, _ = client.Vulnerability._ops.list.call_args
-    assert args[0] == "oss"
-
-
-def test_vulnerability_and_malware_registry_scope_is_oss() -> None:
-    """Vulnerability and Malware catalog facades are OSS-scoped in the registry."""
-    from endorlabs.registry import RESOURCE_REGISTRY
-
-    by_attr = {entry.attr_name: entry for entry in RESOURCE_REGISTRY}
-    assert by_attr["Vulnerability"].scope == "oss"
-    assert by_attr["Malware"].scope == "oss"
-    assert by_attr["QueryVulnerability"].scope == "oss"
-    assert by_attr["QueryMalware"].scope == "oss"
 
 
 def test_query_vulnerability_create_builds_payload_and_uses_oss_namespace(

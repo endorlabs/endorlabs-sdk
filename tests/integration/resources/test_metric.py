@@ -47,35 +47,6 @@ class TestMetric:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
-    def test_metric_list(self) -> None:
-        """LIST in namespace."""
-        from endorlabs.core.exceptions import ServerError
-
-        try:
-            result = self.endor_client.Metric.list(
-                max_pages=TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(result, list)
-
-    def test_metric_get(self) -> None:
-        """GET first item from LIST in namespace."""
-        from endorlabs.core.exceptions import ServerError
-
-        try:
-            items = self.endor_client.Metric.list(
-                max_pages=TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        got = self.endor_client.Metric.get(item)
-        assert got is not None
-        assert got.uuid == item.uuid
-
     def test_metric_filter_by_project(self, sample_metric) -> None:
         """Test filtering metrics by project UUID."""
         print("\n=== TESTING FILTER METRICS BY PROJECT ===")

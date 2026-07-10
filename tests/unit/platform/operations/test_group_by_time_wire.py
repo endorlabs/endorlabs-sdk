@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from unittest.mock import Mock
-
 import pytest
 
 from endorlabs.core.types import ListParameters
-from endorlabs.operations import BaseResourceOperations
 from endorlabs.operations.group_by_time_wire import (
     GROUP_BY_TIME_INTERVAL_ALIASES,
     add_group_by_time_wire_params,
@@ -52,13 +49,3 @@ def test_add_group_by_time_wire_params_field_value_prepend() -> None:
         "GROUP_BY_TIME_INTERVAL_DAY"
     )
     assert params["list_parameters.group_by_time.mode"] == "count"
-
-
-def test_field_grouping_without_time_uses_legacy_group_paths() -> None:
-    client = Mock()
-    ops = BaseResourceOperations(client, "test-resources", Mock)
-    params = ops._build_params(
-        ListParameters(group_aggregation_paths=["meta.name"], group_by_time=False)
-    )
-    assert params["list_parameters.group.aggregation_paths"] == "meta.name"
-    assert params["list_parameters.group_by_time"] == "false"

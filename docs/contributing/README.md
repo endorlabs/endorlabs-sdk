@@ -8,7 +8,8 @@ Agent skills: [endor-implement-sdk-resource](../../agent-knowledge/skills/endor-
 - [architecture.md](architecture.md) — Layers, registry, facade; consumer vs generated models; **Query composition**; regen, overlay, `resources/` deltas.
 - [release-publishing.md](release-publishing.md) — Version tags, hatch-vcs, OIDC PyPI/TestPyPI release CI.
 - PR template: [`.github/pull_request_template.md`](../../.github/pull_request_template.md) — changelog intake block; policy in [agent-knowledge/rules/endor-changelog.md](../../agent-knowledge/rules/endor-changelog.md).
-- [integration-resource-tests.md](integration-resource-tests.md) — Integration test order, pagination profiles (generic vs log); see [contracts.md](../contracts.md).
+- [unit-tests.md](unit-tests.md) — Unit YAGNI / contract-vs-copy checklist (rule `endor-unit-tests`).
+- [integration-resource-tests.md](integration-resource-tests.md) — Integration list/get harness, extras order, pagination profiles (generic vs log); see [contracts.md](../contracts.md).
 - [api-validation.md](api-validation.md) — OpenAPI and optional wire validation before overlay or hand modules.
 - [troubleshooting.md](troubleshooting.md) — SDK failure workflows; detailed stories in local docs or issues.
 - [docs-drift-workflow.md](docs-drift-workflow.md) — Model sync and reference doc regeneration.

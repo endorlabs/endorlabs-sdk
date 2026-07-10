@@ -23,7 +23,7 @@ def test_wait_until_returns_true_after_n_calls() -> None:
         calls[0] += 1
         return calls[0] >= 3
 
-    assert wait_until(predicate, timeout=5) is True
+    assert wait_until(predicate, timeout=5, poll_interval_max=0.001) is True
     assert calls[0] == 3
 
 

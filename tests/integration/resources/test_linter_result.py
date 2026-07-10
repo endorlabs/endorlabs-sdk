@@ -53,50 +53,6 @@ class TestLinterResult:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
-    def test_linter_result_list(self) -> None:
-        """LIST in namespace (registry-based)."""
-        from endorlabs.core.exceptions import NotFoundError, ServerError
-
-        try:
-            result = self.endor_client.LinterResult.list(
-                max_pages=TEST_MAX_PAGES,
-            )
-        except NotFoundError:
-            pytest.skip(
-                "List returned 404 (resource does not exist to user: "
-                "namespace not accessible to credential or resource no longer exists)"
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(result, list)
-
-    def test_linter_result_get(self) -> None:
-        """GET first item from LIST in namespace (registry-based)."""
-        from endorlabs.core.exceptions import NotFoundError, ServerError
-
-        try:
-            items = self.endor_client.LinterResult.list(
-                max_pages=TEST_MAX_PAGES,
-            )
-        except NotFoundError:
-            pytest.skip(
-                "List returned 404 (resource does not exist to user: "
-                "namespace not accessible to credential or resource no longer exists)"
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        ns = (
-            item.tenant_meta.namespace
-            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
-            else self.root_namespace
-        )
-        got = self.endor_client.LinterResult.get(item.uuid, namespace=ns)
-        assert got is not None
-        assert got.uuid == item.uuid
-
     def test_linter_result_filter_by_project(self, sample_linter_result) -> None:
         """Test filtering linter results by project UUID in the resource's namespace."""
         print("\n=== TESTING FILTER LINTER RESULTS BY PROJECT ===")

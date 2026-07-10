@@ -4,17 +4,25 @@ Checklist for **integration** tests that validate registry-backed facades agains
 
 ## When to add tests
 
-After model sync exposes a resource on `Client` (`src/endorlabs/generated/registry_contract.py`), add or extend `tests/integration/resources/test_{resource}.py` when the resource is customer-facing and supports list/get (and create/update/delete where applicable).
+After model sync exposes a resource on `Client` (`src/endorlabs/generated/registry_contract.py`), ensure list/get coverage via the shared harness and add or extend `tests/integration/resources/test_{resource}.py` only for **resource-specific** behavior (create/update/delete, PATCH, parent scope, expected 403, log-style bounds, OSS/system namespace).
+
+**Default list→get** for standard tenant-scoped kinds lives in
+[`test_resource_list_get_roundtrip.py`](../../tests/integration/resources/test_resource_list_get_roundtrip.py).
+Do not re-add per-resource `test_*_list` / `test_*_get` boilerplate when that
+harness already covers the kind.
 
 ## Canonical test order
 
-Each resource test file follows the same order where the registry supports the operation:
+Shared list/get: the roundtrip harness. Per-resource files keep extras only,
+in this order where the registry supports the operation:
 
-1. **LIST** — From the integration `namespace` client (**no `traverse`**), bounded pagination. Assert result is a list. **`traverse=True`** is covered in [tests/integration/client/test_concurrent_list.py](../../tests/integration/client/test_concurrent_list.py), not per-resource CRUD tests.
-2. **GET** — If LIST returned items, GET the first item (pass the **resource object** so namespace is derived). If LIST was empty, skip with `No resources in scope (empty; may be filter/auth/scope)`.
-3. **Create** — For resources with `create` in `supported_ops`: create one, capture UUID for teardown.
-4. **Update** — For resources with `update` in `supported_ops`: update the resource created in (3).
-5. **Delete** — For resources with `delete` in `supported_ops`: delete the resource created in (3) for cleanup.
+1. **LIST / GET** — Prefer the roundtrip harness. If a kind needs unique list
+   filters or get assertions, keep those here (still **no `traverse`** in
+   per-resource CRUD; **`traverse=True`** is covered in
+   [tests/integration/client/test_concurrent_list.py](../../tests/integration/client/test_concurrent_list.py)).
+2. **Create** — For resources with `create` in `supported_ops`: create one, capture UUID for teardown.
+3. **Update** — For resources with `update` in `supported_ops`: update the resource created in (2).
+4. **Delete** — For resources with `delete` in `supported_ops`: delete the resource created in (2) for cleanup.
 
 **Fixtures:** Use integration conftest `api_client`, `namespace`, `root_namespace`. Prefer `endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)` for LIST/GET in namespace scope.
 
@@ -46,14 +54,15 @@ List in the integration **`namespace` only** (no `traverse`).
 
 ## Checklist after changes
 
-- [ ] Registry entry has a matching `tests/integration/resources/test_*.py` when appropriate
-- [ ] LIST and GET covered for list/get resources; create/update/delete where supported
+- [ ] LIST/GET covered via `test_resource_list_get_roundtrip.py` (or justified extras in `test_*.py`)
+- [ ] Per-resource file only for unique behavior; create/update/delete where supported
 - [ ] Update-not-supported resources have `NotImplementedError` test
 - [ ] `uv run pytest tests/integration/resources/test_{resource}.py -v` passes with credentials
 - [ ] OpenAPI quality gates pass when spec is present (`tests/unit/platform/core/test_openapi_spec.py`)
 
 ## Related
 
+- [unit-tests.md](unit-tests.md) — Unit YAGNI / contract-vs-copy checklist
 - [list-query-performance.md](list-query-performance.md) — Traverse, filters, pagination, slow lists
 - [architecture.md](architecture.md) — Generated surface, overlay, custom facades
 - [contracts.md](../contracts.md) — ListParameters, namespace, update_mask

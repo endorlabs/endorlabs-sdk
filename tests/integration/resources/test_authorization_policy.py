@@ -19,9 +19,6 @@ from endorlabs.resources.authorization_policy import (
     SystemRole,
     UpdateAuthorizationPolicyPayload,
 )
-from tests.conftest import (
-    TEST_MAX_PAGES,
-)
 
 
 @pytest.mark.integration
@@ -71,25 +68,6 @@ class TestAuthorizationPolicy:
                 assert SystemRole.CODE_SCANNER.value in policy.spec.permissions.roles, (
                     "All policies should have CODE_SCANNER role"
                 )
-
-    def test_authorization_policy_list(self) -> None:
-        """LIST in namespace."""
-        result = self.endor_client.AuthorizationPolicy.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        assert isinstance(result, list)
-
-    def test_authorization_policy_get(self) -> None:
-        """GET first item from LIST in namespace."""
-        items = self.endor_client.AuthorizationPolicy.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        got = self.endor_client.AuthorizationPolicy.get(item)
-        assert got is not None
-        assert got.uuid == item.uuid
 
     @pytest.mark.writes
     def test_client_ux_create_authorization_policy(self) -> None:

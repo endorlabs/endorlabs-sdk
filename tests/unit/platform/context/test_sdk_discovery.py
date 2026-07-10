@@ -35,11 +35,13 @@ def test_discover_str_is_human_readable() -> None:
     d = endorlabs.discover()
     text = str(d)
     assert f"endorlabs {d.version}" in text
+    assert d.index.as_posix() in text
+    assert d.agents_guide.as_posix() in text
+    assert d.stub.as_posix() in text
     assert "bootstrap_paths:" in text
-    assert "index:" in text
-    assert "run: python -m endorlabs.examples.agent_bootstrap" in text
+    for path in d.bootstrap_paths:
+        assert path.as_posix() in text or path.name in text
     assert "SdkDiscovery(" not in text
-    assert "  - INDEX.md" in text or "  - rules/" in text
 
 
 def test_discover_entry_points_are_endor_only() -> None:

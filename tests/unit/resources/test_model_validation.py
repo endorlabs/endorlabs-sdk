@@ -1,6 +1,6 @@
 """Test cases for model validation utilities.
 
-Tests merge_partial_update, get_tags_update_paths (from model class),
+Tests get_tags_update_paths (from model class),
 validate_update_mask, safe_serialize, and related helpers used by resources/base.
 """
 
@@ -19,7 +19,6 @@ from endorlabs.utils.model_validation import (
     ensure_required_fields,
     get_list_filter_map,
     get_tags_update_paths,
-    merge_partial_update,
     parse_update_mask,
     safe_serialize,
     validate_update_mask,
@@ -52,39 +51,6 @@ class TestSafeSerialize:
         assert safe_serialize(None) is None
 
 
-class TestMergePartialUpdate:
-    """Tests for merge_partial_update."""
-
-    def test_no_mask_updates_non_none(self) -> None:
-        existing = {"a": 1, "b": 2}
-        update = {"a": 10, "b": None}
-        result = merge_partial_update(existing, update)
-        assert result["a"] == 10
-        assert result["b"] == 2
-
-    def test_with_mask_only_specified_fields(self) -> None:
-        existing = {"spec": {"level": "low", "name": "x"}}
-        update = {"spec": {"level": "high", "name": "y"}}
-        result = merge_partial_update(existing, update, update_mask=["spec.level"])
-        assert result["spec"]["level"] == "high"
-        assert result["spec"]["name"] == "x"
-
-    def test_with_mask_nested_creates_path(self) -> None:
-        existing: dict = {}
-        update = {"meta": {"tags": ["a"]}}
-        result = merge_partial_update(existing, update, update_mask=["meta.tags"])
-        assert result.get("meta", {}).get("tags") == ["a"]
-
-    def test_with_mask_does_not_mutate_existing_nested_dict(self) -> None:
-        """Nested updates should not mutate the caller-provided existing data."""
-        existing = {"spec": {"level": "low", "name": "x"}}
-        update = {"spec": {"level": "high"}}
-
-        _ = merge_partial_update(existing, update, update_mask=["spec.level"])
-
-        assert existing["spec"]["level"] == "low"
-
-
 class TestGetImmutableFieldsCls:
     """Tests for model get_immutable_fields_cls() (canonical source)."""
 
@@ -106,16 +72,12 @@ class TestParseUpdateMask:
     def test_single_field(self) -> None:
         assert parse_update_mask("meta.tags") == ["meta.tags"]
 
-    def test_multiple_fields(self) -> None:
+    def test_multiple_fields_and_whitespace(self) -> None:
         assert parse_update_mask("meta.description, meta.tags") == [
             "meta.description",
             "meta.tags",
         ]
-
-    def test_empty_and_whitespace_entries_dropped(self) -> None:
         assert parse_update_mask("a,, b ") == ["a", "b"]
-
-    def test_empty_string_returns_empty_list(self) -> None:
         assert parse_update_mask("") == []
 
 
@@ -201,10 +163,8 @@ class TestValidateUpdateMask:
     def test_empty_mask_returns_true(self) -> None:
         assert validate_update_mask("", ["meta.tags"]) is True
 
-    def test_valid_single_field(self) -> None:
+    def test_valid_fields(self) -> None:
         assert validate_update_mask("meta.tags", ["meta.tags", "spec.level"]) is True
-
-    def test_valid_multiple_fields(self) -> None:
         assert (
             validate_update_mask(
                 "meta.tags, spec.level",

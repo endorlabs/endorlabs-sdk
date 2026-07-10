@@ -153,23 +153,6 @@ def test_detect_communities_component_min_size_rejects_small_graph() -> None:
     assert payload == {}
 
 
-def test_load_clustering_graph_input_legacy_session_layout(tmp_path: Path) -> None:
-    (tmp_path / "compile_dependency_graph.json").write_text(
-        json.dumps(
-            {
-                "namespace": "tenant.ns",
-                "nodes": [{"node_id": 0}],
-                "edges": [],
-            }
-        ),
-        encoding="utf-8",
-    )
-    loaded = load_clustering_graph_input(
-        tmp_path, use_intermediate_representation=False
-    )
-    assert loaded["namespace"] == "tenant.ns"
-
-
 def test_detect_communities_rber_partition_when_vertex_weights_set() -> None:
     pytest.importorskip("igraph")
     pytest.importorskip("leidenalg")

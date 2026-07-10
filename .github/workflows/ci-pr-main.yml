@@ -263,18 +263,25 @@ jobs:
   # Unit tests + coverage — committed generated ship surface (validated in lint via verify_ship_artifacts).
   # Domain buckets live under tests/unit/{client,workflows,platform,tooling}.
   # Runs when src/, unit test files, config, or CI definition changed.
-  # Note: lint conditions are a superset of unit-test conditions, so lint
-  # is never skipped when this job needs to run — no always() required.
+  # Uses always() so agent-knowledge-only changes (unit-tests=true, python=false)
+  # still run when lint is correctly skipped.
   # ---------------------------------------------------------------------------
   unit-tests:
     name: Unit Tests and Coverage
     runs-on: ubuntu-latest
     needs: [resolve-dependencies, lint, detect-changes]
     if: >-
-      needs.detect-changes.outputs.src == 'true' ||
-      needs.detect-changes.outputs.unit-tests == 'true' ||
-      needs.detect-changes.outputs.config == 'true' ||
-      needs.detect-changes.outputs.ci == 'true'
+      always() &&
+      !cancelled() &&
+      needs.resolve-dependencies.result == 'success' &&
+      needs.detect-changes.result == 'success' &&
+      needs.lint.result != 'failure' &&
+      (
+        needs.detect-changes.outputs.src == 'true' ||
+        needs.detect-changes.outputs.unit-tests == 'true' ||
+        needs.detect-changes.outputs.config == 'true' ||
+        needs.detect-changes.outputs.ci == 'true'
+      )
     steps:
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -287,7 +294,7 @@ jobs:
 
       - name: Run unit tests with coverage
         run: |
-          uv run pytest tests/unit/ --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not interactive and not long"
+          uv run pytest tests/unit/ --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }} --durations=15 -m "not interactive and not long"
 
       - name: Display coverage summary
         run: |

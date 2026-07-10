@@ -68,25 +68,6 @@ class TestScanProfile:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
-    def test_scan_profile_list(self) -> None:
-        """LIST in namespace."""
-        result = self.endor_client.ScanProfile.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        assert isinstance(result, list)
-
-    def test_scan_profile_get(self) -> None:
-        """GET first item from LIST in namespace."""
-        items = self.endor_client.ScanProfile.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        got = self.endor_client.ScanProfile.get(item)
-        assert got is not None
-        assert got.uuid == item.uuid
-
     def test_scan_profile_advanced_filtering(self) -> None:
         """Test advanced filtering capabilities."""
         print("\n=== TESTING SCAN PROFILE FILTERING ===")

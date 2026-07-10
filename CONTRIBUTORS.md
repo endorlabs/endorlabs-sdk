@@ -35,7 +35,7 @@ Human checklist (automation: [.pre-commit-config.yaml](.pre-commit-config.yaml);
 - [ ] **Docs freshness** — grep changed paths for stale layout or CLI strings (`workspace/sessions/`, removed `devtools/` scripts, wrong flags such as `endor-auth refresh --sso` vs `--method sso`). Align docstrings, argparse `help=`, and comments with current code (see shipped rule `endor-workspace-layout`, [docs-skillbase-consistency](.cursor/rules/docs-skillbase-consistency.mdc)).
 - [ ] **No secrets or customer data** — never commit `.env`, tokens, API keys, or customer estate identifiers (tenants, production UUIDs, registered repo URLs, emails) in **any** tracked path: unit fixtures, docstrings, CLI examples, skills, docs. Use placeholders (`example-tenant`, `user@example.com` / `user@endor.ai`). Integration tests: real tenant via **env** only. Pre-commit **blocks** staged `.env` / `.endorlabs-context/`, runs **gitleaks**, and **fails** on emails / non-Endor URLs / estate `-n` flags / estate literals; see rule `endor-portable-examples`.
 - [ ] **Changelog** — user-visible changes: one bullet under `docs/changelog.md` → **Unreleased** (policy: [agent-knowledge/rules/endor-changelog.md](agent-knowledge/rules/endor-changelog.md)). Pre-commit prints a **reminder** when user-facing paths are staged without `docs/changelog.md`.
-- [ ] **Pre-commit passes** — `uv run pre-commit run --all-files` (or let the commit hook run: ruff, pyright, unit pytest, ship-artifacts verify when applicable). New guards: rule [`endor-maintainer-tooling`](agent-knowledge/rules/endor-maintainer-tooling.md).
+- [ ] **Pre-commit passes** — `uv run pre-commit run --all-files` (or let the commit hook run: ruff, pyright, unit pytest, ship-artifacts verify when applicable). New guards: rule [`endor-maintainer-tooling`](agent-knowledge/rules/endor-maintainer-tooling.md). New/changed tests: rule [`endor-unit-tests`](agent-knowledge/rules/endor-unit-tests.md).
 
 ### Opening a pull request
 
@@ -116,6 +116,13 @@ Domain-driven test layout:
 
 - `tests/unit/{client,workflows,platform,tooling}`
 - `tests/integration/{client,resources,workflows}`
+
+**Unit test writing:** prefer behavior/contracts over smoke and copy pins — rule
+[`endor-unit-tests`](agent-knowledge/rules/endor-unit-tests.md)
+([docs/contributing/unit-tests.md](docs/contributing/unit-tests.md)).
+**Integration list/get:** shared harness
+[`test_resource_list_get_roundtrip.py`](tests/integration/resources/test_resource_list_get_roundtrip.py);
+per-resource extras only — [integration-resource-tests.md](docs/contributing/integration-resource-tests.md).
 
 ## Linting and type checking
 

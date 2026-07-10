@@ -86,18 +86,6 @@ class TestRepositoryVersion:
             assert isinstance(parent_kind, str)
             assert parent_kind == "Project"
 
-    def test_repository_version_list(self) -> None:
-        """LIST in namespace."""
-        from endorlabs.core.exceptions import ServerError
-
-        try:
-            result = self.endor_client.RepositoryVersion.list(
-                max_pages=TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(result, list)
-
     def test_repository_version_list_with_parent_project(self) -> None:
         """LIST repository versions with parent=project (list with parent resource)."""
         try:
@@ -117,23 +105,6 @@ class TestRepositoryVersion:
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         assert isinstance(result, list)
-
-    def test_repository_version_get(self) -> None:
-        """GET first item from LIST in namespace."""
-        from endorlabs.core.exceptions import ServerError
-
-        try:
-            items = self.endor_client.RepositoryVersion.list(
-                max_pages=TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        got = self.endor_client.RepositoryVersion.get(item)
-        assert got is not None
-        assert got.uuid == item.uuid
 
     def test_repository_version_scan_object_has_status_scan_time(self) -> None:
         """RepositoryVersion scan_object exposes status and scan_time when present."""

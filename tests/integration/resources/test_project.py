@@ -2,9 +2,6 @@
 
 Tests GET and PATCH operations for Project resources, including tag management.
 Follows the testing protocol for comprehensive coverage.
-
-Greenfield alias unit tests live in
-tests/unit/resources/test_greenfield_aliases.py.
 """
 
 import pytest
@@ -73,25 +70,6 @@ class TestProject:
                         f"{scan_profile_uuid}: {e}"
                     )
             self.created_scan_profile_uuids.clear()
-
-    def test_project_list(self) -> None:
-        """LIST in namespace (registry-based)."""
-        result = self.endor_client.Project.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        assert isinstance(result, list)
-
-    def test_project_get(self) -> None:
-        """GET first item from LIST in namespace (registry-based)."""
-        items = self.endor_client.Project.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        got = self.endor_client.Project.get(item)
-        assert got is not None
-        assert got.uuid == item.uuid
 
     def test_project_spec_has_scan_profile_and_archived_attrs(self) -> None:
         """Project spec has scan_profile_uuid, toolchain_profile_uuid and related."""

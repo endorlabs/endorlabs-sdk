@@ -15,6 +15,7 @@ import urllib.parse
 import urllib.request
 from datetime import UTC
 from http.server import HTTPServer
+from io import BytesIO
 from unittest.mock import Mock, patch
 
 import pytest
@@ -32,11 +33,56 @@ from endorlabs.core.exceptions import ValidationError
 _TEST_STATE = "expected-oauth-state"
 
 
-def _run_handler_request(
+class _FakeRequestSocket:
+    """Minimal socket stand-in for BaseHTTPRequestHandler without a live server."""
+
+    def __init__(self, request_bytes: bytes) -> None:
+        super().__init__()
+        self._rfile = BytesIO(request_bytes)
+        self._wfile = BytesIO()
+
+    def makefile(self, mode: str, _bufsize: int | None = None) -> BytesIO:
+        if "r" in mode:
+            return self._rfile
+        return self._wfile
+
+    def sendall(self, data: bytes) -> None:
+        self._wfile.write(data)
+
+    def close(self) -> None:
+        return None
+
+
+def _invoke_handler(
     handler_cls: type,
     query: str,
 ) -> tuple[int | None, str | None, bytes]:
-    """Start a one-shot server and return (HTTP status, captured token, body)."""
+    """Drive TokenHandler.do_GET via a fake socket (no bind / thread / wait)."""
+    auth_server_mod._captured_token = None
+    request = (
+        f"GET /?{query} HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    ).encode()
+    sock = _FakeRequestSocket(request)
+    # BaseHTTPRequestHandler.__init__ reads the request and calls handle().
+    _ = handler_cls(sock, ("127.0.0.1", 0), Mock())
+    raw = sock._wfile.getvalue()
+    status: int | None = None
+    body = b""
+    if raw.startswith(b"HTTP/"):
+        header, _, body = raw.partition(b"\r\n\r\n")
+        status_line = header.split(b"\r\n", 1)[0]
+        parts = status_line.split(b" ", 2)
+        if len(parts) >= 2:
+            with contextlib.suppress(ValueError):
+                status = int(parts[1])
+    return status, auth_server_mod._captured_token, body
+
+
+def _run_handler_request_http(
+    handler_cls: type,
+    query: str,
+) -> tuple[int | None, str | None, bytes]:
+    """One real localhost HTTP round-trip (kept as a single e2e smoke)."""
     auth_server_mod._captured_token = None
     server = HTTPServer(("localhost", 0), handler_cls)
     port = server.server_address[1]
@@ -74,10 +120,10 @@ class TestTokenHandler:
 
     @patch("endorlabs.auth_server.fetch_auth_session", return_value=None)
     def test_token_handler_do_get_via_http_request(self, mock_fetch: Mock) -> None:
-        """Test handler captures token when state matches."""
+        """Real HTTP e2e: handler captures token when state matches."""
         _ = mock_fetch
         handler = _make_token_handler(_TEST_STATE)
-        status, token, body = _run_handler_request(
+        status, token, body = _run_handler_request_http(
             handler,
             f"token=xyz-captured&state={_TEST_STATE}",
         )
@@ -91,7 +137,7 @@ class TestTokenHandler:
         """CLI redirect currently returns token only; capture must still work."""
         _ = mock_fetch
         handler = _make_token_handler(_TEST_STATE)
-        status, token, _body = _run_handler_request(
+        status, token, _body = _invoke_handler(
             handler,
             "token=cli-redirect-token",
         )
@@ -103,7 +149,7 @@ class TestTokenHandler:
         """Token from query string should be URL-decoded."""
         _ = mock_fetch
         handler = _make_token_handler(_TEST_STATE)
-        status, token, _body = _run_handler_request(
+        status, token, _body = _invoke_handler(
             handler,
             f"token=abc%2Bdef%3D%3D&state={_TEST_STATE}",
         )
@@ -113,7 +159,7 @@ class TestTokenHandler:
     def test_token_handler_rejects_state_mismatch(self) -> None:
         """Callback with wrong state must not capture token."""
         handler = _make_token_handler(_TEST_STATE)
-        status, token, _body = _run_handler_request(
+        status, token, _body = _invoke_handler(
             handler,
             "token=ignored&state=wrong-state",
         )
@@ -123,7 +169,7 @@ class TestTokenHandler:
     def test_token_handler_rejects_multiple_token_values(self) -> None:
         """Ambiguous token query should not capture a token."""
         handler = _make_token_handler(_TEST_STATE)
-        _status, token, _body = _run_handler_request(
+        _status, token, _body = _invoke_handler(
             handler,
             f"token=first&token=second&state={_TEST_STATE}",
         )
@@ -145,7 +191,7 @@ class TestTokenHandler:
             },
         }
         handler = _make_token_handler(_TEST_STATE, environment="endorlabs.com")
-        status, token, body = _run_handler_request(
+        status, token, body = _invoke_handler(
             handler,
             f"token=secret-bearer&state={_TEST_STATE}",
         )
@@ -212,30 +258,6 @@ class TestGetToken:
         mock_server.handle_request = Mock(side_effect=handle_request_side_effect)
         mock_bind.return_value = (mock_server, 30000)
         return mock_server
-
-    @pytest.mark.interactive
-    @pytest.mark.writes
-    @patch("endorlabs.auth_server._bind_callback_server")
-    @patch("endorlabs.auth_server.get_browser")
-    def test_get_token_browser_alias_maps_to_browser_auth(
-        self, mock_get_browser, mock_bind
-    ) -> None:
-        """Legacy browser alias should still work via browser-auth mapping."""
-        auth_server_mod._captured_token = None
-        mock_browser = Mock()
-        mock_browser.open_new_tab = Mock()
-        mock_get_browser.return_value = mock_browser
-        mock_server = self._mock_bind_server(mock_bind)
-        mock_server.handle_request.side_effect = lambda: setattr(
-            auth_server_mod, "_captured_token", "alias-token"
-        )
-
-        token = get_token(timeout=20, environment="endorlabs.com", method="browser")
-        assert token == "alias-token"
-        mock_browser.open_new_tab.assert_called_once()
-        auth_url = mock_browser.open_new_tab.call_args[0][0]
-        assert auth_url.endswith("/auth-selector")
-        assert "localhost:" in auth_url
 
     @pytest.mark.interactive
     @pytest.mark.writes
@@ -385,25 +407,3 @@ class TestGetToken:
             tenant="acme",
         )
         assert sso == "https://api.endorlabs.com/v1/auth/sso?tenant=acme"
-
-    @pytest.mark.interactive
-    @pytest.mark.writes
-    @patch("endorlabs.auth_server._bind_callback_server")
-    @patch("endorlabs.auth_server.get_browser")
-    def test_get_token_admin_alias_opens_selector(
-        self, mock_get_browser, mock_bind
-    ) -> None:
-        """Legacy admin/browser aliases open the local auth-selector."""
-        auth_server_mod._captured_token = None
-        mock_browser = Mock()
-        mock_browser.open_new_tab = Mock()
-        mock_get_browser.return_value = mock_browser
-        self._mock_bind_server(mock_bind)
-
-        token = get_token(timeout=20, environment="endorlabs.com", method="admin")
-
-        assert token == "test-bearer-token"
-        auth_url = mock_browser.open_new_tab.call_args[0][0]
-        assert auth_url.endswith("/auth-selector")
-        assert "localhost:" in auth_url
-        assert "endor-admin" not in auth_url

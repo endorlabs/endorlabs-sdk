@@ -23,11 +23,13 @@ from pre_commit_guards import (  # noqa: E402
     check_layer_imports,
     check_portable_examples,
     check_shipped_namespace_flags,
+    cmd_select_tests,
     is_allowed_email,
     is_allowed_namespace_token,
     is_allowed_url,
     is_blocked_staged_path,
     is_user_facing_staged_path,
+    select_test_paths,
 )
 
 
@@ -448,3 +450,166 @@ def test_check_portable_examples_blocks_customer_tenant(
     err = capsys.readouterr().err
     assert "tenant-path" in err
     assert "error:" in err
+
+
+# --- select_test_paths -------------------------------------------------------
+
+
+def test_select_tests_workflows_only() -> None:
+    paths = [
+        "src/endorlabs/workflows/auth/cli.py",
+        "src/endorlabs/workflows/estate/collect/runner.py",
+    ]
+    result = select_test_paths(paths)
+    assert result == ["tests/unit/workflows"]
+
+
+def test_select_tests_docs_only_returns_empty() -> None:
+    paths = [
+        "docs/guides/examples.md",
+        "docs/changelog.md",
+        "docs/contributing/architecture.md",
+    ]
+    result = select_test_paths(paths)
+    assert result == []
+
+
+def test_select_tests_pyproject_triggers_full_suite() -> None:
+    result = select_test_paths(["pyproject.toml"])
+    assert result == ["tests/unit"]
+
+
+def test_select_tests_generated_triggers_full_suite() -> None:
+    result = select_test_paths(["src/endorlabs/generated/models/foo.py"])
+    assert result == ["tests/unit"]
+
+
+def test_select_tests_registry_contract_triggers_full_suite() -> None:
+    result = select_test_paths(["src/endorlabs/generated/registry_contract.py"])
+    assert result == ["tests/unit"]
+
+
+def test_select_tests_tests_conftest_triggers_full_suite() -> None:
+    result = select_test_paths(["tests/conftest.py"])
+    assert result == ["tests/unit"]
+
+
+def test_select_tests_unit_test_file_maps_to_itself() -> None:
+    paths = ["tests/unit/client/test_facade.py"]
+    result = select_test_paths(paths)
+    assert result == ["tests/unit/client/test_facade.py"]
+
+
+def test_select_tests_mixed_unit_files_map_to_themselves() -> None:
+    paths = [
+        "tests/unit/workflows/test_auth.py",
+        "tests/unit/client/test_registry.py",
+    ]
+    result = select_test_paths(paths)
+    assert result == [
+        "tests/unit/client/test_registry.py",
+        "tests/unit/workflows/test_auth.py",
+    ]
+
+
+def test_select_tests_client_module_bucket() -> None:
+    paths = ["src/endorlabs/registry.py", "src/endorlabs/client_surface.py"]
+    result = select_test_paths(paths)
+    assert result == [
+        "tests/unit/client",
+        "tests/unit/facade",
+        "tests/unit/operations",
+        "tests/unit/resources",
+    ]
+
+
+def test_select_tests_operations_subpackage_bucket() -> None:
+    result = select_test_paths(["src/endorlabs/operations/list_op.py"])
+    assert result == [
+        "tests/unit/client",
+        "tests/unit/facade",
+        "tests/unit/operations",
+        "tests/unit/resources",
+    ]
+
+
+def test_select_tests_platform_module_bucket() -> None:
+    paths = ["src/endorlabs/api_client.py", "src/endorlabs/utils/repo_paths.py"]
+    result = select_test_paths(paths)
+    assert result == ["tests/unit/platform", "tests/unit/utils"]
+
+
+def test_select_tests_core_subpackage_bucket() -> None:
+    result = select_test_paths(["src/endorlabs/core/transport.py"])
+    assert result == ["tests/unit/platform", "tests/unit/utils"]
+
+
+def test_select_tests_agent_knowledge_authoring_bucket() -> None:
+    paths = [
+        "agent-knowledge/skills/endor-foo/SKILL.md",
+        "agent-knowledge/rules/endor-bar.mdc",
+    ]
+    result = select_test_paths(paths)
+    assert result == ["tests/unit/platform/context", "tests/unit/tooling/scripts"]
+
+
+def test_select_tests_shipped_agent_knowledge_bucket() -> None:
+    result = select_test_paths(["src/endorlabs/agent_knowledge/skills/foo/SKILL.md"])
+    assert result == ["tests/unit/platform/context", "tests/unit/tooling/scripts"]
+
+
+def test_select_tests_devtools_bucket() -> None:
+    paths = [
+        "devtools/precommit/pre_commit_guards.py",
+        "devtools/codegen/model_sync.py",
+    ]
+    result = select_test_paths(paths)
+    assert result == ["tests/unit/devtools", "tests/unit/tooling"]
+
+
+def test_select_tests_unknown_code_triggers_full_suite() -> None:
+    # src/endorlabs/tools/ is not explicitly mapped → conservative full suite.
+    result = select_test_paths(["src/endorlabs/tools/list_bounds.py"])
+    assert result == ["tests/unit"]
+
+
+def test_select_tests_mixed_unknown_triggers_full_suite() -> None:
+    # Even one unknown code path among otherwise-known paths → full suite.
+    result = select_test_paths(
+        [
+            "src/endorlabs/workflows/auth/cli.py",
+            "src/endorlabs/query/routing.py",
+        ]
+    )
+    assert result == ["tests/unit"]
+
+
+def test_select_tests_mixed_workflows_and_client() -> None:
+    paths = [
+        "src/endorlabs/workflows/findings/report.py",
+        "src/endorlabs/resources/finding.py",
+    ]
+    result = select_test_paths(paths)
+    assert result == [
+        "tests/unit/client",
+        "tests/unit/facade",
+        "tests/unit/operations",
+        "tests/unit/resources",
+        "tests/unit/workflows",
+    ]
+
+
+def test_select_tests_empty_paths_returns_empty() -> None:
+    assert select_test_paths([]) == []
+
+
+def test_cmd_select_tests_prints_targets(capsys) -> None:
+    assert cmd_select_tests(paths=["src/endorlabs/workflows/auth/cli.py"]) == 0
+    out = capsys.readouterr().out.strip()
+    assert out == "tests/unit/workflows"
+
+
+def test_cmd_select_tests_silent_on_docs_only(capsys) -> None:
+    assert cmd_select_tests(paths=["docs/guides/examples.md"]) == 0
+    out = capsys.readouterr().out
+    assert out == ""

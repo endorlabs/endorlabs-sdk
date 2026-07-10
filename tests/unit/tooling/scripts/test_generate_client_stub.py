@@ -134,10 +134,9 @@ def test_committed_pyi_project_list_and_init_docs() -> None:
     assert "list_params:" in project_section
     assert "filter:" in project_section
     assert "mask:" in project_section
-    assert "List resources with full pagination" in project_section
     assert "def __init__(" in content
     assert "max_retries: int | None" in content
-    assert "Resource-oriented client; holds default namespace" in content
+    assert "tenant: str" in content
 
 
 def test_committed_pyi_finding_route_methods_not_untyped() -> None:

@@ -29,8 +29,7 @@ def test_discover_agents_guide_points_to_index() -> None:
     assert d.agents_guide.is_file()
     text = d.agents_guide.read_text(encoding="utf-8")
     assert "INDEX.md" in text
-    assert "Day-0 traps" not in text
-    assert "resolve_package_version_with_callgraph" not in text
+    assert d.index.name in text
 
 
 def test_resource_routes_shipped_when_present() -> None:

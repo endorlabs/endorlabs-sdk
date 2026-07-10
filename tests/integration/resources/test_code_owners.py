@@ -19,32 +19,6 @@ class TestCodeOwners:
 
         self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
 
-    def test_code_owners_list(self) -> None:
-        """LIST in namespace (registry-based)."""
-        result = self.endor_client.CodeOwners.list(
-            page_size=TEST_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES,
-        )
-        assert isinstance(result, list)
-
-    def test_code_owners_get(self) -> None:
-        """GET first item from LIST if any (registry-based)."""
-        items = self.endor_client.CodeOwners.list(
-            page_size=TEST_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES,
-        )
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        ns = (
-            item.tenant_meta.namespace
-            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
-            else self.root_namespace
-        )
-        got = self.endor_client.CodeOwners.get(item.uuid, namespace=ns)
-        assert got is not None
-        assert got.uuid == item.uuid
-
     def test_code_owners_spec_version_has_ref_sha_metadata(self) -> None:
         """CodeOwners spec.version exposes ref, sha, metadata when returned."""
         items = self.endor_client.CodeOwners.list(
