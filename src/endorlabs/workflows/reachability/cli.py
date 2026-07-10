@@ -7,6 +7,7 @@ import logging
 
 from endorlabs.context.paths import (
     DEFAULT_CONTEXT_DIR,
+    default_context_dir,
     project_workspace_dir,
     workflow_projects_root,
 )
@@ -24,7 +25,7 @@ def default_reachability_output_dir(
     """``workspace/projects/<uuid>/`` when subject is known."""
     subject = (finding_uuid or pv_uuid or "").strip()
     if subject:
-        return str(project_workspace_dir(DEFAULT_CONTEXT_DIR, subject))
+        return str(project_workspace_dir(default_context_dir(), subject))
     return str(workflow_projects_root())
 
 
@@ -51,7 +52,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=None,
         help=(
             "Output directory (default: "
-            ".endorlabs-context/workspace/projects/<finding-or-pv-uuid>/)."
+            f"{DEFAULT_CONTEXT_DIR}/workspace/projects/<finding-or-pv-uuid>/)."
         ),
     )
     parser.add_argument(

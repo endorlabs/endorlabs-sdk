@@ -38,8 +38,11 @@ def test_context_json_path(tmp_path: Path) -> None:
 def test_workflow_defaults_use_workspace() -> None:
     assert workflow_projects_root().as_posix().endswith("workspace/projects")
     from endorlabs.context.paths import (
+        DEFAULT_CONTEXT_DIR,
         default_runs_dir,
+        namespace_path_slug,
         workflow_inventory_root,
+        workspace_dir_for,
     )
 
     assert (
@@ -54,3 +57,8 @@ def test_workflow_defaults_use_workspace() -> None:
         .endswith("sessions/troubleshooting")
     )
     assert workflow_sessions_root(user="alice").as_posix().endswith("sessions/alice")
+    assert namespace_path_slug("tenant.example.child") == "tenant_example_child"
+    estate_ws = workspace_dir_for("tenant.example", date_suffix="20260101")
+    assert estate_ws.as_posix() == (
+        f"{DEFAULT_CONTEXT_DIR}/workspace/tenant_example-20260101"
+    )

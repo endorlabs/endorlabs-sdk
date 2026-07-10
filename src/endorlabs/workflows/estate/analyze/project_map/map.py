@@ -82,7 +82,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Output directory. Default: "
-            ".endorlabs-context/workspace/runs/relationships-map/<namespace>/"
+            f"{default_runs_dir('relationships-map').as_posix()}/<namespace>/"
         ),
     )
     p.add_argument(

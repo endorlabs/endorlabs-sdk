@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import endorlabs
+from endorlabs.context.paths import default_runs_dir
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.cardinality.tabular import (
     TabularExport,
@@ -712,7 +713,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "-o",
         help=(
             "Output CSV path for version-cardinality rollup "
-            "(default: .endorlabs-context/workspace/runs/version-cardinality/"
+            "(default: "
+            f"{default_runs_dir('version-cardinality').as_posix()}/"
             "version_cardinality_<slug>.csv)."
         ),
     )
@@ -798,7 +800,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.output:
         output_path = Path(args.output)
     else:
-        from endorlabs.context.paths import default_runs_dir
         from endorlabs.workflows.estate.analyze.compile_graph.pipeline import (
             namespace_slug,
         )

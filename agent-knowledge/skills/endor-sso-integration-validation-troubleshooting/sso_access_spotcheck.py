@@ -227,7 +227,7 @@ def parse_args() -> argparse.Namespace:
         default=str(default_runs_dir(RUN_BUCKET)),
         help=(
             "Output directory for JSON report files "
-            f"(default: .endorlabs-context/workspace/runs/{RUN_BUCKET}/)."
+            f"(default: {default_runs_dir(RUN_BUCKET).as_posix()}/)."
         ),
     )
     return parser.parse_args()

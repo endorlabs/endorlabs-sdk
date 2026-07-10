@@ -33,6 +33,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from .api_client import APIClient
 from .client_surface import Client
+from .context.paths import DEFAULT_CONTEXT_DIR
 from .core.exceptions import (
     AmbiguousError,
     ConflictError,
@@ -127,7 +128,7 @@ from .discovery import SdkDiscovery  # noqa: E402
 
 
 def init(
-    output_dir: str | Path = ".endorlabs-context",
+    output_dir: str | Path = DEFAULT_CONTEXT_DIR,
     include_openapi: bool = False,
     include_user_docs: bool = False,
     include_agent_knowledge: bool = True,
@@ -142,7 +143,7 @@ def init(
     flags to download platform context or mirror skills.
 
     Args:
-        output_dir: Directory to save context files (default: .endorlabs-context).
+        output_dir: Directory to save context files (default: ``DEFAULT_CONTEXT_DIR``).
         include_openapi: Download OpenAPI spec (default: False).
         include_user_docs: Download user documentation (default: False).
         include_agent_knowledge: Materialize agent knowledge to sdk/ (default: True).

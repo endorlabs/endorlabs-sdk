@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from .models import InitStatus
 from .paths import (
+    DEFAULT_CONTEXT_DIR,
     default_context_dir,
     platform_openapi_path,
     platform_user_docs_path,
@@ -51,7 +52,7 @@ def _get_sync() -> Any:
 
 
 def init(
-    output_dir: str | Path = ".endorlabs-context",
+    output_dir: str | Path = DEFAULT_CONTEXT_DIR,
     include_openapi: bool = False,
     include_user_docs: bool = False,
     include_agent_knowledge: bool = True,

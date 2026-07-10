@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from pathlib import Path
 
+from endorlabs.context.paths import (
+    default_context_dir,
+    namespace_path_slug,
+    workspace_date_suffix,
+)
+from endorlabs.context.paths import (
+    workspace_dir_for as context_workspace_dir_for,
+)
 from endorlabs.workflows.estate.contracts.resources import (
     ANALYZE_LOG_FILENAME,
     COLLECT_MANIFEST_FILENAME,
@@ -20,22 +27,8 @@ from endorlabs.workflows.estate.contracts.resources import (
     viz_relpath,
 )
 
-
-def namespace_slug(namespace: str) -> str:
-    cleaned = namespace.strip().rstrip(".")
-    if not cleaned:
-        return "unknown"
-    return cleaned.replace(".", "_")
-
-
-def default_context_dir() -> Path:
-    return Path(".endorlabs-context")
-
-
-def workspace_date_suffix(*, when: datetime | None = None) -> str:
-    """UTC compact date for default workspace directory names."""
-    dt = when or datetime.now(UTC)
-    return dt.strftime("%Y%m%d")
+# Re-export shared layout helpers (estate historically owned these names).
+namespace_slug = namespace_path_slug
 
 
 def workspace_dir_for(
@@ -44,9 +37,16 @@ def workspace_dir_for(
     *,
     date_suffix: str | None = None,
 ) -> Path:
-    suffix = date_suffix if date_suffix is not None else workspace_date_suffix()
-    slug = namespace_slug(namespace)
-    return Path(context_dir) / "workspace" / f"{slug}-{suffix}"
+    """Return estate workspace under ``context_dir`` (positional context first).
+
+    Prefer :func:`endorlabs.context.paths.workspace_dir_for` for new call sites
+    (``namespace`` first, optional ``context_dir``).
+    """
+    return context_workspace_dir_for(
+        namespace,
+        context_dir=context_dir,
+        date_suffix=date_suffix,
+    )
 
 
 def resolve_workspace_root(path_or_manifest: Path) -> Path:
@@ -105,3 +105,23 @@ def ensure_workspace_layout(workspace_root: Path) -> None:
     ir_dir(workspace_root).mkdir(parents=True, exist_ok=True)
     viz_dir(workspace_root).mkdir(parents=True, exist_ok=True)
     logs_dir(workspace_root).mkdir(parents=True, exist_ok=True)
+
+
+__all__ = [
+    "analyze_log_path",
+    "collect_manifest_path",
+    "data_dir",
+    "default_context_dir",
+    "ensure_workspace_layout",
+    "ir_dir",
+    "ir_path",
+    "logs_dir",
+    "namespace_slug",
+    "pull_log_path",
+    "resolve_workspace_root",
+    "resource_path",
+    "viz_dir",
+    "viz_path",
+    "workspace_date_suffix",
+    "workspace_dir_for",
+]

@@ -30,6 +30,8 @@ _ESTATE_PREFIX = "src/endorlabs/workflows/estate/"
 _TOOLS_PREFIX = "src/endorlabs/tools/"
 _UTILS_PREFIX = "src/endorlabs/utils/"
 _SRC_PREFIX = "src/endorlabs/"
+_CONTEXT_PATHS_MODULE = "src/endorlabs/context/paths.py"
+_CONTEXT_ROOT_LITERAL = ".endorlabs-context"
 
 # Known intentional exceptions (path → allowed import prefixes).
 _LAYER_ALLOWLIST: dict[str, frozenset[str]] = {
@@ -432,13 +434,76 @@ def check_agent_knowledge_sync(*, paths: list[str] | None = None) -> int:
     return 0
 
 
+def _is_context_root_scan_path(path: str) -> bool:
+    """Python under src/endorlabs or agent-knowledge skill scripts (not paths.py)."""
+    normalized = _normalize_path(path)
+    if not normalized.endswith(".py"):
+        return False
+    if normalized == _CONTEXT_PATHS_MODULE:
+        return False
+    if "/generated/" in normalized:
+        return False
+    if normalized.startswith(_SRC_PREFIX):
+        return True
+    if normalized.startswith("agent-knowledge/") and "/scripts/" in normalized:
+        return True
+    return False
+
+
+def _is_context_root_literal(value: object) -> bool:
+    if not isinstance(value, str):
+        return False
+    if value == _CONTEXT_ROOT_LITERAL:
+        return True
+    return value.startswith(f"{_CONTEXT_ROOT_LITERAL}/") or value.startswith(
+        f"{_CONTEXT_ROOT_LITERAL}\\"
+    )
+
+
+def check_context_root_literals(*, paths: list[str] | None = None) -> int:
+    """Fail on hard-coded ``.endorlabs-context`` path constants outside paths.py.
+
+    Catches ``Path(".endorlabs-context")``, default-arg strings, and similar AST
+    string constants. Prose that only *mentions* the directory inside a longer
+    string is allowed. Use ``DEFAULT_CONTEXT_DIR``, ``default_context_dir()``,
+    ``default_runs_dir()``, or ``workspace_dir_for()`` instead.
+    """
+    candidates = paths if paths is not None else staged_paths()
+    violations: list[str] = []
+    for path in candidates:
+        if not _is_context_root_scan_path(path):
+            continue
+        normalized = _normalize_path(path)
+        source = _read_staged_text(normalized)
+        if source is None:
+            continue
+        try:
+            tree = ast.parse(source, filename=normalized)
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Constant) and _is_context_root_literal(node.value):
+                violations.append(f"{normalized}:{node.lineno}")
+    if not violations:
+        return 0
+    print(
+        "error: hard-coded .endorlabs-context path constant(s):\n"
+        + "\n".join(f"  - {item}" for item in violations)
+        + "\n\nImport from endorlabs.context.paths "
+        "(DEFAULT_CONTEXT_DIR, default_context_dir, default_runs_dir, "
+        "workspace_dir_for). Only context/paths.py may define the literal.",
+        file=sys.stderr,
+    )
+    return 1
+
+
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
     usage = (
         "usage: pre_commit_guards.py "
         "{blocked-paths|changelog-reminder|layer-imports|bounds-shim|"
         "deprecated-api-strings|accessor-nudge|portable-examples|"
-        "agent-knowledge-sync}"
+        "agent-knowledge-sync|context-root-literals}"
     )
     if not args or args[0] in {"-h", "--help"}:
         print(usage, file=sys.stderr)
@@ -461,6 +526,8 @@ def main(argv: list[str] | None = None) -> int:
         return check_portable_examples()
     if command == "agent-knowledge-sync":
         return check_agent_knowledge_sync()
+    if command == "context-root-literals":
+        return check_context_root_literals()
     print(f"error: unknown command {command!r}", file=sys.stderr)
     return 2
 

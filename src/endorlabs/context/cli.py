@@ -12,6 +12,7 @@ import argparse
 
 import endorlabs
 from endorlabs.context._project_context import GITIGNORE_ENTRY
+from endorlabs.context.paths import DEFAULT_CONTEXT_DIR
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -19,14 +20,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Materialize SDK agent knowledge and optionally download platform "
-            "context under .endorlabs-context/."
+            f"context under {DEFAULT_CONTEXT_DIR}/."
         )
     )
 
     _ = parser.add_argument(
         "--output-dir",
-        default=".endorlabs-context",
-        help="Directory for context files (default: .endorlabs-context).",
+        default=DEFAULT_CONTEXT_DIR,
+        help=f"Directory for context files (default: {DEFAULT_CONTEXT_DIR}).",
     )
 
     _ = parser.add_argument(

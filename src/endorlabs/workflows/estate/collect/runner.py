@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from endorlabs.context.paths import workspace_dir_for
 from endorlabs.filters import main_context_filter
 from endorlabs.tools.list_bounds import (
     count_for_progress,
@@ -51,7 +52,6 @@ from endorlabs.workflows.estate.workspace.collect_manifest import (
 from endorlabs.workflows.estate.workspace.paths import (
     ensure_workspace_layout,
     resource_path,
-    workspace_dir_for,
 )
 from endorlabs.workflows.query_collect import collect_project_findings_via_query
 
@@ -82,7 +82,7 @@ def _resolve_workspace(
 
             return resolve_workspace_root(path)
         return path
-    return workspace_dir_for(".endorlabs-context", namespace, date_suffix=date_suffix)
+    return workspace_dir_for(namespace, date_suffix=date_suffix)
 
 
 def _project_shards(

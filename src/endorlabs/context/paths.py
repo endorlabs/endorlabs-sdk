@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
+import re
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 DEFAULT_CONTEXT_DIR = ".endorlabs-context"
+GITIGNORE_ENTRY = f"{DEFAULT_CONTEXT_DIR}/"
 CONTEXT_JSON_FILENAME = "context.json"
 SDK_DIRNAME = "sdk"
 PLATFORM_DIRNAME = "platform"
@@ -19,6 +22,36 @@ OPENAPI_FILENAME = "openapiv2.swagger.json"
 def default_context_dir() -> Path:
     """Return the default project-local context root directory."""
     return Path(DEFAULT_CONTEXT_DIR)
+
+
+def namespace_path_slug(namespace: str) -> str:
+    """Filesystem slug for a namespace path (``tenant.child`` → ``tenant_child``)."""
+    cleaned = namespace.strip().rstrip(".")
+    if not cleaned:
+        return "unknown"
+    return cleaned.replace(".", "_")
+
+
+def workspace_date_suffix(*, when: datetime | None = None) -> str:
+    """UTC compact date (``YYYYMMDD``) for default workspace directory names."""
+    dt = when or datetime.now(UTC)
+    return dt.strftime("%Y%m%d")
+
+
+def workspace_dir_for(
+    namespace: str,
+    *,
+    context_dir: str | Path | None = None,
+    date_suffix: str | None = None,
+) -> Path:
+    """Return ``<context>/workspace/<namespace-slug>-<YYYYMMDD>/``.
+
+    Used by estate collect/analyze defaults. Pass ``context_dir`` to override the
+    project-local root (default: :data:`DEFAULT_CONTEXT_DIR`).
+    """
+    root = Path(context_dir) if context_dir is not None else default_context_dir()
+    suffix = date_suffix if date_suffix is not None else workspace_date_suffix()
+    return workspace_dir(root) / f"{namespace_path_slug(namespace)}-{suffix}"
 
 
 def sdk_dir(context_dir: str | Path) -> Path:
@@ -84,10 +117,13 @@ def resolve_user_docs_path(context_dir: str | Path) -> Path | None:
     return path if path.is_dir() else None
 
 
+def _context_root(context_dir: str | Path | None) -> Path:
+    return Path(context_dir) if context_dir is not None else default_context_dir()
+
+
 def workflow_projects_root(context_dir: str | Path | None = None) -> Path:
     """Default base directory for project-scoped workflow artifacts."""
-    root = Path(context_dir or DEFAULT_CONTEXT_DIR)
-    return workspace_dir(root) / "projects"
+    return workspace_dir(_context_root(context_dir)) / "projects"
 
 
 def workflow_sessions_root(
@@ -101,8 +137,7 @@ def workflow_sessions_root(
     Prefer :func:`default_runs_dir` for new workflow output. This helper remains for
     callers not yet migrated to the ``workspace/runs/<run-bucket>/`` layout.
     """
-    root = Path(context_dir or DEFAULT_CONTEXT_DIR)
-    base = workspace_dir(root) / "sessions"
+    base = workspace_dir(_context_root(context_dir)) / "sessions"
     if user:
         base = base / user
     if subdir:
@@ -119,14 +154,12 @@ def default_runs_dir(
     ``run_bucket`` is a fixed, authored string (catalog ``workflow_id`` or skill id
     minus ``endor-``). It is not generated at runtime and must not be a timestamp.
     """
-    root = Path(context_dir or DEFAULT_CONTEXT_DIR)
-    return workspace_dir(root) / "runs" / run_bucket
+    return workspace_dir(_context_root(context_dir)) / "runs" / run_bucket
 
 
 def workflow_inventory_root(context_dir: str | Path | None = None) -> Path:
     """Return ``workspace/inventory/`` for namespace-scoped inventory artifacts."""
-    root = Path(context_dir or DEFAULT_CONTEXT_DIR)
-    return workspace_dir(root) / "inventory"
+    return workspace_dir(_context_root(context_dir)) / "inventory"
 
 
 def workflow_artifacts_root(context_dir: str | Path | None = None) -> Path:
@@ -136,8 +169,6 @@ def workflow_artifacts_root(context_dir: str | Path | None = None) -> Path:
 
 def sanitize_path_segment(value: str) -> str:
     """Normalize a namespace or tenant segment for use in filesystem paths."""
-    import re
-
     cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip())
     return cleaned.strip("-._") or "unknown"
 
@@ -162,6 +193,7 @@ def resolve_session_user_slug(client: Any) -> str:
 __all__ = [
     "CONTEXT_JSON_FILENAME",
     "DEFAULT_CONTEXT_DIR",
+    "GITIGNORE_ENTRY",
     "OPENAPI_FILENAME",
     "PLATFORM_DIRNAME",
     "PLATFORM_OPENAPI_DIRNAME",
@@ -172,6 +204,7 @@ __all__ = [
     "default_context_dir",
     "default_runs_dir",
     "load_context_json",
+    "namespace_path_slug",
     "platform_dir",
     "platform_openapi_path",
     "platform_user_docs_path",
@@ -186,5 +219,7 @@ __all__ = [
     "workflow_inventory_root",
     "workflow_projects_root",
     "workflow_sessions_root",
+    "workspace_date_suffix",
     "workspace_dir",
+    "workspace_dir_for",
 ]
