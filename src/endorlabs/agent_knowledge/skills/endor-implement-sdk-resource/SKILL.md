@@ -17,13 +17,13 @@ Follow [api-validation.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/
 ## Phase 1: Regenerate and review contract
 
 ```bash
-uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
+uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
 ```
 
 - [ ] Resource row in `src/endorlabs/generated/registry_contract.py`
 - [ ] Generated model shard under `src/endorlabs/generated/models/` (or hand module if exempt)
 - [ ] `client_surface.pyi` regen has no unexpected drift
-- [ ] If behavior differs from API: minimal change in `src/endorlabs/registry_overlay.py` (allowed keys only) or `devtools/model_sync_profiles/`
+- [ ] If behavior differs from API: minimal change in `src/endorlabs/registry_overlay.py` (allowed keys only) or `devtools/codegen/model_sync_profiles/`
 
 **Hand-written `src/endorlabs/resources/{name}.py` only when needed:**
 

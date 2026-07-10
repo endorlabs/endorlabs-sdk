@@ -1,5 +1,5 @@
 # Scan-plane partition edges (list_for_context) — codegen input for
-# devtools/generate_route_contract.py. Manual FK/parent edges stay in
+# devtools/codegen/generate_route_contract.py. Manual FK/parent edges stay in
 # route_contract_overlay.yaml.
 #
 # project_list_filter_field: optional list filter path on the target kind,

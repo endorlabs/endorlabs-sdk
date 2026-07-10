@@ -33,13 +33,13 @@ Runtime-consumed generated files:
 **Recommended (download latest public OpenAPI and regenerate stubs + reference docs):**
 
 ```bash
-uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
+uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
 ```
 
 **Regenerate using an already-downloaded spec** (repo root; spec at `.endorlabs-context/platform/openapi/openapiv2.swagger.json`):
 
 ```bash
-uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
+uv run python devtools/codegen/model_sync.py --generate-stubs --generate-reference-docs
 ```
 
 **Provenance watermark:** During generation, `endorctl_version` in generated file headers comes from the public **`GET /meta/version`** endpoint (same host as `--spec-url`), not from a local `endorctl` binary.
@@ -47,20 +47,20 @@ uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
 **Verify committed artifacts vs live upstream** (downloads OpenAPI + queries `meta/version`; no generation):
 
 ```bash
-uv run python devtools/model_sync.py --verify-upstream-only
+uv run python devtools/codegen/model_sync.py --verify-upstream-only
 ```
 
 **Refresh only when stale** (if drift is detected, fetch OpenAPI and run full sync + stubs + reference docs):
 
 ```bash
-uv run python devtools/model_sync.py --verify-and-sync-if-stale
+uv run python devtools/codegen/model_sync.py --verify-and-sync-if-stale
 ```
 
 Pre-push hooks run `--verify-upstream-only`. **CI, release, and TestPyPI** use the
 combined ship-artifact gate:
 
 ```bash
-uv run python devtools/verify_ship_artifacts.py --fetch-spec
+uv run python devtools/ship/verify_ship_artifacts.py --fetch-spec
 ```
 
 That runs upstream verify, full regeneration, `git diff` on committed generated surfaces,
@@ -69,13 +69,13 @@ and `sync_agent_knowledge.py --verify`.
 **SHA-256 of the spec file only** (optional `--fetch-spec` first):
 
 ```bash
-uv run python devtools/model_sync.py --spec-hash-only
+uv run python devtools/codegen/model_sync.py --spec-hash-only
 ```
 
 Tooling inventory-only check (logs availability; no files written):
 
 ```bash
-uv run python devtools/model_sync.py --inventory-only
+uv run python devtools/codegen/model_sync.py --inventory-only
 ```
 
 ## Edit policy
@@ -84,7 +84,7 @@ uv run python devtools/model_sync.py --inventory-only
 - Do not hand-edit `src/endorlabs/generated/models/**`.
 - Manual policy overrides belong in:
   - `src/endorlabs/registry_overlay.py` (runtime behavior overrides),
-  - `devtools/model_sync_profiles/*.json` (policy/profile metadata),
+  - `devtools/codegen/model_sync_profiles/*.json` (policy/profile metadata),
   - tests + docs for explicit rationale.
 
 ## Determinism contract
@@ -104,15 +104,15 @@ Model sync is expected to be deterministic for identical spec + profiles:
 - mutable/immutable update failures:
   - check contract `mutable_fields` / `immutable_fields` in `registry_contract.py`.
 - stub description validation failures:
-  - check `devtools/model_sync_profiles/resource_descriptions.json`.
+  - check `devtools/codegen/model_sync_profiles/resource_descriptions.json`.
 
 ## Shipped agent knowledge (`src/endorlabs/agent_knowledge/`)
 
 Sync `agent-knowledge/skills/` into the wheel bundle and regenerate `MANIFEST.json`:
 
 ```bash
-uv run python devtools/sync_agent_knowledge.py
-uv run python devtools/sync_agent_knowledge.py --verify
+uv run python devtools/codegen/sync_agent_knowledge.py
+uv run python devtools/codegen/sync_agent_knowledge.py --verify
 ```
 
 **When to run:** after editing any file under `agent-knowledge/skills/`, or when adding/removing skills.

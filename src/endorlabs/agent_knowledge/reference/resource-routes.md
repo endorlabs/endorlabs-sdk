@@ -1,9 +1,9 @@
 # Resource route map (generated)
 
-Generated **relationship accessor** edges between first-class facades. Regenerate with `uv run python devtools/generate_route_contract.py`.
+Generated **relationship accessor** edges between first-class facades. Regenerate with `uv run python devtools/codegen/generate_route_contract.py`.
 
-Manual edges: `devtools/model_sync_profiles/route_contract_overlay.yaml`.
-Partition edges: `devtools/model_sync_profiles/route_partition_targets.yaml`.
+Manual edges: `devtools/codegen/model_sync_profiles/route_contract_overlay.yaml`.
+Partition edges: `devtools/codegen/model_sync_profiles/route_partition_targets.yaml`.
 
 ## Relationship table
 

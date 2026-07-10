@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-SYNC_SCRIPT = REPO_ROOT / "devtools" / "sync_agent_knowledge.py"
+SYNC_SCRIPT = REPO_ROOT / "devtools" / "codegen" / "sync_agent_knowledge.py"
 
 
 def test_agent_knowledge_verify_matches_committed_tree() -> None:

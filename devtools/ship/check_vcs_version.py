@@ -2,9 +2,9 @@
 """Verify hatch-vcs can resolve a PEP 440 version (fails fast on bad git tags).
 
 Usage:
-    uv run python devtools/check_vcs_version.py
-    uv run python devtools/check_vcs_version.py --expect 0.2.0
-    SETUPTOOLS_SCM_PRETEND_VERSION=0.2.0 uv run python devtools/check_vcs_version.py --release-only --expect 0.2.0
+    uv run python devtools/ship/check_vcs_version.py
+    uv run python devtools/ship/check_vcs_version.py --expect 0.2.0
+    SETUPTOOLS_SCM_PRETEND_VERSION=0.2.0 uv run python devtools/ship/check_vcs_version.py --release-only --expect 0.2.0
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 # Tags that break setuptools-scm or confuse git describe (see setuptools-scm #1040).
 _FORBIDDEN_TAG_RE = re.compile(

@@ -8,14 +8,14 @@ from pathlib import Path
 
 import pytest
 
-from devtools.agent_knowledge_catalog import (
+from devtools.codegen.agent_knowledge_catalog import (
     BOOTSTRAP_CONTRACT_IDS,
     MAINTAINER_ONLY_RULE_IDS,
     build_bootstrap_manifest_block,
     build_contract_manifest_entries,
     build_rules_manifest_entries,
 )
-from devtools.sync_agent_knowledge import (
+from devtools.codegen.sync_agent_knowledge import (
     MANIFEST_SCHEMA_VERSION,
     build_cursor_rule_contents,
 )

@@ -1,7 +1,7 @@
 """Canonical model-sync entrypoint.
 
 Run from repo root:
-    uv run python devtools/model_sync.py
+    uv run python devtools/codegen/model_sync.py
 """
 
 from __future__ import annotations

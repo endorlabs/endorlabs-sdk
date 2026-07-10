@@ -60,7 +60,8 @@ def _load_generated_mutability_by_resource_name() -> dict[str, dict[str, list[st
         from ..generated.registry_contract import RUNTIME_REGISTRY_CONTRACT
     except Exception as error:
         raise RuntimeError(
-            "Missing generated runtime registry contract; run devtools/model_sync.py"
+            "Missing generated runtime registry contract; "
+            "run devtools/codegen/model_sync.py"
         ) from error
     candidate = RUNTIME_REGISTRY_CONTRACT.get("resources")
     if isinstance(candidate, list):

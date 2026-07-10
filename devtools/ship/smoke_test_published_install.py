@@ -2,7 +2,7 @@
 """Smoke-test a package version installed from TestPyPI in an isolated venv.
 
 Usage:
-    uv run python devtools/smoke_test_published_install.py --version 0.1.1
+    uv run python devtools/ship/smoke_test_published_install.py --version 0.1.1
 """
 
 from __future__ import annotations

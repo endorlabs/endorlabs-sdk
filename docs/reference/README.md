@@ -21,5 +21,5 @@ Stable surface: `endorlabs.__all__` — APIClient, Client, exported exception cl
 - [namespace.md](namespace.md) — Namespace in the SDK (list/get/create/update/delete, parameters, pitfalls).
 - [api-surfaces.md](api-surfaces.md) — Thin landing page to canonical generated API surfaces.
 - [create-update-payloads.md](create-update-payloads.md) — Thin landing page to canonical generated payload matrix.
-- [../../devtools/sync/README.md](../../devtools/sync/README.md) — Model-sync generation module guide.
+- [../../devtools/codegen/sync/README.md](../../devtools/codegen/sync/README.md) — Model-sync generation module guide.
 - [../../src/endorlabs/generated/README.md](../../src/endorlabs/generated/README.md) — Generated runtime artifact guide.

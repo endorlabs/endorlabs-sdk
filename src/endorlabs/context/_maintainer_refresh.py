@@ -21,7 +21,7 @@ AGENT_PREFIX = "agent-knowledge/"
 AGENT_KNOWLEDGE_SKILLS = REPO_ROOT / "src" / "endorlabs" / "agent_knowledge" / "skills"
 AGENT_KNOWLEDGE_PREFIX = "src/endorlabs/agent_knowledge/"
 CONTEXT_PREFIX = "src/endorlabs/context/"
-SYNC_AGENT_KNOWLEDGE = REPO_ROOT / "devtools" / "sync_agent_knowledge.py"
+SYNC_AGENT_KNOWLEDGE = REPO_ROOT / "devtools" / "codegen" / "sync_agent_knowledge.py"
 
 logger = get_resource_logger(__name__)
 

@@ -22,7 +22,7 @@ uv run pre-commit install --hook-type pre-push
 
 Alternatively: `uv venv` then `uv pip install -e .` and install dev dependencies from [pyproject.toml](pyproject.toml) (e.g. `uv sync --group dev` or equivalent for your uv version).
 
-If `uv sync` fails on version metadata (`0.1.1.dev19 can't be bumped`), see [docs/contributing/release-publishing.md](docs/contributing/release-publishing.md) and run `uv run python devtools/check_vcs_version.py`.
+If `uv sync` fails on version metadata (`0.1.1.dev19 can't be bumped`), see [docs/contributing/release-publishing.md](docs/contributing/release-publishing.md) and run `uv run python devtools/ship/check_vcs_version.py`.
 
 ## Before you commit / open a PR
 
@@ -31,7 +31,7 @@ Human checklist (automation: [.pre-commit-config.yaml](.pre-commit-config.yaml);
 ### Before commit
 
 - [ ] **Hooks installed** — `uv run pre-commit install` and `uv run pre-commit install --hook-type pre-push` (see [Setup](#setup)).
-- [ ] **Agent-knowledge** — after `agent-knowledge/` edits: `uv run python devtools/sync_agent_knowledge.py` and commit `src/endorlabs/agent_knowledge/`.
+- [ ] **Agent-knowledge** — after `agent-knowledge/` edits: `uv run python devtools/codegen/sync_agent_knowledge.py` and commit `src/endorlabs/agent_knowledge/`.
 - [ ] **Docs freshness** — grep changed paths for stale layout or CLI strings (`workspace/sessions/`, removed `devtools/` scripts, wrong flags such as `endor-auth refresh --sso` vs `--method sso`). Align docstrings, argparse `help=`, and comments with current code (see shipped rule `endor-workspace-layout`, [docs-skillbase-consistency](.cursor/rules/docs-skillbase-consistency.mdc)).
 - [ ] **No secrets or customer data** — never commit `.env`, tokens, API keys, or customer estate identifiers (tenants, production UUIDs, registered repo URLs, emails). Pre-commit **blocks** staged `.env` and `.endorlabs-context/` and runs **gitleaks**; see rule `endor-portable-examples`.
 - [ ] **Changelog** — user-visible changes: one bullet under `docs/changelog.md` → **Unreleased** (policy: [agent-knowledge/rules/endor-changelog.md](agent-knowledge/rules/endor-changelog.md)). Pre-commit prints a **reminder** when user-facing paths are staged without `docs/changelog.md`.
@@ -123,9 +123,9 @@ Domain-driven test layout:
 uv run ruff check .
 uv run ruff format --check .
 uv run pyright --project pyproject.toml
-uv run ruff check --select E,F,I,UP devtools/model_sync.py devtools/generate_client_stub.py devtools/generate_reference_docs.py .github/scripts/check_endorctl_version.py
-uv run pyright --project pyproject.toml devtools/model_sync.py devtools/generate_client_stub.py devtools/generate_reference_docs.py .github/scripts/check_endorctl_version.py
-uv run python devtools/generate_client_stub.py
+uv run ruff check --select E,F,I,UP devtools/codegen/model_sync.py devtools/codegen/generate_client_stub.py devtools/codegen/generate_reference_docs.py .github/scripts/check_endorctl_version.py
+uv run pyright --project pyproject.toml devtools/codegen/model_sync.py devtools/codegen/generate_client_stub.py devtools/codegen/generate_reference_docs.py .github/scripts/check_endorctl_version.py
+uv run python devtools/codegen/generate_client_stub.py
 git diff --exit-code -- src/endorlabs/client_surface.pyi
 uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 ```
@@ -137,7 +137,7 @@ Use `uv run ruff format .` (without `--check`) to apply formatting locally. CI r
 Upstream alignment uses **pre-commit**, **pre-push**, and **CI**, not a bot workflow:
 
 - **Pre-commit** (`.pre-commit-config.yaml`): `ship-artifacts-verify` runs
-  `devtools/verify_ship_artifacts.py --skip-upstream` **before** ruff/pyright when
+  `devtools/ship/verify_ship_artifacts.py --skip-upstream` **before** ruff/pyright when
   model-sync inputs or generated surfaces change — regen + `git diff` so linters see
   current stubs.
 - **Pre-push** (after `uv run pre-commit install --hook-type pre-push`):
@@ -149,11 +149,11 @@ Upstream alignment uses **pre-commit**, **pre-push**, and **CI**, not a bot work
 When verify fails locally or in CI:
 
 ```bash
-uv run python devtools/verify_ship_artifacts.py --fetch-spec
-# or: uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
+uv run python devtools/ship/verify_ship_artifacts.py --fetch-spec
+# or: uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
 ```
 
-See [devtools/sync/README.md](devtools/sync/README.md) and [docs/contributing/docs-drift-workflow.md](docs/contributing/docs-drift-workflow.md).
+See [devtools/codegen/sync/README.md](devtools/codegen/sync/README.md) and [docs/contributing/docs-drift-workflow.md](docs/contributing/docs-drift-workflow.md).
 
 Optional version check (local or cron): `.github/scripts/check_endorctl_version.py`
 
@@ -192,7 +192,7 @@ Consumer projects should add `.endorlabs-context/` to `.gitignore` (downloaded d
 
 The local pre-commit hook also refreshes these maintainer-only artifacts automatically:
 
-- changes under `agent-knowledge/skills/` require `devtools/sync_agent_knowledge.py` (CI/pre-push `--verify` drift gate)
+- changes under `agent-knowledge/skills/` require `devtools/codegen/sync_agent_knowledge.py` (CI/pre-push `--verify` drift gate)
 - `sync_skills` mirrors materialized `.endorlabs-context/sdk/skills/`, not repo `agent-knowledge/skills/` (pip-safe)
 - changes under `src/endorlabs/context/` refresh the existing `.endorlabs-context/` download (docs always; OpenAPI when auth is available)
 

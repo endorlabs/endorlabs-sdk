@@ -59,7 +59,7 @@ def test_generate_route_contract_script_is_stable() -> None:
     before_py = out.read_text(encoding="utf-8")
     before_golden = golden.read_text(encoding="utf-8")
     subprocess.run(
-        [sys.executable, str(repo / "devtools" / "generate_route_contract.py")],
+        [sys.executable, str(repo / "devtools" / "codegen" / "generate_route_contract.py")],
         check=True,
         cwd=repo,
     )

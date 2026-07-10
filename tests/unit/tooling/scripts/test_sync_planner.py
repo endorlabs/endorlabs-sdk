@@ -7,9 +7,9 @@ import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
-_SCRIPTS_DIR = str(_REPO_ROOT / "scripts")
-if _SCRIPTS_DIR not in sys.path:
-    sys.path.insert(0, _SCRIPTS_DIR)
+_CODEGEN_DIR = str(_REPO_ROOT / "devtools" / "codegen")
+if _CODEGEN_DIR not in sys.path:
+    sys.path.insert(0, _CODEGEN_DIR)
 
 from sync.planner import build_plan
 

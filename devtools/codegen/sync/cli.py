@@ -48,7 +48,7 @@ def default_spec_path(repo_root: Path | None = None) -> Path:
 
 def default_custom_profiles_dir(repo_root: Path | None = None) -> Path:
     root = repo_root or _repo_root()
-    return root / "devtools" / "model_sync_profiles"
+    return root / "devtools" / "codegen" / "model_sync_profiles"
 
 
 def generated_contract_module_path(repo_root: Path | None = None) -> Path:
@@ -376,7 +376,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--custom-profiles-dir",
         type=Path,
         default=None,
-        help="Directory containing model_sync_profiles JSON (default: devtools/model_sync_profiles)",
+        help="Directory containing model_sync_profiles JSON (default: devtools/codegen/model_sync_profiles)",
     )
     parser.add_argument("--generate-stubs", action="store_true")
     parser.add_argument("--generate-reference-docs", action="store_true")

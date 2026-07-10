@@ -138,18 +138,18 @@ Pin the action to the **git commit SHA** for a release (e.g. `@cef22109… # v1.
 git fetch --tags
 
 # Should print a PEP 440 version (no setuptools-scm error)
-uv run python devtools/check_vcs_version.py
+uv run python devtools/ship/check_vcs_version.py
 
 # Editable install path used by uv sync / Endor scans
 uv sync --dev
 
 # Release simulation (PowerShell: $env:SETUPTOOLS_SCM_PRETEND_VERSION = "0.2.0")
 export SETUPTOOLS_SCM_PRETEND_VERSION=0.2.0
-uv run python devtools/check_vcs_version.py --expect 0.2.0 --release-only
-uv run python devtools/verify_ship_artifacts.py --fetch-spec --verify-changelog 0.2.0
+uv run python devtools/ship/check_vcs_version.py --expect 0.2.0 --release-only
+uv run python devtools/ship/verify_ship_artifacts.py --fetch-spec --verify-changelog 0.2.0
 uv build
 uv run twine check dist/*
-uv run python devtools/smoke_test_wheel.py --expect-version 0.2.0
+uv run python devtools/ship/smoke_test_wheel.py --expect-version 0.2.0
 ```
 
 Do not publish wheels built with `SETUPTOOLS_SCM_PRETEND_VERSION` unless CI also sets the
@@ -224,7 +224,7 @@ policy — use `workflow_dispatch` from `main` instead.
 After a TestPyPI publish via **Release TestPyPI Publish**:
 
 ```bash
-uv run python devtools/smoke_test_published_install.py --version <version>
+uv run python devtools/ship/smoke_test_published_install.py --version <version>
 ```
 
 Or install manually from `https://test.pypi.org/project/endorlabs/`.
@@ -263,5 +263,5 @@ Intake while merging PRs: [`.github/pull_request_template.md`](../../.github/pul
 - Version config: `pyproject.toml` → `[tool.hatch.version]`, `[tool.hatch.build.hooks.vcs]`
 - Generated at build: `src/endorlabs/_version.py` (gitignored)
 - Release CI: `.github/workflows/release-tag-publish.yml` (production), `.github/workflows/release-testpypi.yml` (staging), `.github/workflows/release-pypi.yml` (dry-run builds only unless a second PyPI publisher is registered)
-- Local helpers: `devtools/check_vcs_version.py`, `devtools/smoke_test_wheel.py`, `devtools/smoke_test_published_install.py`
+- Local helpers: `devtools/ship/check_vcs_version.py`, `devtools/ship/smoke_test_wheel.py`, `devtools/ship/smoke_test_published_install.py`
 - Release gate: `.github/actions/release-build-gate/action.yml`

@@ -3,8 +3,8 @@
 
 Usage:
     uv build
-    uv run python devtools/smoke_test_wheel.py
-    uv run python devtools/smoke_test_wheel.py --wheel dist/endorlabs-0.1.1-py3-none-any.whl
+    uv run python devtools/ship/smoke_test_wheel.py
+    uv run python devtools/ship/smoke_test_wheel.py --wheel dist/endorlabs-0.1.1-py3-none-any.whl
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def _run(cmd: list[str], *, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:

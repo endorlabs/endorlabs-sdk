@@ -40,7 +40,7 @@ The model sync workflow:
 Release, TestPyPI, and CI lint jobs run the same ship-artifact verifier:
 
 ```bash
-uv run python devtools/verify_ship_artifacts.py --fetch-spec
+uv run python devtools/ship/verify_ship_artifacts.py --fetch-spec
 ```
 
 The verifier (in order): upstream OpenAPI SHA check (`--verify-upstream-only`), full model-sync
@@ -53,7 +53,7 @@ matching `## VERSION` section before publish.
 
 ## CI and local gates
 
-**CI** (`.github/workflows/ci-pr-main.yml` lint job): `uv run python devtools/verify_ship_artifacts.py --fetch-spec`
+**CI** (`.github/workflows/ci-pr-main.yml` lint job): `uv run python devtools/ship/verify_ship_artifacts.py --fetch-spec`
 
 **Release** (`.github/workflows/release-tag-publish.yml`, `release-testpypi.yml`): composite
 `.github/actions/release-build-gate` (quality gate + `verify_ship_artifacts` + wheel build).
@@ -71,9 +71,9 @@ generated paths change.
 When verify fails, regenerate and commit in your PR:
 
 ```bash
-uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
-uv run python devtools/generate_route_contract.py
-uv run python devtools/sync_agent_knowledge.py
+uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
+uv run python devtools/codegen/generate_route_contract.py
+uv run python devtools/codegen/sync_agent_knowledge.py
 ```
 
 ### Triage
@@ -96,22 +96,22 @@ sync_openapi()  # downloads to .endorlabs-context/platform/openapi/openapiv2.swa
 Then run model sync (credentials in `.env`; see [README.md](../../README.md#configuration)):
 
 ```bash
-uv run --env-file .env python devtools/model_sync.py --generate-stubs --generate-reference-docs
+uv run --env-file .env python devtools/codegen/model_sync.py --generate-stubs --generate-reference-docs
 ```
 
 Check tooling availability without re-running generation:
 
 ```bash
-uv run python devtools/model_sync.py --inventory-only
+uv run python devtools/codegen/model_sync.py --inventory-only
 ```
 
-**Model consistency (static):** Use the committed runtime registry contract as the static contract signal (no integration test run). Run: `uv run python devtools/model_sync.py` and inspect `src/endorlabs/generated/registry_contract.py` plus `validate_contract_artifacts` output at sync time.
+**Model consistency (static):** Use the committed runtime registry contract as the static contract signal (no integration test run). Run: `uv run python devtools/codegen/model_sync.py` and inspect `src/endorlabs/generated/registry_contract.py` plus `validate_contract_artifacts` output at sync time.
 
 ## Scripts
 
 - **`.github/scripts/check_endorctl_version.py`** — Optional endorctl/OpenAPI drift check (local or cron).
-- **`devtools/model_sync.py`** — Canonical model sync generator/check entrypoint.
-- **`devtools/sync/README.md`** — Generation module responsibilities and triage map.
+- **`devtools/codegen/model_sync.py`** — Canonical model sync generator/check entrypoint.
+- **`devtools/codegen/sync/README.md`** — Generation module responsibilities and triage map.
 - **`src/endorlabs/generated/README.md`** — Runtime generated package maintenance policy.
 
 ## Related

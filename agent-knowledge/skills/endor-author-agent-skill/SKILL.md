@@ -24,7 +24,7 @@ Canonical spec: [schema/README.md](https://github.com/endorlabs/endorlabs-sdk/bl
 - `endorlabs.catalog` in authoring frontmatter when the skill maps to a workflow CLI
 - Reciprocal **Related skills** links on peer skills in the same PR
 - `agent-knowledge/README.md` skill table row when adding a skill
-- Running `devtools/sync_agent_knowledge.py` and fixing validation errors
+- Running `devtools/codegen/sync_agent_knowledge.py` and fixing validation errors
 
 **Out of scope**
 
@@ -88,8 +88,8 @@ Supplemental workflow catalog rows with `skill: null` (e.g. `context-bootstrap`)
 ### 5. Sync and verify
 
 ```bash
-uv run python devtools/sync_agent_knowledge.py
-uv run python devtools/sync_agent_knowledge.py --verify
+uv run python devtools/codegen/sync_agent_knowledge.py
+uv run python devtools/codegen/sync_agent_knowledge.py --verify
 ```
 
 Sync regenerates:

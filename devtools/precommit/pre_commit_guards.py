@@ -1,7 +1,8 @@
 """Pre-commit guardrails: blocked staged paths, changelog reminders, layer bans.
 
 Hook wiring lives in ``.pre-commit-config.yaml`` only. Staged-path listing is
-``devtools/git_staged.py``; path normalization is ``endorlabs.utils.repo_paths``.
+``devtools/precommit/git_staged.py``; path normalization is
+``endorlabs.utils.repo_paths``.
 
 Policy: rule ``endor-maintainer-tooling`` (repo / Cursor mirror).
 """
@@ -13,7 +14,7 @@ import re
 import sys
 from pathlib import Path, PurePosixPath
 
-from git_staged import staged_paths
+from git_staged import staged_added_lines, staged_paths
 
 BLOCKED_STAGED_PATHS = frozenset({".env"})
 BLOCKED_STAGED_PREFIXES = (".endorlabs-context/",)
@@ -21,7 +22,7 @@ BLOCKED_STAGED_PREFIXES = (".endorlabs-context/",)
 CHANGELOG_PATH = "docs/changelog.md"
 CHANGELOG_POLICY = "agent-knowledge/rules/endor-changelog.md"
 
-_REPO_ROOT = Path(__file__).resolve().parent.parent
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 
 _ESTATE_IMPORT_PREFIX = "endorlabs.workflows.estate"
 _BOUNDS_SHIM = "endorlabs.workflows.estate.collect.bounds"
@@ -73,6 +74,69 @@ _PORTABLE_ALLOW_MARKERS = (
     "tenant.namespace",
     "tenant.child",
     "org/repo",
+)
+
+# --- External PII / non-Endor URL guard (staged added lines) ---
+
+_EMAIL_RE = re.compile(
+    r"(?<![A-Za-z0-9._%+\-])"
+    r"[A-Za-z0-9._%+\-]+@"
+    r"[A-Za-z0-9.\-]+\.[A-Za-z]{2,}"
+    r"(?![A-Za-z0-9.\-])"
+)
+_URL_RE = re.compile(
+    r"https?://(?:[A-Za-z0-9\-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:/[^\s<>\"')\]]*)?",
+    re.IGNORECASE,
+)
+
+# Domains allowed in email addresses (placeholders + Endor Labs).
+_EMAIL_ALLOW_DOMAINS = frozenset(
+    {
+        "example.com",
+        "example.org",
+        "example.net",
+        "endorlabs.com",
+    }
+)
+
+# Host suffixes owned by Endor Labs (URL allow).
+_ENDOR_URL_HOST_SUFFIXES = ("endorlabs.com",)
+
+# Path prefixes on github.com that are Endor-owned.
+_ENDOR_GITHUB_PREFIXES = ("endorlabs/",)
+
+# Placeholder / schema-example URL hosts (not customer estate).
+_PLACEHOLDER_URL_HOSTS = frozenset(
+    {
+        "example.com",
+        "example.org",
+        "example.net",
+        "www.example.com",
+    }
+)
+_PLACEHOLDER_GITHUB_PREFIXES = (
+    "org/",
+    "example/",
+    "YOUR_ORG/",
+)
+
+# Skip generated / binary-ish paths for the PII/URL scan.
+_PII_URL_SKIP_PREFIXES = (
+    "src/endorlabs/generated/",
+    "src/endorlabs/agent_knowledge/skills/",  # mirrored; authoring is scanned
+)
+_PII_URL_SKIP_SUFFIXES = (
+    ".lock",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".ico",
+    ".pdf",
+    ".zip",
+    ".whl",
+    ".pyc",
 )
 
 
@@ -427,7 +491,7 @@ def check_agent_knowledge_sync(*, paths: list[str] | None = None) -> int:
     print(
         "reminder: staged agent-knowledge/ without src/endorlabs/agent_knowledge/:\n"
         + "\n".join(f"  - {path}" for path in authoring[:12])
-        + "\n\nRun: uv run python devtools/sync_agent_knowledge.py\n"
+        + "\n\nRun: uv run python devtools/codegen/sync_agent_knowledge.py\n"
         "Then stage the shipped mirror (or rely on the refresh hook).",
         file=sys.stderr,
     )
@@ -458,6 +522,102 @@ def _is_context_root_literal(value: object) -> bool:
     return value.startswith(f"{_CONTEXT_ROOT_LITERAL}/") or value.startswith(
         f"{_CONTEXT_ROOT_LITERAL}\\"
     )
+
+
+def _email_domain(address: str) -> str:
+    return address.rsplit("@", 1)[-1].lower()
+
+
+def is_allowed_email(address: str) -> bool:
+    """Return True when *address* is a placeholder or Endor Labs mailbox."""
+    return _email_domain(address) in _EMAIL_ALLOW_DOMAINS
+
+
+def _url_host_and_path(url: str) -> tuple[str, str]:
+    """Best-effort host + path from an http(s) URL (no full URL parse dep)."""
+    rest = re.sub(r"^https?://", "", url.strip(), count=1, flags=re.IGNORECASE)
+    rest = rest.split("#", 1)[0].split("?", 1)[0]
+    host, _, path = rest.partition("/")
+    host = host.split("@")[-1].split(":")[0].lower().rstrip(".")
+    return host, path
+
+
+def is_endorlabs_owned_url(url: str) -> bool:
+    """Return True when *url* targets an Endor Labs property."""
+    host, path = _url_host_and_path(url)
+    if any(host == s or host.endswith(f".{s}") for s in _ENDOR_URL_HOST_SUFFIXES):
+        return True
+    if host in {"github.com", "www.github.com", "raw.githubusercontent.com"}:
+        return any(path.startswith(prefix) for prefix in _ENDOR_GITHUB_PREFIXES)
+    return False
+
+
+def is_allowed_url(url: str) -> bool:
+    """Return True when *url* is Endor-owned or an explicit placeholder."""
+    if is_endorlabs_owned_url(url):
+        return True
+    host, path = _url_host_and_path(url)
+    if host in _PLACEHOLDER_URL_HOSTS:
+        return True
+    if host in {"github.com", "www.github.com"}:
+        return any(path.startswith(prefix) for prefix in _PLACEHOLDER_GITHUB_PREFIXES)
+    return False
+
+
+def _is_pii_url_scan_path(path: str) -> bool:
+    normalized = _normalize_path(path)
+    if any(normalized.startswith(prefix) for prefix in _PII_URL_SKIP_PREFIXES):
+        return False
+    lower = normalized.lower()
+    return not any(lower.endswith(suffix) for suffix in _PII_URL_SKIP_SUFFIXES)
+
+
+def find_external_pii_url_hits(
+    lines: list[tuple[str, int, str]],
+) -> list[str]:
+    """Return ``path:lineno: kind match`` hits for disallowed emails/URLs."""
+    hits: list[str] = []
+    for path, line_no, text in lines:
+        if not _is_pii_url_scan_path(path):
+            continue
+        for match in _EMAIL_RE.finditer(text):
+            addr = match.group(0)
+            if not is_allowed_email(addr):
+                hits.append(f"{path}:{line_no}: email {addr}")
+        for match in _URL_RE.finditer(text):
+            url = match.group(0).rstrip(".,;:")
+            if not is_allowed_url(url):
+                hits.append(f"{path}:{line_no}: url {url}")
+    return hits
+
+
+def check_external_pii_urls(
+    *,
+    lines: list[tuple[str, int, str]] | None = None,
+) -> int:
+    """Fail when staged *added* lines introduce emails or non-Endor URLs.
+
+    Allowed emails: ``@example.com`` / ``@example.org`` / ``@example.net`` /
+    ``@endorlabs.com``. Allowed URLs: ``*.endorlabs.com``,
+    ``github.com/endorlabs/…``, and placeholder hosts (``example.com``,
+    ``github.com/org/…``). Scan added lines only so untouched historical
+    third-party doc links are not re-flagged; editing those lines re-checks them.
+    """
+    candidates = lines if lines is not None else staged_added_lines()
+    hits = find_external_pii_url_hits(candidates)
+    if not hits:
+        return 0
+    print(
+        "error: staged added lines introduce email or non-Endor Labs URL:\n"
+        + "\n".join(f"  - {item}" for item in hits[:30])
+        + (f"\n  - … and {len(hits) - 30} more" if len(hits) > 30 else "")
+        + "\n\nUse placeholders (user@example.com, https://example.com, "
+        "https://github.com/org/repo) or Endor Labs URLs "
+        "(*.endorlabs.com, github.com/endorlabs/…). "
+        "Do not commit customer emails or estate URLs.",
+        file=sys.stderr,
+    )
+    return 1
 
 
 def check_context_root_literals(*, paths: list[str] | None = None) -> int:
@@ -503,7 +663,7 @@ def main(argv: list[str] | None = None) -> int:
         "usage: pre_commit_guards.py "
         "{blocked-paths|changelog-reminder|layer-imports|bounds-shim|"
         "deprecated-api-strings|accessor-nudge|portable-examples|"
-        "agent-knowledge-sync|context-root-literals}"
+        "agent-knowledge-sync|context-root-literals|external-pii-urls}"
     )
     if not args or args[0] in {"-h", "--help"}:
         print(usage, file=sys.stderr)
@@ -528,6 +688,8 @@ def main(argv: list[str] | None = None) -> int:
         return check_agent_knowledge_sync()
     if command == "context-root-literals":
         return check_context_root_literals()
+    if command == "external-pii-urls":
+        return check_external_pii_urls()
     print(f"error: unknown command {command!r}", file=sys.stderr)
     return 2
 

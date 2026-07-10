@@ -43,7 +43,7 @@ Use **`fetch_online_dashboard_counts`** for estate HTML tiles without pulling fi
 | Latest scan metadata per project | Project → ScanResult **list** ref | `scan-latest-join` |
 | Nested RV + Metric | Project → RepositoryVersion → Metric **lists** | `nested-list` |
 
-See `.tmp/query_workflow_map.md` for join fields and filters.
+See [query-recipes.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/query-recipes.md) for join fields, filters, and counterexamples.
 
 ## Facade + sharding (default until probed)
 

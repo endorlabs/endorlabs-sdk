@@ -180,7 +180,7 @@ def verify_upstream_matches_committed(
         reasons.append(
             "OpenAPI spec SHA256 differs from committed model-sync provenance "
             f"(upstream {live_sha} vs committed {committed['spec_sha256']}). "
-            "Run: uv run python devtools/model_sync.py --fetch-spec "
+            "Run: uv run python devtools/codegen/model_sync.py --fetch-spec "
             "--generate-stubs --generate-reference-docs"
         )
 
@@ -194,7 +194,7 @@ def verify_upstream_matches_committed(
         logger.warning(
             "Published endorctl %s is newer than the committed model-sync watermark "
             "(%s). Re-run model_sync to refresh generated artifacts: "
-            "uv run python devtools/model_sync.py --fetch-spec "
+            "uv run python devtools/codegen/model_sync.py --fetch-spec "
             "--generate-stubs --generate-reference-docs",
             api_semver,
             banner_semver,

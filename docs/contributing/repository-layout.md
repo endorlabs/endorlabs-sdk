@@ -47,7 +47,7 @@ devtools/  (maintainer automation)
 | [`.endorlabs-context/`](../../.endorlabs-context/) | Local runtime root (see below) |
 | [`.cursor/skills/`](../../.cursor/skills/) | Optional IDE skill mirror after `sync_skills` — not authoring source |
 
-Edit `agent-knowledge/` → `uv run python devtools/sync_agent_knowledge.py` → commit `src/endorlabs/agent_knowledge/`.
+Edit `agent-knowledge/` → `uv run python devtools/codegen/sync_agent_knowledge.py` → commit `src/endorlabs/agent_knowledge/`.
 
 ## `.endorlabs-context/` layout
 
@@ -93,7 +93,7 @@ Tracked [`docs/`](../README.md) is durable and public-safe. Ephemeral markdown �
 | [`.cursor/skills/`](../../.cursor/skills/) | Optional mirror after `init(sync_skills=...)` or `endor-context --sync-skills` |
 | [`agent-knowledge-authoring.mdc`](../../.cursor/rules/agent-knowledge-authoring.mdc) | Editing `agent-knowledge/**` — [schema/README.md](../../agent-knowledge/schema/README.md) |
 
-Regenerate rules/skills: `uv run python devtools/sync_agent_knowledge.py`.
+Regenerate rules/skills: `uv run python devtools/codegen/sync_agent_knowledge.py`.
 
 ## Maintainer invariants
 
@@ -103,10 +103,10 @@ When editing `src/endorlabs/**`:
 - **Typing:** public surfaces strict-typed; internal roots ratcheted in [pyproject.toml](../../pyproject.toml).
 - **Security:** credentials via env; run `endorctl scan` before code changes.
 - **Examples in git:** canonical repo `endorlabs/endorlabs-sdk`; no customer tenants/UUIDs in tracked content.
-- **Maintainer tooling:** one home per pre-commit guard; shared staged-path helpers in `devtools/git_staged.py` and `endorlabs.utils.repo_paths` — rule `endor-maintainer-tooling`, [devtools/README.md](../../devtools/README.md).
+- **Maintainer tooling:** one home per pre-commit guard; shared staged-path helpers in `devtools/precommit/git_staged.py` and `endorlabs.utils.repo_paths` — rule `endor-maintainer-tooling`, [devtools/README.md](../../devtools/README.md).
 - **Environment variables:** do not invent `ENDOR_*` names; cite Endor Labs docs; read with `os.getenv`; never mutate `os.environ` or `.env` unless a human explicitly requests it — rule `endor-environment-variables`.
 
-CI, model-sync, and drift gates: [CONTRIBUTORS.md](../../CONTRIBUTORS.md), [docs-drift-workflow.md](docs-drift-workflow.md), [devtools/sync/README.md](../../devtools/sync/README.md).
+CI, model-sync, and drift gates: [CONTRIBUTORS.md](../../CONTRIBUTORS.md), [docs-drift-workflow.md](docs-drift-workflow.md), [devtools/codegen/sync/README.md](../../devtools/codegen/sync/README.md).
 
 ## Related
 

@@ -28,7 +28,7 @@ runs:
     - name: Verify hatch-vcs version resolution
       shell: bash
       run: >-
-        uv run python devtools/check_vcs_version.py
+        uv run python devtools/ship/check_vcs_version.py
         --expect "${{ inputs.version }}"
         --release-only
 
@@ -44,7 +44,7 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        ARGS=(run python devtools/verify_ship_artifacts.py)
+        ARGS=(run python devtools/ship/verify_ship_artifacts.py)
         if [ "${{ inputs.fetch-spec }}" = "true" ]; then
           ARGS+=(--fetch-spec)
         fi
@@ -64,5 +64,5 @@ runs:
     - name: Smoke test built wheel
       shell: bash
       run: >-
-        uv run python devtools/smoke_test_wheel.py
+        uv run python devtools/ship/smoke_test_wheel.py
         --expect-version "${{ inputs.version }}"
