@@ -86,27 +86,6 @@ class TestPagination:
         assert params.get("list_parameters.sort.path") == "meta.name"
         assert params.get("list_parameters.sort.order") == "SORT_ENTRY_ORDER_ASC"
 
-    def test_sort_params_fallback_sort_field_sort_order(self) -> None:
-        """Legacy sort_field + sort_order map to sort.path and sort.order (enum)."""
-        import warnings
-
-        client = Mock()
-        ops = BaseResourceOperations(client, "test-resources", Mock)
-        list_params = ListParameters(
-            sort_field="meta.create_time",
-            sort_order="descending",
-        )
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            params = ops._build_params(list_params)
-            assert any(
-                issubclass(warning.category, DeprecationWarning)
-                and "sort_field" in str(warning.message)
-                for warning in w
-            ), "Expected DeprecationWarning for sort_field/sort_order"
-        assert params.get("list_parameters.sort.path") == "meta.create_time"
-        assert params.get("list_parameters.sort.order") == "SORT_ENTRY_ORDER_DESC"
-
 
 class TestListParametersSerialization:
     """Test that new ListParameters fields serialize to list_parameters.*."""

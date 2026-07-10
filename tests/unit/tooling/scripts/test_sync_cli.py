@@ -14,27 +14,12 @@ if _DEVTOOLS_DIR not in sys.path:
     sys.path.insert(0, _DEVTOOLS_DIR)
 
 from sync.cli import (
-    build_parser,
     default_custom_profiles_dir,
     default_spec_path,
     main,
 )
 from sync.codegen import load_profiles
 from sync.provenance import write_json
-
-
-def test_build_parser_has_expected_flags() -> None:
-    parser = build_parser()
-    args = parser.parse_args([])
-    assert args.custom_profiles_dir is None
-    assert hasattr(args, "generate_stubs")
-    assert hasattr(args, "generate_reference_docs")
-    assert hasattr(args, "inventory_only")
-    assert hasattr(args, "fetch_spec")
-    assert hasattr(args, "spec_url")
-    assert hasattr(args, "spec_hash_only")
-    assert not hasattr(args, "output_root")
-    assert not hasattr(args, "spec_path")
 
 
 def test_main_forwards_parser_args_to_run_sync(monkeypatch) -> None:

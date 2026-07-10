@@ -64,35 +64,6 @@ class TestRepository:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
-    def test_repository_list(self) -> None:
-        """LIST in namespace."""
-        from endorlabs.core.exceptions import ServerError
-
-        try:
-            result = self.endor_client.Repository.list(
-                max_pages=TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(result, list)
-
-    def test_repository_get(self) -> None:
-        """GET first item from LIST in namespace."""
-        from endorlabs.core.exceptions import ServerError
-
-        try:
-            items = self.endor_client.Repository.list(
-                max_pages=TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        got = self.endor_client.Repository.get(item)
-        assert got is not None
-        assert got.uuid == item.uuid
-
     def test_repository_advanced_filtering(self, sample_repository) -> None:
         """Test advanced filtering capabilities."""
         print("\n=== TESTING REPOSITORY FILTERING ===")

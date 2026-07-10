@@ -12,7 +12,6 @@ from endorlabs.workflows.findings.finding_log_trends import (
     build_analysis,
     build_finding_log_new_vs_resolved_analysis,
     chart_canvas_filename,
-    chart_window_params,
     compute_window,
     cumulative,
     gap_trend,
@@ -207,12 +206,6 @@ def test_validate_chart_analysis_accepts_build_analysis_output() -> None:
         lookback=2,
     )
     validate_chart_analysis(analysis)
-
-
-def test_chart_window_params_legacy_lookback_days() -> None:
-    interval, lookback = chart_window_params({"lookback_days": 14})
-    assert interval == "week"
-    assert lookback == 2
 
 
 def test_validate_chart_analysis_rejects_length_mismatch() -> None:

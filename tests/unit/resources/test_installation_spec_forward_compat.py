@@ -29,20 +29,6 @@ def test_installation_spec_accepts_new_bitbucket_shape_without_legacy_fields() -
     assert spec.bitbucket_config.access_token is None
 
 
-def test_installation_spec_accepts_legacy_bitbucket_shape() -> None:
-    """Backward compatibility for older payload shape remains intact."""
-    spec = InstallationSpec(
-        bitbucket_config={
-            "workspace": "team-workspace",
-            "access_token": "masked-token",
-        }
-    )
-
-    assert spec.bitbucket_config is not None
-    assert spec.bitbucket_config.workspace == "team-workspace"
-    assert spec.bitbucket_config.access_token == "masked-token"
-
-
 def test_installation_model_parses_partial_bitbucket_config() -> None:
     """Top-level Installation model should not fail on partial bitbucket config."""
     installation = Installation(

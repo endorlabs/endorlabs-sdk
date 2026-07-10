@@ -260,10 +260,12 @@ class TestTokenExpirationTracking:
         assert not any("meta/version" in url for url in get_urls)
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
-    def test_bearer_expired_raises_refresh_hint(self) -> None:
+    @patch("endorlabs.auth_server.get_token", return_value="unused-fresh-token")
+    def test_bearer_expired_raises_refresh_hint(self, mock_get_token: Mock) -> None:
         """Expired bearer sessions should fail closed on token access."""
         from endorlabs.core.exceptions import UnauthorizedError
 
+        _ = mock_get_token
         expired = datetime.now(UTC) - timedelta(minutes=5)
         near_expired = _v1_auth_get_response(expired.strftime("%Y-%m-%dT%H:%M:%SZ"))
 

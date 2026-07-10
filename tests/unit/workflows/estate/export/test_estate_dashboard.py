@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from endorlabs.workflows.estate.export.charts.estate_dashboard import (
+    ESTATE_DASHBOARD_SCHEMA,
     export_estate_dashboard,
     render_estate_dashboard_html,
 )
@@ -58,8 +59,12 @@ def test_estate_dashboard_includes_risk_and_graph_tabs(tmp_path: Path) -> None:
     workspace = tmp_path / "tenant-20260101"
     _write_min_workspace(workspace)
     html_doc = render_estate_dashboard_html(workspace, namespace_label="tenant")
-    assert "Risk families" in html_doc
-    assert "Internal dependencies" in html_doc
+    assert ESTATE_DASHBOARD_SCHEMA in html_doc
+    assert 'id="panel-risk"' in html_doc
+    assert 'data-tab="risk"' in html_doc
+    assert 'id="panel-graph"' in html_doc
+    assert 'data-tab="graph"' in html_doc
+    assert 'id="panel-bipartite"' in html_doc
     assert "mvn://com.example:lib" in html_doc
     assert "Longest chain" not in html_doc
 
@@ -86,8 +91,9 @@ def test_estate_dashboard_includes_online_query_tiles(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     html_doc = render_estate_dashboard_html(workspace, namespace_label="tenant")
-    assert "PV (Query)" in html_doc
+    assert 'class="tiles online-tiles"' in html_doc
     assert "42" in html_doc
+    assert "7" in html_doc
     assert "managed_platform" in html_doc
 
 

@@ -17,7 +17,6 @@ from endorlabs.resources.semgrep_rule import (
     SemgrepRuleSpec,
     UpdateSemgrepRulePayload,
 )
-from tests.conftest import TEST_MAX_PAGES
 
 
 @pytest.mark.integration
@@ -45,30 +44,6 @@ class TestSemgrepRule:
                 except Exception as e:
                     print(f"[WARNING] Failed to delete semgrep rule {rule_uuid}: {e}")
             self.created_semgrep_rule_uuids.clear()
-
-    def test_semgrep_rule_list(self) -> None:
-        """LIST in namespace."""
-        result = self.endor_client.SemgrepRule.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        assert isinstance(result, list)
-
-    def test_semgrep_rule_get(self) -> None:
-        """GET first item from LIST in namespace."""
-        items = self.endor_client.SemgrepRule.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        ns = (
-            item.tenant_meta.namespace
-            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
-            else self.root_namespace
-        )
-        got = self.endor_client.SemgrepRule.get(item.uuid, namespace=ns)
-        assert got is not None
-        assert got.uuid == item.uuid
 
     @pytest.mark.writes
     def test_semgrep_rule_create(self) -> None:

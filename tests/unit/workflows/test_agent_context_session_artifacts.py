@@ -214,10 +214,13 @@ class TestRenderFindingsSummary:
     """Tests for render_findings_summary."""
 
     def test_empty_findings(self) -> None:
-        """Renders 'no findings' message when total is 0."""
+        """Renders minimal summary when total is 0."""
         ctx = FindingsContext(project_name="test-repo", total=0)
         md = render_findings_summary(ctx)
-        assert "No findings found" in md
+        assert md.startswith("# Findings Summary")
+        assert "test-repo" in md
+        assert "## By Scan Type" not in md
+        assert "**Total findings**" not in md
 
     def test_renders_fetch_error_warning(self) -> None:
         """Includes warning when findings query failed."""
@@ -227,8 +230,8 @@ class TestRenderFindingsSummary:
             fetch_error="backend timeout",
         )
         md = render_findings_summary(ctx)
-        assert "could not be retrieved" in md
-        assert "backend timeout" in md
+        assert "`backend timeout`" in md
+        assert md.startswith("# Findings Summary")
 
     def test_renders_table(self) -> None:
         """Renders a table with category rows."""
@@ -413,5 +416,6 @@ class TestCreateSession:
 
         assert result.status == "error"
         assert result.errors
-        assert "Unable to fetch findings: boom" in result.errors[0]
-        assert "retrieval/write errors" in result.message
+        assert result.findings.fetch_error == "boom"
+        assert any("boom" in err for err in result.errors)
+        assert len(result.errors) >= 1

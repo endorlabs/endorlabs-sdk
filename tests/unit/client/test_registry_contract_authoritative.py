@@ -83,7 +83,6 @@ def test_merge_overlay_warns_on_unknown_contract_key() -> None:
     original = overlay_module.RESOURCE_CONTRACT_OVERLAY_BY_ATTR
     try:
         overlay_module.RESOURCE_CONTRACT_OVERLAY_BY_ATTR = {
-            **original,
             "NoSuchKind": {"workflow_flags": ["project-namespace-list"]},
         }
         with pytest.warns(UserWarning, match="NoSuchKind"):

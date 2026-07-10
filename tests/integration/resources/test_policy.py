@@ -133,35 +133,6 @@ match_finding[result] {
                     print(f"[WARNING] Failed to delete test policy {policy_uuid}: {e}")
             self.created_policy_uuids.clear()
 
-    def test_policy_list(self) -> None:
-        """LIST in namespace."""
-        from endorlabs.core.exceptions import ServerError
-
-        try:
-            result = self.endor_client.Policy.list(
-                max_pages=TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(result, list)
-
-    def test_policy_get(self) -> None:
-        """GET first item from LIST in namespace."""
-        from endorlabs.core.exceptions import ServerError
-
-        try:
-            items = self.endor_client.Policy.list(
-                max_pages=TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        got = self.endor_client.Policy.get(item)
-        assert got is not None
-        assert got.uuid == item.uuid
-
     def test_policy_type_filtering(self) -> None:
         """Test policy filtering by type."""
         print("\n=== TESTING POLICY TYPE FILTERING ===")

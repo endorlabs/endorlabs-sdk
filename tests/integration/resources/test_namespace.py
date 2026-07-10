@@ -211,25 +211,6 @@ class TestNamespaces:
             )
         assert "update_mask" in (exc_info.value.message or "").lower()
 
-    def test_namespace_list(self) -> None:
-        """LIST in namespace."""
-        result = self.client.Namespace.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        assert isinstance(result, list)
-
-    def test_namespace_get(self) -> None:
-        """GET first item from LIST in namespace."""
-        items = self.client.Namespace.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        got = self.client.Namespace.get(item)
-        assert got is not None
-        assert got.uuid == item.uuid
-
     def test_namespace_spec_has_full_name_and_managed(self) -> None:
         """Namespace spec exposes full_name and managed when returned by API."""
         items = self.client.Namespace.list(

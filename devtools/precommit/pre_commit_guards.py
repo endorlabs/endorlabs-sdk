@@ -1145,6 +1145,174 @@ def check_security_content_diff(base: str, head: str = "HEAD") -> int:
     return rc
 
 
+# --- Change-aware test selector -------------------------------------------
+
+_FULL_SUITE_TARGET = "tests/unit"
+
+# Exact paths that force the full unit suite.
+_FULL_SUITE_TRIGGER_EXACT = frozenset(
+    {
+        "pyproject.toml",
+        "tests/conftest.py",
+        "tests/__init__.py",
+    }
+)
+
+# Path prefixes that force the full unit suite.
+_FULL_SUITE_TRIGGER_PREFIXES = ("src/endorlabs/generated/",)
+
+# Generated registry contract (always forces full suite regardless of prefix).
+_FULL_SUITE_TRIGGER_STEMS = frozenset({"registry_contract"})
+
+# Submodule name prefixes under src/endorlabs/ that map to the client bucket.
+_CLIENT_MODULE_PREFIXES = ("registry", "client", "operations", "resources")
+
+# Submodule name prefixes under src/endorlabs/ that map to the platform bucket.
+_PLATFORM_MODULE_PREFIXES = ("api_client", "auth_server", "core", "utils")
+
+# File extensions that indicate a path is code-related.
+_CODE_EXTENSIONS = frozenset({".py", ".pyi", ".toml", ".yaml", ".yml", ".json"})
+
+
+def _classify_staged_path(
+    normalized: str,
+) -> tuple[bool, tuple[str, ...] | None]:
+    """Classify one normalized repo-relative path into a test-selector outcome.
+
+    Returns ``(full_suite, buckets)`` where:
+
+    * ``(True, None)``    — trigger the full unit suite immediately.
+    * ``(False, None)``   — unknown code path; caller treats as full suite.
+    * ``(False, ())``     — docs / non-code; contributes no test targets.
+    * ``(False, targets)``— use these specific pytest target paths.
+    """
+    # Cross-cutting: exact file triggers.
+    if normalized in _FULL_SUITE_TRIGGER_EXACT:
+        return True, None
+
+    # Cross-cutting: generated/ prefix.
+    if any(normalized.startswith(p) for p in _FULL_SUITE_TRIGGER_PREFIXES):
+        return True, None
+
+    # Cross-cutting: registry_contract stem anywhere under src/endorlabs/.
+    if normalized.startswith("src/endorlabs/") and PurePosixPath(
+        normalized
+    ).stem in _FULL_SUITE_TRIGGER_STEMS:
+        return True, None
+
+    # Staged test files run themselves.
+    if normalized.startswith("tests/unit/"):
+        return False, (normalized,)
+
+    # Other tests/ paths (integration, conftest variants, …) → full suite.
+    if normalized.startswith("tests/"):
+        return True, None
+
+    # Shipped agent-knowledge mirror (checked before the general src/endorlabs/ block).
+    if normalized.startswith("src/endorlabs/agent_knowledge/"):
+        return False, ("tests/unit/platform/context", "tests/unit/tooling/scripts")
+
+    # Workflows bucket.
+    if normalized.startswith("src/endorlabs/workflows/"):
+        return False, ("tests/unit/workflows",)
+
+    # Client / operations / resources / facade bucket.
+    if normalized.startswith("src/endorlabs/"):
+        rest = normalized[len("src/endorlabs/"):]
+        # First path component (file stem for flat files, dir name for packages).
+        first = rest.split("/")[0].split(".")[0]
+        if any(first.startswith(p) for p in _CLIENT_MODULE_PREFIXES):
+            return False, (
+                "tests/unit/client",
+                "tests/unit/facade",
+                "tests/unit/operations",
+                "tests/unit/resources",
+            )
+        if any(first.startswith(p) for p in _PLATFORM_MODULE_PREFIXES):
+            return False, ("tests/unit/platform", "tests/unit/utils")
+        # Other src/endorlabs/ code files (tools, query, filters, context, …).
+        if PurePosixPath(normalized).suffix.lower() in _CODE_EXTENSIONS:
+            return False, None  # unknown code → caller uses full suite
+        return False, ()  # non-code under src/endorlabs/ → skip
+
+    # Agent-knowledge authoring.
+    if normalized.startswith("agent-knowledge/"):
+        return False, ("tests/unit/platform/context", "tests/unit/tooling/scripts")
+
+    # Devtools.
+    if normalized.startswith("devtools/"):
+        return False, ("tests/unit/devtools", "tests/unit/tooling")
+
+    # Pure docs (docs/** or bare *.md/.mdc outside agent-knowledge).
+    if normalized.startswith("docs/"):
+        return False, ()
+    ext = PurePosixPath(normalized).suffix.lower()
+    if ext in {".md", ".mdc", ".rst"}:
+        return False, ()
+
+    # Remaining code-looking paths (CI YAML, pyproject in subdirs, …).
+    if ext in _CODE_EXTENSIONS:
+        return False, None  # unknown code → full suite
+
+    # Everything else (images, lock files, …) → no tests.
+    return False, ()
+
+
+def select_test_paths(paths: list[str]) -> list[str]:
+    """Map staged paths to deduplicated, sorted pytest target paths.
+
+    Returns an empty list when only non-code (docs/assets) paths are staged —
+    the caller should treat that as "skip tests". Returns ``["tests/unit"]``
+    when any cross-cutting or unknown code path is staged.
+    """
+    targets: set[str] = set()
+    for path in paths:
+        normalized = _normalize_path(path)
+        full, buckets = _classify_staged_path(normalized)
+        if full or buckets is None:
+            return [_FULL_SUITE_TARGET]
+        targets.update(buckets)
+    return sorted(targets)
+
+
+def cmd_select_tests(*, paths: list[str] | None = None) -> int:
+    """Print space-separated pytest targets for staged paths; exit 0 always.
+
+    Prints nothing when staged changes are docs-only. *paths* overrides
+    ``staged_paths()`` for testing.
+    """
+    candidates = paths if paths is not None else staged_paths()
+    targets = select_test_paths(candidates)
+    if targets:
+        print(" ".join(targets))
+    return 0
+
+
+def cmd_run_selected_tests(*, paths: list[str] | None = None) -> int:
+    """Select tests for staged paths then execute pytest; exit 0 on docs-only.
+
+    Replaces the unconditional full-suite pytest-unit pre-commit hook so that
+    only the subset of unit tests relevant to staged changes runs at commit
+    time. The full suite remains the CI gate.
+    """
+    candidates = paths if paths is not None else staged_paths()
+    targets = select_test_paths(candidates)
+    if not targets:
+        print("pre-commit: no tests needed (docs-only change)", file=sys.stderr)
+        return 0
+    cmd = [
+        sys.executable,
+        "-m",
+        "pytest",
+        *targets,
+        "-q",
+        "-m",
+        "not interactive and not long",
+    ]
+    result = subprocess.run(cmd, check=False)  # noqa: S603
+    return result.returncode
+
+
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
     usage = (
@@ -1152,7 +1320,8 @@ def main(argv: list[str] | None = None) -> int:
         "{blocked-paths|changelog-reminder|layer-imports|bounds-shim|"
         "deprecated-api-strings|accessor-nudge|portable-examples|"
         "agent-knowledge-sync|context-root-literals|external-pii-urls|"
-        "shipped-namespace-flags|security-content-diff <base> [head]}"
+        "shipped-namespace-flags|security-content-diff <base> [head]|"
+        "select-tests|run-selected-tests}"
     )
     if not args or args[0] in {"-h", "--help"}:
         print(usage, file=sys.stderr)
@@ -1187,6 +1356,10 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         head = args[2] if len(args) > 2 else "HEAD"
         return check_security_content_diff(args[1], head)
+    if command == "select-tests":
+        return cmd_select_tests()
+    if command == "run-selected-tests":
+        return cmd_run_selected_tests()
     print(f"error: unknown command {command!r}", file=sys.stderr)
     return 2
 

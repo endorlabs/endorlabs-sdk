@@ -172,19 +172,17 @@ repos:
         files: (^pyproject\.toml$|^\.github/workflows/.*\.(yaml|yml)$|.*\.(py|pyi)$)
 
       - id: pytest-unit
-        name: pytest unit (CI parity; not interactive or long)
+        name: pytest unit (change-aware; CI parity; not interactive or long)
         entry: uv
         args:
           - run
-          - pytest
-          - tests/unit/
-          - -q
-          - -m
-          - "not interactive and not long"
+          - python
+          - devtools/precommit/pre_commit_guards.py
+          - run-selected-tests
         language: system
         pass_filenames: false
         require_serial: true
-        files: (^pyproject\.toml$|^tests/.*|^src/endorlabs/.*|.*\.(py|pyi)$)
+        always_run: true
 
       - id: consumer-wire-fixtures-verify
         name: consumer wire fixtures verify

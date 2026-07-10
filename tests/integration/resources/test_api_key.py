@@ -15,9 +15,6 @@ from endorlabs.resources.api_key import (
     APIKeySpec,
     CreateAPIKeyPayload,
 )
-from tests.conftest import (
-    TEST_MAX_PAGES,
-)
 
 
 @pytest.mark.integration
@@ -47,25 +44,6 @@ class TestAPIKey:
                 except Exception as e:
                     print(f"[WARNING] Failed to delete API key {key_uuid}: {e}")
             self.created_api_key_uuids.clear()
-
-    def test_api_key_list(self) -> None:
-        """LIST in namespace (registry-based)."""
-        result = self.endor_client.APIKey.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        assert isinstance(result, list)
-
-    def test_api_key_get(self) -> None:
-        """GET first item from LIST in namespace (registry-based)."""
-        items = self.endor_client.APIKey.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        got = self.endor_client.APIKey.get(item)
-        assert got is not None
-        assert got.uuid == item.uuid
 
     def test_client_ux_create_api_key(self) -> None:
         """Consumer UX: client.APIKey.create(payload); teardown deletes."""

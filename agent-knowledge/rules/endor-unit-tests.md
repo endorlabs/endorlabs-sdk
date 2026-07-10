@@ -1,0 +1,117 @@
+---
+id: endor-unit-tests
+tags: [maintainer, tests, pytest, yagni]
+summary: >-
+  Write unit tests for behavior and contracts, not copy or hasattr smoke;
+  keep buckets correct; avoid real sockets/sleeps; prefer parametrize over
+  per-resource boilerplate; rely on pre-commit guards as defense-in-depth.
+---
+
+# Unit tests (maintainer)
+
+Repo-only guidance for writing and reviewing tests under `tests/`. Not shipped
+in the wheel bootstrap bundle.
+
+Live API resource order and pagination: [docs/contributing/integration-resource-tests.md](../../docs/contributing/integration-resource-tests.md).
+
+## Before adding a test
+
+1. Name the **behavior under test** in one sentence. If you can only name a
+   module attribute, constructor field, or Pydantic default — **do not add it**.
+2. Prefer extending an existing file over a new `test_*.py`.
+3. Prefer `@pytest.mark.parametrize` / registry loops over per-resource
+   copy-paste.
+
+## What belongs where
+
+| Bucket | Tests | Does not belong |
+| ------ | ----- | --------------- |
+| `tests/unit/client\|platform\|resources\|operations` | SDK contracts, transport, facades | Workflow report scripts |
+| `tests/unit/workflows` | Shipped `endorlabs.workflows` | Maintainer `devtools/` |
+| `tests/unit/tooling\|devtools` | `devtools/precommit`, codegen, ship gates | Thin CLI wrappers over already-tested libraries |
+| `tests/integration/resources` | Unique extras (PATCH, CRUD, parent scope) | Default list→get (use the roundtrip harness) |
+
+## Assert contracts, not copy
+
+- **OK:** exception class, field/kind names, remediation tokens
+  (`endor-auth refresh`), signatures, MANIFEST ids, golden files, heading
+  *count*, HTML *ids*, data values.
+- **Never:** English headings, docstring sentences, `__str__` line format,
+  “phrase not in AGENTS.md”, full warning/error prose.
+- `pytest.raises(..., match=)` / `pytest.warns(..., match=)` — match **stable
+  tokens** only.
+
+## Runtime hygiene
+
+- Never open real localhost OAuth / `HTTPServer` / browser flows in default
+  unit tests. Patch `auth_server.get_token`. Mark real browser paths
+  `@pytest.mark.interactive`.
+- Never rely on default `wait_until` sleeps; pass a tiny `poll_interval_max`
+  in tests.
+- One intentional e2e HTTP smoke is enough; drive handlers via fake sockets
+  otherwise.
+- Subprocess codegen/drift tests are fine; pre-commit `select-tests` /
+  `run-selected-tests` runs a path-mapped subset when those paths change
+  (full suite remains mandatory in CI).
+
+## Defense in depth (pre-commit)
+
+These hooks **fail the commit** (or remind) so a bad fixture does not rely on
+review alone. Write tests as if the guard will run — do not treat “CI will
+catch it later” as the first line of defense. Policy lives in
+[`devtools/precommit/pre_commit_guards.py`](../../devtools/precommit/pre_commit_guards.py);
+wiring in [`.pre-commit-config.yaml`](../../.pre-commit-config.yaml). Full
+guard map: rule **endor-maintainer-tooling**.
+
+| Guard / hook | What it does for tests and fixtures |
+| ------------ | ----------------------------------- |
+| **blocked-paths** | Refuses staging `.env` or anything under `.endorlabs-context/` (session dumps, live OpenAPI, workspace artifacts). Put secrets and tenant dumps only in gitignored paths. |
+| **gitleaks** + **detect-private-key** | Scans staged content for secrets and private keys. Unit fixtures must use fake tokens (`"test-token"`), never pasted credentials. |
+| **portable-examples** | Fails on high-confidence **estate literals** in staged checked-in paths (customer GitHub URLs, dotted tenant paths). Use `example-tenant`, `example-tenant.child`, `https://github.com/org/repo`. |
+| **external-pii-urls** | Fails on non-placeholder **emails**, non-Endor **URLs**, and estate `-n` / `--namespace` / `--tenant` tokens on *added* lines. Allowed emails: `@example.*`, `@endorlabs.com`, `@endor.ai`. |
+| **shipped-namespace-flags** | Full-tree scan of `src/endorlabs/**`: non-placeholder `-n` values cannot ship in the wheel (authoring/tests still covered by staged `external-pii-urls`). |
+| **security-content-diff** (CI) | Same portable / PII / `-n` checks on the PR diff so a skipped local hook does not land on `main`. |
+| **layer-imports** / **bounds-shim** | Block forbidden cross-layer imports and removed `estate.collect.bounds` shims in `src/` and `tests/`. |
+| **context-root-literals** | Block hard-coded `.endorlabs-context/...` path constants in SDK / skill scripts — use path helpers. |
+| **run-selected-tests** | Change-aware unit pytest: maps staged paths to buckets (or full suite for `pyproject.toml` / generated / unknown code). Docs-only → skip. **CI still runs the full unit suite** with coverage. |
+| **consumer-wire-fixtures-verify** | When model fixtures or `resources/` change, verifies consumer wire fixtures stay aligned. |
+| **ship-artifacts-verify** / pre-push upstream | Regen + drift for generated surfaces; do not hand-edit `generated/` to “fix” a test. |
+| **changelog-reminder** | Non-blocking stderr when user-facing paths are staged without `docs/changelog.md` (tests alone usually do not need Unreleased). |
+
+**Implication for authors:** placeholders and fake ids are not style — they are
+what keeps the public repo and wheel clean. If a guard fails on a test file,
+fix the fixture; do not weaken the guard or `--no-verify`.
+
+## Anti-patterns (delete on sight)
+
+- `hasattr(module, "foo")` / `__all__` presence as the only assert
+- Mock-mirror: set `_ops.list = Mock()`, call `list()`, assert the mock got
+  the namespace you just configured — unless it encodes a real scope rule
+  (OSS vs tenant)
+- Duplicate expiration/ISO parsing already covered in
+  `test_api_client_auth.py`
+- Per-resource integration list/get when
+  `test_resource_list_get_roundtrip.py` covers it
+- Tests for `REMOVE_BY_0_7_0` shims once the shim is gone
+- Real customer tenants, emails, or production UUIDs in unit fixtures
+  (guards will fail the commit)
+
+## Checklist (PR)
+
+- [ ] New test fails if the bug/regression is reintroduced (not only if copy
+      changes)
+- [ ] No new English-copy substring pins
+- [ ] No real network/socket/sleep without a marker or injected interval
+- [ ] Duplicates merged into a table or deleted
+- [ ] File lives in the correct domain bucket
+- [ ] Fixtures use placeholders only (portable-examples / external-pii-urls
+      would pass)
+
+## Related
+
+- [docs/contributing/unit-tests.md](../../docs/contributing/unit-tests.md) —
+  short index entry
+- [docs/contributing/integration-resource-tests.md](../../docs/contributing/integration-resource-tests.md) —
+  live API list/get/create order
+- Rule **endor-maintainer-tooling** — pre-commit / `select-tests` wiring
+- Rule **endor-portable-examples** — no customer estate in fixtures

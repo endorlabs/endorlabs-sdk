@@ -19,32 +19,6 @@ class TestNotificationTarget:
 
         self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
 
-    def test_notification_target_list(self) -> None:
-        """LIST in namespace (registry-based)."""
-        result = self.endor_client.NotificationTarget.list(
-            page_size=TEST_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES,
-        )
-        assert isinstance(result, list)
-
-    def test_notification_target_get(self) -> None:
-        """GET first item from LIST in namespace (registry-based)."""
-        items = self.endor_client.NotificationTarget.list(
-            page_size=TEST_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES,
-        )
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        ns = (
-            item.tenant_meta.namespace
-            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
-            else self.root_namespace
-        )
-        got = self.endor_client.NotificationTarget.get(item.uuid, namespace=ns)
-        assert got is not None
-        assert got.uuid == item.uuid
-
     def test_notification_target_spec_action_has_action_type(self) -> None:
         """NotificationTarget spec.action exposes action_type when present."""
         items = self.endor_client.NotificationTarget.list(

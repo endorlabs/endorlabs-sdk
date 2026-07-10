@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from endorlabs.workflows.estate.export.charts.compile_graph_viz import (
+    COMPILE_GRAPH_VIZ_SCHEMA,
     export_compile_graph_viz,
     render_compile_graph_viz_html,
 )
@@ -69,9 +70,13 @@ def test_render_compile_graph_viz_html(tmp_path: Path) -> None:
     workspace = tmp_path / "tenant-20260101"
     _write_min_workspace(workspace)
     html_doc = render_compile_graph_viz_html(workspace, namespace_label="tenant")
-    assert "Compile-dependency graph" in html_doc
-    assert "Repo groups (shared compile dependencies)" in html_doc
+    assert COMPILE_GRAPH_VIZ_SCHEMA in html_doc
+    assert 'id="panel-dashboard"' in html_doc
+    assert 'id="panel-bipartite"' in html_doc
+    assert 'data-tab="dashboard"' in html_doc
+    assert 'class="data"' in html_doc
     assert "acme/importer" in html_doc
+    assert "tenant.child" in html_doc
     assert "Longest chain" not in html_doc
 
 

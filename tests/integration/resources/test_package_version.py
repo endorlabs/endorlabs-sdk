@@ -129,35 +129,6 @@ class TestPackageVersion:
         except Exception as e:
             print(f"[WARNING] Failed to restore original values: {e}")
 
-    def test_package_version_list(self) -> None:
-        """LIST in namespace."""
-        from endorlabs.core.exceptions import ServerError
-
-        try:
-            result = self.endor_client.PackageVersion.list(
-                max_pages=TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(result, list)
-
-    def test_package_version_get(self) -> None:
-        """GET first item from LIST in namespace."""
-        from endorlabs.core.exceptions import ServerError
-
-        try:
-            items = self.endor_client.PackageVersion.list(
-                max_pages=TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        got = self.endor_client.PackageVersion.get(item)
-        assert got is not None
-        assert got.uuid == item.uuid
-
     @pytest.mark.writes
     def test_client_ux_update_package_version(self) -> None:
         """Consumer UX: client.PackageVersion.get() then update then revert."""

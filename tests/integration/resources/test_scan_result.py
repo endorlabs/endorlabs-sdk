@@ -51,13 +51,6 @@ class TestScanResult:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
-    def test_scan_result_list(self) -> None:
-        """LIST in namespace."""
-        result = self.endor_client.ScanResult.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        assert isinstance(result, list)
-
     def test_scan_result_list_with_parent_project(self) -> None:
         """LIST scan results with parent=project (list with parent resource)."""
         projects = self.endor_client.Project.list(
@@ -71,18 +64,6 @@ class TestScanResult:
             max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(result, list)
-
-    def test_scan_result_get(self) -> None:
-        """GET first item from LIST in namespace."""
-        items = self.endor_client.ScanResult.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        got = self.endor_client.ScanResult.get(item)
-        assert got is not None
-        assert got.uuid == item.uuid
 
     def test_scan_result_filter_by_project(self, sample_scan_result) -> None:
         """Test filtering scan results by project UUID in the resource's namespace."""

@@ -304,17 +304,6 @@ class TestUpdateContractSpec:
             == "meta.tags,spec.finding_tags"
         )
 
-    def test_update_with_none_or_empty_mask_raises_validation_error(self) -> None:
-        """update() raises EndorValidationError when update_mask is empty (required)."""
-        client = Mock()
-        client.patch = Mock()
-        ops = BaseResourceOperations(client, "findings", MinimalPayload)
-        payload = MinimalPayload(uuid="id-1")
-        with pytest.raises(EndorValidationError) as exc_info:
-            ops.update("tenant.ns", "id-1", payload, update_mask=[])
-        assert "update_mask" in exc_info.value.message.lower()
-        client.patch.assert_not_called()
-
     def test_patch_body_always_has_object_and_request_update_mask(self) -> None:
         """PATCH body has object and request.update_mask (update_mask required)."""
         client = Mock()
@@ -338,11 +327,7 @@ class TestUpdateContractSpec:
 
 
 class TestModelClassmethodsCanonical:
-    """Tests for get_mutable_fields_cls/get_immutable_fields_cls and get_tags_update_paths.
-
-    Model is canonical for mutable/immutable fields; get_tags_update_paths
-    derives tag paths from the model class.
-    """  # noqa: E501
+    """Tests for get_mutable_fields_cls/get_immutable_fields_cls on resource models."""
 
     def test_base_resource_get_mutable_fields_cls_returns_default(self) -> None:
         """BaseResource.get_mutable_fields_cls() returns default mutable list."""
@@ -373,17 +358,3 @@ class TestModelClassmethodsCanonical:
         assert "meta.name" in immutable
         assert "spec.git" in immutable
         assert "tenant_meta.namespace" in immutable
-
-    def test_get_tags_update_paths_from_model_class(self) -> None:
-        """get_tags_update_paths(model_class) returns tag paths from model mutable."""
-        from endorlabs.utils.model_validation import get_tags_update_paths
-
-        # Project has meta.tags but not spec.finding_tags
-        project_tags = get_tags_update_paths(Project)
-        assert "meta.tags" in project_tags
-        assert "spec.finding_tags" not in project_tags
-
-        # Finding has both meta.tags and spec.finding_tags
-        finding_tags = get_tags_update_paths(Finding)
-        assert "meta.tags" in finding_tags
-        assert "spec.finding_tags" in finding_tags

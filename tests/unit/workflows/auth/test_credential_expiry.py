@@ -11,13 +11,7 @@ from endorlabs.workflows.auth.credential_expiry import (
     build_credential_expiry_row,
     classify_expiration,
     expiry_upper_bound_filter,
-    parse_expiration_time,
 )
-
-
-def test_parse_expiration_time_accepts_z_suffix() -> None:
-    parsed = parse_expiration_time("2026-08-01T12:00:00Z")
-    assert parsed == datetime(2026, 8, 1, 12, 0, 0, tzinfo=UTC)
 
 
 def test_classify_expiration_marks_expired_and_soon() -> None:

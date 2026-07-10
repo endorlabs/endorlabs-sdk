@@ -358,6 +358,7 @@ MAINTAINER_ONLY_RULE_IDS: frozenset[str] = frozenset(
         "endor-changelog",
         "endor-environment-variables",
         "endor-maintainer-tooling",
+        "endor-unit-tests",
     }
 )
 

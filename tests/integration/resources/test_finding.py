@@ -44,25 +44,6 @@ class TestFinding:
         if hasattr(self, "created_finding_uuids"):
             self.created_finding_uuids.clear()
 
-    def test_finding_list(self) -> None:
-        """LIST in namespace (registry-based)."""
-        result = self.endor_client.Finding.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        assert isinstance(result, list)
-
-    def test_finding_get(self) -> None:
-        """GET first item from LIST in namespace (registry-based)."""
-        items = self.endor_client.Finding.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
-        got = self.endor_client.Finding.get(item)
-        assert got is not None
-        assert got.uuid == item.uuid
-
     @pytest.fixture
     def updatable_finding(self):
         """Return a finding suitable for PATCH tag tests (``spec.dismiss`` is false).

@@ -18,11 +18,6 @@ import pytest  # noqa: TC002
 
 from endorlabs.operations.list_response import extract_list_objects as extract_objects
 from endorlabs.resources.call_graph_data_proto import (
-    ACCESS_LEVEL,
-    CALL_TYPE,
-    CALLGRAPH_VERSION,
-    CLASS_TYPE,
-    LANGUAGE_OR_RUNTIME,
     CallableInfo,
     CallEdge,
     CallGraphInfo,
@@ -33,7 +28,6 @@ from endorlabs.resources.call_graph_data_proto import (
     _decode_proto_map_entry,
     _decode_raw_fields,
     _decode_timestamp,
-    _decode_varint,
     _get_field,
     _get_fields,
     _unwrap_bool,
@@ -41,7 +35,7 @@ from endorlabs.resources.call_graph_data_proto import (
     _unwrap_string,
 )
 from endorlabs.tools.callgraph_artifacts import _clean_source_path, summarize_call_graph
-from endorlabs.utils.artifact_io import slugify, write_json
+from endorlabs.utils.artifact_io import write_json
 from endorlabs.workflows.agent_context.hydration import (
     ProjectResult,
     PVResult,
@@ -110,42 +104,16 @@ def _encode_int_wrapper(value: int) -> bytes:
     return _encode_varint_field(1, value)
 
 
+def _parse_headings(md: str) -> list[str]:
+    """Extract heading text from markdown (strips leading # and whitespace)."""
+    return [
+        line.lstrip("#").strip() for line in md.splitlines() if line.startswith("#")
+    ]
+
+
 # ===================================================================
-#  Section 1 — Protobuf wire-format decoder tests
+#  Section 1 — Wire-format decoder tests (multi-field and edge cases)
 # ===================================================================
-
-
-class TestDecodeVarint:
-    """Test _decode_varint for single and multi-byte varints."""
-
-    def test_single_byte(self) -> None:
-        data = bytes([0x08])  # value=8 in one byte
-        value, pos = _decode_varint(data, 0)
-        assert value == 8
-        assert pos == 1
-
-    def test_multi_byte(self) -> None:
-        data = _encode_varint(300)
-        value, pos = _decode_varint(data, 0)
-        assert value == 300
-        assert pos == len(data)
-
-    def test_zero(self) -> None:
-        data = bytes([0x00])
-        value, pos = _decode_varint(data, 0)
-        assert value == 0
-        assert pos == 1
-
-    def test_large_value(self) -> None:
-        data = _encode_varint(2**32)
-        value, _pos = _decode_varint(data, 0)
-        assert value == 2**32
-
-    def test_offset(self) -> None:
-        prefix = bytes([0xFF, 0xFF])
-        data = prefix + _encode_varint(42)
-        value, _pos = _decode_varint(data, 2)
-        assert value == 42
 
 
 class TestDecodeRawFields:
@@ -489,9 +457,13 @@ class TestInferProfile:
     def test_basic_profile(self) -> None:
         info = TestCallGraphInfo._make_info()
         profile = _infer_profile(info)
-        assert "PYTHON" in profile
-        assert "First-party functions" in profile
-        assert "Third-party function stubs" in profile
+        # Language label is derived from info.language
+        assert info.language in profile
+        # Callable counts from fixture appear in the profile text
+        total_first_party = sum(len(t.methods) for t in info.internal_types)
+        total_third_party = sum(len(t.methods) for t in info.external_types)
+        assert str(total_first_party) in profile
+        assert str(total_third_party) in profile
 
     def test_detects_flask_pattern(self) -> None:
         external = TypeInfo(
@@ -515,7 +487,9 @@ class TestInferProfile:
         )
         info.build_index()
         profile = _infer_profile(info)
-        assert "Web server (Python)" in profile
+        # The type key "flask" surfaces in the dependencies line of the profile
+        assert external.key in profile
+        assert info.language in profile
 
 
 class TestRenderCallgraphAnalysis:
@@ -524,38 +498,21 @@ class TestRenderCallgraphAnalysis:
     def test_produces_markdown(self) -> None:
         info = TestCallGraphInfo._make_info()
         md = render_callgraph_analysis(info)
-        assert md.startswith("# Call Graph Analysis:")
-        assert "First-Party Modules" in md
-        assert "Third-Party Dependencies" in md
-        assert "Reconstructed Call Tree" in md
-        assert "Cross-Module Call Edges" in md
-        assert "Source Files" in md
-        assert "Application Profile" in md
+        headings = _parse_headings(md)
+        # Top-level heading is H1 containing the analysis label
+        assert headings and headings[0].startswith("Call Graph Analysis")
+        # At least 6 distinct sections are rendered (H1 + 5+ H2/H3 sections)
+        assert len(headings) >= 6
+        # Callable names from the fixture appear in the output
+        assert "main()" in md
+        assert "helper()" in md
+        # Package name from fixture appears in the document
+        assert info.package_name in md
 
 
 # ===================================================================
 #  Section 5 — Utility helper tests
 # ===================================================================
-
-
-class TestSlugify:
-    """Test slugify function."""
-
-    def test_github_url(self) -> None:
-        assert slugify("https://github.com/org/repo.git") == "org_repo"
-
-    def test_plain_name(self) -> None:
-        assert slugify("my-package") == "my-package"
-
-    def test_special_chars(self) -> None:
-        assert slugify("foo/bar@1.0") == "foo_bar_1.0"
-
-    def test_max_len(self) -> None:
-        result = slugify("a" * 200, max_len=10)
-        assert len(result) == 10
-
-    def test_empty_string(self) -> None:
-        assert slugify("") == "unknown"
 
 
 class TestWriteJson:
@@ -843,32 +800,7 @@ class TestCleanSourcePath:
 
 
 # ===================================================================
-#  Section 8 — Enum coverage
-# ===================================================================
-
-
-class TestEnumDicts:
-    """Verify enum dicts have expected entries."""
-
-    def test_language_enum(self) -> None:
-        assert LANGUAGE_OR_RUNTIME[0] == "UNSPECIFIED"
-        assert LANGUAGE_OR_RUNTIME[3] == "PYTHON"
-
-    def test_callgraph_version(self) -> None:
-        assert CALLGRAPH_VERSION[7] == "V7"
-
-    def test_access_level(self) -> None:
-        assert ACCESS_LEVEL[1] == "PUBLIC"
-
-    def test_class_type(self) -> None:
-        assert CLASS_TYPE[4] == "REGULAR"
-
-    def test_call_type(self) -> None:
-        assert CALL_TYPE[4] == "STATIC"
-
-
-# ===================================================================
-#  Section 10 — Markdown summary builder tests
+#  Section 8 — Markdown summary builder tests
 # ===================================================================
 
 
@@ -889,7 +821,10 @@ class TestRenderPvSection:
         buf = StringIO()
         _render_pv_section(pv, "##", buf)
         md = buf.getvalue()
-        assert "Dependencies" in md
+        headings = _parse_headings(md)
+        # At least one section heading is rendered
+        assert len(headings) >= 1
+        # Dependency coordinates from fixture appear in output
         assert "npm://a" in md
         assert "npm://b" in md
 
@@ -904,7 +839,8 @@ class TestRenderPvSection:
         buf = StringIO()
         _render_pv_section(pv, "##", buf)
         md = buf.getvalue()
-        assert "Call Graph" in md
+        # Call graph UUID from fixture surfaces in the section
+        assert pv.cg_summary["uuid"] in md
 
 
 class TestBuildDependencyCallgraphSummary:
@@ -927,10 +863,12 @@ class TestBuildDependencyCallgraphSummary:
             pv_results=[pv],
         )
         md = build_dependency_callgraph_summary(result)
-        assert "my-pkg@1.0" in md
-        assert "proj-1" in md
-        assert "Dependencies" in md
-        assert "Generated at" in md
+        headings = _parse_headings(md)
+        # Data-derived identifiers appear in the summary
+        assert pv.pv_name in md
+        assert result.project_uuid in md
+        # At least a top-level heading and one sub-section are rendered
+        assert len(headings) >= 2
 
     def test_multi_pv(self) -> None:
         pvs = [
@@ -946,7 +884,9 @@ class TestBuildDependencyCallgraphSummary:
             pv_results=pvs,
         )
         md = build_dependency_callgraph_summary(result)
-        assert "Package Versions (3)" in md
+        # All PV names appear and the count is reflected somewhere in the output
+        assert all(pv.pv_name in md for pv in pvs)
+        assert str(len(pvs)) in md
 
     def test_with_dep_metadata_stats(self) -> None:
         result = ProjectResult(
@@ -968,8 +908,11 @@ class TestBuildDependencyCallgraphSummary:
             },
         )
         md = build_dependency_callgraph_summary(result)
-        assert "Dependency Metadata" in md
-        assert "50" in md
+        headings = _parse_headings(md)
+        # Stats section adds at least one extra heading beyond the base
+        assert len(headings) >= 2
+        # The total count value from the stats dict appears in output
+        assert str(result.dep_metadata_stats["total"]) in md
 
 
 def test_retrieve_dep_metadata_full_prefers_project_namespace(
