@@ -38,7 +38,7 @@ flowchart TD
    - Holds default namespace and exposes resource facades (e.g. `client.Namespace`, `client.Project`).
    - Builds facades from the effective registry; do not hand-wire each resource in `Client.__init__`.
 
-3. **Facade (`ResourceRuntimeFacade[T]`)** — `facade.py`
+3. **Facade (`ResourceRuntimeFacade[T]`)** — `facade/` package (`base.py`, `runtime.py`, `specialized.py`)
    - Resolves namespace, builds `ListParameters` from convenience kwargs, and delegates CRUD/list behavior to `BaseResourceOperations`.
    - `ResourceFacade` remains as a backward-compatible alias, but the runtime implementation is `ResourceRuntimeFacade`.
    - A single facade class handles all scopes via the `scope` property (`None` for tenant, `"oss"`, or `"system"`).
@@ -114,7 +114,7 @@ flowchart TB
     end
     subgraph runtime [Layer2_ConsumerRuntime]
         Registry["registry.py + registry_overlay.py"]
-        Client["client_surface.py + facade.py"]
+        Client["client_surface.py + facade/"]
         Ops["operations/BaseResourceOperations"]
         ResBase["resources/base.py + *_config.py"]
         ResKinds["resources/{kind}.py"]
@@ -220,6 +220,6 @@ Normative routing: shipped contract `query-vs-list-semantics.md` (wheel / `agent
 
 ## When to Use
 
-- Editing `client_surface.py`, `facade.py`, `registry.py`, `registry_overlay.py`, **`facade/specialized.py` (QueryFacade)**, or **`query/`** (recipes, executor, topology).
+- Editing `client_surface.py`, `facade/`, `registry.py`, `registry_overlay.py`, **`facade/specialized.py` (QueryFacade)**, or **`query/`** (recipes, executor, topology).
 - Regenerating or overriding the client surface after OpenAPI changes.
 - Adding integration tests or custom workflow facades — not for duplicating generated models in docs.

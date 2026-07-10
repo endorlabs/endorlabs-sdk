@@ -9,6 +9,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from endorlabs.filters import main_context_filter
+from endorlabs.tools.list_bounds import (
+    count_for_progress,
+    count_list_delta_check,
+    resolve_collect_max_workers,
+    resolve_max_pages,
+)
 from endorlabs.tools.list_sharding import (
     ProjectShard,
     parallel_map_shards_iter,
@@ -16,12 +22,6 @@ from endorlabs.tools.list_sharding import (
 )
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
-from endorlabs.workflows.estate.collect.bounds import (
-    count_for_progress,
-    count_list_delta_check,
-    resolve_collect_max_workers,
-    resolve_max_pages,
-)
 from endorlabs.workflows.estate.collect.dependency_metadata import (
     dependency_metadata_record_from_row,
 )
@@ -302,6 +302,9 @@ def _collect_dm_and_finding_parallel(
             resume=resume,
             preflight=preflight,
             validate_counts=validate_counts,
+            # No DependencyMetadata.list_by_project route (importer UUID field).
+            # Prefer list_for_context when a ScanResult is available; otherwise
+            # shard + main_context_filter(spec.importer_data.project_uuid==…).
             filter_fn=lambda s: main_context_filter(
                 f'spec.importer_data.project_uuid=="{s.project_uuid}"'
             ),

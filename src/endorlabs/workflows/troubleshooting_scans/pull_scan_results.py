@@ -14,16 +14,16 @@ from typing import Any
 
 import endorlabs
 from endorlabs.core.types import ListParameters
-from endorlabs.workflows.estate.collect.bounds import (
+from endorlabs.tools.list_bounds import (
     is_list_truncated,
     resolve_max_pages,
 )
+from endorlabs.utils.namespace import resource_namespace
 
 from .common import (
     date_window_from_bounds,
     default_troubleshooting_output_dir,
     object_to_dict,
-    project_namespace,
     root_tenant,
     scan_result_extended_summary,
     write_json,
@@ -80,7 +80,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     client = endorlabs.Client(tenant=args.tenant)
     try:
         project = client.Project.get(args.project_uuid, namespace=ns)
-        list_ns = project_namespace(project) or ns
+        list_ns = resource_namespace(project) or ns
 
         lp = ListParameters(
             from_date=from_d,

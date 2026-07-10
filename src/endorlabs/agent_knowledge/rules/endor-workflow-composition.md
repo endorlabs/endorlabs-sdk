@@ -73,7 +73,7 @@ Generic entrypoints (no estate literals):
 - `endorlabs.workflows.estate.export_version_cardinality_for_package_match`
 - `endorlabs.workflows.callgraph.run_callgraph_export`
 - `endorlabs.workflows.callgraph.find_call_graph_path`
-- `endorlabs.workflows.troubleshooting_scans` — workflow CLIs; prefer facade sugar for scan lists and project resolve
+- `endorlabs.workflows.troubleshooting_scans` — workflow CLIs; prefer `ScanResult.list_by_project` and `workflows.projects.discovery.resolve_project_candidate`
 - `endorlabs.workflows.agent_context.hydration` — per-project BOM/CG hydration primitive; not a workflow orchestrator
 
 See `MANIFEST.json` → `workflows[].library_entrypoints` for the catalog row tied to each skill.

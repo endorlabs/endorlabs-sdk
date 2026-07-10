@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: ef509280c86fbe7550a42f550ea90004465ed936ee6d7c5c1867549db7b36438
+x-endor-source-sha256: a230e3aae8447bc67859b464881c0acdbce820364147e90494065ff37ce04f81
 ---
 
 # Workflow composition
@@ -78,7 +78,7 @@ Generic entrypoints (no estate literals):
 - `endorlabs.workflows.estate.export_version_cardinality_for_package_match`
 - `endorlabs.workflows.callgraph.run_callgraph_export`
 - `endorlabs.workflows.callgraph.find_call_graph_path`
-- `endorlabs.workflows.troubleshooting_scans` — workflow CLIs; prefer facade sugar for scan lists and project resolve
+- `endorlabs.workflows.troubleshooting_scans` — workflow CLIs; prefer `ScanResult.list_by_project` and `workflows.projects.discovery.resolve_project_candidate`
 - `endorlabs.workflows.agent_context.hydration` — per-project BOM/CG hydration primitive; not a workflow orchestrator
 
 See `MANIFEST.json` → `workflows[].library_entrypoints` for the catalog row tied to each skill.
