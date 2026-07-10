@@ -11,23 +11,15 @@ from types import ModuleType
 
 def _load_module() -> ModuleType:
     repo_root = Path(__file__).resolve().parents[4]
-    candidate_paths = (
+    script_path = (
         repo_root
         / "agent-knowledge"
-        / "skills"
+        / "workflow-reports"
         / "endor-ci-endorctl-version-audit"
         / "scripts"
-        / "audit_ci_endorctl_versions.py",
-        repo_root
-        / "src"
-        / "endorlabs"
-        / "agent_knowledge"
-        / "skills"
-        / "endor-ci-endorctl-version-audit"
-        / "scripts"
-        / "audit_ci_endorctl_versions.py",
+        / "audit_ci_endorctl_versions.py"
     )
-    script_path = next(path for path in candidate_paths if path.is_file())
+    assert script_path.is_file(), script_path
     spec = spec_from_file_location("audit_ci_endorctl_versions", script_path)
     assert spec is not None
     assert spec.loader is not None

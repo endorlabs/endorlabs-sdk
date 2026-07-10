@@ -12,23 +12,15 @@ from endorlabs.workflows.auth.credential_expiry import CredentialExpiryRow
 
 def _load_module() -> ModuleType:
     repo_root = Path(__file__).resolve().parents[4]
-    candidate_paths = (
+    script_path = (
         repo_root
         / "agent-knowledge"
-        / "skills"
+        / "workflow-reports"
         / "endor-auth-credential-expiry"
         / "scripts"
-        / "credential_expiry_report.py",
-        repo_root
-        / "src"
-        / "endorlabs"
-        / "agent_knowledge"
-        / "skills"
-        / "endor-auth-credential-expiry"
-        / "scripts"
-        / "credential_expiry_report.py",
+        / "credential_expiry_report.py"
     )
-    script_path = next(path for path in candidate_paths if path.is_file())
+    assert script_path.is_file(), script_path
     spec = spec_from_file_location("credential_expiry_report", script_path)
     assert spec is not None
     assert spec.loader is not None

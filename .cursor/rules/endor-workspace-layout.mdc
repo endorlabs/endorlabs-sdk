@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workspace-layout.md
-x-endor-source-sha256: fe38e28fb0e6b0487fd8fda6e011c06174718b7dae0e68c295074625d4939596
+x-endor-source-sha256: 537ad864e8978b52f422c9fe76ac385006e2b9c7f004c7309b558591bfefeaba
 ---
 
 # Workspace layout
@@ -66,6 +66,7 @@ Do not commit under `docs/`.
 
 ## Legacy paths
 
+<!-- REMOVE_BY_0_7_0: drop this section with session_workspace_dir / workflow_artifacts_root. -->
 Older docs used `workspace/sessions/<user>/exports/…` and `workspace/artifacts/`.
 Prefer the three-bucket layout above. `workflow_artifacts_root()` aliases
 `workflow_inventory_root()` (`inventory/`).

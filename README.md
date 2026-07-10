@@ -73,11 +73,10 @@ Source repo: [`endorlabs/endorlabs-sdk`](https://github.com/endorlabs/endorlabs-
 
 | Extra       | Install                                  | Enables                                                                                                      |
 | ----------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `docs`      | `pip install 'endorlabs[docs]'`        | User-docs sync (`include_user_docs=True`); OpenAPI download works on the base install                       |
 | `analytics` | `pip install 'endorlabs[analytics]'`    | DataFrame / Parquet export and estate graph metrics — see [docs/estate/README.md](docs/estate/README.md) |
 
 
-CSV export from `workflows.estate.analyze.cardinality.tabular` works without extras. In this repo: `uv sync --extra docs --extra analytics`.
+CSV export from `workflows.estate.analyze.cardinality.tabular` works without extras. In this repo: `uv sync --extra analytics`. Product docs: [Docs MCP](https://docs.endorlabs.com/introduction/docs-mcp-server) (or [llms.txt](https://docs.endorlabs.com/llms.txt) without MCP).
 
 ## Quick start
 
@@ -117,7 +116,7 @@ workflow CLI (see [docs/contributing/list-query-performance.md](docs/contributin
 ### Requesting a scan and waiting for results
 
 ```python
-repo_url = "https://github.com/tgowan-endor/BenchmarkJava.git"
+repo_url = "https://github.com/org/example-repo.git"
 projects = client.Project.search_by_name(repo_url, traverse=True, max_pages=2)
 project = projects[0] if projects else None
 
@@ -201,7 +200,7 @@ Bearer sessions are **in-memory only**: load `ENDOR_TOKEN` once (or `token=` on 
 | ---- | -------- |
 | INDEX, contracts, traps, stub path — **no cwd writes** | `print(endorlabs.discover())` or `python -m endorlabs.examples.agent_bootstrap --dry-run` — then read every `bootstrap_paths` entry |
 | Skill playbooks on disk (call graph, scan RCA, bundles) | `endorlabs.init()` → `.endorlabs-context/sdk/skills/<id>/SKILL.md` |
-| Platform OpenAPI / user docs offline | `pip install 'endorlabs[docs]'` then `init(include_openapi=True, include_user_docs=True)` |
+| Platform OpenAPI | `init(include_openapi=True)` (auth required). Product docs: [Docs MCP](https://docs.endorlabs.com/introduction/docs-mcp-server) (or [llms.txt](https://docs.endorlabs.com/llms.txt)) |
 
 Runnable probe (paths only): `python -m endorlabs.examples.agent_bootstrap --dry-run`. Shipped consumer guide: `discover().agents_guide`.
 

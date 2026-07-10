@@ -168,14 +168,14 @@ uv run --env-file .env endor-agent-context --help
 ## 8. Agent bootstrap (optional)
 
 SDK API usage does not require local context files. For cwd-relative skills and
-offline OpenAPI/user docs:
+offline OpenAPI:
 
 ```python
 import endorlabs
 
 status = endorlabs.init()  # materializes sdk/ by default
-# Full mirror: endorlabs.init(include_openapi=True, include_user_docs=True)
-# Requires [docs] extra for user-docs sync
+# Full mirror: endorlabs.init(include_openapi=True)
+# Product docs: Docs MCP — https://docs.endorlabs.com/introduction/docs-mcp-server
 ```
 
 ```bash
@@ -183,7 +183,7 @@ uv run endor-context --sync-openapi
 ```
 
 See [AGENTS.md — Bootstrap](../../AGENTS.md#bootstrap)
-and [CONTRIBUTORS.md — Optional: sync external docs](../../CONTRIBUTORS.md#optional-sync-external-docs).
+and [CONTRIBUTORS.md — Optional: SDK bootstrap and OpenAPI](../../CONTRIBUTORS.md#optional-sdk-bootstrap-and-openapi).
 
 ## Suggested order for a first tenant session
 

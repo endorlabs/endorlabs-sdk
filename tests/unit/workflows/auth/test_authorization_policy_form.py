@@ -11,9 +11,9 @@ from endorlabs.workflows.auth.authorization_policy_form import (
 
 def test_comma_separated_namespace_blob() -> None:
     blob = (
-        "doordash.doordash-github-creditornot, "
-        "doordash.doordash-github-doordash, "
-        "doordash.doordash-github-roo"
+        "example-tenant.example-github-a, "
+        "example-tenant.example-github-b, "
+        "example-tenant.example-github-c"
     )
     findings = audit_target_namespaces(
         policy_uuid="u1",
@@ -22,7 +22,7 @@ def test_comma_separated_namespace_blob() -> None:
     )
     assert any(f.code == "comma_separated_namespace_blob" for f in findings)
     assert findings[0].severity == "critical"
-    assert "doordash.doordash-github-roo" in findings[0].suggestion
+    assert "example-tenant.example-github-c" in findings[0].suggestion
 
 
 def test_good_target_namespaces_ok() -> None:
@@ -30,8 +30,8 @@ def test_good_target_namespaces_ok() -> None:
         policy_uuid=None,
         policy_name="p",
         target_namespaces=[
-            "doordash.doordash-github-creditornot",
-            "doordash.doordash-github-doordash",
+            "example-tenant.example-github-a",
+            "example-tenant.example-github-b",
         ],
     )
     assert findings == []
@@ -41,7 +41,7 @@ def test_double_provider_suffix() -> None:
     findings = audit_clause(
         policy_uuid=None,
         policy_name="p",
-        clause=["user=timmy166@gitlab@gitlab", "gitlab"],
+        clause=["user=user@gitlab@gitlab", "gitlab"],
     )
     assert any(f.code == "double_provider_suffix" for f in findings)
 
@@ -50,7 +50,7 @@ def test_good_gitlab_clause_ok() -> None:
     findings = audit_clause(
         policy_uuid=None,
         policy_name="p",
-        clause=["user=timmy166@gitlab", "gitlab"],
+        clause=["user=user@gitlab", "gitlab"],
     )
     assert not any(f.severity == "critical" for f in findings)
 

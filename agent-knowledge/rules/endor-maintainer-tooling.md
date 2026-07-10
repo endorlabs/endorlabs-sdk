@@ -18,7 +18,7 @@ Repo-only guidance for hooks, guard scripts, and shared helpers. Not shipped in 
 | Hook wiring | [`.pre-commit-config.yaml`](../../.pre-commit-config.yaml) | Invoke entrypoints only — no inline shell policy |
 | Path normalization | [`endorlabs.utils.repo_paths`](../../src/endorlabs/utils/repo_paths.py) | POSIX repo-relative paths for hooks and refresh |
 | Git staged listing | [`devtools/precommit/git_staged.py`](../../devtools/precommit/git_staged.py) | `git diff --cached --name-only` wrapper |
-| Commit guards | [`devtools/precommit/pre_commit_guards.py`](../../devtools/precommit/pre_commit_guards.py) | Block `.env` / `.endorlabs-context/`; **Unreleased** reminder (stderr, exit 0); block emails / non-Endor URLs on staged *added* lines (`external-pii-urls`) |
+| Commit guards | [`devtools/precommit/pre_commit_guards.py`](../../devtools/precommit/pre_commit_guards.py) | Block `.env` / `.endorlabs-context/`; **Unreleased** reminder (stderr, exit 0); **fail** on emails / non-Endor URLs / estate `-n` flags (`external-pii-urls`) and estate literals (`portable-examples`) on staged checked-in paths |
 | Context refresh | [`src/endorlabs/context/_maintainer_refresh.py`](../../src/endorlabs/context/_maintainer_refresh.py) | Pre-commit bundle sync + local `.endorlabs-context/` refresh (paths via hook argv) |
 | Release gates | [`devtools/ship/verify_ship_artifacts.py`](../../devtools/ship/verify_ship_artifacts.py) | Regen drift; optional `## X.Y.Z` changelog at release (`--verify-changelog`) |
 | Secrets scan | gitleaks + detect-private-key | Content scan — complementary to path block |

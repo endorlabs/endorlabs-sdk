@@ -1,4 +1,7 @@
-"""Tests for reconciling legacy flat .endorlabs-context downloads."""
+"""Tests for reconciling legacy flat .endorlabs-context downloads.
+
+REMOVE_BY_0_7_0: drop with ``_reconcile_legacy_platform_downloads``.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +13,6 @@ from endorlabs.context._sync import _reconcile_legacy_platform_downloads, sync_o
 from endorlabs.context.paths import (
     OPENAPI_FILENAME,
     platform_openapi_path,
-    platform_user_docs_path,
 )
 
 
@@ -62,17 +64,3 @@ def test_sync_openapi_default_uses_platform_layout(tmp_path: Path, monkeypatch) 
     assert expected.is_file()
     assert not legacy.exists()
     assert json.loads(expected.read_text(encoding="utf-8")) == {"openapi": "3.0.0"}
-
-
-def test_reconcile_moves_legacy_user_docs(tmp_path: Path) -> None:
-    root = tmp_path / ".endorlabs-context"
-    root.mkdir()
-    legacy_docs = root / "user-docs"
-    legacy_docs.mkdir()
-    (legacy_docs / "index.md").write_text("# legacy", encoding="utf-8")
-    canonical = platform_user_docs_path(root)
-
-    _reconcile_legacy_platform_downloads(root)
-
-    assert not legacy_docs.exists()
-    assert (canonical / "index.md").read_text(encoding="utf-8") == "# legacy"

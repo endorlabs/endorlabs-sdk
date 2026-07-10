@@ -11,10 +11,11 @@ from __future__ import annotations
 
 import ast
 import re
+import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 
-from git_staged import staged_added_lines, staged_paths
+from git_staged import diff_added_lines, staged_added_lines, staged_paths
 
 BLOCKED_STAGED_PATHS = frozenset({".env"})
 BLOCKED_STAGED_PREFIXES = (".endorlabs-context/",)
@@ -51,19 +52,183 @@ _DEPRECATED_API_PATTERNS = (
     re.compile(r"ScanResult\.list_for_project"),
 )
 
-_PROJECT_UUID_FILTER = re.compile(
-    r"spec\.(?:importer_data\.)?project_uuid\s*=="
-)
+_PROJECT_UUID_FILTER = re.compile(r"spec\.(?:importer_data\.)?project_uuid\s*==")
 
-# High-confidence estate literals in agent/docs (warning-only).
+# High-confidence estate literals (fail on staged checked-in text paths).
 _HEX_UUID = re.compile(r"\b[0-9a-f]{24}\b", re.IGNORECASE)
 _GITHUB_ORG_REPO = re.compile(
-    r"https?://github\.com/(?!org(?:/|$)|example(?:/|$)|YOUR_|<)"
-    r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+"
+    r"https?://github\.com/"
+    r"(?P<org>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)",
+    re.IGNORECASE,
 )
+_GITHUB_ALLOW_ORGS = frozenset(
+    {
+        "endorlabs",
+        "org",
+        "example",
+        "your_org",
+        "your-org",
+        "semgrep",
+        "trailofbits",
+        "astral-sh",
+        "pre-commit",
+        "psf",
+        "pypa",
+        "pytest-dev",
+        "python",
+        "codespell-project",
+        "gitleaks",
+        "github",
+        "actions",
+        "dependabot",
+        "openai",
+        "anthropics",
+        "cursor",
+        "modelcontextprotocol",
+        "pycqa",
+        "pyca",
+        "owner",
+        "acme",
+        "o",
+        "a",
+        "b",
+        "yarpc",
+    }
+)
+# Multi-segment dotted paths that look like Endor namespaces, not public DNS
+# or Python import paths (endorlabs.*).
 _TENANT_PATH = re.compile(
-    r"\b(?!tenant\.namespace\b|tenant\.child\b|tenant\.leaf\b|tenant\.root\b)"
+    r"\b(?!tenant\.namespace\b|tenant\.child\b|tenant\.leaf\b|tenant\.root\b|"
+    r"endorlabs\b)"
     r"[a-z][a-z0-9-]{2,}\.[a-z][a-z0-9-]{2,}(?:\.[a-z0-9-]+)+\b"
+)
+_PUBLIC_DNS_TLDS = frozenset(
+    {
+        "com",
+        "org",
+        "net",
+        "io",
+        "ai",
+        "dev",
+        "app",
+        "cloud",
+        "co",
+        "uk",
+        "us",
+        "edu",
+        "gov",
+        "info",
+        "biz",
+        "xyz",
+    }
+)
+# Last segment looks like a filename extension, not a namespace leaf.
+_FILE_EXT_SEGMENTS = frozenset(
+    {
+        "json",
+        "yml",
+        "yaml",
+        "md",
+        "mdc",
+        "py",
+        "pyi",
+        "toml",
+        "txt",
+        "lock",
+        "svg",
+        "png",
+        "jpg",
+        "jpeg",
+        "gif",
+        "webp",
+        "html",
+        "css",
+        "js",
+        "ts",
+        "tsx",
+        "sh",
+        "ps1",
+        "bat",
+        "cfg",
+        "ini",
+        "rst",
+        "csv",
+        "xml",
+        "proto",
+        "whl",
+        "gz",
+        "zip",
+    }
+)
+# Intermediate segments that mark CI / schema / code / API field paths.
+_CODE_PATH_SEGMENTS = frozenset(
+    {
+        "outputs",
+        "result",
+        "results",
+        "changes",
+        "steps",
+        "needs",
+        "inputs",
+        "jobs",
+        "schema",
+        "swagger",
+        "workflow",
+        "workflows",
+        "github",
+        "actions",
+        "meta",
+        "spec",
+        "uuid",
+        "name",
+        "config",
+        "environment",
+        "parent",
+        "mkdir",
+        "joinpath",
+        "resolve",
+        "replace",
+        "split",
+        "strip",
+        "lower",
+        "upper",
+        "format",
+        "encode",
+        "decode",
+        "palette",
+        "foreground",
+        "background",
+        "stroke",
+        "tertiary",
+        "theme",
+        "args",
+        "logging",
+        "listen",
+        "collect",
+        "bounds",
+        "rule",
+        "output",
+        "path",
+        "paths",
+        "client",
+        "request",
+        "response",
+        "headers",
+        "status",
+        "error",
+        "errors",
+        "value",
+        "values",
+        "items",
+        "keys",
+        "data",
+        "json",
+        "text",
+        "read",
+        "write",
+        "open",
+        "close",
+    }
 )
 _PORTABLE_ALLOW_MARKERS = (
     "placeholder",
@@ -71,12 +236,61 @@ _PORTABLE_ALLOW_MARKERS = (
     "<namespace>",
     "<project-uuid>",
     "example.com",
+    "example-tenant",
     "tenant.namespace",
     "tenant.child",
     "org/repo",
 )
+# First segment of dotted tokens that are code/import paths, not namespaces.
+_TENANT_PATH_SKIP_ROOTS = frozenset(
+    {
+        "endorlabs",
+        "tests",
+        "test",
+        "src",
+        "docs",
+        "devtools",
+        "agent",
+        "workflows",
+        "unit",
+        "integration",
+        "github",
+        "actions",
+        "cursor",
+        "pre",
+        "py",
+        "uv",
+        "os",
+        "sys",
+        "typing",
+        "collections",
+        "concurrent",
+        "importlib",
+        "pathlib",
+        "pydantic",
+        "pytest",
+        "httpx",
+        "urllib",
+        "email",
+        "steps",
+        "needs",
+        "skill",
+        "changelog",
+        "openapiv2",
+        "detect",
+        "verifytypes",
+        "resolve",
+        "jobs",
+        "inputs",
+        "tool",
+        "project",
+        "hatch",
+        "ruff",
+        "lint",
+    }
+)
 
-# --- External PII / non-Endor URL guard (staged added lines) ---
+# --- Security content: emails, non-Endor URLs, namespace CLI flags (added lines) ---
 
 _EMAIL_RE = re.compile(
     r"(?<![A-Za-z0-9._%+\-])"
@@ -88,6 +302,20 @@ _URL_RE = re.compile(
     r"https?://(?:[A-Za-z0-9\-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:/[^\s<>\"')\]]*)?",
     re.IGNORECASE,
 )
+_NAMESPACE_FLAG_RE = re.compile(
+    r"(?:^|[\s`\"'(=])(?:-n|--namespace|--tenant|--target-tenant)"
+    r"(?:[\s=]+|[\s]*=[\s]*)[\"']?"
+    r"("
+    r"<[^>\s]+>"
+    r"|"
+    r"\{[A-Za-z_][A-Za-z0-9_]*\}"
+    r"|"
+    r"\$[A-Za-z_][A-Za-z0-9_]*"
+    r"|"
+    r"[A-Za-z][A-Za-z0-9_.-]{0,127}"
+    r")"
+    r"(?![A-Za-z0-9_.-])",
+)
 
 # Domains allowed in email addresses (placeholders + Endor Labs).
 _EMAIL_ALLOW_DOMAINS = frozenset(
@@ -96,11 +324,12 @@ _EMAIL_ALLOW_DOMAINS = frozenset(
         "example.org",
         "example.net",
         "endorlabs.com",
+        "endor.ai",
     }
 )
 
 # Host suffixes owned by Endor Labs (URL allow).
-_ENDOR_URL_HOST_SUFFIXES = ("endorlabs.com",)
+_ENDOR_URL_HOST_SUFFIXES = ("endorlabs.com", "endor.ai")
 
 # Path prefixes on github.com that are Endor-owned.
 _ENDOR_GITHUB_PREFIXES = ("endorlabs/",)
@@ -120,12 +349,88 @@ _PLACEHOLDER_GITHUB_PREFIXES = (
     "YOUR_ORG/",
 )
 
-# Skip generated / binary-ish paths for the PII/URL scan.
-_PII_URL_SKIP_PREFIXES = (
-    "src/endorlabs/generated/",
-    "src/endorlabs/agent_knowledge/skills/",  # mirrored; authoring is scanned
+# Allowed CLI / kwarg namespace tokens (placeholders + CI defaults).
+# Bare customer-looking names are rejected; prefer example-* or <angle> forms.
+_NAMESPACE_FLAG_ALLOW = frozenset(
+    {
+        "example",
+        "example-tenant",
+        "example-namespace",
+        "demo",
+        "test",
+        "local",
+        "oss",
+        "endor-admin",
+        "auri",
+        "your-tenant",
+        "your_tenant",
+        "YOUR_TENANT",
+        "NAMESPACE",
+        "NS",
+        "namespace",
+        "namespace_scope",
+        "project-namespace",
+        "customer-namespace",
+    }
 )
-_PII_URL_SKIP_SUFFIXES = (
+# Words that follow ``-n`` / ``--tenant`` in English prose, not namespace values.
+_NAMESPACE_FLAG_STOPWORDS = frozenset(
+    {
+        "or",
+        "and",
+        "still",
+        "for",
+        "with",
+        "the",
+        "a",
+        "an",
+        "to",
+        "in",
+        "on",
+        "of",
+        "is",
+        "as",
+        "if",
+        "when",
+        "from",
+        "into",
+        "via",
+        "per",
+        "only",
+        "also",
+        "not",
+        "required",
+        "optional",
+        "default",
+        "unset",
+        "flag",
+        "flags",
+        "value",
+        "values",
+        "here",
+        "below",
+        "above",
+        "see",
+        "use",
+        "using",
+        "pass",
+        "set",
+        "must",
+        "may",
+        "can",
+        "should",
+        "placeholders",
+        "placeholder",
+    }
+)
+
+# Skip generated / binary-ish paths for security content scans.
+_SECURITY_SKIP_PREFIXES = (
+    "src/endorlabs/generated/",
+    # Mirrored; authoring under agent-knowledge/ is scanned for added lines.
+    "src/endorlabs/agent_knowledge/",
+)
+_SECURITY_SKIP_SUFFIXES = (
     ".lock",
     ".png",
     ".jpg",
@@ -226,7 +531,7 @@ def _read_staged_text(path: str) -> str | None:
         return None
     try:
         return full.read_text(encoding="utf-8")
-    except OSError:
+    except (OSError, UnicodeDecodeError):
         return None
 
 
@@ -300,9 +605,7 @@ def check_layer_imports(*, paths: list[str] | None = None) -> int:
         ):
             violations.append(f"{normalized}: imports workflows.estate")
 
-        if any(
-            mod == "devtools" or mod.startswith("devtools.") for mod in modules
-        ):
+        if any(mod == "devtools" or mod.startswith("devtools.") for mod in modules):
             violations.append(f"{normalized}: imports devtools")
 
         if normalized.startswith(_TOOLS_PREFIX):
@@ -438,37 +741,118 @@ def check_accessor_nudge(
     return 1 if fail else 0
 
 
+def _is_security_scan_path(path: str) -> bool:
+    """True for checked-in text paths subject to PII / estate guards."""
+    normalized = _normalize_path(path)
+    if any(normalized.startswith(prefix) for prefix in _SECURITY_SKIP_PREFIXES):
+        return False
+    lower = normalized.lower()
+    if any(lower.endswith(suffix) for suffix in _SECURITY_SKIP_SUFFIXES):
+        return False
+    return True
+
+
+def _is_estate_literal_scan_path(path: str) -> bool:
+    """Staged text paths where dotted tenant / customer GitHub URLs must fail."""
+    if not _is_security_scan_path(path):
+        return False
+    normalized = _normalize_path(path)
+    if normalized == CHANGELOG_PATH:
+        # Historical release notes may mention withdrawn versions; still scan
+        # for new estate literals on added lines via external-pii-urls.
+        return True
+    return True
+
+
+def _looks_like_public_dns(token: str) -> bool:
+    """Return True when a dotted token ends in a common public DNS TLD."""
+    last = token.rsplit(".", 1)[-1].lower()
+    return last in _PUBLIC_DNS_TLDS
+
+
+def _looks_like_code_or_file_token(token: str) -> bool:
+    """Return True when a dotted token is a filename, CI/schema, or code/API path."""
+    segments = token.lower().split(".")
+    last = segments[-1]
+    if last in _FILE_EXT_SEGMENTS or last in _PUBLIC_DNS_TLDS:
+        return True
+    if any(seg in _CODE_PATH_SEGMENTS for seg in segments):
+        return True
+    # Real estate namespaces almost always include a hyphenated segment
+    # (e.g. example-tenant.example-github-team). Pure dotted ids are code/API.
+    return "-" not in token
+
+
+def _is_disallowed_github_url(line: str) -> bool:
+    """Return True when *line* contains a non-allowlisted github.com org/repo URL."""
+    for match in _GITHUB_ORG_REPO.finditer(line):
+        org = match.group("org").lower()
+        if org.startswith("your_"):
+            continue
+        if org in _GITHUB_ALLOW_ORGS:
+            continue
+        return True
+    return False
+
+
+def _is_docs_or_agent_path(path: str) -> bool:
+    normalized = _normalize_path(path)
+    return normalized.startswith(
+        ("agent-knowledge/", ".cursor/rules/", "docs/", "AGENTS.md", "CONTRIBUTORS.md")
+    )
+
+
 def check_portable_examples(*, paths: list[str] | None = None) -> int:
-    """Warn on high-confidence estate literals in staged agent/docs content."""
+    """Fail on high-confidence estate literals in staged checked-in content.
+
+    Scans all staged text paths (not only agent/docs). UUID literals are only
+    enforced under docs/agent-knowledge (unit fixtures use opaque 24-hex ids).
+    """
     candidates = paths if paths is not None else staged_paths()
     hits: list[str] = []
     for path in candidates:
-        if not _is_deprecated_api_scan_path(path):
+        if not _is_estate_literal_scan_path(path):
+            continue
+        # Guard unit tests intentionally embed disallowed literals.
+        if path.endswith("test_pre_commit_guards.py"):
             continue
         source = _read_staged_text(path)
         if source is None:
             continue
+        scan_uuid = _is_docs_or_agent_path(path)
         for line_no, line in enumerate(source.splitlines(), start=1):
             lower = line.lower()
             if any(marker in lower for marker in _PORTABLE_ALLOW_MARKERS):
                 continue
-            if (
-                _HEX_UUID.search(line)
-                or _GITHUB_ORG_REPO.search(line)
-                or _TENANT_PATH.search(line)
-            ):
-                hits.append(f"{path}:{line_no}")
+            if _is_disallowed_github_url(line):
+                hits.append(f"{path}:{line_no}: github-url")
+                continue
+            for match in _TENANT_PATH.finditer(line):
+                token = match.group(0)
+                if _looks_like_public_dns(token) or _looks_like_code_or_file_token(
+                    token
+                ):
+                    continue
+                if token.startswith("example-tenant."):
+                    continue
+                root = token.split(".", 1)[0].lower()
+                if root in _TENANT_PATH_SKIP_ROOTS:
+                    continue
+                hits.append(f"{path}:{line_no}: tenant-path {token}")
+            if scan_uuid and _HEX_UUID.search(line):
+                hits.append(f"{path}:{line_no}: uuid")
     if not hits:
         return 0
     print(
-        "warning: possible estate identifiers in portable agent/docs content:\n"
-        + "\n".join(f"  - {item}" for item in hits[:20])
-        + (f"\n  - … and {len(hits) - 20} more" if len(hits) > 20 else "")
-        + "\n\nPrefer placeholders (<tenant>, <project-uuid>, "
-        "https://github.com/org/repo). See endor-portable-examples.",
+        "error: possible estate identifiers in staged checked-in content:\n"
+        + "\n".join(f"  - {item}" for item in hits[:30])
+        + (f"\n  - … and {len(hits) - 30} more" if len(hits) > 30 else "")
+        + "\n\nPrefer placeholders (<tenant>, example-tenant.child, "
+        "https://github.com/org/repo, user@endor.ai). "
+        "See endor-portable-examples.",
         file=sys.stderr,
     )
-    return 0
+    return 1
 
 
 def check_agent_knowledge_sync(*, paths: list[str] | None = None) -> int:
@@ -564,21 +948,53 @@ def is_allowed_url(url: str) -> bool:
     return False
 
 
-def _is_pii_url_scan_path(path: str) -> bool:
-    normalized = _normalize_path(path)
-    if any(normalized.startswith(prefix) for prefix in _PII_URL_SKIP_PREFIXES):
-        return False
-    lower = normalized.lower()
-    return not any(lower.endswith(suffix) for suffix in _PII_URL_SKIP_SUFFIXES)
+def is_allowed_namespace_token(token: str) -> bool:
+    """Return True when a ``-n`` / ``--namespace`` value is an approved placeholder."""
+    if token.startswith("<") and token.endswith(">"):
+        return True
+    if token.startswith("{") and token.endswith("}"):
+        return True  # f-string / format field (runtime value)
+    if token.startswith("$"):
+        return True  # shell env var
+    if token.lower() in _NAMESPACE_FLAG_STOPWORDS:
+        return True  # English prose after the flag (not a value)
+    if token in _NAMESPACE_FLAG_ALLOW:
+        return True
+    if token.upper().startswith("YOUR_"):
+        return True
+    lower = token.lower()
+    if lower.startswith("example"):
+        return True
+    # Angle-style words used as bare placeholders in docs (legacy).
+    if lower in {"tenant", "namespace", "namespace_scope", "project-namespace"}:
+        return True
+    # Short ALLCAPS schema placeholders (``--namespace NS``).
+    if token.isupper() and 1 <= len(token) <= 16 and token.isalpha():
+        return True
+    return False
+
+
+def iter_namespace_flag_hits(path: str, text: str) -> list[str]:
+    """Return ``path:lineno: namespace-flag token`` hits for disallowed values."""
+    hits: list[str] = []
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        for match in _NAMESPACE_FLAG_RE.finditer(line):
+            token = match.group(1)
+            if not is_allowed_namespace_token(token):
+                hits.append(f"{path}:{line_no}: namespace-flag {token}")
+    return hits
 
 
 def find_external_pii_url_hits(
     lines: list[tuple[str, int, str]],
 ) -> list[str]:
-    """Return ``path:lineno: kind match`` hits for disallowed emails/URLs."""
+    """Return ``path:lineno: kind match`` hits for disallowed emails/URLs/flags."""
     hits: list[str] = []
     for path, line_no, text in lines:
-        if not _is_pii_url_scan_path(path):
+        if not _is_security_scan_path(path):
+            continue
+        # Guard unit tests intentionally embed disallowed literals.
+        if path.endswith("test_pre_commit_guards.py"):
             continue
         for match in _EMAIL_RE.finditer(text):
             addr = match.group(0)
@@ -588,36 +1004,98 @@ def find_external_pii_url_hits(
             url = match.group(0).rstrip(".,;:")
             if not is_allowed_url(url):
                 hits.append(f"{path}:{line_no}: url {url}")
+        for match in _NAMESPACE_FLAG_RE.finditer(text):
+            token = match.group(1)
+            if not is_allowed_namespace_token(token):
+                hits.append(f"{path}:{line_no}: namespace-flag {token}")
     return hits
+
+
+def check_shipped_namespace_flags(*, root: Path | None = None) -> int:
+    """Fail when shipped ``src/endorlabs`` content has non-placeholder ``-n`` values.
+
+    Scans the full tree (not only staged diffs). Generated models are skipped.
+    Authoring under ``agent-knowledge/`` is covered by staged ``external-pii-urls``.
+    """
+    base = root or _REPO_ROOT
+    shipped = base / "src" / "endorlabs"
+    if not shipped.is_dir():
+        return 0
+    hits: list[str] = []
+    for path in sorted(shipped.rglob("*")):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(base).as_posix()
+        if "/generated/" in rel:
+            continue
+        lower = rel.lower()
+        if any(lower.endswith(suffix) for suffix in _SECURITY_SKIP_SUFFIXES):
+            continue
+        source = path.read_text(encoding="utf-8", errors="replace")
+        hits.extend(iter_namespace_flag_hits(rel, source))
+    if not hits:
+        return 0
+    print(
+        "error: shipped src/endorlabs has non-placeholder -n/--namespace/--tenant:\n"
+        + "\n".join(f"  - {item}" for item in hits[:40])
+        + (f"\n  - … and {len(hits) - 40} more" if len(hits) > 40 else "")
+        + "\n\nUse placeholders only (-n example-tenant, -n <tenant>, "
+        "-n {tenant}, -n $ENDOR_NAMESPACE). See endor-portable-examples.",
+        file=sys.stderr,
+    )
+    return 1
+
+
+def _has_git_head() -> bool:
+    """Return True when HEAD resolves (false on an unborn/orphan branch)."""
+    result = subprocess.run(
+        ["git", "rev-parse", "-q", "--verify", "HEAD"],
+        check=False,
+        capture_output=True,
+        cwd=_REPO_ROOT,
+    )
+    return result.returncode == 0
 
 
 def check_external_pii_urls(
     *,
     lines: list[tuple[str, int, str]] | None = None,
 ) -> int:
-    """Fail when staged *added* lines introduce emails or non-Endor URLs.
+    """Fail when staged *added* lines introduce emails, non-Endor URLs, or estate flags.
 
-    Allowed emails: ``@example.com`` / ``@example.org`` / ``@example.net`` /
-    ``@endorlabs.com``. Allowed URLs: ``*.endorlabs.com``,
-    ``github.com/endorlabs/…``, and placeholder hosts (``example.com``,
-    ``github.com/org/…``). Scan added lines only so untouched historical
-    third-party doc links are not re-flagged; editing those lines re-checks them.
+    Allowed emails: ``@example.*`` / ``@endorlabs.com`` / ``@endor.ai``.
+    Allowed URLs: ``*.endorlabs.com``, ``*.endor.ai``, ``github.com/endorlabs/…``,
+    and placeholder hosts. Namespace CLI tokens must be placeholders
+    (``example-tenant``, ``<tenant>``, ``auri``, ``oss``, …). Applies to all
+    checked-in paths (skips generated / binary). Added lines only so untouched
+    historical third-party links are not re-flagged; editing those lines
+    re-checks them.
+
+    On an unborn/orphan branch (no ``HEAD`` yet), skip the added-line email/URL
+    scan — every file looks newly added and third-party docs links would false
+    fail. Always still runs :func:`check_shipped_namespace_flags`.
     """
-    candidates = lines if lines is not None else staged_added_lines()
-    hits = find_external_pii_url_hits(candidates)
-    if not hits:
-        return 0
-    print(
-        "error: staged added lines introduce email or non-Endor Labs URL:\n"
-        + "\n".join(f"  - {item}" for item in hits[:30])
-        + (f"\n  - … and {len(hits) - 30} more" if len(hits) > 30 else "")
-        + "\n\nUse placeholders (user@example.com, https://example.com, "
-        "https://github.com/org/repo) or Endor Labs URLs "
-        "(*.endorlabs.com, github.com/endorlabs/…). "
-        "Do not commit customer emails or estate URLs.",
-        file=sys.stderr,
-    )
-    return 1
+    rc = 0
+    scan_added = lines is not None or _has_git_head()
+    if scan_added:
+        candidates = lines if lines is not None else staged_added_lines()
+        hits = find_external_pii_url_hits(candidates)
+        if hits:
+            print(
+                "error: staged added lines introduce email, non-Endor URL, "
+                "or estate namespace flag:\n"
+                + "\n".join(f"  - {item}" for item in hits[:30])
+                + (f"\n  - … and {len(hits) - 30} more" if len(hits) > 30 else "")
+                + "\n\nUse placeholders (user@endor.ai, user@example.com, "
+                "https://example.com, "
+                "https://github.com/org/repo, -n example-tenant) or Endor Labs "
+                "URLs (*.endorlabs.com, *.endor.ai, github.com/endorlabs/…). "
+                "Do not commit customer emails, estate URLs, or customer "
+                "``-n`` tenants.",
+                file=sys.stderr,
+            )
+            rc = 1
+    return check_shipped_namespace_flags() or rc
 
 
 def check_context_root_literals(*, paths: list[str] | None = None) -> int:
@@ -657,13 +1135,24 @@ def check_context_root_literals(*, paths: list[str] | None = None) -> int:
     return 1
 
 
+def check_security_content_diff(base: str, head: str = "HEAD") -> int:
+    """CI entry: scan added lines + estate literals on paths touched since *base*."""
+    lines = diff_added_lines(base, head)
+    rc = check_external_pii_urls(lines=lines)
+    paths = sorted({path for path, _, _ in lines})
+    if paths:
+        rc = check_portable_examples(paths=paths) or rc
+    return rc
+
+
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
     usage = (
         "usage: pre_commit_guards.py "
         "{blocked-paths|changelog-reminder|layer-imports|bounds-shim|"
         "deprecated-api-strings|accessor-nudge|portable-examples|"
-        "agent-knowledge-sync|context-root-literals|external-pii-urls}"
+        "agent-knowledge-sync|context-root-literals|external-pii-urls|"
+        "shipped-namespace-flags|security-content-diff <base> [head]}"
     )
     if not args or args[0] in {"-h", "--help"}:
         print(usage, file=sys.stderr)
@@ -690,6 +1179,14 @@ def main(argv: list[str] | None = None) -> int:
         return check_context_root_literals()
     if command == "external-pii-urls":
         return check_external_pii_urls()
+    if command == "shipped-namespace-flags":
+        return check_shipped_namespace_flags()
+    if command == "security-content-diff":
+        if len(args) < 2:
+            print(usage, file=sys.stderr)
+            return 2
+        head = args[2] if len(args) > 2 else "HEAD"
+        return check_security_content_diff(args[1], head)
     print(f"error: unknown command {command!r}", file=sys.stderr)
     return 2
 

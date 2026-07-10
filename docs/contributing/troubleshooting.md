@@ -5,7 +5,7 @@ and integration tests. Shipped agent playbook:
 [endor-troubleshoot-sdk](../../agent-knowledge/skills/endor-troubleshoot-sdk/SKILL.md)
 and [validation-reference.md](../../agent-knowledge/skills/endor-troubleshoot-sdk/validation-reference.md).
 
-Resolved-case narratives: local docs under `.endorlabs-context/platform/user-docs/` and repo issues.
+Resolved-case narratives: Docs MCP / online docs and repo issues.
 
 ## Platform insight: path namespace vs body UUID
 
@@ -66,4 +66,4 @@ See [integration-resource-tests.md](integration-resource-tests.md) for canonical
 
 - OpenAPI/spec path and list/update patterns: [contracts.md](../contracts.md).
 - Agent validation playbook: [validation-reference.md](../../agent-knowledge/skills/endor-troubleshoot-sdk/validation-reference.md).
-- For resolved-case narratives (wrong URL pattern, update_mask, tags): use local docs snapshots under `.endorlabs-context/platform/user-docs/` or repo issues.
+- For resolved-case narratives (wrong URL pattern, update_mask, tags): use Docs MCP or online docs, or repo issues.

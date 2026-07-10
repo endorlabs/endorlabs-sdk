@@ -49,4 +49,4 @@ Findings are per **RepositoryVersion** (branch). The same issue may appear once 
 - [contracts.md](../contracts.md) — traverse, mask, project-scoped namespace
 - [reference/resources.md](../reference/resources.md)
 
-Runnable patterns: `tests/`; platform docs under `.endorlabs-context/platform/user-docs/` when materialized.
+Runnable patterns: `tests/`; product docs via Docs MCP when configured.

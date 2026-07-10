@@ -1,9 +1,12 @@
 ---
 name: endor-troubleshoot-authlog
-description: Investigate tenant SSO/login issues using AuthenticationLog, AuthorizationPolicy,
-  and optional AuditLog. Use when correlating IdP claims with Endor policy mapping,
-  "no authorized tenant" symptoms, or exporting structured, flow-agnostic auth investigation
-  JSON.
+description: 'Use when investigating tenant SSO/login issues with AuthenticationLog,
+
+  AuthorizationPolicy, and optional AuditLog—correlating IdP claims with Endor
+
+  policy mapping, "no authorized tenant" symptoms, or exporting structured
+
+  flow-agnostic auth investigation JSON.'
 ---
 
 # Troubleshoot authentication logs and authorization policies
@@ -11,9 +14,6 @@ description: Investigate tenant SSO/login issues using AuthenticationLog, Author
 Systematic workflow for **Endor-side** evidence: what the platform recorded at login
 (`AuthenticationLog`) versus how access is configured (`AuthorizationPolicy`).
 
-## Prerequisites
-
-- **Credentials:** `ENDOR_TOKEN` or API key pair in `.env`, e.g.
   `uv run --env-file .env python ...` (browser refresh: `uv run endor-auth refresh --method sso -n <tenant>`).
 - **Auth setup:** [endor-auth-setup](../endor-auth-setup/SKILL.md) — `uv run endor-auth check --tenant <tenant>`.
 - **Local context (optional):** API spec at `.endorlabs-context/platform/openapi/openapiv2.swagger.json`;
@@ -70,7 +70,8 @@ client.close()
 ```
 
 Defaults include **failed** logins and **non-interactive** URIs (broader than login-count).
-For login **counts** only, use [endor-auth-login-count](../endor-auth-login-count/SKILL.md)
+For login **counts** only, see
+[endor-workflow-reports](../endor-workflow-reports/SKILL.md)
 (`list_groups` on `spec.claims` — server-side aggregation).
 
 ### AuthorizationPolicy
@@ -107,8 +108,6 @@ SSO claim-to-namespace mapping: [endor-sso-integration-validation-troubleshootin
 | Need | Skill |
 | ---- | ----- |
 | Credential setup / refresh | [endor-auth-setup](../endor-auth-setup/SKILL.md) |
-| AuthPolicy claim/namespace form audit | [endor-audit-authorization-policies](../endor-audit-authorization-policies/SKILL.md) |
-| Login activity CSV (server `list_groups`) | [endor-auth-login-count](../endor-auth-login-count/SKILL.md) |
 | SSO setup / claim-to-namespace spot-check | [endor-sso-integration-validation-troubleshooting](../endor-sso-integration-validation-troubleshooting/SKILL.md) |
 | Broader SDK debugging | [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md) |
 | Contributing | `docs/contributing/troubleshooting.md` |

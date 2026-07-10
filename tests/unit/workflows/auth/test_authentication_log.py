@@ -88,7 +88,7 @@ def test_is_api_key_noise_detects_automation_paths() -> None:
 
 def test_is_sso_login_uri_detects_interactive_callbacks() -> None:
     assert is_sso_login_uri("/v1/auth/google/callback?state=abc")
-    assert is_sso_login_uri("/v1/auth/saml-callback?tenant=cyera")
+    assert is_sso_login_uri("/v1/auth/saml-callback?tenant=example-tenant")
     assert not is_sso_login_uri("/v1/auth/api-key")
 
 
@@ -339,14 +339,14 @@ def test_list_auth_logs_uses_tenant_list_path_defaults() -> None:
     rows = list_auth_logs(
         client,
         days=30,
-        namespace="cyera",
+        namespace="example-tenant",
         traverse=False,
     )
     assert len(rows) == 1
     assert rows[0]["claims"] == ["email=alice@example.com"]
 
     _, kwargs = client.AuthenticationLog.list.call_args
-    assert kwargs["namespace"] == "cyera"
+    assert kwargs["namespace"] == "example-tenant"
     assert kwargs["traverse"] is False
     assert "meta.create_time>=date(" in kwargs["filter"]
     assert "spec.success!=false" in kwargs["filter"]

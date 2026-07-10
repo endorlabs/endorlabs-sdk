@@ -165,7 +165,6 @@ class TestInit:
         assert status.agent_knowledge_path == output_dir / "sdk"
         assert status.context_json_path == output_dir / "context.json"
         assert status.openapi_path is None
-        assert status.user_docs_path is None
 
     def test_init_openapi_only(self, tmp_path: Path) -> None:
         """Test init with only OpenAPI download."""
@@ -177,7 +176,6 @@ class TestInit:
         status = init(
             output_dir=output_dir,
             include_openapi=True,
-            include_user_docs=False,
             include_agent_knowledge=False,
             client=mock_client,
         )
@@ -187,8 +185,6 @@ class TestInit:
             output_dir / "platform" / "openapi" / "openapiv2.swagger.json"
         )
         assert status.openapi_path == status.platform_openapi_path
-        assert status.user_docs_path is None
-        assert status.user_docs_count == 0
         assert status.agent_knowledge_path is None
         assert status.context_json_path == output_dir / "context.json"
         assert status.downloaded_at is not None
@@ -205,7 +201,6 @@ class TestInit:
             init(
                 output_dir=output_dir,
                 include_openapi=True,
-                include_user_docs=False,
                 include_agent_knowledge=False,
                 client=mock_client,
             )
@@ -226,7 +221,6 @@ class TestInit:
         status = init(
             output_dir=output_dir,
             include_openapi=True,
-            include_user_docs=False,
             include_agent_knowledge=False,
             client=mock_client,
         )
@@ -249,7 +243,6 @@ class TestInit:
         status = init(
             output_dir=output_dir,
             include_openapi=True,
-            include_user_docs=False,
             force=True,
             include_agent_knowledge=False,
             client=mock_client,
@@ -274,7 +267,6 @@ class TestInit:
         status = init(
             output_dir=output_dir,
             include_openapi=True,
-            include_user_docs=False,
             force=False,
             include_agent_knowledge=False,
             client=mock_client,
@@ -288,31 +280,8 @@ class TestInit:
         # API should not be called
         mock_client.get.assert_not_called()
 
-    def test_init_user_docs_only_skips_api_client_creation(
-        self, tmp_path: Path
-    ) -> None:
-        """User-doc sync should not instantiate APIClient when OpenAPI is disabled."""
-        from endorlabs.context._sync import init
-
-        output_dir = tmp_path / ".endor-context"
-        with (
-            patch("endorlabs.api_client.APIClient") as mock_cls,
-            patch("endorlabs.context._sync.sync_user_docs", return_value=7),
-        ):
-            status = init(
-                output_dir=output_dir,
-                include_openapi=False,
-                include_user_docs=True,
-                include_agent_knowledge=False,
-            )
-
-        mock_cls.assert_not_called()
-        assert status.openapi_path is None
-        assert status.user_docs_path == output_dir / "platform" / "user-docs"
-        assert status.user_docs_count == 7
-
     def test_init_skills_only_uses_wheel_source(self, tmp_path: Path) -> None:
-        """Skill-only sync uses wheel skills when sdk/ is not materialized."""
+        """Skill-only sync uses wheel skills when sdk/ is absent."""
         from endorlabs.agent_knowledge import agent_knowledge_dir
         from endorlabs.context._sync import init
 
@@ -328,7 +297,6 @@ class TestInit:
             status = init(
                 output_dir=output_dir,
                 include_openapi=False,
-                include_user_docs=False,
                 include_agent_knowledge=False,
                 sync_skills="cursor",
             )
@@ -337,7 +305,6 @@ class TestInit:
         assert output_dir.exists()
         assert not (output_dir / "sdk" / "INDEX.md").exists()
         assert status.openapi_path is None
-        assert status.user_docs_path is None
         assert status.synced_skill_paths == {"cursor": mirrored_path}
         mock_sync.assert_called_once()
         assert mock_sync.call_args.kwargs["source_dir"] == (
@@ -389,43 +356,6 @@ class TestTopLevelInit:
         assert hasattr(endorlabs, "agent_knowledge_manifest")
 
 
-class TestContextDepsCheck:
-    """Test context dependency checking."""
-
-    def test_import_docs_deps_raises_when_missing(self) -> None:
-        """Test _import_docs_deps raises ImportError when deps missing."""
-        from endorlabs.context import _sync
-
-        # Mock the import to fail
-        with (
-            patch.dict("sys.modules", {"bs4": None}),
-            patch.object(
-                _sync,
-                "_import_docs_deps",
-                side_effect=ImportError(
-                    "Context dependencies not installed. "
-                    "Install with: pip install endorlabs[docs]"
-                ),
-            ),
-            pytest.raises(ImportError, match="Context dependencies not installed"),
-        ):
-            _sync._import_docs_deps()
-
-    def test_import_docs_deps_returns_deps_when_installed(self) -> None:
-        """Test _import_docs_deps returns deps when installed."""
-        pytest.importorskip(
-            "bs4", reason="beautifulsoup4 not installed (context extra)"
-        )
-        from endorlabs.context import _sync
-
-        # Should return a tuple of (BeautifulSoup, md)
-        result = _sync._import_docs_deps()
-        assert isinstance(result, tuple)
-        assert len(result) == 2
-        # First element should be BeautifulSoup class
-        assert result[0].__name__ == "BeautifulSoup"
-
-
 class TestContextModule:
     """Test context module exports."""
 
@@ -435,7 +365,6 @@ class TestContextModule:
 
         assert hasattr(context, "init")
         assert hasattr(context, "sync_openapi")
-        assert hasattr(context, "sync_user_docs")
         assert hasattr(context, "InitStatus")
 
     def test_context_init_status_importable(self) -> None:
@@ -443,41 +372,3 @@ class TestContextModule:
         from endorlabs.context import InitStatus
 
         assert InitStatus is not None
-
-
-class TestDocsHashManifest:
-    """Test docs content-hash manifest helpers."""
-
-    def test_write_and_load_hash_manifest_round_trip(self, tmp_path: Path) -> None:
-        """Manifest should preserve file -> hash entries."""
-        from endorlabs.context._sync import _load_hash_manifest, _write_hash_manifest
-
-        manifest = tmp_path / "_content-hashes.md"
-        hashes = {
-            "index.md": "a" * 64,
-            "scan-sast.md": "b" * 64,
-        }
-        urls = {
-            "index.md": "https://docs.endorlabs.com/",
-            "scan-sast.md": "https://docs.endorlabs.com/scan/sast/",
-        }
-        _write_hash_manifest(
-            manifest,
-            hashes_by_file=hashes,
-            urls_by_file=urls,
-        )
-
-        loaded = _load_hash_manifest(manifest)
-        assert loaded == hashes
-
-    def test_extract_markdown_body_removes_frontmatter(self, tmp_path: Path) -> None:
-        """Body extraction should remove YAML frontmatter wrapper."""
-        from endorlabs.context._sync import _extract_markdown_body
-
-        md_file = tmp_path / "sample.md"
-        md_file.write_text(
-            "---\nurl: https://docs.endorlabs.com/\n---\n\n# Heading\nBody\n",
-            encoding="utf-8",
-        )
-        body = _extract_markdown_body(md_file)
-        assert body == "# Heading\nBody\n"

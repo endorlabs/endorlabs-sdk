@@ -119,16 +119,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             status = endorlabs.init(
                 output_dir=CONTEXT_DIR,
                 include_openapi=include_openapi,
-                include_user_docs=True,
                 include_agent_knowledge=True,
                 force=True,
                 sync_skills="none",
             )
             logger.info(
-                "Refreshed local context at %s (%d docs%s).",
-                status.user_docs_path or CONTEXT_DIR,
-                status.user_docs_count,
-                " + OpenAPI" if status.openapi_path is not None else "",
+                "Refreshed local context at %s%s.",
+                CONTEXT_DIR,
+                " (OpenAPI)" if status.openapi_path is not None else "",
             )
         return 0
     except Exception as exc:

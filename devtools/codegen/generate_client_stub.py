@@ -71,7 +71,7 @@ RESOURCE_DESCRIPTION_OVERLAY_PATH = (
 )
 
 # ---------------------------------------------------------------------------
-# Resource descriptions — validated from OpenAPI spec + local user docs
+# Resource descriptions — validated from OpenAPI spec + product docs
 # ---------------------------------------------------------------------------
 RESOURCE_DESCRIPTIONS: dict[str, str] = {}
 

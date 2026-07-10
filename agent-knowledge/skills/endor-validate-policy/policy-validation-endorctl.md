@@ -42,4 +42,6 @@ It does **not** POST to `/policy/validate`. Therefore:
 | 128 | Valid policy, one or more matches |
 | 18 | Policy evaluation error |
 
-See `.endorlabs-context/platform/user-docs/developers-api/cli/commands/validate/policy.md`.
+See Docs MCP (search validate policy) or
+https://docs.endorlabs.com/developers-api/cli/commands/validate/policy
+([Docs MCP setup](https://docs.endorlabs.com/introduction/docs-mcp-server)).

@@ -1,9 +1,13 @@
 ---
 name: endor-route-estate-queries
-description: Routes estate-scale data pulls between Query graph joins and facade list/count/shard
-  patterns after bounded topology discovery. Use when choosing how to fetch counts,
-  aggregates, or validated joins across many projects. Not for single-project RCA
-  — hand off when full row export is needed without a validated Query join.
+description: 'Use when routing estate-scale data pulls between Query graph joins and
+  facade
+
+  list/count/shard patterns after bounded topology discovery—choosing how to fetch
+
+  counts, aggregates, or validated joins across many projects. Not for single-project
+
+  RCA; hand off when full row export is needed without a validated Query join.'
 ---
 
 # Route estate queries (Query vs facade)

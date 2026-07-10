@@ -81,4 +81,4 @@ uv run --env-file .env python -m endorlabs.workflows.estate.analyze.project_map.
 ## Documentation hops
 
 - OpenAPI: `.endorlabs-context/platform/openapi/openapiv2.swagger.json`
-- Online: [https://docs.endorlabs.com/llms.txt](https://docs.endorlabs.com/llms.txt)
+- Product docs: Docs MCP (`https://docs.endorlabs.com/mcp` — [setup](https://docs.endorlabs.com/introduction/docs-mcp-server))

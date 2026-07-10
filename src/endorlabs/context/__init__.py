@@ -1,12 +1,11 @@
 """Context bootstrap for Endor Labs agentic workflows.
 
 By default ``init()`` materializes agent knowledge under ``sdk/``. Use explicit flags
-to download platform context (OpenAPI spec and user documentation) or mirror skills
-into IDE discovery directories.
+to download the OpenAPI spec or mirror skills into IDE discovery directories.
 
-Optional dependencies for user-docs sync::
-
-    pip install endorlabs[docs]
+Product user documentation uses the Docs MCP server
+(``https://docs.endorlabs.com/mcp``) — see
+https://docs.endorlabs.com/introduction/docs-mcp-server
 
 Example::
 
@@ -27,7 +26,6 @@ from .paths import (
     DEFAULT_CONTEXT_DIR,
     default_context_dir,
     platform_openapi_path,
-    platform_user_docs_path,
 )
 
 if TYPE_CHECKING:
@@ -54,9 +52,7 @@ def _get_sync() -> Any:
 def init(
     output_dir: str | Path = DEFAULT_CONTEXT_DIR,
     include_openapi: bool = False,
-    include_user_docs: bool = False,
     include_agent_knowledge: bool = True,
-    max_pages: int | None = None,
     force: bool = False,
     sync_skills: Literal["none", "cursor", "claude", "both"] = "none",
     client: APIClient | None = None,
@@ -69,9 +65,7 @@ def init(
     return _get_sync().init(
         output_dir=output_dir,
         include_openapi=include_openapi,
-        include_user_docs=include_user_docs,
         include_agent_knowledge=include_agent_knowledge,
-        max_pages=max_pages,
         force=force,
         sync_skills=sync_skills,
         client=client,
@@ -101,33 +95,6 @@ def sync_openapi(
     )
 
 
-def sync_user_docs(
-    output_dir: str | Path | None = None,
-    max_pages: int | None = None,
-    timeout: int = 10,
-    force: bool = False,
-    max_concurrent: int | None = None,
-) -> int:
-    """Download user documentation pages and convert to markdown.
-
-    See endorlabs.context._sync.sync_user_docs for full documentation.
-
-    """
-    resolved = (
-        Path(output_dir)
-        if output_dir is not None
-        else platform_user_docs_path(default_context_dir())
-    )
-
-    return _get_sync().sync_user_docs(
-        output_dir=resolved,
-        max_pages=max_pages,
-        timeout=timeout,
-        force=force,
-        max_concurrent=max_concurrent,
-    )
-
-
 def sync_agent_skills(
     *,
     repo_root: str | Path = ".",
@@ -147,5 +114,4 @@ __all__ = [
     "init",
     "sync_agent_skills",
     "sync_openapi",
-    "sync_user_docs",
 ]

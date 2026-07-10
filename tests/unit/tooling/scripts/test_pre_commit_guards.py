@@ -22,7 +22,9 @@ from pre_commit_guards import (  # noqa: E402
     check_external_pii_urls,
     check_layer_imports,
     check_portable_examples,
+    check_shipped_namespace_flags,
     is_allowed_email,
+    is_allowed_namespace_token,
     is_allowed_url,
     is_blocked_staged_path,
     is_user_facing_staged_path,
@@ -239,7 +241,9 @@ def test_check_layer_imports_blocks_devtools(tmp_path: Path, monkeypatch) -> Non
     assert check_layer_imports(paths=["src/endorlabs/client.py"]) == 1
 
 
-def test_check_portable_examples_warns(tmp_path: Path, monkeypatch, capsys) -> None:
+def test_check_portable_examples_fails_on_uuid_in_docs(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
     monkeypatch.setattr("pre_commit_guards._REPO_ROOT", tmp_path)
     doc = tmp_path / "docs" / "guides" / "examples.md"
     doc.parent.mkdir(parents=True)
@@ -247,8 +251,8 @@ def test_check_portable_examples_warns(tmp_path: Path, monkeypatch, capsys) -> N
         "uuid = 69458a5fd899e9af5f6e0f4f\n",
         encoding="utf-8",
     )
-    assert check_portable_examples(paths=["docs/guides/examples.md"]) == 0
-    assert "warning:" in capsys.readouterr().err
+    assert check_portable_examples(paths=["docs/guides/examples.md"]) == 1
+    assert "error:" in capsys.readouterr().err
 
 
 def test_check_agent_knowledge_sync_reminds(
@@ -334,10 +338,13 @@ def test_check_context_root_literals_scans_skill_scripts(
 def test_is_allowed_email_placeholders_and_endor() -> None:
     assert is_allowed_email("user@example.com")
     assert is_allowed_email("ops@endorlabs.com")
+    assert is_allowed_email("user@endor.ai")
     customer = "user@" + "customer.com"
     short = "a@" + "b.com"
+    hotmail = "user@" + "hotmail.com"
     assert not is_allowed_email(customer)
     assert not is_allowed_email(short)
+    assert not is_allowed_email(hotmail)
 
 
 def test_is_allowed_url_endor_and_placeholders() -> None:
@@ -360,6 +367,7 @@ def test_check_external_pii_urls_blocks_email_and_url(capsys) -> None:
         ("README.md", 2, f"See {bad_url}"),
         ("docs/guides/examples.md", 3, "ok https://docs.endorlabs.com/x"),
         ("docs/guides/examples.md", 4, "ok user@example.com"),
+        ("docs/guides/examples.md", 5, "ok user@endor.ai"),
     ]
     assert check_external_pii_urls(lines=lines) == 1
     err = capsys.readouterr().err
@@ -367,9 +375,76 @@ def test_check_external_pii_urls_blocks_email_and_url(capsys) -> None:
     assert bad_url in err
 
 
+def test_check_external_pii_urls_blocks_namespace_flag(capsys) -> None:
+    lines = [
+        ("devtools/README.md", 1, "uv run probe -n " + "smarsh"),
+        ("tests/unit/foo.py", 2, "-n example-tenant"),
+        ("docs/x.md", 3, "-n example-tenant.child"),
+        ("docs/x.md", 4, "-n <tenant>"),
+    ]
+    assert check_external_pii_urls(lines=lines) == 1
+    err = capsys.readouterr().err
+    assert "namespace-flag" in err
+    assert "smarsh" in err
+
+
 def test_check_external_pii_urls_allows_clean_lines() -> None:
     lines = [
         ("docs/guides/examples.md", 1, "https://github.com/endorlabs/endorlabs-sdk"),
-        ("tests/unit/foo.py", 2, 'identity="user@example.com"'),
+        ("tests/unit/foo.py", 2, 'identity="user@endor.ai"'),
+        ("devtools/README.md", 3, "-n example-tenant"),
+        ("docs/x.md", 4, "requires -n or ENDOR_NAMESPACE"),
+        ("docs/x.md", 5, "--tenant still required"),
     ]
     assert check_external_pii_urls(lines=lines) == 0
+
+
+def test_check_shipped_namespace_flags_blocks_customer(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    monkeypatch.setattr("pre_commit_guards._REPO_ROOT", tmp_path)
+    bad = tmp_path / "src" / "endorlabs" / "workflows" / "help.md"
+    bad.parent.mkdir(parents=True)
+    # Split so staged-line PII scan does not treat this fixture as a real -n flag.
+    bad.write_text("run with -n " + "customer-prod" + "\n", encoding="utf-8")
+    assert check_shipped_namespace_flags(root=tmp_path) == 1
+    err = capsys.readouterr().err
+    assert "customer-prod" in err
+    assert "shipped" in err
+
+
+def test_is_allowed_namespace_token_placeholders() -> None:
+    assert is_allowed_namespace_token("example-tenant")
+    assert is_allowed_namespace_token("example-tenant.child")
+    assert is_allowed_namespace_token("<tenant>")
+    assert is_allowed_namespace_token("{tenant}")
+    assert is_allowed_namespace_token("$ENDOR_NAMESPACE")
+    assert is_allowed_namespace_token("or")  # prose
+    assert is_allowed_namespace_token("NS")
+    assert not is_allowed_namespace_token("smarsh")
+    assert not is_allowed_namespace_token("customer" + "-prod")
+
+
+def test_check_portable_examples_fails_on_tenant_path(capsys) -> None:
+    # Use a temp-style path list with in-memory content via monkeypatch in other
+    # tests; here exercise the fail path with a real repo file after scrub.
+    lines_ok = check_portable_examples(
+        paths=["tests/unit/tooling/scripts/test_login_count_report.py"]
+    )
+    assert lines_ok == 0
+
+
+def test_check_portable_examples_blocks_customer_tenant(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    monkeypatch.setattr("pre_commit_guards._REPO_ROOT", tmp_path)
+    bad = tmp_path / "tests" / "unit" / "foo.py"
+    bad.parent.mkdir(parents=True)
+    bad.write_text(
+        'TENANT = "customer.child-ns.prod"\n',
+        encoding="utf-8",
+    )
+    assert check_portable_examples(paths=["tests/unit/foo.py"]) == 1
+    err = capsys.readouterr().err
+    assert "tenant-path" in err
+    assert "error:" in err

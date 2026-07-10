@@ -15,7 +15,6 @@ SDK_DIRNAME = "sdk"
 PLATFORM_DIRNAME = "platform"
 WORKSPACE_DIRNAME = "workspace"
 PLATFORM_OPENAPI_DIRNAME = "openapi"
-PLATFORM_USER_DOCS_DIRNAME = "user-docs"
 OPENAPI_FILENAME = "openapiv2.swagger.json"
 
 
@@ -69,11 +68,6 @@ def platform_openapi_path(context_dir: str | Path) -> Path:
     return platform_dir(context_dir) / PLATFORM_OPENAPI_DIRNAME / OPENAPI_FILENAME
 
 
-def platform_user_docs_path(context_dir: str | Path) -> Path:
-    """Canonical user docs directory after init."""
-    return platform_dir(context_dir) / PLATFORM_USER_DOCS_DIRNAME
-
-
 def workspace_dir(context_dir: str | Path) -> Path:
     """Return workspace root for generated run artifacts."""
     return Path(context_dir) / WORKSPACE_DIRNAME
@@ -88,6 +82,8 @@ def session_workspace_dir(context_dir: str | Path, user: str) -> Path:
     """Legacy path under ``workspace/sessions/<user>/``.
 
     Prefer :func:`default_runs_dir` for new workflow output.
+
+    REMOVE_BY_0_7_0: drop this helper once callers use workspace/runs/ only.
     """
     return workspace_dir(context_dir) / "sessions" / user
 
@@ -109,12 +105,6 @@ def resolve_openapi_spec_path(context_dir: str | Path) -> Path | None:
     """Resolve OpenAPI spec path under platform layout."""
     path = platform_openapi_path(context_dir)
     return path if path.is_file() else None
-
-
-def resolve_user_docs_path(context_dir: str | Path) -> Path | None:
-    """Resolve user docs directory under platform layout."""
-    path = platform_user_docs_path(context_dir)
-    return path if path.is_dir() else None
 
 
 def _context_root(context_dir: str | Path | None) -> Path:
@@ -163,7 +153,10 @@ def workflow_inventory_root(context_dir: str | Path | None = None) -> Path:
 
 
 def workflow_artifacts_root(context_dir: str | Path | None = None) -> Path:
-    """Alias for :func:`workflow_inventory_root` (legacy name ``artifacts/``)."""
+    """Alias for :func:`workflow_inventory_root` (legacy name ``artifacts/``).
+
+    REMOVE_BY_0_7_0: drop this alias; callers should use workflow_inventory_root.
+    """
     return workflow_inventory_root(context_dir)
 
 
@@ -197,7 +190,6 @@ __all__ = [
     "OPENAPI_FILENAME",
     "PLATFORM_DIRNAME",
     "PLATFORM_OPENAPI_DIRNAME",
-    "PLATFORM_USER_DOCS_DIRNAME",
     "SDK_DIRNAME",
     "WORKSPACE_DIRNAME",
     "context_json_path",
@@ -207,11 +199,9 @@ __all__ = [
     "namespace_path_slug",
     "platform_dir",
     "platform_openapi_path",
-    "platform_user_docs_path",
     "project_workspace_dir",
     "resolve_openapi_spec_path",
     "resolve_session_user_slug",
-    "resolve_user_docs_path",
     "sanitize_path_segment",
     "sdk_dir",
     "session_workspace_dir",

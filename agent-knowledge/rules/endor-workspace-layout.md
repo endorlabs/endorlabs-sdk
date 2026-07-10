@@ -59,6 +59,7 @@ Do not commit under `docs/`.
 
 ## Legacy paths
 
+<!-- REMOVE_BY_0_7_0: drop this section with session_workspace_dir / workflow_artifacts_root. -->
 Older docs used `workspace/sessions/<user>/exports/…` and `workspace/artifacts/`.
 Prefer the three-bucket layout above. `workflow_artifacts_root()` aliases
 `workflow_inventory_root()` (`inventory/`).

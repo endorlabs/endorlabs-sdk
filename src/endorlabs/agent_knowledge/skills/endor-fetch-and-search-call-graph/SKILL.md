@@ -168,7 +168,7 @@ Use this structure in the final result:
 |-------|------|
 | [endor-project-retrieval-bundle](../endor-project-retrieval-bundle/SKILL.md) | **Required first** for `--callgraph-export` + manifest |
 | [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) | Finding / `oss` vuln function reachability |
-| [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md) | Tenant-wide PRF approximation + PV error summary |
+| [endor-workflow-reports](../endor-workflow-reports/SKILL.md) | Tenant-wide PRF approximation + PV error summary |
 | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) | Finding rows, scan-scoped lists |
 | [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md) | Manifest path / ref lineage (not call paths) |
 
@@ -176,4 +176,4 @@ Use this structure in the final result:
 
 - Deep reference: [call-graph-format-and-search.md](call-graph-format-and-search.md)
 - Facade helpers: [facade-helpers.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/facade-helpers.md) (`CallGraphData.decode` / `.fetch`)
-- Platform docs: [https://docs.endorlabs.com/llms.txt](https://docs.endorlabs.com/llms.txt)
+- Product docs: Docs MCP (`https://docs.endorlabs.com/mcp` — [setup](https://docs.endorlabs.com/introduction/docs-mcp-server))

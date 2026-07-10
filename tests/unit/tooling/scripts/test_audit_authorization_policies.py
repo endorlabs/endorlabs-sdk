@@ -12,29 +12,15 @@ from endorlabs.workflows.auth import audit_target_namespaces
 
 def _load_audit_module() -> ModuleType:
     repo_root = Path(__file__).resolve().parents[4]
-    candidate_paths = (
+    script_path = (
         repo_root
         / "agent-knowledge"
-        / "skills"
+        / "workflow-reports"
         / "endor-audit-authorization-policies"
         / "scripts"
-        / "audit_authorization_policies.py",
-        repo_root
-        / "src"
-        / "endorlabs"
-        / "agent_knowledge"
-        / "skills"
-        / "endor-audit-authorization-policies"
-        / "scripts"
-        / "audit_authorization_policies.py",
-        repo_root
-        / ".cursor"
-        / "skills"
-        / "endor-audit-authorization-policies"
-        / "scripts"
-        / "audit_authorization_policies.py",
+        / "audit_authorization_policies.py"
     )
-    script_path = next(path for path in candidate_paths if path.is_file())
+    assert script_path.is_file(), script_path
     spec = spec_from_file_location("audit_authorization_policies", script_path)
     assert spec is not None
     assert spec.loader is not None

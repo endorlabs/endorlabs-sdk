@@ -54,7 +54,7 @@ See [policy-validation-api.md](policy-validation-api.md) for request/response sh
 | `template_uuid` + `template_values` | If policy is templated | Copied from stored policy `spec` |
 | `rule` + `query_statements` + `resource_kinds` | If not templated | Copied from stored policy `spec` |
 
-### Matching gotchas (SCA exception template `6839f54bfc0b87f4c01f2d83`)
+### Matching gotchas (SCA exception template `<TEMPLATE_UUID>`)
 
 - **`VulnID`**: Rego matches `vulnerability.meta.name` **and** `vulnerability.spec.aliases` (exact, lowercased). Trim CVE/GHSA strings — leading spaces in template values **never match**.
 - **`MatchApproximate: Yes`**: Requires `finding.spec.approximation == true`. Omit or leave empty to skip that gate.
@@ -67,10 +67,10 @@ See [policy-validation-api.md](policy-validation-api.md) for request/response sh
 ```python
 import endorlabs
 
-client = endorlabs.Client(tenant="customer.namespace")
-policy = client.Policy.get("<policy-uuid>", namespace="customer.namespace")
+client = endorlabs.Client(tenant="example-tenant.child")
+policy = client.Policy.get("<policy-uuid>", namespace="example-tenant.child")
 
-finding = client.Finding.get("<finding-uuid>", namespace="customer.namespace")
+finding = client.Finding.get("<finding-uuid>", namespace="example-tenant.child")
 project_uuid = finding.spec.project_uuid
 ```
 
@@ -78,7 +78,7 @@ project_uuid = finding.spec.project_uuid
 
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.policies.validate \
-  --namespace customer.namespace \
+  --namespace example-tenant.child \
   --policy-uuid <POLICY_UUID> \
   --finding-uuid <FINDING_UUID> \
   --output-json
@@ -90,7 +90,7 @@ Or programmatically:
 from endorlabs.workflows.policies import run_validate_policy
 
 result = run_validate_policy(
-    namespace="customer.namespace",
+    namespace="example-tenant.child",
     policy_uuid="<policy-uuid>",
     finding_uuid="<finding-uuid>",
 )
@@ -110,7 +110,7 @@ print(result.finding_matched)
 endorctl validate policy \
   --policy-uuid <POLICY_UUID> \
   --uuid <PROJECT_UUID> \
-  --namespace customer.namespace \
+  --namespace example-tenant.child \
   --output-type json \
   --bypass-host-check
 ```
@@ -130,7 +130,7 @@ Output uses top-level `matching_findings` (full finding objects), not `spec.resu
 ## References
 
 - OpenAPI: `PolicyValidationService_CreatePolicyValidation` → `POST /v1/namespaces/{tenant_meta.namespace}/policy/validate` (`x-internal: true`)
-- Local docs: `.endorlabs-context/platform/user-docs/developers-api/cli/commands/validate/policy.md`
+- Product docs (validate policy CLI): Docs MCP → search “validate policy” / `developers-api/cli/commands/validate/policy` ([Docs MCP setup](https://docs.endorlabs.com/introduction/docs-mcp-server))
 - Implementation: `src/endorlabs/workflows/policies/validate.py`
 - Fixture probe (creates templated policy in `ENDOR_NAMESPACE`): place under `.endorlabs-context/workspace/runs/scratch/policy_validate_probe.py` (see [workspace-layout](../../rules/endor-workspace-layout.md))
 
@@ -148,4 +148,4 @@ uv run --env-file .env python -m endorlabs.workflows.policies.validate \
 | ---- | ----- |
 | Resolve finding UUID / project namespace | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) |
 | Scan pipeline or aggregate count regression | [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) |
-| Package/finding lineage at commit scope | [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) |
+| Package/finding lineage at commit scope | [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md) |

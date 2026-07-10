@@ -24,28 +24,27 @@ Each skill is a directory with `SKILL.md` plus optional reference files. Format:
 | [endor-namespace-relationship-map](endor-namespace-relationship-map/) | Namespace consumer→producer project graph (live API); breaking-change focus filter | `endorlabs.workflows.estate.analyze.project_map` |
 | [endor-custom-sast-rules](endor-custom-sast-rules/) | SemgrepRule YAML authoring, validation, import | Canonical (skill-owned) |
 | [endor-dependency-provenance](endor-dependency-provenance/) | Resolve exact package lineage by manifest path/ref and direct-vs-transitive introduction routes | Skill-owned |
-| [endor-dependency-finding-provenance](endor-dependency-finding-provenance/) | Trace vulnerability/dependency lineage and commit-scoped presence across findings, package versions, and artifacts | Skill-owned |
+| [endor-sca-findings](endor-sca-findings/) | Trace vulnerability/dependency lineage and commit-scoped presence across findings, package versions, and artifacts | Skill-owned |
 | [endor-author-agent-skill](endor-author-agent-skill/) | Author or update shipped agent skills: frontmatter, sync, composition handoffs | [schema/README.md](schema/README.md), `devtools/codegen/sync_agent_knowledge.py` |
 | [endor-fetch-and-search-call-graph](endor-fetch-and-search-call-graph/) | Fetch/decode call graphs; direct-edge and multi-hop path search (customer PV plane) | `endorlabs.workflows.callgraph` |
 | [endor-implement-sdk-resource](endor-implement-sdk-resource/) | Model-sync-first surface extension, overlay, integration tests | `docs/contributing/architecture.md`, `integration-resource-tests.md` |
 | [endor-model-sync-drift](endor-model-sync-drift/) | OpenAPI/provenance drift; regen `registry_contract`, stubs, reference docs; CI/pre-push verify failures | `docs/contributing/docs-drift-workflow.md`, `devtools/codegen/sync/` |
-| [endor-duplicate-projects](endor-duplicate-projects/) | Tenant-wide duplicate Project audit (exact name default; opt-in `--name-strip-tokens`); excludes SBOM (`spec.sbom`); CSV + canvas | Skill-owned |
-| [endor-potentially-reachable-analysis](endor-potentially-reachable-analysis/) | Tenant-wide PRF approximation + PackageVersion resolution error report (JSON, canvas, HTML/PDF) | Skill-owned |
-| [endor-chart-new-vs-resolved-findings](endor-chart-new-vs-resolved-findings/) | Cumulative weekly new vs resolved Critical/High reachable vuln trends from FindingLog CREATE/DELETE (SDK `finding_log_trends` + canvas) | Skill-owned |
-| [endor-cli-vs-cloud-projects](endor-cli-vs-cloud-projects/) | Classify Project as CLI vs Cloud (agentless SCM) via `spec.git.external_installation_id` | Skill-owned |
-| [endor-ci-endorctl-version-audit](endor-ci-endorctl-version-audit/) | Tenant-wide CLI latest-scan endorctl version histogram (7-day default) | Skill-owned |
 | [endor-retrieve-scan-results](endor-retrieve-scan-results/) | Querying findings, scan results, or projects | `docs/guides/`, `docs/contributing/` |
 | [endor-route-estate-queries](endor-route-estate-queries/) | Estate-scale Query vs facade count routing | `docs/guides/query-recipes.md` |
 | [endor-troubleshooting-scans](endor-troubleshooting-scans/) | Scan pipeline RCA; ScanResults, `ScanResult.get_logs`, scripted diffs | `endorlabs.workflows.troubleshooting_scans`; see `docs/guides/`, `docs/contributing/list-query-performance.md` |
 | [endor-troubleshoot-sdk](endor-troubleshoot-sdk/) | Debugging SDK errors, 404s, 500s, or test failures | `docs/contributing/` |
 | [endor-troubleshoot-authlog](endor-troubleshoot-authlog/) | AuthenticationLog / AuthorizationPolicy / SSO login troubleshooting | Skill-owned |
 | [endor-auth-setup](endor-auth-setup/) | Probe, verify, and refresh SDK credentials (`endor-auth check` / `refresh`) | `endorlabs.workflows.auth` |
-| [endor-audit-authorization-policies](endor-audit-authorization-policies/) | Audit AuthorizationPolicy claim/namespace form (CSV blobs, IdP claim shape) | Skill-owned |
-| [endor-auth-login-count](endor-auth-login-count/) | AuthenticationLog login counts by identity (CSV; default 90-day window; tenant list path) | `endorlabs.workflows.auth` |
-| [endor-auth-credential-expiry](endor-auth-credential-expiry/) | Tenant APIKey expiration audit (expired / expiring-soon CSV; default 30-day lookahead) | `endorlabs.workflows.auth` |
+| [endor-workflow-reports](endor-workflow-reports/) | Route tenant/namespace audit and report requests to script-backed CSV, canvas, and PDF report playbooks | `agent-knowledge/workflow-reports/`, `workflows.yaml` |
 | [endor-reachability-provenance](endor-reachability-provenance/) | Triaging conflicting reachability signals on findings | `endor-reachability-context` |
 | [endor-sso-integration-validation-troubleshooting](endor-sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, and claims-to-namespace troubleshooting | Skill-owned |
 | [endor-validate-policy](endor-validate-policy/) | Validate exception policies vs project findings (PolicyValidation API + endorctl parity) | `endorlabs.workflows.policies.validate` |
+
+
+
+## Workflow report playbooks (not shipped individually)
+
+CSV/canvas report generators live under [`workflow-reports/`](workflow-reports/). The shipped router skill is [`endor-workflow-reports`](endor-workflow-reports/).
 
 ## How Loading Works
 
@@ -61,10 +60,10 @@ Authoring → shipped bundle → runtime mirror flow: [docs/contributing/reposit
 
 After editing skills, run `uv run python devtools/codegen/sync_agent_knowledge.py` (see [schema/README.md](schema/README.md) for authoring rules, including [skill composition and handoffs](schema/README.md#skill-composition-and-handoffs)). Optional IDE mirrors: `init(sync_skills=...)` or the `endor-context` command below.
 
-To refresh runtime mirrors from materialized context:
+To refresh runtime mirrors from `.endorlabs-context/sdk/skills/`:
 
 ```bash
-uv run endor-context --no-openapi --no-user-docs --sync-skills cursor
+uv run endor-context --sync-skills cursor
 ```
 
 Use `claude` or `both` instead when needed.

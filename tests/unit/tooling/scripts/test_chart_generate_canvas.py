@@ -11,23 +11,15 @@ from types import ModuleType
 
 def _load_module() -> ModuleType:
     repo_root = Path(__file__).resolve().parents[4]
-    candidate_paths = (
+    script_path = (
         repo_root
         / "agent-knowledge"
-        / "skills"
+        / "workflow-reports"
         / "endor-chart-new-vs-resolved-findings"
         / "scripts"
-        / "generate_canvas.py",
-        repo_root
-        / "src"
-        / "endorlabs"
-        / "agent_knowledge"
-        / "skills"
-        / "endor-chart-new-vs-resolved-findings"
-        / "scripts"
-        / "generate_canvas.py",
+        / "generate_canvas.py"
     )
-    script_path = next(path for path in candidate_paths if path.is_file())
+    assert script_path.is_file(), script_path
     scripts_dir = str(script_path.parent)
     if scripts_dir not in sys.path:
         sys.path.insert(0, scripts_dir)

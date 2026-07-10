@@ -42,17 +42,17 @@ def test_browser_method_from_authentication_source_email_magic_link() -> None:
 
 def test_browser_method_from_authentication_source_sso_object_id() -> None:
     assert (
-        browser_method_from_authentication_source("65d5495cd71c1bffbb149eb9") == "sso"
+        browser_method_from_authentication_source("aaaaaaaaaaaaaaaaaaaaaaaa") == "sso"
     )
 
 
 def test_browser_method_from_user_identity_email_magic_link() -> None:
-    assert browser_method_from_user_identity("timmy166@hotmail.com@endor") == "email"
+    assert browser_method_from_user_identity("user@endor.ai@endor") == "email"
 
 
 def test_browser_method_from_user_identity_sso_object_id() -> None:
     assert (
-        browser_method_from_user_identity("tgowan@endor.ai@65d5495cd71c1bffbb149eb9")
+        browser_method_from_user_identity("tgowan@endor.ai@aaaaaaaaaaaaaaaaaaaaaaaa")
         == "sso"
     )
 
@@ -75,8 +75,8 @@ def test_browser_method_from_auth_payload_email_magic_link() -> None:
             {
                 "authentication_source": "endor",
                 "user": {
-                    "meta": {"name": "timmy166@hotmail.com@endor"},
-                    "spec": {"email": "timmy166@hotmail.com"},
+                    "meta": {"name": "user@endor.ai@endor"},
+                    "spec": {"email": "user@endor.ai"},
                 },
             }
         )
@@ -88,9 +88,9 @@ def test_browser_method_from_auth_payload_sso_object_id() -> None:
     assert (
         browser_method_from_auth_payload(
             {
-                "authentication_source": "65d5495cd71c1bffbb149eb9",
+                "authentication_source": "aaaaaaaaaaaaaaaaaaaaaaaa",
                 "user": {
-                    "meta": {"name": "tgowan@endor.ai@65d5495cd71c1bffbb149eb9"},
+                    "meta": {"name": "tgowan@endor.ai@aaaaaaaaaaaaaaaaaaaaaaaa"},
                     "spec": {"email": "tgowan@endor.ai"},
                 },
             }

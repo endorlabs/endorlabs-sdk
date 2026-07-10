@@ -21,7 +21,7 @@ client = endorlabs.Client(tenant="your-tenant")  # or ENDOR_NAMESPACE
 print(client.whoami())  # None → check .env / single auth mode
 
 # 2. Workflows — call graph, scan RCA, project bundles (not on dir(client))
-status = endorlabs.init(include_openapi=False, include_user_docs=False)
+status = endorlabs.init(include_openapi=False)
 # Read .endorlabs-context/sdk/skills/<id>/SKILL.md
 ```
 
@@ -77,18 +77,19 @@ paths = endorlabs.agent_knowledge_bootstrap_paths()  # INDEX + bootstrap rules
 ```python
 import endorlabs
 
-status = endorlabs.init(include_openapi=False, include_user_docs=False)
+status = endorlabs.init(include_openapi=False)
 # Read: status.agent_knowledge_index_path  →  .endorlabs-context/sdk/INDEX.md
 ```
 
-**Full bootstrap** (agent knowledge + platform OpenAPI/user docs):
+**Full bootstrap** (agent knowledge + platform OpenAPI):
 
 ```python
-pip install 'endorlabs[docs]'
 import endorlabs
 
-status = endorlabs.init(include_openapi=True, include_user_docs=True)
+status = endorlabs.init(include_openapi=True)
 # Read: status.agent_knowledge_index_path
+# Product docs: configure Docs MCP — https://docs.endorlabs.com/introduction/docs-mcp-server
+# Unsupported harnesses: https://docs.endorlabs.com/llms.txt
 ```
 
 ## Authentication
@@ -134,8 +135,8 @@ looks wrong, **triangulate** SDK vs `endorctl` vs `contracts/` — skill
    literal `oss` plane. Field `spec.dependency_data.namespace == "oss"` is data semantics only.
 7. **Workflow composition:** Extend workflow JSON/manifests before re-listing the API; escalate
    CLI → library → `Client` → session script (see `rules/endor-workflow-composition.md`).
-8. **Portable examples:** Use placeholders in docs; never commit customer estate identifiers
-   (`rules/endor-portable-examples.md`).
+8. **Portable examples:** Use placeholders in docs, skills, **unit fixtures**, and CLI/docstring
+   examples; never commit customer estate identifiers (`rules/endor-portable-examples.md`).
 
 ## Bootstrap (load for Endor SDK work)
 
@@ -148,7 +149,7 @@ Harnesses should prepend `agent_knowledge_bootstrap_paths()` (or read these rule
 | `endor-workflow-composition` | CLI → library → Client → session script; artifact-first |
 | `endor-list-query-performance` | Do not set `page_size` unless asked |
 | `endor-local-context` | Check gitignored `.endorlabs-context/` paths explicitly |
-| `endor-portable-examples` | Placeholders only; no committed tenant/project UUID literals |
+| `endor-portable-examples` | Placeholders only across tracked surfaces (fixtures, docs, skills); no tenant/email/UUID literals |
 
 See `MANIFEST.json` → `bootstrap.rule_ids` and `bootstrap.contract_ids` for the machine-readable lists.
 
@@ -190,7 +191,7 @@ Do not use repo-root `.tmp/`. Gitignore `.endorlabs-context/` in consumer projec
 3. **`rules/*.md`** — harness bootstrap (always load)
 4. **`contracts/*.md`** — normative SDK semantics on demand
 5. **`skills/*/SKILL.md`** — task playbooks
-6. `../platform/openapi/` and `../platform/user-docs/` — product/API reference (after `init()`)
+6. `../platform/openapi/` — OpenAPI after `init(include_openapi=True)`; product docs via Docs MCP (`https://docs.endorlabs.com/mcp`)
 7. `../workspace/` — your run outputs
 
 ## Task routing (common intents)

@@ -216,8 +216,11 @@ policy — use `workflow_dispatch` from `main` instead.
 | Action | When |
 |--------|------|
 | **Yank** on TestPyPI | Trial uploads are expendable; yank before re-uploading the same version |
-| **Yank + patch** on production PyPI | Bad release shipped — yank `X.Y.Z`, publish `X.Y.(Z+1)` from a fix commit |
+| **Yank + patch** on production PyPI | Bad release shipped **and** the installable artifact is dirty (wheel or default install path) — yank `X.Y.Z`, publish `X.Y.(Z+1)` from a fix commit |
+| **Supersede without yank** | Prefer a clean `X.Y.(Z+1)` when older artifacts are superseded; yank is optional if installable paths were already clean |
 | **Do not** rewrite published prod versions | PyPI versions are immutable; yank only |
+
+**Artifact surfaces:** hatch wheels and sdists both ship package content only (`[tool.hatch.build.targets.wheel] packages = ["src/endorlabs"]`; `[tool.hatch.build.targets.sdist] only-packages = true`). Neither includes `tests/`, `devtools/`, or authoring `agent-knowledge/`. Classify wheel vs sdist only for historical releases before that sdist policy.
 
 ## TestPyPI smoke install
 
@@ -232,7 +235,7 @@ Or install manually from `https://test.pypi.org/project/endorlabs/`.
 ## Production release
 
 1. Ensure PyPI pending publisher is registered for **`release-tag-publish.yml`** / environment **`pypi`**
-2. **Changelog on `main`:** merge a PR that promotes [`docs/changelog.md`](../changelog.md) **Unreleased** → **`## X.Y.Z`** (see [Changelog at release cut](#changelog-at-release-cut) below). If the PR touches only `docs/**`, CI is skipped via `paths-ignore` — include a trivial `src/` change or merge with admin bypass so branch protection sees **Branch Protection CI Gate**
+2. **Changelog on `main`:** merge a PR that promotes [`docs/changelog.md`](../changelog.md) **Unreleased** → **`## X.Y.Z`** (see [Changelog at release cut](#changelog-at-release-cut) below). Docs-only PRs still run CI (required **Branch Protection CI Gate**); heavy jobs may skip via `detect-changes`.
 3. **Actions → Release Tag Publish** → `workflow_dispatch`:
    - `version`: `X.Y.Z`
    - `ref`: `main`

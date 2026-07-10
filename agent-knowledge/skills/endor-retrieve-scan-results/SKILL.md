@@ -1,11 +1,10 @@
 ---
 name: endor-retrieve-scan-results
-description: >-
-  Project-scoped SDK workflow: resolve Project → latest ScanResult → Finding rows
-  for one repo. Use when the user wants scan results, findings, or reports for a
-  specific project. Default to namespace=project.namespace without traverse on
-  findings; use traverse only to discover Project when namespace is unknown, or
-  when the user explicitly requests tenant-wide reports.
+description: |
+  Use when retrieving scan results, findings, or reports for a specific project via
+  Project → latest ScanResult → Finding rows. Default namespace=project.namespace
+  without traverse on findings; use traverse only to discover Project when namespace
+  is unknown, or when the user explicitly requests tenant-wide reports.
 ---
 
 # Retrieving Scan Results and Findings
@@ -162,11 +161,8 @@ When counting severity or unique issues, dedupe by explanation/remediation or fi
 
 | Need | Skill |
 | ---- | ----- |
-| CLI vs Cloud (agentless SCM) project classification | [endor-cli-vs-cloud-projects](../endor-cli-vs-cloud-projects/SKILL.md) |
 | Scan failed, metrics spiked, logs between runs | [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) |
 | Policy / exception matches a finding | [endor-validate-policy](../endor-validate-policy/SKILL.md) |
 | Reachability conflicts on a finding | [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) |
-| Tenant-wide PRF approximation + PV resolution errors | [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md) |
-| New vs resolved FindingLog trend charts | [endor-chart-new-vs-resolved-findings](../endor-chart-new-vs-resolved-findings/SKILL.md) |
-| Fixed vs present, SBOM vs API | [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) |
+| Fixed vs present, SBOM vs API | [endor-sca-findings](../endor-sca-findings/SKILL.md) |
 | Package paths/versions across manifests | [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md) |

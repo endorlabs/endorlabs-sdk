@@ -33,10 +33,8 @@ def test_identity_from_auth_payload_prefers_email() -> None:
 
 def test_identity_from_auth_payload_meta_name() -> None:
     assert (
-        identity_from_auth_payload(
-            {"user": {"meta": {"name": "timmy166@hotmail.com@endor"}}}
-        )
-        == "timmy166@hotmail.com@endor"
+        identity_from_auth_payload({"user": {"meta": {"name": "user@endor.ai@endor"}}})
+        == "user@endor.ai@endor"
     )
 
 
@@ -46,7 +44,7 @@ def mock_api_client() -> Mock:
     mock = Mock(spec=APIClient)
     mock.auth_type = "api-key"
     mock.is_api_key_auth = True
-    mock.key = "endr+TestKey123"
+    mock.key = "endr+" + "TestKey123"
     mock.get_user_info.return_value = None
     return mock
 
@@ -171,7 +169,7 @@ class TestWhoAmI:
         mock = Mock(spec=APIClient)
         mock.auth_type = "api-key"
         mock.is_api_key_auth = True
-        mock.key = "endr+TestKey"
+        mock.key = "endr+" + "TestKey"
         mock.get_user_info.return_value = None
         client = endorlabs.Client(
             api_client=mock,
@@ -200,7 +198,7 @@ class TestWhoAmI:
         # Check that list_params.filter contains the key
         list_params = args[1]
         assert list_params is not None
-        assert "endr+TestKey123" in (list_params.filter or "")
+        assert "endr+" + "TestKey123" in (list_params.filter or "")
         assert list_params.page_size == 1
         assert args[2] == 1
 

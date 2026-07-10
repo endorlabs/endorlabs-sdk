@@ -11,23 +11,15 @@ from unittest.mock import MagicMock
 
 def _load_module() -> ModuleType:
     repo_root = Path(__file__).resolve().parents[4]
-    candidate_paths = (
+    script_path = (
         repo_root
         / "agent-knowledge"
-        / "skills"
+        / "workflow-reports"
         / "endor-duplicate-projects"
         / "scripts"
-        / "find_duplicate_projects.py",
-        repo_root
-        / "src"
-        / "endorlabs"
-        / "agent_knowledge"
-        / "skills"
-        / "endor-duplicate-projects"
-        / "scripts"
-        / "find_duplicate_projects.py",
+        / "find_duplicate_projects.py"
     )
-    script_path = next(path for path in candidate_paths if path.is_file())
+    assert script_path.is_file(), script_path
     spec = spec_from_file_location("find_duplicate_projects", script_path)
     assert spec is not None
     assert spec.loader is not None

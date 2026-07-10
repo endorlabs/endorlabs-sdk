@@ -90,7 +90,7 @@ curl -sS -X POST "https://api.endorlabs.com/v1/namespaces/customer.namespace/pol
     "spec": {
       "request": {
         "policy_type": "POLICY_TYPE_EXCEPTION",
-        "template_uuid": "6839f54bfc0b87f4c01f2d83",
+        "template_uuid": "<TEMPLATE_UUID>",
         "template_values": {
           "VulnID": { "values": ["CVE-2026-42033"] }
         },

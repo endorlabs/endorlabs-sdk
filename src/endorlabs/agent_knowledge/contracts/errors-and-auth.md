@@ -126,10 +126,10 @@ Use top-level `endorlabs` exception types (`NotFoundError`, `UnauthorizedError`,
 
 ## Local OpenAPI spec
 
-Preferred path after `init()`:
+Preferred path after `init(include_openapi=True)`:
 
 `.endorlabs-context/platform/openapi/openapiv2.swagger.json`
 
-User docs mirror:
-
-`.endorlabs-context/platform/user-docs/`
+Product docs: Docs MCP (`https://docs.endorlabs.com/mcp`) —
+[setup](https://docs.endorlabs.com/introduction/docs-mcp-server).
+Unsupported harnesses: [https://docs.endorlabs.com/llms.txt](https://docs.endorlabs.com/llms.txt).

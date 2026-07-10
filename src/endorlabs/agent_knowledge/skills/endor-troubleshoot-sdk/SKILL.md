@@ -23,7 +23,7 @@ Deep triangulation playbook: [validation-reference.md](validation-reference.md).
 ## Workflow
 
 1. **Document** — capture the task, context, approach, and full error (including stack trace and `response.text`). Persist triage notes, repro scripts, and JSON exports under `.endorlabs-context/workspace/runs/scratch/` (see [workspace-layout](../../rules/endor-workspace-layout.md)); For CLI → library → script escalation, see [workflow-composition](../../rules/endor-workflow-composition.md).
-2. **Research** — search codebase, `contracts/`, and API spec. Local spec: `.endorlabs-context/platform/openapi/openapiv2.swagger.json`; local user docs: `.endorlabs-context/platform/user-docs/`. Online fallback: <https://api.endorlabs.com/download/openapiv2.swagger.json>.
+2. **Research** — search codebase, `contracts/`, and API spec. Local OpenAPI: `.endorlabs-context/platform/openapi/openapiv2.swagger.json`. Product docs: Docs MCP (`https://docs.endorlabs.com/mcp` — [setup](https://docs.endorlabs.com/introduction/docs-mcp-server)). Online OpenAPI fallback: <https://api.endorlabs.com/download/openapiv2.swagger.json>.
 3. **Investigate** — replay the same call with `endorctl` (same resource, namespace, filter, traverse); compare outcomes using [validation-reference.md](validation-reference.md).
 4. **Resolve** — fix usage, scope, model-sync, or SDK bug; document what evidence changed.
 

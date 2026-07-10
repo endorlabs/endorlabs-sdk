@@ -21,8 +21,8 @@ Support only variable names that appear in **at least one** of:
 | [docs/contracts.md](../../docs/contracts.md) | Transport, auth, and behavioral contracts |
 | [CONTRIBUTORS.md](../../CONTRIBUTORS.md) — Environment | Maintainer dev setup |
 | Shipped [contracts/errors-and-auth.md](../contracts/errors-and-auth.md) | Agent/auth quick reference |
-| Endor Labs product docs | endorctl parity — prefer synced copy under `.endorlabs-context/platform/user-docs/` (e.g. `developers-api/cli/environment-variables.md`) |
-| Local OpenAPI / user-docs after `init()` | API-specific flags only when product docs reference them |
+| Endor Labs product docs | endorctl parity — prefer Docs MCP (`https://docs.endorlabs.com/mcp`; [setup](https://docs.endorlabs.com/introduction/docs-mcp-server)); unsupported harnesses: [llms.txt](https://docs.endorlabs.com/llms.txt) |
+| Local OpenAPI after `init(include_openapi=True)` | API-specific flags only when product docs reference them |
 
 **Do not** add parallel spellings, SDK-only aliases, or new `ENDOR_*` names without a
 doc citation and README/contract update in the same change.

@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
-
-if TYPE_CHECKING:
-    import pytest
+from typing import ClassVar
 
 from endorlabs.context import cli as context_cli
 from endorlabs.context._project_context import GITIGNORE_ENTRY
@@ -17,8 +14,6 @@ def test_parse_args_defaults() -> None:
     parsed = context_cli._parse_args([])
     assert parsed.output_dir == ".endorlabs-context"
     assert parsed.include_openapi is False
-    assert parsed.include_user_docs is False
-    assert parsed.max_pages is None
     assert parsed.force is False
     assert parsed.sync_skills == "none"
     assert parsed.include_agent_knowledge is True
@@ -31,10 +26,7 @@ def test_parse_args_supports_switches() -> None:
             "--output-dir",
             "tmp-context",
             "--sync-openapi",
-            "--sync-user-docs",
             "--no-materialize-agent-knowledge",
-            "--max-pages",
-            "12",
             "--force",
             "--sync-skills",
             "both",
@@ -42,46 +34,42 @@ def test_parse_args_supports_switches() -> None:
     )
     assert parsed.output_dir == "tmp-context"
     assert parsed.include_openapi is True
-    assert parsed.include_user_docs is True
     assert parsed.include_agent_knowledge is False
-    assert parsed.max_pages == 12
     assert parsed.force is True
     assert parsed.sync_skills == "both"
 
 
-def test_print_gitignore_line(capsys: pytest.CaptureFixture[str]) -> None:
-    """CLI can print the recommended gitignore entry."""
+def test_print_gitignore_line(capsys: object) -> None:
+    """--print-gitignore-line prints entry and exits without init."""
     context_cli.main(["--print-gitignore-line"])
     captured = capsys.readouterr()
-    assert captured.out.strip() == GITIGNORE_ENTRY.rstrip("/") + "/"
+    assert captured.out.strip() == GITIGNORE_ENTRY
 
 
-def test_main_noop_without_actions(
-    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Main should not call init when every action is disabled."""
-    called = {"init": False}
+def test_main_noop_without_actions(monkeypatch: object, capsys: object) -> None:
+    """No bootstrap flags should not call init."""
+    called = False
 
-    def _fake_init(**kwargs: object) -> None:
-        called["init"] = True
+    def _fake_init(**kwargs: object) -> object:
+        nonlocal called
+        called = True
+        raise AssertionError("init should not run")
 
     monkeypatch.setattr("endorlabs.context.cli.endorlabs.init", _fake_init)
     context_cli.main(["--no-materialize-agent-knowledge"])
-    assert called["init"] is False
+    assert called is False
     captured = capsys.readouterr()
     assert "No bootstrap actions requested" in captured.out
 
 
 def test_main_defaults_call_init(monkeypatch: object, tmp_path: Path) -> None:
-    """Bare CLI invocation materializes agent knowledge by default."""
+    """Default main materializes agent knowledge via init."""
     calls: dict[str, object] = {}
 
     class _Status:
         agent_knowledge_path = tmp_path / "sdk"
         context_json_path = tmp_path / "context.json"
         openapi_path = None
-        user_docs_path = None
-        user_docs_count = 0
         synced_skill_paths: ClassVar[dict[str, Path]] = {}
 
     def _fake_init(**kwargs: object) -> _Status:
@@ -92,9 +80,10 @@ def test_main_defaults_call_init(monkeypatch: object, tmp_path: Path) -> None:
     context_cli.main(["--output-dir", str(tmp_path)])
 
     assert calls["output_dir"] == str(tmp_path)
-    assert calls["include_agent_knowledge"] is True
     assert calls["include_openapi"] is False
-    assert calls["include_user_docs"] is False
+    assert calls["include_agent_knowledge"] is True
+    assert calls["force"] is False
+    assert calls["sync_skills"] == "none"
 
 
 def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
@@ -105,8 +94,6 @@ def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
         agent_knowledge_path = tmp_path / "sdk"
         context_json_path = tmp_path / "context.json"
         openapi_path = tmp_path / "platform" / "openapi" / "openapiv2.swagger.json"
-        user_docs_path = tmp_path / "platform" / "user-docs"
-        user_docs_count = 42
         synced_skill_paths: ClassVar[dict[str, Path]] = {}
 
     def _fake_init(**kwargs: object) -> _Status:
@@ -119,9 +106,6 @@ def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
             "--output-dir",
             str(tmp_path),
             "--sync-openapi",
-            "--sync-user-docs",
-            "--max-pages",
-            "5",
             "--force",
             "--sync-skills",
             "cursor",
@@ -130,8 +114,6 @@ def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
 
     assert calls["output_dir"] == str(tmp_path)
     assert calls["include_openapi"] is True
-    assert calls["include_user_docs"] is True
     assert calls["include_agent_knowledge"] is True
-    assert calls["max_pages"] == 5
     assert calls["force"] is True
     assert calls["sync_skills"] == "cursor"

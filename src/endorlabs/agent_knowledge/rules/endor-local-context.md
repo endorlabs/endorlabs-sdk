@@ -4,8 +4,9 @@ tags:
 - context
 - openapi
 - bootstrap
-summary: Check gitignored .endorlabs-context paths explicitly; prefer local platform
-  docs before the web; never print secrets.
+- docs-mcp
+summary: Prefer Docs MCP for product docs; check gitignored .endorlabs-context for
+  OpenAPI and sdk/; never print secrets.
 ---
 
 # Local context discovery
@@ -13,19 +14,26 @@ summary: Check gitignored .endorlabs-context paths explicitly; prefer local plat
 When guidance references local context under gitignored paths, do not assume those
 files are absent because a broad search did not show them.
 
+## Product documentation (prefer MCP)
+
+Use the **Endor Labs documentation MCP** at `https://docs.endorlabs.com/mcp`
+(`endor-docs`) for product docs. Configure it from the setup guide:
+[Documentation MCP server](https://docs.endorlabs.com/introduction/docs-mcp-server)
+
+Unsupported harnesses (no MCP) can use
+[https://docs.endorlabs.com/llms.txt](https://docs.endorlabs.com/llms.txt).
+
+Product docs are available through Docs MCP or `llms.txt`, not `endorlabs.init()` / `endor-context`.
+
 ## Check explicitly
 
+- [https://docs.endorlabs.com/mcp](https://docs.endorlabs.com/mcp)
 - `.endorlabs-context/`
 - `.endorlabs-context/context.json`
 - `.endorlabs-context/sdk/INDEX.md`
 - `.endorlabs-context/sdk/MANIFEST.json`
 - `.endorlabs-context/platform/openapi/openapiv2.swagger.json` (canonical OpenAPI)
-- `.endorlabs-context/platform/user-docs/`
 - `.env` (confirm variables exist only — **never print secrets**)
-
-Do **not** use legacy flat paths (`.endorlabs-context/openapiv2.swagger.json`,
-`.endorlabs-context/user-docs/`). `endorlabs.init(include_openapi=True)` and
-`sync_openapi()` reconcile or remove them when syncing to `platform/`.
 
 Gitignored paths may be missing from workspace search; try targeted reads before
 concluding context is unavailable.
@@ -33,7 +41,8 @@ concluding context is unavailable.
 ## Research order
 
 1. Wheel: `agent_knowledge_index_path()` / `agent_knowledge_manifest()` (site-packages), or materialized `.endorlabs-context/sdk/` after `init()`.
-2. Local OpenAPI and user docs under `.endorlabs-context/platform/` (when bootstrapped).
-3. Online API spec and docs only as fallback.
+2. Docs MCP (`endor-docs`) for product documentation; if MCP is unavailable, [llms.txt](https://docs.endorlabs.com/llms.txt).
+3. Local OpenAPI under `.endorlabs-context/platform/openapi/` when bootstrapped.
+4. Online API spec (`https://api.endorlabs.com/download/openapiv2.swagger.json`) only as fallback.
 
-Materialize with `endorlabs.init()` when a cwd-relative tree is needed.
+Materialize with `endorlabs.init()` when a cwd-relative sdk/ tree is needed.

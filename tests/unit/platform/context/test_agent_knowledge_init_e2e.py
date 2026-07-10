@@ -11,7 +11,6 @@ def test_init_materializes_sdk_bundle_without_auth(tmp_path) -> None:
     status = endorlabs.init(
         output_dir=tmp_path,
         include_openapi=False,
-        include_user_docs=False,
     )
     assert status.agent_knowledge_path is not None
     assert (status.agent_knowledge_path / "INDEX.md").is_file()
@@ -33,7 +32,6 @@ def test_wheel_manifest_matches_materialized_skill_paths(tmp_path) -> None:
     status = endorlabs.init(
         output_dir=tmp_path,
         include_openapi=False,
-        include_user_docs=False,
     )
     assert status.agent_knowledge_path is not None
     materialized = json.loads(

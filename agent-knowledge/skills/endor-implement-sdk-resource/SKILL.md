@@ -1,10 +1,10 @@
 ---
 name: endor-implement-sdk-resource
-description: >-
-  Extend the SDK client surface after OpenAPI changes: model sync, registry
-  overlay, payload builders, and integration tests. Use when a new API resource
-  appears, facade behavior diverges from generated contract, or list/get/create
-  needs validation—not for hand-implementing every resource from scratch.
+description: |
+  Use when extending the SDK client surface after OpenAPI changes—model sync,
+  registry overlay, payload builders, and integration tests—when a new API resource
+  appears, facade behavior diverges from the generated contract, or list/get/create
+  needs validation. Not for hand-implementing every resource from scratch.
 ---
 
 # Extend the SDK client surface (model-sync-first)
@@ -33,7 +33,7 @@ uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --gen
 - `build_create_payload` / create convenience; `extra="allow"` on specs for forward compat
 - Field aliasing per [contracts.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contracts.md); Tier 3 aliases in `resources/field_aliases.py`
 - Resource-specific helpers (not module-level CRUD — facade uses `BaseResourceOperations`)
-- Do **not** add per-resource `detect_schema_drift` validators — use model-sync parity ([endor-model-sync-drift](../endor-model-sync-drift/))
+- Do **not** add per-resource `detect_schema_drift` validators — use model-sync parity ([endor-model-sync-drift](../endor-model-sync-drift/SKILL.md))
 
 Do **not** hand-wire facades in `Client.__init__`.
 

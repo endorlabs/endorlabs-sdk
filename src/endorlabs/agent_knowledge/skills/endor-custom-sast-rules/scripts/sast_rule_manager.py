@@ -10,30 +10,30 @@ Usage examples:
     # Import rules from a directory (from repo root)
     uv run python \\
         sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
-        import --rules-dir opengrep-rules/ --namespace tenant.ns
+        import --rules-dir opengrep-rules/ --namespace example-tenant.ns
 
     # Delete rules matching a name filter
     uv run python \\
         sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
-        delete --name-filter "endor-sdk" --namespace tenant.ns
+        delete --name-filter "endor-sdk" --namespace example-tenant.ns
 
     # Clean orphaned findings from deleted rules
     uv run python \\
         sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
-        orphans --deleted-names rule-a rule-b --namespace tenant.ns
+        orphans --deleted-names rule-a rule-b --namespace example-tenant.ns
 
     # Configure enable/disable state
     uv run python \\
         sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
         configure --rules-dir opengrep-rules/ \\
-        --enabled-dir opengrep-rules/trust-chain/ --namespace tenant.ns
+        --enabled-dir opengrep-rules/trust-chain/ --namespace example-tenant.ns
 
     # Full sync (delete + orphans + import + configure)
     uv run python \\
         sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
         sync --rules-dir opengrep-rules/ \\
         --enabled-dir opengrep-rules/trust-chain/ \\
-        --name-filter "endor-sdk" --namespace tenant.ns --force
+        --name-filter "endor-sdk" --namespace example-tenant.ns --force
 """
 
 from __future__ import annotations

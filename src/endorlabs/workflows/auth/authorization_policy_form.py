@@ -174,7 +174,7 @@ def audit_clause(
                     observed=entry,
                     suggestion=(
                         "For GitHub/GitLab set UI Value to the platform handle only "
-                        "(e.g. timmy166 → user=timmy166@gitlab)."
+                        "(e.g. handle → user=handle@gitlab)."
                     ),
                 )
             )

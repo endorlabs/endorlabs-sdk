@@ -130,9 +130,7 @@ from .discovery import SdkDiscovery  # noqa: E402
 def init(
     output_dir: str | Path = DEFAULT_CONTEXT_DIR,
     include_openapi: bool = False,
-    include_user_docs: bool = False,
     include_agent_knowledge: bool = True,
-    max_pages: int | None = None,
     force: bool = False,
     sync_skills: Literal["none", "cursor", "claude", "both"] = "none",
     client: APIClient | None = None,
@@ -145,20 +143,16 @@ def init(
     Args:
         output_dir: Directory to save context files (default: ``DEFAULT_CONTEXT_DIR``).
         include_openapi: Download OpenAPI spec (default: False).
-        include_user_docs: Download user documentation (default: False).
-        include_agent_knowledge: Materialize agent knowledge to sdk/ (default: True).
-        max_pages: Maximum number of user doc pages to download (default: all).
+        include_agent_knowledge: Copy agent knowledge to sdk/ (default: True).
         force: Force re-download even if files exist (default: False).
         sync_skills: Mirror skills into runtime discovery directories.
         client: Optional APIClient instance for OpenAPI download.
 
     Returns:
-        InitStatus with paths to materialized and downloaded files.
+        InitStatus with paths to copied and downloaded files.
 
     Raises:
         UnauthorizedError: If OpenAPI authentication fails.
-        ImportError: If context dependencies are not installed (for user docs).
-            Install with: pip install endorlabs[docs]
 
     Example::
 
@@ -173,9 +167,7 @@ def init(
     return _sync.init(
         output_dir=output_dir,
         include_openapi=include_openapi,
-        include_user_docs=include_user_docs,
         include_agent_knowledge=include_agent_knowledge,
-        max_pages=max_pages,
         force=force,
         sync_skills=sync_skills,
         client=client,

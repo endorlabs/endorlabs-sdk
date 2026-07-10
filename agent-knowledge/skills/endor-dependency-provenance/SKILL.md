@@ -1,9 +1,9 @@
 ---
 name: endor-dependency-provenance
-description: >-
-  Resolve package-version lineage by manifest path and source ref/sha, and
-  distinguish direct vs transitive introduction paths. Use when the same
-  package appears at multiple versions or via multiple manifest files.
+description: |
+  Use when resolving package-version lineage by manifest path and source ref/sha,
+  or distinguishing direct vs transitive introduction paths—especially when the
+  same package appears at multiple versions or via multiple manifest files.
 ---
 
 # Dependency Provenance
@@ -62,5 +62,5 @@ Return a matrix with one row per introduction path:
 | Need | Skill |
 | ---- | ----- |
 | Finding rows, scan UUIDs, project resolution | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) |
-| Vuln fixed vs present at ref/sha | [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) |
+| Vuln fixed vs present at ref/sha | [endor-sca-findings](../endor-sca-findings/SKILL.md) |
 | Scan pipeline failure (deps never resolved) | [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) |

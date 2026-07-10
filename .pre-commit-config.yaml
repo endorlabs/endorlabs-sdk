@@ -19,6 +19,9 @@
 # default_stages: pre-commit only — hooks without explicit stages do not rerun on
 # push (pre-commit 4.x otherwise defaults to all stages).
 default_stages: [pre-commit]
+# Stop after the first failing hook so cheap content guards do not still burn
+# ruff/pyright/pytest time on an already-rejected commit.
+fail_fast: true
 #
 # We use local `uv run` hooks instead of astral-sh/ruff-pre-commit because that
 # hook passes --force-exclude, which skips paths listed in [tool.ruff] exclude
@@ -86,16 +89,15 @@ repos:
         files: ^src/endorlabs/workflows/.*\.py$
 
       - id: pre-commit-guards-portable-examples
-        name: portable-examples nudge (warning; estate literals in agent/docs)
+        name: block estate literals in staged checked-in paths
         entry: uv
         args: [run, python, devtools/precommit/pre_commit_guards.py, portable-examples]
         language: system
         pass_filenames: false
         always_run: true
-        files: ^(agent-knowledge/|\.cursor/rules/|docs/).*\.(md|mdc)$
 
       - id: pre-commit-guards-external-pii-urls
-        name: block emails and non-Endor Labs URLs in staged added lines
+        name: block emails, non-Endor URLs, estate -n flags; gate shipped -n placeholders
         entry: uv
         args: [run, python, devtools/precommit/pre_commit_guards.py, external-pii-urls]
         language: system

@@ -1,11 +1,11 @@
 ---
 name: endor-troubleshooting-scans
-description: >-
-  Scan pipeline RCA: resolve a project (including app scan-history URLs), compare
-  scan pairs (heuristic or user-supplied), search embedded spec.logs for errors,
-  diff aggregate metrics, and probe PackageVersion resolution_errors. Not for
-  individual Finding rows or policy validation — hand off to sibling skills when
-  deeper analysis is needed.
+description: |
+  Use when doing scan pipeline RCA: resolve a project (including app scan-history
+  URLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs
+  for errors, diff aggregate metrics, and probe PackageVersion resolution_errors.
+  Not for individual Finding rows or policy validation—hand off to sibling skills
+  when deeper analysis is needed.
 endorlabs:
   catalog:
     workflow_id: troubleshooting-scans
@@ -38,13 +38,13 @@ Chain CLI steps on JSON artifacts; extend with library imports per [workflow-com
 
 **Out of scope (use another skill):**
 
-- Whether the project is **CLI vs Cloud** (agentless SCM) → [endor-cli-vs-cloud-projects](../endor-cli-vs-cloud-projects/SKILL.md) — especially when `RunBySystem` differs between scans
+- Whether the project is **CLI vs Cloud** (agentless SCM) → [endor-workflow-reports](../endor-workflow-reports/SKILL.md) — especially when `RunBySystem` differs between scans
 - Listing or triaging individual **Finding** resources → [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md)
 - Policy / exception matching → [endor-validate-policy](../endor-validate-policy/SKILL.md)
 - Reachability signal conflicts on a finding → [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md)
-- Tenant-wide PRF approximation / PV resolution error report → [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md)
-- New vs resolved FindingLog trend charts → [endor-chart-new-vs-resolved-findings](../endor-chart-new-vs-resolved-findings/SKILL.md)
-- Fixed vs present at branch/commit, SBOM reconciliation → [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md)
+- Tenant-wide PRF approximation / PV resolution error report → [endor-workflow-reports](../endor-workflow-reports/SKILL.md)
+- New vs resolved FindingLog trend charts → [endor-workflow-reports](../endor-workflow-reports/SKILL.md)
+- Fixed vs present at branch/commit, SBOM reconciliation → [endor-sca-findings](../endor-sca-findings/SKILL.md)
 - Package introduction paths across manifests/versions → [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md)
 
 Finding counts here come from **`ScanResult.spec.stats` aggregates only** — not `Finding.list`.
@@ -67,12 +67,12 @@ Thread UUIDs and namespace from each artifact into the next step; do not re-list
 | Scan failed, metrics spiked, or logs look wrong between runs | **This skill** | — |
 | Need CVE/finding rows, filters, branch dedup | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) | This skill if scan *pipeline* regressed |
 | Diff flagged `findings_*` counts; need which findings changed | This skill (pair UUIDs from diff) | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) via `Finding.list_for_context(scan)` |
-| `dependency_count_total` collapsed / resolution errors | This skill (embedded logs + PV probe) | [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) at branch/sha |
-| Tenant-wide PV resolution error patterns | [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md) | This skill for one scan pair |
-| Automated vs manual scan config differs (`RunBySystem`) | [endor-cli-vs-cloud-projects](../endor-cli-vs-cloud-projects/SKILL.md) | This skill for metrics/logs |
+| `dependency_count_total` collapsed / resolution errors | This skill (embedded logs + PV probe) | [endor-sca-findings](../endor-sca-findings/SKILL.md) at branch/sha |
+| Tenant-wide PV resolution error patterns | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) | This skill for one scan pair |
+| Automated vs manual scan config differs (`RunBySystem`) | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) | This skill for metrics/logs |
 | Exception policy matches a finding? | [endor-validate-policy](../endor-validate-policy/SKILL.md) | — |
 | Reachable dep vs unreachable function | [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) | — |
-| New vs resolved vuln trend (FindingLog) | [endor-chart-new-vs-resolved-findings](../endor-chart-new-vs-resolved-findings/SKILL.md) | — |
+| New vs resolved vuln trend (FindingLog) | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) | — |
 | Same package, multiple versions/paths | [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md) | — |
 
 ## Artifact chains
@@ -115,7 +115,7 @@ for pv in client.PackageVersion.list_by_project(project, namespace=project_ns, m
         ...  # STATUS_ERROR_BUILD / unresolved.description
 ```
 
-3. **Hand off:** single-project branch/sha → [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md); tenant-wide → [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md)
+3. **Hand off:** single-project branch/sha → [endor-sca-findings](../endor-sca-findings/SKILL.md); tenant-wide → [endor-workflow-reports](../endor-workflow-reports/SKILL.md)
 
 ## Optional stops (artifact chain)
 
@@ -139,7 +139,7 @@ for pv in client.PackageVersion.list_by_project(project, namespace=project_ns, m
 | `scan_success` ↓ and `dependency_count_total` ↓ | PV `resolution_errors` library probe |
 | `fetch_scan_logs` `entry_count > 0` but no `error` in text | Re-check embedded `spec.logs`; API rows may be hollow |
 | `regression_detected: false` but user named two scans | Use explicit-pair path; user intent overrides heuristic |
-| `RunBySystem: true` vs `false` in scan config | [endor-cli-vs-cloud-projects](../endor-cli-vs-cloud-projects/SKILL.md) for config narrative |
+| `RunBySystem: true` vs `false` in scan config | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) for config narrative |
 
 Artifacts live under `.endorlabs-context/workspace/runs/troubleshooting-scans/`.
 See [workspace-layout](../../rules/endor-workspace-layout.md). Filename
@@ -279,9 +279,9 @@ Do **not** filter on `context.scan_uuid` — see [resource-discovery contract](.
 | Need | Skill |
 | ---- | ----- |
 | Finding rows for a scan plane | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) |
-| CLI vs Cloud scan config | [endor-cli-vs-cloud-projects](../endor-cli-vs-cloud-projects/SKILL.md) |
-| Branch/sha fixed vs present | [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) |
-| Tenant-wide PV resolution errors | [endor-potentially-reachable-analysis](../endor-potentially-reachable-analysis/SKILL.md) |
+| CLI vs Cloud scan config | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) |
+| Branch/sha fixed vs present | [endor-sca-findings](../endor-sca-findings/SKILL.md) |
+| Tenant-wide PV resolution errors | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) |
 
 ## Recommended defaults
 

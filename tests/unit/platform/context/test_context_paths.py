@@ -7,7 +7,6 @@ from pathlib import Path
 from endorlabs.context.paths import (
     context_json_path,
     platform_openapi_path,
-    platform_user_docs_path,
     project_workspace_dir,
     session_workspace_dir,
     workflow_projects_root,
@@ -20,7 +19,6 @@ def test_platform_paths_under_context(tmp_path: Path) -> None:
     root = tmp_path / ".endorlabs-context"
     assert platform_openapi_path(root).name == "openapiv2.swagger.json"
     assert platform_openapi_path(root).parent.name == "openapi"
-    assert platform_user_docs_path(root).name == "user-docs"
 
 
 def test_workspace_layout(tmp_path: Path) -> None:

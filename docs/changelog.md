@@ -8,7 +8,29 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- Agent skill `endor-workflow-reports`: routes tenant/namespace audit and report requests to script-backed workflow report playbooks without shipping each report as a top-level discovery skill.
+
 ### Changed
+
+- Product user-docs scrape removed: prefer Docs MCP (`https://docs.endorlabs.com/mcp`; unsupported harnesses: `https://docs.endorlabs.com/llms.txt`). Removed `include_user_docs` / `--sync-user-docs` / `sync_user_docs()`, the `[docs]` extra, and `InitStatus` user-docs fields.
+- Marked `REMOVE_BY_0_7_0` on remaining 0.6.x compat: `InitStatus.openapi_path` alias, flat-OpenAPI reconcile, `session_workspace_dir`, and `workflow_artifacts_root`.
+
+### Fixed
+
+### Breaking
+
+## 0.6.0
+
+Repository history starts from a single clean root; sdists ship package content only (no `tests/`). Prefer **0.6.0+**.
+
+### Added
+
+- Always-on CI Security Content Guards and expanded pre-commit portable-examples / content checks (emails, non-Endor URLs, estate `-n` literals). Shipped `src/endorlabs` requires placeholder-only `-n` / `--namespace` / `--tenant` values.
+
+### Changed
+
+- Hatch sdist target uses `only-packages = true` (aligned with the wheel: `src/endorlabs` only). Historical note: some 0.5.x sdists could include `tests/`; those dirty artifacts were removed from PyPI.
+- Portable-examples and fixture scrubbing: customer estate paths and personal emails replaced with placeholders across skills, docs, and unit tests.
 
 ### Fixed
 
@@ -307,9 +329,9 @@ First public pre-release on TestPyPI.
 
 - **Model-sync pipeline** — in-memory staging (dicts + in-process `datamodel_code_generator`); removed committed `workspace/model-sync/` tree; disk writes limited to ship surface (`src/endorlabs/generated/`, stub, reference docs). Path safety via `find_repo_root()` + `safe_repo_output_path()`; removed `--output-root` and `--spec-path` from maintainer CLI.
 - **Model-sync maintainer tooling** — removed git-baseline PR delta helpers (`model_sync_pr_deltas.py`, `--delta-summary`); SHA verify (`--verify-upstream-only`), deterministic regen, and CI/pre-push drift gates unchanged.
-- **`.endorlabs-context/` layout** — `platform/openapi/`, `platform/user-docs/`, `sdk/`, `workspace/` (flat root OpenAPI/docs paths are not supported).
-- **`InitStatus`** — adds `agent_knowledge_path`, `context_json_path`, `platform_*` fields; `openapi_path` / `user_docs_path` remain as aliases.
+- **`.endorlabs-context/` layout** — `platform/openapi/`, `sdk/`, `workspace/` (flat root OpenAPI paths are not supported).
+- **`InitStatus`** — adds `agent_knowledge_path`, `context_json_path`, and `platform_openapi_path`; `openapi_path` remains as an alias.
 - **`sync_skills`** — mirrors from materialized `sdk/skills/`, not repo `agent-knowledge/skills/` (pip-safe).
 - **Workflow default outputs** — project artifacts under `.endorlabs-context/workspace/projects/`; troubleshooting session root under `workspace/sessions/troubleshooting/`.
-- **Skills and docs paths** — canonical local OpenAPI/user-docs paths under `.endorlabs-context/platform/`; shipped bundle INDEX documents SDK-only vs bootstrap modes.
+- **Skills and OpenAPI paths** — canonical local OpenAPI path under `.endorlabs-context/platform/`; shipped bundle INDEX documents SDK-only vs bootstrap modes.
 - **Shipped `SKILL.md` frontmatter** — portable subset only (`name`, `description`, optional `disable-model-invocation`); `endorlabs.catalog` stripped at sync.

@@ -140,8 +140,8 @@ class TestTokenHandler:
             "expiration_time": "2099-01-01T12:00:00Z",
             "tenants": [{"name": "demo"}],
             "user": {
-                "meta": {"name": "timmy166@hotmail.com@endor"},
-                "spec": {"email": "timmy166@hotmail.com"},
+                "meta": {"name": "user@endor.ai@endor"},
+                "spec": {"email": "user@endor.ai"},
             },
         }
         handler = _make_token_handler(_TEST_STATE, environment="endorlabs.com")
@@ -151,7 +151,7 @@ class TestTokenHandler:
         )
         assert status == 200
         assert token == "secret-bearer"
-        assert b"timmy166@hotmail.com" in body
+        assert b"user@endor.ai" in body
         assert b"Token TTL" in body
         assert b"secret-bearer" not in body
         mock_fetch.assert_called_once_with(

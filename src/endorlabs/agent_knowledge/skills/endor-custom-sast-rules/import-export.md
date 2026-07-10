@@ -34,7 +34,7 @@ Set these in your `.env` file or shell environment:
 `sast_rule_manager.py` and other SDK workflow scripts read these from the environment. Load a local `.env` with **`uv run --env-file .env`** (see [README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/README.md#configuration)):
 
 ```bash
-uv run --env-file .env endorctl api list --resource Project -n tenant.ns
+uv run --env-file .env endorctl api list --resource Project -n example-tenant.ns
 ```
 
 ### Dependencies
@@ -74,19 +74,19 @@ expectations.
 ```bash
 # Import all rules in a directory (validates each rule first)
 uv run python sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
-    import --rules-dir opengrep-rules/ --namespace tenant.ns
+    import --rules-dir opengrep-rules/ --namespace example-tenant.ns
 
 # Force update existing rules
 uv run python sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
-    import --rules-dir opengrep-rules/ --namespace tenant.ns --force
+    import --rules-dir opengrep-rules/ --namespace example-tenant.ns --force
 
 # Dry run (parse, validate, and log planned actions without calling the API)
 uv run python sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
-    import --rules-dir opengrep-rules/ --namespace tenant.ns --dry-run
+    import --rules-dir opengrep-rules/ --namespace example-tenant.ns --dry-run
 
 # Verbose logging
 uv run python sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
-    import --rules-dir opengrep-rules/ --namespace tenant.ns --verbose
+    import --rules-dir opengrep-rules/ --namespace example-tenant.ns --verbose
 ```
 
 ### Step 3: Verify
@@ -194,7 +194,7 @@ To export rules from the platform, use the SDK to list and retrieve them:
 ```python
 import endorlabs
 
-client = endorlabs.Client(tenant="tenant.namespace")
+client = endorlabs.Client(tenant="example-tenant.child")
 
 # List all custom rules
 rules = client.SemgrepRule.list()

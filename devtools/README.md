@@ -23,7 +23,7 @@ GitHub Actions–only helpers (not regen): [`.github/scripts/`](../.github/scrip
 
 Hook wiring only: [`.pre-commit-config.yaml`](../.pre-commit-config.yaml). Policy: rule [`endor-maintainer-tooling`](../agent-knowledge/rules/endor-maintainer-tooling.md).
 
-For syncing external documentation (OpenAPI spec, user docs), use the programmatic API:
+For materializing SDK context and optional OpenAPI, use the programmatic API:
 
 ```python
 import endorlabs

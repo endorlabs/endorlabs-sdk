@@ -58,3 +58,34 @@ workflows:
       - endorlabs.workflows.vector_search.list_tenant_vector_stores
       - endorlabs.workflows.vector_search.probe_store_indexed_for_project
       - endorlabs.workflows.vector_search.query_vector_store
+
+  # Workflow report workflows — routed through endor-workflow-reports, not shown independently.
+  - id: auth-login-count
+    cli: null
+    module: endorlabs.workflows.auth.authentication_log
+    skill: endor-workflow-reports
+    default_output: .endorlabs-context/workspace/runs/auth-login-count/
+    agent_visible: false
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.auth.count_logins_from_groups
+      - endorlabs.workflows.auth.list_auth_logs
+  - id: auth-credential-expiry
+    cli: null
+    module: endorlabs.workflows.auth.credential_expiry
+    skill: endor-workflow-reports
+    default_output: .endorlabs-context/workspace/runs/auth-credential-expiry/
+    agent_visible: false
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.auth.audit_api_key_expiry
+      - endorlabs.workflows.auth.list_api_keys
+  - id: finding-log-weekly-trends
+    cli: null
+    module: endorlabs.workflows.findings.finding_log_trends
+    skill: endor-workflow-reports
+    default_output: .endorlabs-context/workspace/runs/finding-log-weekly-trends/
+    agent_visible: false
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis

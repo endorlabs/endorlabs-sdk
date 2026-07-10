@@ -38,24 +38,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
 
     _ = parser.add_argument(
-        "--sync-user-docs",
-        action="store_true",
-        dest="include_user_docs",
-        help="Download user docs to platform/user-docs/.",
-    )
-
-    _ = parser.add_argument(
         "--no-materialize-agent-knowledge",
         action="store_false",
         dest="include_agent_knowledge",
         help="Skip copying shipped agent knowledge into project sdk/ (default: on).",
-    )
-
-    _ = parser.add_argument(
-        "--max-pages",
-        type=int,
-        default=None,
-        help="Limit docs pages downloaded.",
     )
 
     _ = parser.add_argument(
@@ -84,7 +70,6 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     parser.set_defaults(
         include_openapi=False,
-        include_user_docs=False,
         include_agent_knowledge=True,
     )
 
@@ -94,7 +79,6 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def _has_bootstrap_actions(args: argparse.Namespace) -> bool:
     return bool(
         args.include_openapi
-        or args.include_user_docs
         or args.include_agent_knowledge
         or args.sync_skills != "none"
     )
@@ -112,17 +96,17 @@ def main(argv: list[str] | None = None) -> None:
         print("No bootstrap actions requested.")
         print(f"Wheel skills: {endorlabs.agent_knowledge_index_path()}")
         print(
-            "Pass --sync-openapi, --sync-user-docs, and/or --sync-skills, "
-            "or omit --no-materialize-agent-knowledge."
+            "Pass --sync-openapi and/or --sync-skills, "
+            "or omit --no-materialize-agent-knowledge. "
+            "Product docs: configure Docs MCP "
+            "(https://docs.endorlabs.com/introduction/docs-mcp-server)."
         )
         return
 
     status = endorlabs.init(
         output_dir=args.output_dir,
         include_openapi=args.include_openapi,
-        include_user_docs=args.include_user_docs,
         include_agent_knowledge=args.include_agent_knowledge,
-        max_pages=args.max_pages,
         force=args.force,
         sync_skills=args.sync_skills,
     )
@@ -137,9 +121,6 @@ def main(argv: list[str] | None = None) -> None:
 
     if status.openapi_path is not None:
         print(f"OpenAPI: {status.openapi_path}")
-
-    if status.user_docs_path is not None:
-        print(f"User docs: {status.user_docs_path} ({status.user_docs_count} pages)")
 
     for target_name, path in sorted(status.synced_skill_paths.items()):
         print(f"{target_name.title()} skills: {path}")

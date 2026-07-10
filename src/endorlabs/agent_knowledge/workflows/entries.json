@@ -15,38 +15,6 @@
   },
   {
     "agent_visible": true,
-    "cli": null,
-    "default_output": null,
-    "id": "auth-credential-expiry",
-    "library_entrypoints": [
-      "endorlabs.workflows.auth.audit_api_key_expiry",
-      "endorlabs.workflows.auth.list_api_keys",
-      "endorlabs.workflows.auth.classify_expiration",
-      "endorlabs.workflows.auth.build_credential_expiry_row",
-      "endorlabs.workflows.auth.expiry_upper_bound_filter"
-    ],
-    "module": "endorlabs.workflows.auth.credential_expiry",
-    "skill": "endor-auth-credential-expiry"
-  },
-  {
-    "agent_visible": true,
-    "cli": null,
-    "default_output": null,
-    "id": "auth-login-count",
-    "library_entrypoints": [
-      "endorlabs.workflows.auth.count_logins_from_groups",
-      "endorlabs.workflows.auth.list_auth_logs",
-      "endorlabs.workflows.auth.count_logins_from_rows",
-      "endorlabs.workflows.auth.normalize_auth_log",
-      "endorlabs.workflows.auth.extract_user_identifiers",
-      "endorlabs.workflows.auth.is_api_key_noise",
-      "endorlabs.workflows.auth.is_sso_login_uri"
-    ],
-    "module": "endorlabs.workflows.auth.authentication_log",
-    "skill": "endor-auth-login-count"
-  },
-  {
-    "agent_visible": true,
     "cli": "endor-auth",
     "default_output": null,
     "id": "auth-setup",
@@ -95,20 +63,6 @@
     "id": "context-bootstrap",
     "module": "endorlabs.context.cli",
     "skill": null
-  },
-  {
-    "agent_visible": true,
-    "cli": null,
-    "default_output": null,
-    "id": "finding-log-weekly-trends",
-    "library_entrypoints": [
-      "endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis",
-      "endorlabs.workflows.logs.group_by_time.group_by_time_counts",
-      "endorlabs.filters.reachable_vuln_log_base_filter",
-      "endorlabs.filters.prf_vuln_filter"
-    ],
-    "module": "endorlabs.workflows.findings.finding_log_trends",
-    "skill": "endor-chart-new-vs-resolved-findings"
   },
   {
     "agent_visible": true,

@@ -20,7 +20,7 @@ GIT TRACKED                          GITIGNORED (per project)
 ───────────                          ────────────────────────
 agent-knowledge/  ──sync──►         .endorlabs-context/
   rules contracts skills               ├── sdk/          ← materialized agent bundle
-src/endorlabs/agent_knowledge/         ├── platform/     ← OpenAPI + user-docs (optional)
+src/endorlabs/agent_knowledge/         ├── platform/     ← OpenAPI (optional)
   (shipped in wheel)                     └── workspace/    ← workflow + session outputs
 src/endorlabs/  (SDK + workflows)
 docs/  (public docs)
@@ -56,7 +56,6 @@ Edit `agent-knowledge/` → `uv run python devtools/codegen/sync_agent_knowledge
 | `context.json` | Materialization manifest |
 | `sdk/` | Copy of shipped agent knowledge (`rules/`, `skills/`, `contracts/`, `INDEX.md`, `MANIFEST.json`) |
 | `platform/openapi/` | Downloaded OpenAPI (`openapiv2.swagger.json`) when synced |
-| `platform/user-docs/` | Downloaded platform docs when synced (`[docs]` extra) |
 | `workspace/projects/<slug>_<timestamp>/` | Project bundles (`endor-agent-context`), per-uuid reachability |
 | `workspace/runs/<run-bucket>/` | Workflow CSV/JSON/RCA/report outputs (e.g. `troubleshooting-scans/`, `relationships-map/`) |
 | `workspace/runs/scratch/` | Ephemeral probes, triage scripts, session notes (gitignored) |
@@ -64,6 +63,7 @@ Edit `agent-knowledge/` → `uv run python devtools/codegen/sync_agent_knowledge
 | `workspace/<slug>-<YYYYMMDD>/` | Estate pull/analyze workspaces — [estate/workspace.md](../estate/workspace.md) |
 
 Legacy paths `workspace/sessions/` and `workspace/artifacts/` are deprecated — see shipped `rules/endor-workspace-layout.md`.
+<!-- REMOVE_BY_0_7_0: drop legacy path callouts once helpers/aliases are removed. -->
 
 Path helpers: `endorlabs.context.paths`.
 
@@ -102,7 +102,7 @@ When editing `src/endorlabs/**`:
 - **Stdout:** no `print()` except explicit CLI entrypoints.
 - **Typing:** public surfaces strict-typed; internal roots ratcheted in [pyproject.toml](../../pyproject.toml).
 - **Security:** credentials via env; run `endorctl scan` before code changes.
-- **Examples in git:** canonical repo `endorlabs/endorlabs-sdk`; no customer tenants/UUIDs in tracked content.
+- **Examples / fixtures in git:** no customer tenants, emails, production UUIDs, or estate URLs in tracked content — unit fixtures, docstrings, CLI examples, skills, and docs alike. Use placeholders (`example-tenant`, `user@example.com` / `user@endor.ai`). Integration tests take real tenants from **env** only. Rule `endor-portable-examples`.
 - **Maintainer tooling:** one home per pre-commit guard; shared staged-path helpers in `devtools/precommit/git_staged.py` and `endorlabs.utils.repo_paths` — rule `endor-maintainer-tooling`, [devtools/README.md](../../devtools/README.md).
 - **Environment variables:** do not invent `ENDOR_*` names; cite Endor Labs docs; read with `os.getenv`; never mutate `os.environ` or `.env` unless a human explicitly requests it — rule `endor-environment-variables`.
 

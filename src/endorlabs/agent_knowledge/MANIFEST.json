@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-10T13:48:55.720254+00:00",
+  "generated_at": "2026-07-10T22:11:05.651947+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -87,10 +87,11 @@
     {
       "id": "endor-local-context",
       "path": "rules/endor-local-context.md",
-      "summary": "Check gitignored .endorlabs-context paths explicitly; prefer local platform docs before the web; never print secrets.",
+      "summary": "Prefer Docs MCP for product docs; check gitignored .endorlabs-context for OpenAPI and sdk/; never print secrets.",
       "tags": [
         "bootstrap",
         "context",
+        "docs-mcp",
         "openapi"
       ]
     },
@@ -118,11 +119,13 @@
     {
       "id": "endor-portable-examples",
       "path": "rules/endor-portable-examples.md",
-      "summary": "Use placeholders in git-tracked agent content; never commit customer estate identifiers, PII, or secrets (tenants, project URLs, production UUIDs, emails).",
+      "summary": "Use placeholders in all git-tracked content; never commit customer estate identifiers, PII, or secrets (tenants, project URLs, production UUIDs, emails) across docs, skills, unit fixtures, docstrings, and CLI examples.",
       "tags": [
         "examples",
+        "fixtures",
         "hygiene",
-        "placeholders"
+        "placeholders",
+        "tests"
       ]
     },
     {
@@ -147,38 +150,10 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.5.4.dev4",
+  "sdk_version": "0.1.dev1",
   "skills": [
     {
-      "description": "Audit AuthorizationPolicy wire shape and claim/namespace form for common misconfigurations (comma-separated namespace blobs, wrong IdP claim keys, double provider suffixes). Use when reviewing Auth Policy setup, \"no authorized tenant\" after successful IdP login, or customer policy imports\u2014 not for credential refresh (endor-auth-setup), Enterprise SSO planning (endor-sso-integration-validation-troubleshooting), or AuthenticationLog RCA (endor-troubleshoot-authlog).",
-      "id": "endor-audit-authorization-policies",
-      "name": "endor-audit-authorization-policies",
-      "path": "skills/endor-audit-authorization-policies/SKILL.md",
-      "refs": [
-        "skills/endor-audit-authorization-policies/claim-and-namespace-forms.md",
-        "skills/endor-audit-authorization-policies/scripts/audit_authorization_policies.py"
-      ]
-    },
-    {
-      "description": "Audit tenant APIKey resources for expired or soon-to-expire credentials. Lists API keys on a namespace path, classifies expiration status, and writes a CSV report (default 30-day lookahead). Use for tenant credential hygiene and rotation planning\u2014not for bearer ENDOR_TOKEN refresh, SSO policy mapping, or AuthenticationLog RCA.",
-      "id": "endor-auth-credential-expiry",
-      "name": "endor-auth-credential-expiry",
-      "path": "skills/endor-auth-credential-expiry/SKILL.md",
-      "refs": [
-        "skills/endor-auth-credential-expiry/scripts/credential_expiry_report.py"
-      ]
-    },
-    {
-      "description": "Aggregate AuthenticationLog login activity by user identity over a configurable lookback window (default 90 days). Outputs a CSV with identity, user identifiers, last login, and login count. Shares workflow helpers with auth troubleshooting skills. Use for tenant login-activity audits\u2014not for SSO policy mapping or per-user auth RCA.",
-      "id": "endor-auth-login-count",
-      "name": "endor-auth-login-count",
-      "path": "skills/endor-auth-login-count/SKILL.md",
-      "refs": [
-        "skills/endor-auth-login-count/scripts/login_count_report.py"
-      ]
-    },
-    {
-      "description": "Probe, verify, and refresh Endor Labs SDK credentials before API workflows. Covers env-key scan, Client whoami check, endorctl detection, and interactive browser token refresh into .env. Use as step zero for any tenant session\u2014not for SSO policy mapping or AuthenticationLog RCA.",
+      "description": "Use when probing, verifying, or refreshing Endor Labs SDK credentials before API\nworkflows\u2014env-key scan, Client whoami check, endorctl detection, and interactive\nbrowser token refresh into .env. Step zero for any tenant session. Not for SSO\npolicy mapping or AuthenticationLog RCA.\n",
       "id": "endor-auth-setup",
       "name": "endor-auth-setup",
       "path": "skills/endor-auth-setup/SKILL.md",
@@ -192,37 +167,7 @@
       "refs": []
     },
     {
-      "description": "Generates cumulative weekly new vs resolved Critical/High reachable vulnerability trend charts from FindingLog group-by-time queries (CREATE/DELETE events via SDK FindingLog.list_groups). Default window is the past 90 days with complete weeks only. Produces one Cursor canvas per namespace root with optional child traverse. Use when the user asks for a resolved vs new findings trend chart, FindingLog analytics, or executive vulnerability burndown for main-context findings\u2014not for open Finding snapshots, PRF/PV resolution reports, or scan pipeline RCA.",
-      "id": "endor-chart-new-vs-resolved-findings",
-      "name": "endor-chart-new-vs-resolved-findings",
-      "path": "skills/endor-chart-new-vs-resolved-findings/SKILL.md",
-      "refs": [
-        "skills/endor-chart-new-vs-resolved-findings/scripts/generate_canvas.py",
-        "skills/endor-chart-new-vs-resolved-findings/scripts/paths.py",
-        "skills/endor-chart-new-vs-resolved-findings/scripts/run_analysis.py",
-        "skills/endor-chart-new-vs-resolved-findings/scripts/run_report.py"
-      ]
-    },
-    {
-      "description": "Tenant-wide audit of projects whose latest scan within a recent window ran via CLI endorctl (not agentless Cloud scans). Aggregates project counts by endorctl version from ScanResult.spec.environment.endorctl_version. Use when checking CI endorctl adoption, stale CLI versions, or version-specific rollout status\u2014not for scan pipeline RCA or Cloud vs CLI registration classification alone.",
-      "id": "endor-ci-endorctl-version-audit",
-      "name": "endor-ci-endorctl-version-audit",
-      "path": "skills/endor-ci-endorctl-version-audit/SKILL.md",
-      "refs": [
-        "skills/endor-ci-endorctl-version-audit/scripts/audit_ci_endorctl_versions.py"
-      ]
-    },
-    {
-      "description": "Classify Projects as CLI-scanned (local endorctl) vs Cloud-scanned (agentless SCM integrations such as GitHub or Bitbucket apps) using spec.git.external_installation_id. Tenant-wide runs emit a CSV with installation names resolved from Installation rows. Use when scan behavior, automation, or RCA depends on how the project was registered\u2014not for listing findings or scan pipeline diffs (hand off to sibling skills).",
-      "id": "endor-cli-vs-cloud-projects",
-      "name": "endor-cli-vs-cloud-projects",
-      "path": "skills/endor-cli-vs-cloud-projects/SKILL.md",
-      "refs": [
-        "skills/endor-cli-vs-cloud-projects/scripts/classify_cli_vs_cloud_projects.py"
-      ]
-    },
-    {
-      "description": "Author, validate, and import custom OpenGrep/Semgrep rule YAML into Endor Labs SemgrepRule resources. Use when writing or fixing rule syntax, Endor metadata shape, local opengrep/semgrep checks, or importing rules to a namespace \u2014 not for finding triage (hand off to endor-retrieve-scan-results).",
+      "description": "Use when authoring, validating, or importing custom OpenGrep/Semgrep rule YAML\ninto Endor Labs SemgrepRule resources\u2014rule syntax, Endor metadata shape, local\nopengrep/semgrep checks, or namespace import. Not for finding triage (hand off to\nendor-retrieve-scan-results).\n",
       "id": "endor-custom-sast-rules",
       "name": "endor-custom-sast-rules",
       "path": "skills/endor-custom-sast-rules/SKILL.md",
@@ -235,27 +180,11 @@
       ]
     },
     {
-      "description": "Trace vulnerability and dependency lineage across Findings, PackageVersions, and SBOM artifacts to verify resolved vs present state at branch/commit scope. Use for customer asks about \"is this fixed\", orphaned related-resource errors, patched-vs-upstream coordinate confusion, or mismatches between UI exports and API data.",
-      "id": "endor-dependency-finding-provenance",
-      "name": "endor-dependency-finding-provenance",
-      "path": "skills/endor-dependency-finding-provenance/SKILL.md",
-      "refs": []
-    },
-    {
-      "description": "Resolve package-version lineage by manifest path and source ref/sha, and distinguish direct vs transitive introduction paths. Use when the same package appears at multiple versions or via multiple manifest files.",
+      "description": "Use when resolving package-version lineage by manifest path and source ref/sha,\nor distinguishing direct vs transitive introduction paths\u2014especially when the\nsame package appears at multiple versions or via multiple manifest files.",
       "id": "endor-dependency-provenance",
       "name": "endor-dependency-provenance",
       "path": "skills/endor-dependency-provenance/SKILL.md",
       "refs": []
-    },
-    {
-      "description": "Find potential duplicate Projects across a tenant and all child namespaces: identical meta.name across namespaces, or names differing only when the user passes --name-strip-tokens (no default). Excludes SBOM projects (spec.sbom). Emit a flat CSV (project name, namespace, uuid, source) and a grouped canvas. Use when auditing project inventory or deduplicating registrations\u2014not for findings, scan RCA, or single-project classification alone.",
-      "id": "endor-duplicate-projects",
-      "name": "endor-duplicate-projects",
-      "path": "skills/endor-duplicate-projects/SKILL.md",
-      "refs": [
-        "skills/endor-duplicate-projects/scripts/find_duplicate_projects.py"
-      ]
     },
     {
       "description": "Fetch project call graph artifacts, decode zstd payloads into searchable node and edge files, and run safe direct-edge or multi-hop path searches on the customer PackageVersion plane. Use for static symbol paths (e.g. app code to a dependency API)\u2014not for Finding/CVE reachability triage (hand off to endor-reachability-provenance), scan finding lists (endor-retrieve-scan-results), or natural-language function summaries (VectorStoreQuery; separate flow).",
@@ -267,14 +196,14 @@
       ]
     },
     {
-      "description": "Extend the SDK client surface after OpenAPI changes: model sync, registry overlay, payload builders, and integration tests. Use when a new API resource appears, facade behavior diverges from generated contract, or list/get/create needs validation\u2014not for hand-implementing every resource from scratch.",
+      "description": "Use when extending the SDK client surface after OpenAPI changes\u2014model sync,\nregistry overlay, payload builders, and integration tests\u2014when a new API resource\nappears, facade behavior diverges from the generated contract, or list/get/create\nneeds validation. Not for hand-implementing every resource from scratch.",
       "id": "endor-implement-sdk-resource",
       "name": "endor-implement-sdk-resource",
       "path": "skills/endor-implement-sdk-resource/SKILL.md",
       "refs": []
     },
     {
-      "description": "Triage and fix OpenAPI / model-sync upstream drift when CI or pre-push fails verify-upstream-only, or when published endorctl is newer than committed provenance. Use for regenerating registry_contract, stubs, and reference docs; reviewing generated diffs; and optional local endorctl upgrades. Not for runtime SDK API errors (see troubleshoot-sdk).",
+      "description": "Use when triaging OpenAPI / model-sync upstream drift\u2014CI or pre-push\nverify-upstream-only failures, or published endorctl newer than committed\nprovenance. Covers regenerating registry_contract, stubs, and reference docs;\nreviewing generated diffs; optional local endorctl upgrades. Not for runtime SDK\nAPI errors (endor-troubleshoot-sdk).",
       "id": "endor-model-sync-drift",
       "name": "endor-model-sync-drift",
       "path": "skills/endor-model-sync-drift/SKILL.md",
@@ -288,21 +217,7 @@
       "refs": []
     },
     {
-      "description": "Generates a tenant-wide PRF (potentially reachable function) vulnerability and PackageVersion resolution error report for main-context NuGet, NPM, Maven, and PyPI findings tagged FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION. Outputs analysis JSON, Cursor canvas, and optional HTML/PDF. Use for PRF approximation coverage, dependency resolution error triage, or executive-style reachability summaries\u2014not for per-finding reachability proof or scan pipeline RCA.",
-      "id": "endor-potentially-reachable-analysis",
-      "name": "endor-potentially-reachable-analysis",
-      "path": "skills/endor-potentially-reachable-analysis/SKILL.md",
-      "refs": [
-        "skills/endor-potentially-reachable-analysis/resolution-reference.md",
-        "skills/endor-potentially-reachable-analysis/scripts/generate_canvas.py",
-        "skills/endor-potentially-reachable-analysis/scripts/generate_report_pdf.py",
-        "skills/endor-potentially-reachable-analysis/scripts/paths.py",
-        "skills/endor-potentially-reachable-analysis/scripts/run_analysis.py",
-        "skills/endor-potentially-reachable-analysis/scripts/run_report.py"
-      ]
-    },
-    {
-      "description": "Deterministic single-project retrieval bundle via endor-agent-context: context_manifest.json, dependency explorer artifacts, optional session summaries, PV index + hydration, optional call-graph export. Not namespace topology or breaking-change consumer discovery \u2014 hand off to endor-namespace-relationship-map.",
+      "description": "Use when building a deterministic single-project retrieval bundle via\nendor-agent-context: context_manifest.json, dependency explorer artifacts,\noptional session summaries, PV index + hydration, optional call-graph export. Not\nfor namespace topology or breaking-change consumer discovery\u2014hand off to\nendor-namespace-relationship-map.\n",
       "id": "endor-project-retrieval-bundle",
       "name": "endor-project-retrieval-bundle",
       "path": "skills/endor-project-retrieval-bundle/SKILL.md",
@@ -311,7 +226,7 @@
       ]
     },
     {
-      "description": "Investigates reachability provenance mismatches in vulnerability findings by comparing dependency reachability, function reachability, and vulnerability metadata in the oss namespace. Use when finding tags or summary text appear contradictory (for example reachable dependency with unreachable function), when validating affected_callpath_uris attribution, or when analyzing CVE/GHSA alias consistency.",
+      "description": "Use when investigating reachability provenance mismatches in vulnerability\nfindings\u2014comparing dependency reachability, function reachability, and oss\nvulnerability metadata; contradictory finding tags/summary text; validating\naffected_callpath_uris attribution; or CVE/GHSA alias consistency.\n",
       "id": "endor-reachability-provenance",
       "name": "endor-reachability-provenance",
       "path": "skills/endor-reachability-provenance/SKILL.md",
@@ -320,21 +235,28 @@
       ]
     },
     {
-      "description": "Project-scoped SDK workflow: resolve Project \u2192 latest ScanResult \u2192 Finding rows for one repo. Use when the user wants scan results, findings, or reports for a specific project. Default to namespace=project.namespace without traverse on findings; use traverse only to discover Project when namespace is unknown, or when the user explicitly requests tenant-wide reports.",
+      "description": "Use when retrieving scan results, findings, or reports for a specific project via\nProject \u2192 latest ScanResult \u2192 Finding rows. Default namespace=project.namespace\nwithout traverse on findings; use traverse only to discover Project when namespace\nis unknown, or when the user explicitly requests tenant-wide reports.",
       "id": "endor-retrieve-scan-results",
       "name": "endor-retrieve-scan-results",
       "path": "skills/endor-retrieve-scan-results/SKILL.md",
       "refs": []
     },
     {
-      "description": "Routes estate-scale data pulls between Query graph joins and facade list/count/shard patterns after bounded topology discovery. Use when choosing how to fetch counts, aggregates, or validated joins across many projects. Not for single-project RCA \u2014 hand off when full row export is needed without a validated Query join.",
+      "description": "Use when routing estate-scale data pulls between Query graph joins and facade\nlist/count/shard patterns after bounded topology discovery\u2014choosing how to fetch\ncounts, aggregates, or validated joins across many projects. Not for single-project\nRCA; hand off when full row export is needed without a validated Query join.",
       "id": "endor-route-estate-queries",
       "name": "endor-route-estate-queries",
       "path": "skills/endor-route-estate-queries/SKILL.md",
       "refs": []
     },
     {
-      "description": "Customer-facing workflow for planning, validating, and troubleshooting Endor Enterprise SSO integrations. Use when a customer is setting up SSO, validating namespace access behavior, or debugging claims-to-authorization mapping.",
+      "description": "Use when tracing vulnerability and dependency lineage across Findings,\nPackageVersions, and SBOM artifacts to verify resolved vs present state at\nbranch/commit scope\u2014customer \"is this fixed\" asks, orphaned related-resource\nerrors, patched-vs-upstream coordinate confusion, or UI export vs API mismatches.",
+      "id": "endor-sca-findings",
+      "name": "endor-sca-findings",
+      "path": "skills/endor-sca-findings/SKILL.md",
+      "refs": []
+    },
+    {
+      "description": "Use when planning, validating, or troubleshooting Endor Enterprise SSO\nintegrations\u2014customer SSO setup, namespace access behavior, or claims-to-authorization\nmapping.",
       "id": "endor-sso-integration-validation-troubleshooting",
       "name": "endor-sso-integration-validation-troubleshooting",
       "path": "skills/endor-sso-integration-validation-troubleshooting/SKILL.md",
@@ -344,7 +266,7 @@
       ]
     },
     {
-      "description": "Investigate tenant SSO/login issues using AuthenticationLog, AuthorizationPolicy, and optional AuditLog. Use when correlating IdP claims with Endor policy mapping, \"no authorized tenant\" symptoms, or exporting structured, flow-agnostic auth investigation JSON.",
+      "description": "Use when investigating tenant SSO/login issues with AuthenticationLog,\nAuthorizationPolicy, and optional AuditLog\u2014correlating IdP claims with Endor\npolicy mapping, \"no authorized tenant\" symptoms, or exporting structured\nflow-agnostic auth investigation JSON.",
       "id": "endor-troubleshoot-authlog",
       "name": "endor-troubleshoot-authlog",
       "path": "skills/endor-troubleshoot-authlog/SKILL.md",
@@ -360,7 +282,7 @@
       ]
     },
     {
-      "description": "Scan pipeline RCA: resolve a project (including app scan-history URLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs for errors, diff aggregate metrics, and probe PackageVersion resolution_errors. Not for individual Finding rows or policy validation \u2014 hand off to sibling skills when deeper analysis is needed.",
+      "description": "Use when doing scan pipeline RCA: resolve a project (including app scan-history\nURLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs\nfor errors, diff aggregate metrics, and probe PackageVersion resolution_errors.\nNot for individual Finding rows or policy validation\u2014hand off to sibling skills\nwhen deeper analysis is needed.\n",
       "id": "endor-troubleshooting-scans",
       "name": "endor-troubleshooting-scans",
       "path": "skills/endor-troubleshooting-scans/SKILL.md",
@@ -375,6 +297,13 @@
         "skills/endor-validate-policy/policy-validation-api.md",
         "skills/endor-validate-policy/policy-validation-endorctl.md"
       ]
+    },
+    {
+      "description": "Use when the user asks for tenant or namespace-level Endor Labs audit reports,\nCSV exports, Cursor canvases, or executive-style workflow summaries that are\nbacked by bundled report scripts rather than day-0 SDK troubleshooting skills.\nRoutes to auth, project inventory, CI version, finding trend, and PRF report\nplaybooks. Not for single-project scan RCA, finding retrieval, SDK debugging,\nor policy validation.",
+      "id": "endor-workflow-reports",
+      "name": "endor-workflow-reports",
+      "path": "skills/endor-workflow-reports/SKILL.md",
+      "refs": []
     }
   ],
   "workflows": [
@@ -393,36 +322,30 @@
       "skill": "endor-project-retrieval-bundle"
     },
     {
-      "agent_visible": true,
+      "agent_visible": false,
       "cli": null,
-      "default_output": null,
+      "composition": "library_api",
+      "default_output": ".endorlabs-context/workspace/runs/auth-credential-expiry/",
       "id": "auth-credential-expiry",
       "library_entrypoints": [
         "endorlabs.workflows.auth.audit_api_key_expiry",
-        "endorlabs.workflows.auth.list_api_keys",
-        "endorlabs.workflows.auth.classify_expiration",
-        "endorlabs.workflows.auth.build_credential_expiry_row",
-        "endorlabs.workflows.auth.expiry_upper_bound_filter"
+        "endorlabs.workflows.auth.list_api_keys"
       ],
       "module": "endorlabs.workflows.auth.credential_expiry",
-      "skill": "endor-auth-credential-expiry"
+      "skill": "endor-workflow-reports"
     },
     {
-      "agent_visible": true,
+      "agent_visible": false,
       "cli": null,
-      "default_output": null,
+      "composition": "library_api",
+      "default_output": ".endorlabs-context/workspace/runs/auth-login-count/",
       "id": "auth-login-count",
       "library_entrypoints": [
         "endorlabs.workflows.auth.count_logins_from_groups",
-        "endorlabs.workflows.auth.list_auth_logs",
-        "endorlabs.workflows.auth.count_logins_from_rows",
-        "endorlabs.workflows.auth.normalize_auth_log",
-        "endorlabs.workflows.auth.extract_user_identifiers",
-        "endorlabs.workflows.auth.is_api_key_noise",
-        "endorlabs.workflows.auth.is_sso_login_uri"
+        "endorlabs.workflows.auth.list_auth_logs"
       ],
       "module": "endorlabs.workflows.auth.authentication_log",
-      "skill": "endor-auth-login-count"
+      "skill": "endor-workflow-reports"
     },
     {
       "agent_visible": true,
@@ -492,18 +415,16 @@
       "skill": null
     },
     {
-      "agent_visible": true,
+      "agent_visible": false,
       "cli": null,
-      "default_output": null,
+      "composition": "library_api",
+      "default_output": ".endorlabs-context/workspace/runs/finding-log-weekly-trends/",
       "id": "finding-log-weekly-trends",
       "library_entrypoints": [
-        "endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis",
-        "endorlabs.workflows.logs.group_by_time.group_by_time_counts",
-        "endorlabs.filters.reachable_vuln_log_base_filter",
-        "endorlabs.filters.prf_vuln_filter"
+        "endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis"
       ],
       "module": "endorlabs.workflows.findings.finding_log_trends",
-      "skill": "endor-chart-new-vs-resolved-findings"
+      "skill": "endor-workflow-reports"
     },
     {
       "agent_visible": true,

@@ -22,7 +22,7 @@ client = endorlabs.Client(tenant="your-tenant")  # or ENDOR_NAMESPACE
 print(client.whoami())  # not Namespace.list()
 
 # 2. Workflows — skills not on dir(client)
-endorlabs.init(include_openapi=False, include_user_docs=False)
+endorlabs.init(include_openapi=False)
 # Read .endorlabs-context/sdk/skills/<id>/SKILL.md
 ```
 

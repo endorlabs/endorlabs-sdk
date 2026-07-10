@@ -1,10 +1,14 @@
 ---
 name: endor-model-sync-drift
-description: Triage and fix OpenAPI / model-sync upstream drift when CI or pre-push
-  fails verify-upstream-only, or when published endorctl is newer than committed provenance.
-  Use for regenerating registry_contract, stubs, and reference docs; reviewing generated
-  diffs; and optional local endorctl upgrades. Not for runtime SDK API errors (see
-  troubleshoot-sdk).
+description: 'Use when triaging OpenAPI / model-sync upstream drift—CI or pre-push
+
+  verify-upstream-only failures, or published endorctl newer than committed
+
+  provenance. Covers regenerating registry_contract, stubs, and reference docs;
+
+  reviewing generated diffs; optional local endorctl upgrades. Not for runtime SDK
+
+  API errors (endor-troubleshoot-sdk).'
 ---
 
 # Model-sync upstream drift

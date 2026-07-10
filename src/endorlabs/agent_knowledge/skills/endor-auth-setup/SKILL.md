@@ -1,9 +1,15 @@
 ---
 name: endor-auth-setup
-description: Probe, verify, and refresh Endor Labs SDK credentials before API workflows.
-  Covers env-key scan, Client whoami check, endorctl detection, and interactive browser
-  token refresh into .env. Use as step zero for any tenant session—not for SSO policy
-  mapping or AuthenticationLog RCA.
+description: 'Use when probing, verifying, or refreshing Endor Labs SDK credentials
+  before API
+
+  workflows—env-key scan, Client whoami check, endorctl detection, and interactive
+
+  browser token refresh into .env. Step zero for any tenant session. Not for SSO
+
+  policy mapping or AuthenticationLog RCA.
+
+  '
 ---
 
 # Authentication setup
@@ -11,10 +17,6 @@ description: Probe, verify, and refresh Endor Labs SDK credentials before API wo
 Step-zero playbook for **SDK**, **endorctl**, and **MCP** consumers. Normative env
 rules live in [errors-and-auth](../../contracts/errors-and-auth.md).
 
-## Prerequisites
-
-- **SDK install:** `pip install endorlabs` (or `uv` in this repo). See [README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/README.md#installation).
-- **Bootstrap (agents):** `endorlabs.init()` or `uv run endor-context --sync-skills cursor` —
   see [README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/README.md#agent-bootstrap-discover-vs-init).
 - **Not for CI:** browser refresh opens localhost:30000 and requires a human present.
 
@@ -178,9 +180,6 @@ Verify: `uv run --env-file .env endor-auth check`.
 
 | Need | Skill |
 | ---- | ----- |
-| Auth setup / refresh | **This skill** |
-| AuthPolicy form audit | [endor-audit-authorization-policies](../endor-audit-authorization-policies/SKILL.md) |
-| Login activity CSV | [endor-auth-login-count](../endor-auth-login-count/SKILL.md) |
-| API key expiration audit | [endor-auth-credential-expiry](../endor-auth-credential-expiry/SKILL.md) |
 | SSO / login RCA | [endor-troubleshoot-authlog](../endor-troubleshoot-authlog/SKILL.md) |
 | SDK list / traverse errors | [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md) |
+| Auth workflow reports | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) |

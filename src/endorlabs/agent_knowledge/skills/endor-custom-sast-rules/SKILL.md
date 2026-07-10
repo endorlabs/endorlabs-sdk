@@ -1,9 +1,15 @@
 ---
 name: endor-custom-sast-rules
-description: Author, validate, and import custom OpenGrep/Semgrep rule YAML into Endor
-  Labs SemgrepRule resources. Use when writing or fixing rule syntax, Endor metadata
-  shape, local opengrep/semgrep checks, or importing rules to a namespace — not for
-  finding triage (hand off to endor-retrieve-scan-results).
+description: 'Use when authoring, validating, or importing custom OpenGrep/Semgrep
+  rule YAML
+
+  into Endor Labs SemgrepRule resources—rule syntax, Endor metadata shape, local
+
+  opengrep/semgrep checks, or namespace import. Not for finding triage (hand off to
+
+  endor-retrieve-scan-results).
+
+  '
 ---
 
 # Custom SemgrepRule authoring and import
@@ -67,11 +73,11 @@ relative path under `src/endorlabs/agent_knowledge/skills/` in the wheel):
 
 ```bash
 uv run python sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
-  import --rules-dir opengrep-rules/ --namespace tenant.ns --dry-run
+  import --rules-dir opengrep-rules/ --namespace example-tenant.ns --dry-run
 
 uv run python sdk/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
   sync --rules-dir opengrep-rules/ --enabled-dir opengrep-rules/enabled/ \
-  --name-filter "my-prefix" --namespace tenant.ns --force
+  --name-filter "my-prefix" --namespace example-tenant.ns --force
 ```
 
 | Command | Purpose |
@@ -95,7 +101,7 @@ Compare counts with local opengrep/semgrep on the same target.
 ## SemgrepRule metadata inventory
 
 ```bash
-uv run endor-semgrep-inventory --namespace tenant.namespace
+uv run endor-semgrep-inventory --namespace example-tenant.child
 ```
 
 Lists tenant **`SemgrepRule`** rows and summarizes metadata-key prevalence —

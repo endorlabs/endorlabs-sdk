@@ -1,9 +1,9 @@
 ---
 name: endor-sso-integration-validation-troubleshooting
-description: >-
-  Customer-facing workflow for planning, validating, and troubleshooting Endor
-  Enterprise SSO integrations. Use when a customer is setting up SSO, validating
-  namespace access behavior, or debugging claims-to-authorization mapping.
+description: |
+  Use when planning, validating, or troubleshooting Endor Enterprise SSO
+  integrations—customer SSO setup, namespace access behavior, or claims-to-authorization
+  mapping.
 ---
 
 # SSO Integration, Validation, and Troubleshooting
@@ -124,6 +124,5 @@ Always return:
 
 | Need | Skill |
 | ---- | ----- |
-| AuthPolicy claim/namespace form audit | [endor-audit-authorization-policies](../endor-audit-authorization-policies/SKILL.md) |
-| Login activity / login count CSV | [endor-auth-login-count](../endor-auth-login-count/SKILL.md) |
+| Auth workflow reports / AuthPolicy form audit | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) |
 | Per-user auth RCA | [endor-troubleshoot-authlog](../endor-troubleshoot-authlog/SKILL.md) |

@@ -1,10 +1,10 @@
 ---
 name: endor-project-retrieval-bundle
-description: >-
-  Deterministic single-project retrieval bundle via endor-agent-context:
-  context_manifest.json, dependency explorer artifacts, optional session
-  summaries, PV index + hydration, optional call-graph export. Not namespace
-  topology or breaking-change consumer discovery — hand off to
+description: |
+  Use when building a deterministic single-project retrieval bundle via
+  endor-agent-context: context_manifest.json, dependency explorer artifacts,
+  optional session summaries, PV index + hydration, optional call-graph export. Not
+  for namespace topology or breaking-change consumer discovery—hand off to
   endor-namespace-relationship-map.
 endorlabs:
   catalog:

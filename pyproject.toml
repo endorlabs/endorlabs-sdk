@@ -41,11 +41,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# User-docs sync (include_user_docs=True in init/endor-context)
-docs = [
-    "beautifulsoup4==4.15.0",
-    "markdownify==1.2.2",
-]
 # DataFrame/Parquet export (estate cardinality tabular) + estate graph metrics (igraph/leidenalg)
 analytics = [
     "pandas==3.0.3",
@@ -84,9 +79,6 @@ dev = [
     "pyright==1.1.410",
     "pre-commit==4.6.0",
     "rich==15.0.0",
-    # Docs-sync deps for unit tests (mirrors [project.optional-dependencies.docs])
-    "beautifulsoup4==4.15.0",
-    "markdownify==1.2.2",
     # Analytics deps for unit tests (mirrors [project.optional-dependencies.analytics])
     "pandas==3.0.3",
     "pyarrow==24.0.0",
@@ -126,6 +118,17 @@ version-file = "src/endorlabs/_version.py"
 [tool.hatch.build.targets.wheel]
 packages = ["src/endorlabs"]
 artifacts = ["src/endorlabs/py.typed"]  # PEP 561 marker for typed package
+
+[tool.hatch.build.targets.sdist]
+only-packages = true
+exclude = [
+  "/tests",
+  "/docs",
+  "/devtools",
+  "/agent-knowledge",
+  "/.github",
+  "/.cursor",
+]
 
 # Maintainer publish target only (explicit index; not used for default uv sync).
 [[tool.uv.index]]
@@ -351,6 +354,20 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 # Skill-maintained CLI scripts (authoring tree; mirrored into agent_knowledge bundle).
 "agent-knowledge/skills/**/scripts/*.py" = [
     "ERA001",  # section divider comments
+    "D",
+    "E501",
+    "PERF401",
+    "T201",
+    "RUF001",
+    "C901",
+    "PLW0108",
+    "SLF001",
+    "S603",
+    "S607",
+]
+# Workflow report CLI scripts (authoring tree; not shipped as individual skills).
+"agent-knowledge/workflow-reports/**/scripts/*.py" = [
+    "ERA001",
     "D",
     "E501",
     "PERF401",

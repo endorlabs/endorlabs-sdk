@@ -4,27 +4,29 @@
 
 Local setup: see [CONTRIBUTORS.md](../../CONTRIBUTORS.md).
 
-## Sync external docs (optional, for full IDE context)
+## SDK bootstrap and OpenAPI (optional, for IDE use)
 
-Create the gitignored `.endorlabs-context/` folder with both the OpenAPI spec and local user documentation snapshots. **Optional, for full IDE context** — pull full platform-admin context into the IDE.
+Bootstrap SDK agent knowledge and optionally download OpenAPI. **Product docs**
+use the [Docs MCP server](https://docs.endorlabs.com/introduction/docs-mcp-server)
+(`https://docs.endorlabs.com/mcp`). Unsupported harnesses:
+[https://docs.endorlabs.com/llms.txt](https://docs.endorlabs.com/llms.txt).
 
 ```bash
-uv sync --extra docs
+uv sync
 ```
 
 ```python
 import endorlabs
-status = endorlabs.init()  # materializes sdk/; optional platform downloads
+status = endorlabs.init(include_openapi=True)  # writes sdk/ + optional OpenAPI
 ```
 
 This creates:
 
 - `.endorlabs-context/sdk/` — shipped agent knowledge (INDEX, rules, skills, contracts)
-- `.endorlabs-context/platform/openapi/openapiv2.swagger.json` — API spec
-- `.endorlabs-context/platform/user-docs/*.md` — User docs (sitemap-based, parallel download)
+- `.endorlabs-context/platform/openapi/openapiv2.swagger.json` — API spec (when requested)
 - `.endorlabs-context/context.json` — init manifest
 
-Options: `include_openapi=True/False`, `include_user_docs=True/False`, `include_agent_knowledge=True/False`, `max_pages=N`, `force=True`. See [AGENTS.md](../../AGENTS.md#bootstrap) and [CONTRIBUTORS.md](../../CONTRIBUTORS.md#optional-sync-external-docs).
+Options: `include_openapi=True/False`, `include_agent_knowledge=True/False`, `force=True`. See [AGENTS.md](../../AGENTS.md#bootstrap) and [CONTRIBUTORS.md](../../CONTRIBUTORS.md#optional-sdk-bootstrap-and-openapi).
 
 ## Model sync workflow (CI and local)
 
@@ -84,7 +86,7 @@ uv run python devtools/codegen/sync_agent_knowledge.py
 
 ## Local Use
 
-**Option A — Full context:** Sync spec + user docs into `.endorlabs-context/`, then run model sync (see [Sync external docs](#sync-external-docs-optional-for-full-ide-context) above).
+**Option A — SDK bootstrap + OpenAPI:** Write agent knowledge and OpenAPI into `.endorlabs-context/`, then run model sync (see [SDK bootstrap and OpenAPI](#sdk-bootstrap-and-openapi-optional-for-ide-use) above).
 
 **Option B — Spec only:** Download just the OpenAPI spec, then run model sync:
 

@@ -44,7 +44,7 @@ rule metadata before create/update.
 Use the inventory CLI to snapshot **`SemgrepRule`** metadata key usage in your tenant (workflow id `semgrep-inventory`; API resource **`SemgrepRule`**, not a generic “Semgrep” kind):
 
 ```bash
-uv run endor-semgrep-inventory --namespace tenant.namespace
+uv run endor-semgrep-inventory --namespace example-tenant.child
 ```
 
 `--max-pages` defaults to **0 (unlimited)**. The JSON includes `list_truncated`
