@@ -12,6 +12,8 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Fixed
 
+- `Query` nested-reference pagination (`estate.collect`, `Finding.list_for_context`, …) no longer treats `next_page_token: 0` as a real cursor; the SDK previously re-requested the same page and duplicated its rows before its loop guard stopped the retry.
+
 ### Breaking
 
 ## 0.6.0
