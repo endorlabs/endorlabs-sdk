@@ -191,10 +191,16 @@ def reference_next_page_token(project_obj: dict[str, Any], ref_key: str) -> int 
 def reference_next_page_cursor(
     project_obj: dict[str, Any], ref_key: str
 ) -> PageCursor | None:
-    """Return the next reference list cursor (``page_token`` over ``page_id``)."""
+    """Return the next reference list cursor (``page_token`` over ``page_id``).
+
+    ``next_page_token`` is a proto3 int field; the server uses its zero value
+    (``0``) to mean "no more pages", not a literal page token. Treating it as
+    a real cursor causes ``iter_paginated_pages`` to re-request the same page
+    before its duplicate-cursor guard stops the loop.
+    """
     meta = reference_list_response_meta(project_obj, ref_key)
     token = meta.get("next_page_token")
-    if token is not None:
+    if token is not None and int(token) != 0:
         return PageCursor(page_token=int(token))
     page_id = meta.get("next_page_id")
     if page_id is not None:

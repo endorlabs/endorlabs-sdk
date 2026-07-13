@@ -297,6 +297,82 @@ def test_reference_next_page_cursor_falls_back_to_page_id() -> None:
     assert cursor == PageCursor(page_id="page-id-1")
 
 
+def test_reference_next_page_cursor_treats_zero_token_as_terminal() -> None:
+    """``next_page_token: 0`` means "no more pages", not a real cursor.
+
+    Regression for a loop where the SDK re-requested the same page using
+    ``page_token=0`` before the duplicate-cursor guard stopped it.
+    """
+    obj = {
+        "meta": {
+            "references": {
+                "Finding": {
+                    "list": {
+                        "response": {
+                            "next_page_token": 0,
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    cursor = reference_next_page_cursor(obj, "Finding")
+    assert cursor is None
+
+
+def test_collect_reference_rows_stops_when_token_is_zero() -> None:
+    """A single-page response with ``next_page_token: 0`` must not be re-fetched."""
+    calls: list[dict[str, Any]] = []
+
+    class _CollectClient:
+        def __init__(self) -> None:
+            super().__init__()
+            self.Query = self
+
+        def create(self, *, payload: Any, namespace: str) -> dict[str, Any]:
+            _ = namespace
+            spec = payload.spec["query_spec"]
+            calls.append(spec)
+            return {
+                "spec": {
+                    "query_response": {
+                        "list": {
+                            "objects": [
+                                {
+                                    "uuid": "proj-a",
+                                    "meta": {
+                                        "references": {
+                                            "Finding": {
+                                                "list": {
+                                                    "objects": [{"uuid": "f-001"}],
+                                                    "response": {"next_page_token": 0},
+                                                }
+                                            }
+                                        }
+                                    },
+                                }
+                            ],
+                            "response": {"next_page_token": None},
+                        }
+                    }
+                }
+            }
+
+    spec = estate_findings_list_spec()
+    scope = scopes_from_projects(
+        [SimpleNamespace(uuid="proj-a", namespace="tenant.leaf")]
+    )[0]
+    merged = QueryExecutor(_CollectClient()).collect_reference_rows(
+        spec,
+        scopes=[scope],
+        ref_keys=("Finding",),
+    )
+    rows = merged["proj-a"]
+    assert [row["uuid"] for row in rows] == ["f-001"]
+    assert len(calls) == 1
+
+
 def test_collect_reference_rows_paginates_nested_list() -> None:
     calls: list[dict[str, Any]] = []
 
