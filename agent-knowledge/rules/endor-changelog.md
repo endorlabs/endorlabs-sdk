@@ -75,7 +75,8 @@ Optional structured fields: [`agent-knowledge/schema/changelog-intake.schema.jso
 
 1. Collapse model-sync-only PRs into one **Changed** footnote or omit.
 2. Promote **Unreleased** → `## X.Y.Z`; reset **Unreleased** headers.
-3. Grep for removed CLI/API names; update durable docs to **current** behavior only.
+3. Set **`[project].version = "X.Y.Z"`** in `pyproject.toml` (same PR as the changelog cut).
+4. Grep for removed CLI/API names; update durable docs to **current** behavior only.
 
 Do **not** auto-generate `docs/changelog.md` from `git log`.
 

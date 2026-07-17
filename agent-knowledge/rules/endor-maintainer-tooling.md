@@ -37,7 +37,7 @@ Repo-only guidance for hooks, guard scripts, and shared helpers. Not shipped in 
 | ------ | ---- | -------- |
 | Pre-commit | `devtools/precommit/` | `git_staged.py`, `pre_commit_guards.py`, `audit_consumer_surfaces.py` |
 | Codegen | `devtools/codegen/` | `model_sync.py`, `sync/`, `model_sync_profiles/`, `sync_agent_knowledge.py` |
-| Ship | `devtools/ship/` | `verify_ship_artifacts.py`, `check_vcs_version.py`, smoke tests |
+| Ship | `devtools/ship/` | `verify_ship_artifacts.py`, `check_project_version.py`, smoke tests |
 | GHA-only | `.github/scripts/` | `check_endorctl_version.py` — see [`.github/scripts/README.md`](../../.github/scripts/README.md) |
 
 ## Adding a guard

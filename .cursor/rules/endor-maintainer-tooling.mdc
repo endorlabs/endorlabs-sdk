@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-maintainer-tooling.md
-x-endor-source-sha256: c1066bfff1c3a5390de966efa36dfeda67c7c84855b7d5508c5dfd7d6349ed8c
+x-endor-source-sha256: da00718e4d8d0182a3a06fbfc2e80f1273e5f72594532ca3838ba9edbbffe039
 ---
 
 # Maintainer tooling (pre-commit and devtools)
@@ -43,7 +43,7 @@ Repo-only guidance for hooks, guard scripts, and shared helpers. Not shipped in 
 | ------ | ---- | -------- |
 | Pre-commit | `devtools/precommit/` | `git_staged.py`, `pre_commit_guards.py`, `audit_consumer_surfaces.py` |
 | Codegen | `devtools/codegen/` | `model_sync.py`, `sync/`, `model_sync_profiles/`, `sync_agent_knowledge.py` |
-| Ship | `devtools/ship/` | `verify_ship_artifacts.py`, `check_vcs_version.py`, smoke tests |
+| Ship | `devtools/ship/` | `verify_ship_artifacts.py`, `check_project_version.py`, smoke tests |
 | GHA-only | `.github/scripts/` | `check_endorctl_version.py` — see [`.github/scripts/README.md`](../../.github/scripts/README.md) |
 
 ## Adding a guard
