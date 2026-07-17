@@ -131,6 +131,12 @@ exclude = [
   "/.cursor",
 ]
 
+# Default install index: Endor package firewall (auth via UV_INDEX_ENDOR_FIREWALL_*).
+[[tool.uv.index]]
+name = "endor-firewall"
+url = "https://factory.endorlabs.com/v1/namespaces/endor-solutions-tgowan/firewall/pypi/simple/"
+default = true
+authenticate = "always"
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit", "tests/integration"]
