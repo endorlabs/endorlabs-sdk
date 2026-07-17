@@ -155,6 +155,10 @@ class SpecEndorLicenseInfo(BaseModel):
     """
     The time when the license expires.
     """
+    free_tier: bool | None = None
+    """
+    Whether this is a free-tier (limited) grant.
+    """
     limit: int | None = None
     """
     A value of 0 or -1 corresponds to an unlimited license.
@@ -369,6 +373,10 @@ class BundleInfoItem(BaseModel):
     """
     The time when the license bundle expires.
     """
+    free_tier: bool | None = None
+    """
+    Whether this bundle is granted as a free tier.
+    """
     limit: int | None = None
     """
     A value of 0 or -1 corresponds to an unlimited license.
@@ -388,6 +396,10 @@ class LicenseInfoItem(BaseModel):
     expiration_time: AwareDatetime | None = None
     """
     The time when the license expires.
+    """
+    free_tier: bool | None = None
+    """
+    Whether this is a free-tier (limited) grant.
     """
     limit: int | None = None
     """
@@ -550,6 +562,10 @@ class SpecEndorLicenseBundleInfo(BaseModel):
     expiration_time: AwareDatetime | None = None
     """
     The time when the license bundle expires.
+    """
+    free_tier: bool | None = None
+    """
+    Whether this bundle is granted as a free tier.
     """
     limit: int | None = None
     """

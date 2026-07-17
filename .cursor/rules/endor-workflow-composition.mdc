@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: 28d0a218cd3b1888c46f5ffe70ab059b4786cf8df7bb29d78a06f25f7071cd23
+x-endor-source-sha256: 7f8821893fb65fd492a2c5075ab97c38ff3423eabc6eeec47f9e96033c58ced4
 ---
 
 # Workflow composition

@@ -49,7 +49,7 @@ AUTHORIZATION_POLICY_SPEC_REQUIRED = (
 AUTHORIZATION_POLICY_META_FIELDS = ()
 AUTHORIZATION_POLICY_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
 
-CODE_OWNERS_SPEC_FIELDS = ("patterns", "version")
+CODE_OWNERS_SPEC_FIELDS = ("patterns", "version", "file_hash")
 CODE_OWNERS_SPEC_REQUIRED = ()
 CODE_OWNERS_META_FIELDS = ()
 CODE_OWNERS_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
@@ -293,6 +293,7 @@ PACKAGE_FIREWALL_LOG_SPEC_FIELDS = (
     "cvss_vuln_uuid",
     "api_key_name",
     "user",
+    "filtered_versions",
 )
 PACKAGE_FIREWALL_LOG_SPEC_REQUIRED = ("ecosystem", "package_name")
 PACKAGE_FIREWALL_LOG_META_FIELDS = ()

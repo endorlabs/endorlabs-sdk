@@ -605,11 +605,14 @@ class V1PackageFirewallAction(StrEnum):
 
      - PACKAGE_FIREWALL_ACTION_BLOCK: Block the request and return HTTP 403.
      - PACKAGE_FIREWALL_ACTION_WARN: Log a warning audit event and allow the request to proceed.
+     - PACKAGE_FIREWALL_ACTION_CURATED: One or more versions were removed from the package metadata response as part of package curation.
+    The package manager resolves to the best remaining safe version without seeing the curated-out versions.
     """
 
     PACKAGE_FIREWALL_ACTION_UNSPECIFIED = 'PACKAGE_FIREWALL_ACTION_UNSPECIFIED'
     PACKAGE_FIREWALL_ACTION_BLOCK = 'PACKAGE_FIREWALL_ACTION_BLOCK'
     PACKAGE_FIREWALL_ACTION_WARN = 'PACKAGE_FIREWALL_ACTION_WARN'
+    PACKAGE_FIREWALL_ACTION_CURATED = 'PACKAGE_FIREWALL_ACTION_CURATED'
 
 
 class V1PackageFirewallReason(StrEnum):
@@ -620,6 +623,8 @@ class V1PackageFirewallReason(StrEnum):
      - PACKAGE_FIREWALL_REASON_MIN_AGE_NOT_MET: The requested package version does not meet the configured minimum age.
      - PACKAGE_FIREWALL_REASON_RESTRICTED_LICENSE: The requested package version has a license that is on the restricted list.
      - PACKAGE_FIREWALL_REASON_CVSS_SEVERITY_DETECTED: The requested package version has a CVSS vulnerability meeting or exceeding the configured severity threshold.
+     - PACKAGE_FIREWALL_REASON_VERSIONS_CURATED: One or more versions were removed from the package metadata response as part of package curation.
+    See PackageFirewallLog.Spec.filtered_versions for per-version detail.
     """
 
     PACKAGE_FIREWALL_REASON_UNSPECIFIED = 'PACKAGE_FIREWALL_REASON_UNSPECIFIED'
@@ -632,6 +637,9 @@ class V1PackageFirewallReason(StrEnum):
     )
     PACKAGE_FIREWALL_REASON_CVSS_SEVERITY_DETECTED = (
         'PACKAGE_FIREWALL_REASON_CVSS_SEVERITY_DETECTED'
+    )
+    PACKAGE_FIREWALL_REASON_VERSIONS_CURATED = (
+        'PACKAGE_FIREWALL_REASON_VERSIONS_CURATED'
     )
 
 
