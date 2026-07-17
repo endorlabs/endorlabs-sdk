@@ -22,7 +22,7 @@ uv run pre-commit install --hook-type pre-push
 
 Alternatively: `uv venv` then `uv pip install -e .` and install dev dependencies from [pyproject.toml](pyproject.toml) (e.g. `uv sync --group dev` or equivalent for your uv version).
 
-If `uv sync` fails on version metadata (`0.1.1.dev19 can't be bumped`), see [docs/contributing/release-publishing.md](docs/contributing/release-publishing.md) and run `uv run python devtools/ship/check_vcs_version.py`.
+If `uv sync` fails on version metadata, see [docs/contributing/release-publishing.md](docs/contributing/release-publishing.md) and run `uv run python devtools/ship/check_project_version.py`.
 
 ## Before you commit / open a PR
 

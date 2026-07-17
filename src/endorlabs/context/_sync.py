@@ -516,9 +516,14 @@ def init(
         .endorlabs-context/sdk
 
     """
-    from endorlabs._version import __version__
+    import importlib.metadata
+
     from endorlabs.api_client import APIClient as APIClientClass
 
+    try:
+        __version__ = importlib.metadata.version("endorlabs")
+    except importlib.metadata.PackageNotFoundError:
+        __version__ = "0.0.0.dev0"
     normalized_sync_target = _normalize_skill_sync_mode(sync_skills)
     needs_context_dir = (
         include_agent_knowledge or include_openapi or normalized_sync_target != "none"

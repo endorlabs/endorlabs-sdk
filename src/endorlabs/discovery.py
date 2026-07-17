@@ -16,8 +16,8 @@ from .agent_knowledge import (
 )
 
 try:
-    from endorlabs._version import __version__
-except ImportError:
+    __version__ = importlib.metadata.version("endorlabs")
+except importlib.metadata.PackageNotFoundError:
     __version__ = "0.0.0.dev0"
 
 _ENDOR_CONSOLE_SCRIPT_PREFIX = "endor-"

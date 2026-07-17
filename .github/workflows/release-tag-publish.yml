@@ -153,41 +153,10 @@ jobs:
           files: dist/*
           generate_release_notes: true
 
-  post-release-bump:
-    name: Push Next Dev Anchor Tag
-    runs-on: ubuntu-latest
-    needs: [classify, publish-pypi]
-    if: >-
-      needs.classify.outputs.is_final_release == 'true' &&
-      needs.classify.outputs.publish == 'true' &&
-      needs.publish-pypi.result == 'success'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          fetch-depth: 1
-
-      - name: Push next dev anchor tag
-        run: |
-          set -euo pipefail
-          VERSION="${{ needs.classify.outputs.version }}"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          NEXT_PATCH=$((PATCH + 1))
-          NEXT_TAG="v${MAJOR}.${MINOR}.${NEXT_PATCH}.dev0"
-          if git rev-parse "$NEXT_TAG" >/dev/null 2>&1; then
-            echo "Dev anchor tag ${NEXT_TAG} already exists; skipping"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$NEXT_TAG" -m "Dev anchor after release v${VERSION}"
-          git push origin "$NEXT_TAG"
-          echo "Pushed dev anchor tag: ${NEXT_TAG}"
-
   release-summary:
     name: Publish Release Summary
     runs-on: ubuntu-latest
-    needs: [classify, build, publish-pypi, github-release, post-release-bump]
+    needs: [classify, build, publish-pypi, github-release]
     if: always()
     steps:
       - name: Publish release summary
@@ -209,7 +178,6 @@ jobs:
             echo "| Build | \`${{ needs.build.result }}\` |"
             echo "| PyPI publish | \`${{ needs.publish-pypi.result }}\` |"
             echo "| GitHub Release | \`${{ needs.github-release.result }}\` |"
-            echo "| Dev anchor bump | \`${{ needs.post-release-bump.result }}\` |"
             echo ""
             if [ "${{ needs.classify.outputs.publish }}" != "true" ]; then
               echo "### Dry-run"

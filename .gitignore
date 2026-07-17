@@ -68,9 +68,6 @@ Thumbs.db
 # Logs
 *.log
 
-# Generated version file (hatch-vcs)
-src/endorlabs/_version.py
-
 # Customer / session exports (never commit)
 *findings-export*.csv
 *.gh-endorlabs*.csv

@@ -49,7 +49,7 @@ Normative shards for agents and skills (also under `agent-knowledge/contracts/` 
 ## Contributing
 
 - [contributing/README.md](contributing/README.md) — Process and checklists for extending the generated SDK surface.
-- [contributing/release-publishing.md](contributing/release-publishing.md) — Version tags, hatch-vcs, OIDC PyPI/TestPyPI release CI.
+- [contributing/release-publishing.md](contributing/release-publishing.md) — Static version, tag-identity releases, OIDC PyPI/TestPyPI release CI.
 - [changelog.md](changelog.md) — User-facing **Added**, **Changed**, and **Breaking** per release (including estate CLI/layout upgrades).
 - [contributing/integration-resource-tests.md](contributing/integration-resource-tests.md)
 - [contributing/api-validation.md](contributing/api-validation.md)

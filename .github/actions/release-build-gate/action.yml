@@ -5,7 +5,7 @@ description: >-
 
 inputs:
   version:
-    description: PEP 440 version (sets SETUPTOOLS_SCM_PRETEND_VERSION)
+    description: PEP 440 release version (must match committed [project].version)
     required: true
   fetch-spec:
     description: Download live OpenAPI spec before ship-artifact verify
@@ -19,18 +19,16 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Set release version
+    - name: Log release version
       shell: bash
-      run: |
-        echo "SETUPTOOLS_SCM_PRETEND_VERSION=${{ inputs.version }}" >> "$GITHUB_ENV"
-        echo "Release version: ${{ inputs.version }}"
+      run: 'echo "Release version: ${{ inputs.version }}"'
 
-    - name: Verify hatch-vcs version resolution
+    - name: Verify static project version
       shell: bash
       run: >-
-        uv run python devtools/ship/check_vcs_version.py
+        uv run python devtools/ship/check_project_version.py
         --expect "${{ inputs.version }}"
-        --release-only
+        --no-tag-warnings
 
     - name: Run quality gate
       shell: bash
