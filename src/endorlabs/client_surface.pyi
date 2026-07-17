@@ -325,6 +325,7 @@ class _CodeOwnersFacade(ResourceRuntimeFacade[CodeOwners]):
         namespace: str | None = None,
         patterns: dict[str, Any] | None = None,
         version: Any | None = None,
+        file_hash: Any | None = None,
         **kwargs: Any,
     ) -> CodeOwners: ...
 

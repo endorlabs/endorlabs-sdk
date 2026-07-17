@@ -357,6 +357,10 @@ class GroupResponseGroupData(BaseModel):
 
 
 class V1CodeOwnersSpec(BaseModel):
+    file_hash: str | None = None
+    """
+    The SHA-256 hash of the CODEOWNERS file.
+    """
     patterns: dict[str, V1CodeOwnerData] | None = None
     """
     Map of code owner data indexed by file path or pattern.
@@ -379,7 +383,8 @@ class V1CodeOwnersSpec(BaseModel):
     """
     version: V1Version | None = None
     """
-    Version of the CODEOWNERS file.
+    Version the current CODEOWNERS content was first observed in.
+    Only updated when the CODEOWNERS file content changes.
     """
 
 

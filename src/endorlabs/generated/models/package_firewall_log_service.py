@@ -368,11 +368,14 @@ class V1PackageFirewallAction(StrEnum):
 
      - PACKAGE_FIREWALL_ACTION_BLOCK: Block the request and return HTTP 403.
      - PACKAGE_FIREWALL_ACTION_WARN: Log a warning audit event and allow the request to proceed.
+     - PACKAGE_FIREWALL_ACTION_CURATED: One or more versions were removed from the package metadata response as part of package curation.
+    The package manager resolves to the best remaining safe version without seeing the curated-out versions.
     """
 
     PACKAGE_FIREWALL_ACTION_UNSPECIFIED = 'PACKAGE_FIREWALL_ACTION_UNSPECIFIED'
     PACKAGE_FIREWALL_ACTION_BLOCK = 'PACKAGE_FIREWALL_ACTION_BLOCK'
     PACKAGE_FIREWALL_ACTION_WARN = 'PACKAGE_FIREWALL_ACTION_WARN'
+    PACKAGE_FIREWALL_ACTION_CURATED = 'PACKAGE_FIREWALL_ACTION_CURATED'
 
 
 class V1PackageFirewallReason(StrEnum):
@@ -383,6 +386,8 @@ class V1PackageFirewallReason(StrEnum):
      - PACKAGE_FIREWALL_REASON_MIN_AGE_NOT_MET: The requested package version does not meet the configured minimum age.
      - PACKAGE_FIREWALL_REASON_RESTRICTED_LICENSE: The requested package version has a license that is on the restricted list.
      - PACKAGE_FIREWALL_REASON_CVSS_SEVERITY_DETECTED: The requested package version has a CVSS vulnerability meeting or exceeding the configured severity threshold.
+     - PACKAGE_FIREWALL_REASON_VERSIONS_CURATED: One or more versions were removed from the package metadata response as part of package curation.
+    See PackageFirewallLog.Spec.filtered_versions for per-version detail.
     """
 
     PACKAGE_FIREWALL_REASON_UNSPECIFIED = 'PACKAGE_FIREWALL_REASON_UNSPECIFIED'
@@ -395,6 +400,9 @@ class V1PackageFirewallReason(StrEnum):
     )
     PACKAGE_FIREWALL_REASON_CVSS_SEVERITY_DETECTED = (
         'PACKAGE_FIREWALL_REASON_CVSS_SEVERITY_DETECTED'
+    )
+    PACKAGE_FIREWALL_REASON_VERSIONS_CURATED = (
+        'PACKAGE_FIREWALL_REASON_VERSIONS_CURATED'
     )
 
 
@@ -443,6 +451,30 @@ class GroupResponseGroupData(BaseModel):
     """
 
 
+class PackageFirewallLogFilteredVersion(BaseModel):
+    """
+    FilteredVersion records a single package version suppressed from a metadata response
+    during a package curation event.
+    """
+
+    malware_uuid: str | None = None
+    """
+    UUID of detected malware (populated when reason = MALWARE_DETECTED).
+    """
+    package_age_hours: int | None = None
+    """
+    Age of package in hours at suppression time (populated when reason = MIN_AGE_NOT_MET).
+    """
+    reason: V1PackageFirewallReason | None = 'PACKAGE_FIREWALL_REASON_UNSPECIFIED'
+    """
+    Reason this version was suppressed.
+    """
+    version: str | None = None
+    """
+    Version string that was suppressed from the metadata response.
+    """
+
+
 class V1GroupResponse(BaseModel):
     """
     Response to a list group request.
@@ -453,6 +485,30 @@ class V1GroupResponse(BaseModel):
     Map indexed by values of the fields specified in aggregation_paths,
     for example, {"[{"key":"meta.kind","value":"Project"}]": {
     "aggregation_count": { "count": 1649 } } }.
+    """
+
+
+class FilteredVersion(BaseModel):
+    """
+    FilteredVersion records a single package version suppressed from a metadata response
+    during a package curation event.
+    """
+
+    malware_uuid: str | None = None
+    """
+    UUID of detected malware (populated when reason = MALWARE_DETECTED).
+    """
+    package_age_hours: int | None = None
+    """
+    Age of package in hours at suppression time (populated when reason = MIN_AGE_NOT_MET).
+    """
+    reason: V1PackageFirewallReason | None = 'PACKAGE_FIREWALL_REASON_UNSPECIFIED'
+    """
+    Reason this version was suppressed.
+    """
+    version: str | None = None
+    """
+    Version string that was suppressed from the metadata response.
     """
 
 
@@ -494,6 +550,12 @@ class V1PackageFirewallLogSpec(BaseModel):
     ecosystem: V1Ecosystem
     """
     Ecosystem of the blocked package (npm, pypi, etc.).
+    """
+    filtered_versions: list[FilteredVersion] | None = None
+    """
+    Per-version detail for MetadataAllVersions curation events.
+    Populated when package_curation_enabled = true and one or more versions were suppressed
+    from the metadata response because their per-policy action is BLOCK. Empty for all other request types.
     """
     malware_uuid: str | None = None
     """

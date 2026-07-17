@@ -35,6 +35,7 @@ Code ownership assignments for a project.
 
 Optional:
 
+- `file_hash`
 - `patterns`
 - `version`
 

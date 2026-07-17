@@ -85,6 +85,7 @@ dev = [
     "igraph==1.0.0",
     "leidenalg==0.12.0",
     "datamodel-code-generator==0.61.0",
+    # Build Dependencies
     "hatch==1.17.0",
     "twine==6.2.0",
 ]
@@ -130,12 +131,12 @@ exclude = [
   "/.cursor",
 ]
 
-# Maintainer publish target only (explicit index; not used for default uv sync).
+# Default install index: Endor package firewall (auth via UV_INDEX_ENDOR_FIREWALL_*).
 [[tool.uv.index]]
-name = "testpypi"
-url = "https://test.pypi.org/simple/"
-publish-url = "https://test.pypi.org/legacy/"
-explicit = true
+name = "endor-firewall"
+url = "https://factory.endorlabs.com/v1/namespaces/endor-solutions-tgowan/firewall/pypi/simple/"
+default = true
+authenticate = "always"
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit", "tests/integration"]
