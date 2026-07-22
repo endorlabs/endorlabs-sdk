@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-10T22:11:05.651947+00:00",
+  "generated_at": "2026-07-13T17:56:41.354002+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -150,7 +150,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.1.dev1",
+  "sdk_version": "0.6.1.dev0",
   "skills": [
     {
       "description": "Use when probing, verifying, or refreshing Endor Labs SDK credentials before API\nworkflows\u2014env-key scan, Client whoami check, endorctl detection, and interactive\nbrowser token refresh into .env. Step zero for any tenant session. Not for SSO\npolicy mapping or AuthenticationLog RCA.\n",
@@ -409,7 +409,8 @@
         "endorlabs.workflows.estate.analyze_workspace",
         "endorlabs.workflows.estate.fetch_online_dashboard_counts",
         "endorlabs.workflows.estate.export_version_cardinality_for_package_match",
-        "endorlabs.workflows.estate.export_risk_ranked_version_cardinality"
+        "endorlabs.workflows.estate.export_risk_ranked_version_cardinality",
+        "endorlabs.workflows.findings.build_patch_fix_report"
       ],
       "module": "endorlabs.workflows.estate.cli.main",
       "skill": null

@@ -62,6 +62,7 @@ Generic entrypoints (no estate literals):
 - `client.Project.is_app()` / `.is_cli()` / `.is_sbom()` — project registration inventory (see [facade-helpers.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/facade-helpers.md))
 - `endorlabs.filters` — canonical main-context and finding MQL fragments (replaces removed `workflows.findings.filters` submodule)
 - `endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis` — FindingLog CREATE/DELETE weekly chart data (online aggregated)
+- `endorlabs.workflows.findings.build_patch_fix_report` — findings fixable by a patch, rolled up by package + current version (`endor-estate patch-fix-report`)
 - `endorlabs.workflows.logs.group_by_time.group_by_time_counts` — generic log `list_groups` + `group_by_time` aggregation
 - `endorlabs.workflows.auth.verify_auth` / `refresh_token_to_dotenv` — credential probe and browser refresh (`endor-auth`)
 - `endorlabs.workflows.auth.probe_auth_logs` — tenant list-path auth-log RCA rows

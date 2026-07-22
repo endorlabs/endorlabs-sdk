@@ -198,6 +198,33 @@ def cmd_export_version(args: argparse.Namespace) -> int:
     return export_main(argv)
 
 
+def cmd_patch_fix_report(args: argparse.Namespace) -> int:
+    from endorlabs.workflows.findings.patch_fix_report import main as patch_fix_main
+
+    argv: list[str] = []
+    if args.namespace:
+        argv.extend(["--namespace", args.namespace])
+    if args.output:
+        argv.extend(["--output", args.output])
+    if args.finding_detail_output:
+        argv.extend(["--finding-detail-output", args.finding_detail_output])
+    for category in args.finding_categories or []:
+        argv.extend(["--finding-category", category])
+    for severity in args.severities or []:
+        argv.extend(["--severity", severity])
+    if args.gate:
+        argv.extend(["--gate", args.gate])
+    if args.reachability:
+        argv.extend(["--reachability", args.reachability])
+    if args.max_project_pages is not None:
+        argv.extend(["--max-project-pages", str(args.max_project_pages)])
+    if args.max_pages is not None:
+        argv.extend(["--max-pages", str(args.max_pages)])
+    if args.max_workers is not None:
+        argv.extend(["--max-workers", str(args.max_workers)])
+    return patch_fix_main(argv)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="endor-estate",
@@ -292,6 +319,37 @@ def build_parser() -> argparse.ArgumentParser:
     export_version.add_argument("--remediation-cve")
     export_version.add_argument("--remediation-output")
     export_version.set_defaults(func=cmd_export_version)
+
+    patch_fix_report = sub.add_parser(
+        "patch-fix-report",
+        help="Findings fixable by a patch, aggregated by package + version",
+    )
+    patch_fix_report.add_argument(
+        "--namespace",
+        "-n",
+        default=os.environ.get("ENDOR_NAMESPACE"),
+        help="Estate root namespace",
+    )
+    patch_fix_report.add_argument("--output", "-o", help="Output CSV path")
+    patch_fix_report.add_argument("--finding-detail-output")
+    patch_fix_report.add_argument(
+        "--finding-category", action="append", dest="finding_categories"
+    )
+    patch_fix_report.add_argument("--severity", action="append", dest="severities")
+    patch_fix_report.add_argument(
+        "--gate",
+        choices=("any", "endor-patch", "fix-available"),
+        default="any",
+    )
+    patch_fix_report.add_argument(
+        "--reachability",
+        choices=("any", "reachable", "unreachable"),
+        default="any",
+    )
+    patch_fix_report.add_argument("--max-project-pages", type=int, default=None)
+    patch_fix_report.add_argument("--max-pages", type=int, default=None)
+    patch_fix_report.add_argument("--max-workers", type=int, default=None)
+    patch_fix_report.set_defaults(func=cmd_patch_fix_report)
 
     return parser
 

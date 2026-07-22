@@ -3,7 +3,7 @@ description: Do not set page_size unless explicitly asked; scope and filter befo
 alwaysApply: true
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-list-query-performance.md
-x-endor-source-sha256: 9330b6dceb96c20dd1e7f3b3beb401a9b619c5177e08e5f8acc6c3dfdf2a4016
+x-endor-source-sha256: be4cfde01c91020cf6266b44b48b4286174680c2dabb28ef4df751ff05832238
 ---
 
 # List query performance

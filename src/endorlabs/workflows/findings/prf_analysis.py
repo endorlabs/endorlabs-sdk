@@ -171,15 +171,22 @@ def list_findings_sharded(
     max_workers: int = 12,
     progress_label: str = "Finding shards",
 ) -> list[dict[str, Any]]:
-    """List findings per project in parallel (``spec.project_uuid`` + namespace)."""
+    """List findings per project in parallel (``spec.project_uuid`` + namespace).
+
+    ``max_pages`` is always passed explicitly (including ``None``) to
+    ``Finding.list_by_project`` — the underlying route executor
+    (``RouteExecutor.execute``) defaults to ``max_pages=1`` when the keyword
+    is omitted entirely, silently truncating any project with more than one
+    page of matching findings. Omitting the kwarg (rather than passing
+    ``None``) reintroduces that truncation.
+    """
     if not shards:
         return []
 
     list_kwargs: dict[str, Any] = {
         "mask": mask,
+        "max_pages": max_pages,
     }
-    if max_pages is not None:
-        list_kwargs["max_pages"] = max_pages
 
     def _worker(shard: ProjectShard) -> list[dict[str, Any]]:
         # Prefer generated accessor (spec.project_uuid + source namespace).

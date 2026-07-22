@@ -124,6 +124,29 @@ def test_list_findings_sharded_scopes_by_project_uuid() -> None:
     assert kwargs["mask"] == "meta.parent_uuid"
 
 
+def test_list_findings_sharded_passes_max_pages_none_explicitly() -> None:
+    """Regression: omitting max_pages (vs. passing None) reintroduces silent
+    truncation — the route executor backing Finding.list_by_project defaults
+    to max_pages=1 when the keyword is absent entirely from the call.
+    """
+    client = MagicMock()
+    client.Finding.list_by_project.return_value = []
+    shards = [
+        ProjectShard(project_uuid="proj-1", namespace="tenant.child", label="child")
+    ]
+
+    list_findings_sharded(
+        client,
+        shards,
+        "context.type==CONTEXT_TYPE_MAIN",
+        mask="meta.parent_uuid",
+    )
+
+    _, kwargs = client.Finding.list_by_project.call_args
+    assert "max_pages" in kwargs
+    assert kwargs["max_pages"] is None
+
+
 def test_list_findings_tenant_uses_traverse_when_namespace_shared() -> None:
     client = MagicMock()
     client.Finding.list_iter.return_value = [
