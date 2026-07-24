@@ -32,7 +32,7 @@ Index for SDK-specific documentation.
 - [guides/README.md](guides/README.md) — List of guides.
 - [guides/examples.md](guides/examples.md) — Skill walkthrough and minimal API snippets for a first tenant session.
 - [guides/facade-helpers.md](guides/facade-helpers.md) — When to use `search_by_*`, relationship accessors, `RouteResult`, wire helpers.
-- [guides/query-recipes.md](guides/query-recipes.md) — Query graph join recipes for dashboard-style project counts.
+- [guides/query-recipes.md](guides/query-recipes.md) — Query vs facade routing, supported `list_parameters`, and estate join recipes.
 - [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; SDK consumer UX.
 - [guides/retrieving-scan-results.md](guides/retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.
 
@@ -49,7 +49,7 @@ Normative shards for agents and skills (also under `agent-knowledge/contracts/` 
 ## Contributing
 
 - [contributing/README.md](contributing/README.md) — Process and checklists for extending the generated SDK surface.
-- [contributing/release-publishing.md](contributing/release-publishing.md) — Static version, tag-identity releases, OIDC PyPI/TestPyPI release CI.
+- [contributing/release-publishing.md](contributing/release-publishing.md) — Version tags, hatch-vcs, OIDC PyPI/TestPyPI release CI.
 - [changelog.md](changelog.md) — User-facing **Added**, **Changed**, and **Breaking** per release (including estate CLI/layout upgrades).
 - [contributing/integration-resource-tests.md](contributing/integration-resource-tests.md)
 - [contributing/api-validation.md](contributing/api-validation.md)
@@ -68,8 +68,8 @@ API or endpoint behavior changes → [contracts.md](contracts.md) and [generated
 Regenerate from repo root:
 
 ```bash
-uv run python devtools/codegen/model_sync.py --generate-stubs --generate-reference-docs
-uv run python devtools/codegen/generate_route_contract.py
+uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
+uv run python devtools/generate_route_contract.py
 ```
 
-CI validates ship artifacts via `devtools/ship/verify_ship_artifacts.py` (registry, route contract, reference docs, agent knowledge).
+CI validates ship artifacts via `devtools/verify_ship_artifacts.py` (registry, route contract, reference docs, agent knowledge).

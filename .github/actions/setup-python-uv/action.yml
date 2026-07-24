@@ -35,7 +35,7 @@ runs:
         set -euo pipefail
         if [ -z "${UV_INDEX_ENDOR_FIREWALL_USERNAME:-}" ] || [ -z "${UV_INDEX_ENDOR_FIREWALL_PASSWORD:-}" ]; then
           echo "::error::Missing Endor package firewall credentials for uv sync."
-          echo "Configure repository Secrets (preferred) or Variables:"
+          echo "Configure repository Secrets:"
           echo "  UV_INDEX_ENDOR_FIREWALL_USERNAME"
           echo "  UV_INDEX_ENDOR_FIREWALL_PASSWORD"
           exit 1

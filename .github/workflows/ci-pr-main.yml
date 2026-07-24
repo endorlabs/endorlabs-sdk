@@ -9,7 +9,6 @@ name: CI PR Main
 #   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret (integration tests only)
 #   - UV_INDEX_ENDOR_FIREWALL_USERNAME: package-firewall index username (all uv sync jobs)
 #   - UV_INDEX_ENDOR_FIREWALL_PASSWORD: package-firewall index password/token (all uv sync jobs)
-#     (vars.* with the same names are accepted as a fallback; prefer Secrets for both)
 # Security: This repo is scanned by the Endor Labs app integration.
 #
 # Noop strategy (first principles — a job runs only when its inputs change):
@@ -84,8 +83,8 @@ env:
   ACTIONS_CHECKOUT_VERSION: "v6.0.3"
 
   # uv named index "endor-firewall" (see [[tool.uv.index]] in pyproject.toml)
-  UV_INDEX_ENDOR_FIREWALL_USERNAME: ${{ secrets.UV_INDEX_ENDOR_FIREWALL_USERNAME || vars.UV_INDEX_ENDOR_FIREWALL_USERNAME }}
-  UV_INDEX_ENDOR_FIREWALL_PASSWORD: ${{ secrets.UV_INDEX_ENDOR_FIREWALL_PASSWORD || vars.UV_INDEX_ENDOR_FIREWALL_PASSWORD }}
+  UV_INDEX_ENDOR_FIREWALL_USERNAME: ${{ secrets.UV_INDEX_ENDOR_FIREWALL_USERNAME }}
+  UV_INDEX_ENDOR_FIREWALL_PASSWORD: ${{ secrets.UV_INDEX_ENDOR_FIREWALL_PASSWORD }}
 
 jobs:
   # ---------------------------------------------------------------------------
