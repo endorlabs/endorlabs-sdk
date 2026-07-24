@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-maintainer-tooling.md
-x-endor-source-sha256: da00718e4d8d0182a3a06fbfc2e80f1273e5f72594532ca3838ba9edbbffe039
+x-endor-source-sha256: 7086be676c993fb638dc289bd96536df16a9073cb4a1adfb2c0007233067b475
 ---
 
 # Maintainer tooling (pre-commit and devtools)

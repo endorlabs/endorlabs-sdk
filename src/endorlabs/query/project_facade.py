@@ -113,7 +113,13 @@ class ProjectQueryFacade:
         max_pages: int | None = None,
         exclude_sbom: bool = False,
     ) -> TopologySnapshot:
-        """Discover project geometry via bounded ``Project.list``."""
+        """Discover project geometry via bounded ``Project.list``.
+
+        Live, non-archived projects only — see ``discover_topology`` for
+        the full scope note, including the blind spot around deleted
+        projects whose UUID other resources (e.g. ``Finding``) may still
+        reference.
+        """
         return discover_topology(
             self._client_for_facade_ops(),
             namespace,

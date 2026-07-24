@@ -22,7 +22,11 @@ PAGINATION_THRESHOLD = 500
 
 @dataclass(frozen=True, slots=True)
 class DiscoveredProject:
-    """One project row from bounded discovery."""
+    """One project row from bounded discovery.
+
+    A lightweight projection (``PROJECT_DISCOVERY_MASK``), not the full
+    ``Project`` resource — only ``uuid``/``name``/``namespace`` survive.
+    """
 
     uuid: str
     name: str
@@ -50,7 +54,15 @@ class NamespaceGeometry:
 
 @dataclass
 class TopologySnapshot:
-    """Client-side estate geometry from bounded ``Project.list``."""
+    """Client-side estate geometry from bounded ``Project.list``.
+
+    ``.projects`` is the canonical, deduplicated project list (see
+    ``discover_topology`` for its scope and blind spots); every other field
+    here (``namespace_geometry``, ``duplicate_name_groups``, ``archetype``,
+    ``project_shards()``, ``query_scopes()``) is derived from it. A project
+    absent from ``.projects`` is therefore invisible everywhere downstream,
+    with no error or warning surfaced.
+    """
 
     tenant: str
     project_count: int
@@ -145,6 +157,16 @@ def _project_row(row: Any, fallback_ns: str) -> DiscoveredProject | None:
 
 
 def _dedupe_projects(rows: list[Any], fallback_ns: str) -> list[DiscoveredProject]:
+    """Deduplicate by project UUID, keeping the deepest namespace match.
+
+    ``traverse=True`` can surface the same project UUID more than once
+    (reachable via more than one namespace path); when that happens, keep
+    whichever row has the more specific namespace (more dot-separated
+    segments). This is a UUID-keyed dedup only — it never merges or drops
+    rows just because they share a display name; same-name collisions
+    across distinct namespaces are reported separately, unmodified, by
+    ``_duplicate_name_groups``.
+    """
     by_uuid: dict[str, DiscoveredProject] = {}
     for row in rows:
         ref = _project_row(row, fallback_ns)
@@ -161,6 +183,14 @@ def _duplicate_name_groups(
     *,
     limit: int = 20,
 ) -> list[dict[str, Any]]:
+    """Report project names that appear under more than one namespace.
+
+    Diagnostic only — does not filter, merge, or otherwise change
+    ``projects`` (contrast with ``_dedupe_projects``, which is the actual
+    dedup step and keys on UUID, not name). Flags cases like the same repo
+    registered under two different orgs. Capped to the top ``limit`` groups
+    by namespace count.
+    """
     by_name: dict[str, set[str]] = defaultdict(set)
     for proj in projects:
         by_name[proj.name].add(proj.namespace)
@@ -204,7 +234,19 @@ def discover_topology(
     max_pages: int | None = None,
     exclude_sbom: bool = False,
 ) -> TopologySnapshot:
-    """Discover project geometry via lean ``Project.list`` (no ProjectSummary)."""
+    """Discover project geometry via lean ``Project.list`` (no ProjectSummary).
+
+    Scope is exactly ``Project.list(namespace, traverse=traverse)`` — live,
+    non-archived projects only. There is no ``archive=True`` fallback here,
+    so a project that has since been deleted is invisible to this function
+    even when other resources (e.g. ``Finding``) still carry live rows
+    referencing its UUID. Such orphaned references will not appear in the
+    returned snapshot's ``.projects``, nor in anything derived from it
+    (``project_shards()``, ``query_scopes()``, namespace geometry,
+    archetype) — callers that need every UUID a Finding/DM row points at,
+    including ones with no live project, must query those resources
+    directly rather than cross-reference through this snapshot.
+    """
     mask = PROJECT_DISCOVERY_MASK
     if exclude_sbom:
         mask = f"{mask},spec.sbom"

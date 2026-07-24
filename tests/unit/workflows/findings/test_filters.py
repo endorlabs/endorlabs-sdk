@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 
 from endorlabs.filters import (
     finding_log_time_window_filter,
+    fix_available_vuln_filter,
     prd_vuln_filter,
     prf_vuln_filter,
     reachable_vuln_log_base_filter,
@@ -24,6 +25,13 @@ def test_prf_and_prd_filters_differ_by_tag() -> None:
     prd = prd_vuln_filter()
     assert "POTENTIALLY_REACHABLE_FUNCTION" in prf
     assert "POTENTIALLY_REACHABLE_DEPENDENCY" in prd
+
+
+def test_fix_available_vuln_filter_includes_tag_and_category() -> None:
+    filt = fix_available_vuln_filter()
+    assert "CONTEXT_TYPE_MAIN" in filt
+    assert "FINDING_CATEGORY_VULNERABILITY" in filt
+    assert "FINDING_TAGS_FIX_AVAILABLE" in filt
 
 
 def test_finding_log_time_window_filter() -> None:

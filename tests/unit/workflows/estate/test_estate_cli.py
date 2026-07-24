@@ -25,6 +25,16 @@ def test_build_parser_registers_subcommands() -> None:
     assert args.namespace == "tenant.example"
 
 
+def test_build_parser_registers_patch_fix_report() -> None:
+    parser = build_parser()
+    args = parser.parse_args(
+        ["patch-fix-report", "-n", "tenant.example", "--gate", "fix-available"]
+    )
+    assert args.command == "patch-fix-report"
+    assert args.namespace == "tenant.example"
+    assert args.gate == "fix-available"
+
+
 def test_resolve_workspace_from_explicit_path(tmp_path: Path) -> None:
     args = Namespace(workspace=str(tmp_path), namespace=None, date=None)
     assert _resolve_workspace(args) == tmp_path.resolve()

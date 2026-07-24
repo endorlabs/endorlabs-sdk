@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-output-shape-routing.md
-x-endor-source-sha256: c1ce3e00faa5d715a8f82f295f273471701fb97a9ae7716857e2f0083a3b22fe
+x-endor-source-sha256: c9524330ccdac7793c53f40b81d642b4c2bc69bcbf4ade22f7715a9a9bcfeb8f
 ---
 
 # Output shape routing

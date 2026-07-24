@@ -1135,6 +1135,8 @@ class V1Ecosystem(StrEnum):
     ECOSYSTEM_COCOAPOD, which is an alternative package manager for Swift
     packages.
      - ECOSYSTEM_CONAN: Ecosystem Conan for C/C++ packages managed by the Conan 2.x package manager.
+     - ECOSYSTEM_VSCODE: VS Code editor extensions, distributed via the Microsoft Visual Studio
+    Marketplace.
     """
 
     ECOSYSTEM_UNSPECIFIED = 'ECOSYSTEM_UNSPECIFIED'
@@ -1159,6 +1161,7 @@ class V1Ecosystem(StrEnum):
     ECOSYSTEM_AI_MODEL = 'ECOSYSTEM_AI_MODEL'
     ECOSYSTEM_SWIFT = 'ECOSYSTEM_SWIFT'
     ECOSYSTEM_CONAN = 'ECOSYSTEM_CONAN'
+    ECOSYSTEM_VSCODE = 'ECOSYSTEM_VSCODE'
 
 
 class V1FileType(StrEnum):
