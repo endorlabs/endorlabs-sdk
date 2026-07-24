@@ -87,9 +87,14 @@ def resource_has_rows_in_scope(
     return False
 
 
-def _scan_has_context(scan: object) -> bool:
-    ctx = getattr(scan, "context", None)
+def _context_usable(ctx: object | None) -> bool:
+    """True when *ctx* is a Context-like object with a usable type."""
     return ctx is not None and bool(getattr(ctx, "type", None))
+
+
+def _scan_has_context(scan: object) -> bool:
+    """True when *scan* carries a usable ``.context`` partition."""
+    return _context_usable(getattr(scan, "context", None))
 
 
 def _context_matches(left: object, right: object) -> bool:
@@ -125,33 +130,35 @@ def _sample_from_row_context(
         rows = _list_rows(cl, list_method)
         if not rows:
             continue
-        row = rows[0]
-        row_ctx = getattr(row, "context", None)
-        if not _scan_has_context(row_ctx):
-            continue
-        project_uuid = nested_attr(row, "spec.project_uuid") or nested_attr(
-            row, "meta.parent_uuid"
-        )
-        if not project_uuid:
-            continue
-        ns = nested_attr(row, "tenant_meta.namespace") or getattr(
-            cl, "_default_namespace", None
-        )
-        try:
-            project = cl.Project.get(str(project_uuid), namespace=ns)
-        except Exception:
-            continue
-        for scan in _project_scans(cl, project):
-            if not _scan_has_context(scan):
+        # Sparse kinds (e.g. ScanWorkflowResult) may not put a usable plane on
+        # the first list row — walk the page before falling back to scan probe.
+        for row in rows:
+            row_ctx = getattr(row, "context", None)
+            if not _context_usable(row_ctx):
                 continue
-            if not _context_matches(row_ctx, scan.context):
+            project_uuid = nested_attr(row, "spec.project_uuid") or nested_attr(
+                row, "meta.parent_uuid"
+            )
+            if not project_uuid:
                 continue
+            ns = nested_attr(row, "tenant_meta.namespace") or getattr(
+                cl, "_default_namespace", None
+            )
             try:
-                result = facade.list_for_context(scan, max_pages=TEST_MAX_PAGES)
-            except ServerError:
+                project = cl.Project.get(str(project_uuid), namespace=ns)
+            except Exception:
                 continue
-            if result:
-                return project, scan, result
+            for scan in _project_scans(cl, project):
+                if not _scan_has_context(scan):
+                    continue
+                if not _context_matches(row_ctx, scan.context):
+                    continue
+                try:
+                    result = facade.list_for_context(scan, max_pages=TEST_MAX_PAGES)
+                except ServerError:
+                    continue
+                if result:
+                    return project, scan, result
     return None
 
 
