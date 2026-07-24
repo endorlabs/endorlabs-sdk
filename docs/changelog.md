@@ -10,6 +10,8 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Pyright: `reportImportCycles` and missing-import checks elevated to error; strict roots expanded (`facade/__init__`, `query/__init__`, `operations/__init__`); `reportUnknownVariableType` ratcheted to error for `core/`, `workflows/`, and `operations/`. Dev pins: pyright 1.1.411, ruff 0.15.20, pytest 9.1.1.
+
 ### Fixed
 
 - `Query` nested-reference pagination (`estate.collect`, `Finding.list_for_context`, …) no longer treats `next_page_token: 0` as a real cursor; the SDK previously re-requested the same page and duplicated its rows before its loop guard stopped the retry.

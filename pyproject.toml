@@ -73,10 +73,10 @@ Issues = "https://github.com/endorlabs/endorlabs-sdk/issues"
 [dependency-groups]
 dev = [
     "jsonschema==4.26.0",
-    "pytest==9.0.3",
+    "pytest==9.1.1",
     "pytest-cov==7.1.0",
-    "ruff==0.15.16",
-    "pyright==1.1.410",
+    "ruff==0.15.20",
+    "pyright==1.1.411",
     "pre-commit==4.6.0",
     "rich==15.0.0",
     # Analytics deps for unit tests (mirrors [project.optional-dependencies.analytics])
@@ -460,7 +460,7 @@ reportUnusedImport = "error"                # Clean up unused imports
 reportDuplicateImport = "error"             # Prevent duplicate imports
 reportPrivateImportUsage = "error"         # Enforce private API boundary
 reportUnsupportedDunderAll = "error"        # __all__ must be valid and names must exist
-reportImportCycles = "warning"             # Flag cycles (architectural smell)
+reportImportCycles = "error"              # Block new circular imports (regression guard)
 reportWildcardImportFromLibrary = "error"  # No from lib import *
 
 # ============================================================================
@@ -551,16 +551,19 @@ strict = [
   "src/endorlabs/__init__.py",
   "src/endorlabs/client_surface.py",
   "src/endorlabs/facade.py",
+  "src/endorlabs/facade/__init__.py",
   "src/endorlabs/api_client.py",
   "src/endorlabs/core/exceptions.py",
   "src/endorlabs/core/filter.py",
   "src/endorlabs/core/types.py",
+  "src/endorlabs/query/__init__.py",
+  "src/endorlabs/operations/__init__.py",
 ]
 
 # Per-root overrides (more specific roots first; first match wins).
 # client_surface.pyi supplies the typed Client stub; venvPath omitted for portability.
 executionEnvironments = [
-    { root = "src/endorlabs/core", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
+    { root = "src/endorlabs/core", pythonVersion = "3.13", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
     # Estate workflows: staged typing (migrated analytics + relationships modules).
     { root = "src/endorlabs/workflows/estate", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportPrivateUsage = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
     # Call-graph and dependency hydration workflow modules.
@@ -569,14 +572,14 @@ executionEnvironments = [
     { root = "src/endorlabs/workflows/dependencies/coordinates.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
     { root = "src/endorlabs/workflows/dependencies/metadata_fetch.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
     { root = "src/endorlabs/workflows/agent_context/hydration.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
-    # Staged strictness ratchet (phase 2): workflow library unknown-types to warning.
-    { root = "src/endorlabs/workflows", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning", reportCallIssue = "none", reportUnusedCallResult = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
+    # Staged strictness ratchet (phase 2): workflow library unknown argument/member types.
+    { root = "src/endorlabs/workflows", pythonVersion = "3.13", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning", reportCallIssue = "none", reportUnusedCallResult = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
     { root = "src/endorlabs/tools", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
-    { root = "src/endorlabs/context", pythonVersion = "3.13", reportMissingImports = "none", reportUnknownVariableType = "none" },
+    { root = "src/endorlabs/context", pythonVersion = "3.13", reportUnknownVariableType = "none" },
     { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none" },
     { root = "src/endorlabs/resources", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportIncompatibleVariableOverride = "none", reportIncompatibleMethodOverride = "none", reportInvalidTypeForm = "none", reportOptionalOperand = "none", reportGeneralTypeIssues = "none", reportUnnecessaryTypeIgnoreComment = "none", reportCallIssue = "none", reportArgumentType = "none", reportOptionalMemberAccess = "none" },
-    # Staged strictness ratchet (phase 1): move operations unknown-types to warning.
-    { root = "src/endorlabs/operations", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
+    # Staged strictness ratchet (phase 1): operations unknown argument/member types.
+    { root = "src/endorlabs/operations", pythonVersion = "3.13", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
     { root = "tests", pythonVersion = "3.13", extraPaths = ["src", ".", "devtools", "devtools/codegen", "devtools/precommit", "devtools/ship", ".github/scripts"], reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportUninitializedInstanceVariable = "none", reportAttributeAccessIssue = "none", reportMissingParameterType = "none", reportUnusedCallResult = "none", reportReturnType = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportPrivateUsage = "none", reportOperatorIssue = "none", reportMissingTypeArgument = "none" },
     { root = "src", pythonVersion = "3.13" },
 ]
