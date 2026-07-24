@@ -46,10 +46,10 @@ server-side plan for broad unfiltered queries.
 
 ## Query graph joins
 
-- **`endorlabs.query`** (`client.Query.create`) is the platform **graph join** API — root kind + nested references; each node accepts `list_parameters` (`filter`, `mask`, `count`, `group`, `group_by_time`, pagination).
+- **`endorlabs.query`** (`client.Query.create`) is the platform **graph join** API — root kind + nested references. Supported `list_parameters` per node: `filter`, `mask`, `count`, root `group` (limited), pagination — **not** `group_by_time`. See [query-vs-list-semantics](../contracts/query-vs-list-semantics.md).
 - Shipped **count recipes** POST to each project's **wire namespace** — not tenant root alone. Run `validate_sample()` on a small mix of namespaces before estate-wide count joins.
-- **Custom joins** (masked lists, grouped rollups) use `QuerySpec` / `create(payload=...)` after validating parity — see [query-recipes.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/query-recipes.md) and `tests/integration/client/test_query_recipes.py`.
-- **Row export** at estate scale (`endor-estate pull`, JSONL) still uses `list_for_shards` until join-based materialization is validated.
+- **Time buckets / log trends:** facade `list_groups` — not Query.
+- **Row export** at estate scale (`endor-estate pull`, JSONL) still uses `list_for_shards` when full pagination/checkpointing is needed.
 - Classify **`OutputShape`** before estate-scale lists — see `rules/endor-output-shape-routing.md`.
 
 See also `rules/endor-namespace-scoping.md` and `contracts/list-parameters.md`.

@@ -29,6 +29,8 @@ def test_recommend_finding_log_trends() -> None:
     plan = recommend(OutputShape.FINDING_LOG_TRENDS)
     assert plan.primary == "facade_list_groups"
     assert plan.validate_recommended is False
+    assert any("group_by_time" in note for note in plan.notes)
+    assert any("list_groups" in note for note in plan.notes)
 
 
 def test_recommend_finding_category_counts() -> None:

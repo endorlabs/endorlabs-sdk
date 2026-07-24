@@ -412,6 +412,9 @@ class QueryFacade:
 
     **Estate recipes:** ``Query.Project`` — validated project-sharded dashboard
     patterns (``count_pv``, ``collect_*``, ``discover``, ``validate_sample``).
+
+    Time-bucket aggregation (FindingLog trends, log rollups): facade
+    ``list_groups`` — not Query.
     """
 
     def __init__(self, client: APIClient, default_namespace: str | None) -> None:
