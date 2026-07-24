@@ -38,14 +38,14 @@ flowchart TD
    - Holds default namespace and exposes resource facades (e.g. `client.Namespace`, `client.Project`).
    - Builds facades from the effective registry; do not hand-wire each resource in `Client.__init__`.
 
-3. **Facade (`ResourceRuntimeFacade[T]`)** — `facade/` package (`base.py`, `runtime.py`, `specialized.py`)
+3. **Facade (`ResourceRuntimeFacade[T]`)** — `facade.py`
    - Resolves namespace, builds `ListParameters` from convenience kwargs, and delegates CRUD/list behavior to `BaseResourceOperations`.
    - `ResourceFacade` remains as a backward-compatible alias, but the runtime implementation is `ResourceRuntimeFacade`.
    - A single facade class handles all scopes via the `scope` property (`None` for tenant, `"oss"`, or `"system"`).
    - Enforces supported operations from registry metadata; unsupported methods raise `NotImplementedError`.
 
 4. **Registry adapter** — generated-contract + overlay source of truth for `Client`
-   - Runtime contract is generated at `src/endorlabs/generated/registry_contract.py` by `devtools/codegen/model_sync.py`.
+   - Runtime contract is generated at `src/endorlabs/generated/registry_contract.py` by `devtools/model_sync.py`.
    - `registry.py` adapts generated contract rows into `ResourceEntry(...)` objects, applies explicit overrides from `registry_overlay.py`, and appends narrowly scoped experimental facades when needed.
    - Prefer model-sync inputs plus the minimal overlay. Use experimental facades only as explicit, lightweight stopgaps instead of hand-authoring a large registry table.
 
@@ -60,7 +60,7 @@ flowchart TD
 
 New API resources are **modeled by model sync**, not hand-added to `Client` one at a time. The default workflow:
 
-1. **Regenerate** — `uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs` (see [docs-drift-workflow.md](docs-drift-workflow.md)).
+1. **Regenerate** — `uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs` (see [docs-drift-workflow.md](docs-drift-workflow.md)).
 2. **Verify contract** — Resource appears in `src/endorlabs/generated/registry_contract.py`; facade is attached at runtime from the registry adapter (no entry in `Client.__init__`).
 3. **Validate API shape** — [api-validation.md](api-validation.md) (OpenAPI + optional endorctl list/get).
 4. **Diverge only when needed** — [registry_overlay.py](../../src/endorlabs/registry_overlay.py) for scope, ops, or metadata the generator cannot express; keep overrides minimal.
@@ -85,7 +85,7 @@ New API resources are **modeled by model sync**, not hand-added to `Client` one 
 
 Two model planes: **wire truth** in `generated/models/` and **consumer runtime** in
 `resources/`. Wire golden tests: `tests/fixtures/models/{module}/list_row_min.json`
-(gated by `devtools/precommit/audit_consumer_surfaces.py --check`).
+(gated by `devtools/audit_consumer_surfaces.py --check`).
 
 | Plane | Location | Role |
 | ----- | -------- | ---- |
@@ -114,7 +114,7 @@ flowchart TB
     end
     subgraph runtime [Layer2_ConsumerRuntime]
         Registry["registry.py + registry_overlay.py"]
-        Client["client_surface.py + facade/"]
+        Client["client_surface.py + facade.py"]
         Ops["operations/BaseResourceOperations"]
         ResBase["resources/base.py + *_config.py"]
         ResKinds["resources/{kind}.py"]
@@ -201,25 +201,23 @@ List-plane sharding (`list_for_shards`, estate DM collect) and query-plane joins
 
 ### Validation before scale
 
-`validate_sample` compares Query recipe output to facade `count()` on a bounded project sample (`recipe="pv"|"dm"|"findings"`). Estate dashboard and online counts call `client.Query.Project.validate_sample` before full `count_*` runs. Live coverage: `tests/integration/client/test_query_recipes.py` (see [guides/query-recipes.md](../guides/query-recipes.md)).
+`validate_sample` compares Query recipe output to facade `count()` on a bounded project sample (`recipe="pv"|"dm"|"findings"`). Estate dashboard and online counts call `client.Query.Project.validate_sample` before full `count_*` runs. Maintainer live checks: `.tmp/query_workflow_probes/validate_query_facade.py`.
 
 ### When to use Query vs facade
 
-Query is **kind-agnostic** at the wire level. **`client.Query.Project.*`** is one validated recipe family for estate dashboard patterns.
+Normative matrix: shipped contract `query-vs-list-semantics.md` and [guides/query-recipes.md](../guides/query-recipes.md).
 
 | Ask | Path |
 | --- | ---- |
-| Namespace-scoped count/filter (any kind) | `Query.at_namespace` + `QuerySpec.root("<Kind>")` or facade `count()` — probe parity |
 | Dashboard counts across many projects | `client.Query.Project.count_*` after `validate_sample` |
-| Masked finding rows (estate collect) | `client.Query.Project.collect_estate_findings` after probe |
-| One project RCA / full finding rows | `Finding.list_by_project` |
-| FindingLog trends, DM version buckets | Facade `list_groups` today (Query `group` / `group_by_time` = probe) |
-| Custom graph join | `QuerySpec` + `client.Query.execute` |
+| Time buckets / log trends | Facade `list_groups` — Query does not support `group_by_time` |
+| One project RCA / full rows | `list_by_project` / facade `list()` |
+| Custom graph join | `QuerySpec` + `client.Query.execute` after sample parity |
 
-Normative routing: shipped contract `query-vs-list-semantics.md` (wheel / `agent-knowledge/contracts/`). Agent skill: `endor-route-estate-queries`.
+Agent skill: `endor-route-estate-queries`.
 
 ## When to Use
 
-- Editing `client_surface.py`, `facade/`, `registry.py`, `registry_overlay.py`, **`facade/specialized.py` (QueryFacade)**, or **`query/`** (recipes, executor, topology).
+- Editing `client_surface.py`, `facade.py`, `registry.py`, `registry_overlay.py`, **`facade/specialized.py` (QueryFacade)**, or **`query/`** (recipes, executor, topology).
 - Regenerating or overriding the client surface after OpenAPI changes.
 - Adding integration tests or custom workflow facades — not for duplicating generated models in docs.

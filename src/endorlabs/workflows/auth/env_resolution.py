@@ -14,6 +14,7 @@ import re
 from pathlib import Path
 
 from endorlabs.utils.endorctl_config import read_endorctl_namespace
+from endorlabs.workflows.wire_access import as_dict, nested_str
 
 from .dotenv import read_env_or_dotenv
 
@@ -96,22 +97,17 @@ def browser_method_from_auth_payload(payload: dict[str, object]) -> str | None:
     if resolved:
         return resolved
 
-    user = payload.get("user")
-    if isinstance(user, dict):
-        meta = user.get("meta")
-        if isinstance(meta, dict):
-            name = meta.get("name")
-            if isinstance(name, str):
-                resolved = browser_method_from_user_identity(name)
-                if resolved:
-                    return resolved
-        spec = user.get("spec")
-        if isinstance(spec, dict):
-            email = spec.get("email")
-            if isinstance(email, str):
-                resolved = browser_method_from_user_identity(email)
-                if resolved:
-                    return resolved
+    user = as_dict(payload.get("user"))
+    name = nested_str(user, "meta", "name")
+    if name:
+        resolved = browser_method_from_user_identity(name)
+        if resolved:
+            return resolved
+    email = nested_str(user, "spec", "email")
+    if email:
+        resolved = browser_method_from_user_identity(email)
+        if resolved:
+            return resolved
     return None
 
 
