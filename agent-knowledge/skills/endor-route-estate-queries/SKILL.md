@@ -1,10 +1,11 @@
 ---
 name: endor-route-estate-queries
-description: |
-  Use when routing estate-scale data pulls between Query graph joins and facade
-  list/count/shard patterns after bounded topology discovery—choosing how to fetch
-  counts, aggregates, or validated joins across many projects. Not for single-project
-  RCA; hand off when full row export is needed without a validated Query join.
+description: >-
+  Routes estate-scale data pulls between Query graph joins and facade
+  list/count/shard patterns after bounded topology discovery. Use when choosing
+  how to fetch counts, aggregates, or validated joins across many projects.
+  Not for single-project RCA — hand off when full row export is needed without
+  a validated Query join.
 ---
 
 # Route estate queries (Query vs facade)
@@ -51,7 +52,7 @@ shards = topo.project_shards()
 | ---------- | ------------ |
 | Count/filter at one namespace (e.g. agent hook events) | `client.Query.at_namespace(QuerySpec.root("<Kind>").count(...), namespace=…)` or facade `count()` |
 | Tenant-wide finding total (no per-project breakdown) | Probe `Query.at_namespace` with `Finding` root; compare to `Finding.count` |
-| New vs resolved over time | `FindingLog.list_groups` (probe Query `group_by_time`) |
+| New vs resolved over time | `FindingLog.list_groups` — Query does not support `group_by_time` |
 | OSS CVE/coordinate lookup | `QueryVulnerability` / `QueryMalware` |
 
 ```python

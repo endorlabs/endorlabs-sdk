@@ -22,7 +22,7 @@ import json
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field, is_dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel
 
@@ -30,6 +30,14 @@ _TABULAR_INSTALL_HINT = (
     "Install analytics extras for DataFrame/Parquet support: "
     "pip install 'endorlabs[analytics]'"
 )
+
+
+def _empty_rows() -> list[dict[str, Any]]:
+    return []
+
+
+def _empty_str_list() -> list[str]:
+    return []
 
 
 def normalize_record(item: Any) -> dict[str, Any]:
@@ -42,7 +50,7 @@ def normalize_record(item: Any) -> dict[str, Any]:
     if is_dataclass(item) and not isinstance(item, type):
         return asdict(item)
     if isinstance(item, Mapping):
-        return dict(item)
+        return {str(k): v for k, v in cast("Mapping[Any, Any]", item).items()}
     msg = f"Unsupported record type: {type(item).__name__}"
     raise TypeError(msg)
 
@@ -157,8 +165,8 @@ def column_names(
 class TabularExport:
     """Flattened resource rows plus column order for CSV / DataFrame export."""
 
-    rows: list[dict[str, Any]] = field(default_factory=list)
-    columns: list[str] = field(default_factory=list)
+    rows: list[dict[str, Any]] = field(default_factory=_empty_rows)
+    columns: list[str] = field(default_factory=_empty_str_list)
 
     @property
     def row_count(self) -> int:
@@ -175,12 +183,12 @@ class TabularExport:
         frame = pd.DataFrame(self.rows)
         if columns is not None:
             present = [col for col in columns if col in frame.columns]
-            return frame[present] if present else frame
+            return cast("Any", frame[present] if present else frame)
         if self.columns:
             present = [col for col in self.columns if col in frame.columns]
             if present:
-                return frame[present]
-        return frame
+                return cast("Any", frame[present])
+        return cast("Any", frame)
 
     def write_csv(
         self,

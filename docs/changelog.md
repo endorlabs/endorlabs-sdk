@@ -12,6 +12,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Pyright: `reportImportCycles` and missing-import checks elevated to error; strict roots expanded (`facade/__init__`, `query/__init__`, `operations/__init__`); `reportUnknownVariableType` ratcheted to error for `core/`, `workflows/`, and `operations/`. Dev pins: pyright 1.1.411, ruff 0.15.20, pytest 9.1.1.
 - `TabularExport` and CSV helpers moved to `endorlabs.workflows.tabular` (layer-neutral). `endorlabs.workflows.estate.analyze.cardinality.tabular` remains a re-export shim.
 
 ### Fixed

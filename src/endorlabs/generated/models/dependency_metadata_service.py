@@ -834,6 +834,13 @@ class V1ContainerBaseImage(BaseModel):
     """
     The name of the base image. For example, "debian:bookworm-slim".
     """
+    package_version_uuid: str | None = None
+    """
+    The UUID of the base image's own PackageVersion, if it has been scanned.
+    Populated by the scanner from the in-memory base image lookup at scan
+    time; consumers that need this after the fact and find it unset may fall
+    back to a digest-based PackageVersion lookup.
+    """
     update_options: V1ContainerImageUpdateOptions | None = None
     """
     Base image update candidates for this app image.

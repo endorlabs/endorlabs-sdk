@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.estate.export.charts.compile_graph_viz import (
     render_compile_graph_panels_html,
 )
@@ -274,5 +275,5 @@ def export_estate_dashboard(
         namespace_label=namespace_label,
         collapse_prefixes=collapse_prefixes,
     )
-    out.write_text(html_doc, encoding="utf-8")
+    safe_write_text(workspace_root, out, html_doc)
     return out

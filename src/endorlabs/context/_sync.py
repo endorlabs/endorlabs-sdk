@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from endorlabs.api_client import APIClient
 
 from endorlabs.utils.logging_config import get_resource_logger
+from endorlabs.utils.path_safety import safe_write_text
 
 from ._project_context import warn_agent_defer_gitignore_to_user
 from .models import InitStatus
@@ -159,7 +160,7 @@ def _sync_claude_context(
         sdk_index_path=source_dir / "INDEX.md",
     )
 
-    _ = output_path.write_text(claude_md, encoding="utf-8")
+    _ = safe_write_text(repo_root, output_path, claude_md)
     logger.info("Generated CLAUDE.md at %s", output_path)
 
     commands_dir = repo_root / ".claude" / "commands"
@@ -171,7 +172,7 @@ def _sync_claude_context(
             f"{skill['description']}\n\n"
             f"See: .endorlabs-context/sdk/skills/{skill['id']}/SKILL.md"
         )
-        _ = command_path.write_text(command_content, encoding="utf-8")
+        _ = safe_write_text(repo_root, command_path, command_content)
 
     return output_path
 

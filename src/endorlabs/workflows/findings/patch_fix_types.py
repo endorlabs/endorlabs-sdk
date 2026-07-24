@@ -8,6 +8,10 @@ from endorlabs.workflows.common import WorkflowResult
 from endorlabs.workflows.tabular import TabularExport
 
 
+def _empty_signal_breakdown() -> dict[str, int]:
+    return {}
+
+
 @dataclass
 class PatchFixReportStats:
     """Aggregated statistics for a patch-fix report run."""
@@ -26,7 +30,7 @@ class PatchFixReportResult(WorkflowResult):
     stats: PatchFixReportStats = field(default_factory=PatchFixReportStats)
     table: TabularExport = field(default_factory=TabularExport)
     finding_detail: TabularExport = field(default_factory=TabularExport)
-    signal_breakdown: dict[str, int] = field(default_factory=dict)
+    signal_breakdown: dict[str, int] = field(default_factory=_empty_signal_breakdown)
 
     @property
     def rows(self) -> list[dict[str, object]]:

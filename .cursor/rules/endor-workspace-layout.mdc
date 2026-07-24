@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workspace-layout.md
-x-endor-source-sha256: 9de6ff6aed718e4c60787151c2c24db4cad27f0821d3a1f9e4bc78fd9e48b256
+x-endor-source-sha256: 537ad864e8978b52f422c9fe76ac385006e2b9c7f004c7309b558591bfefeaba
 ---
 
 # Workspace layout

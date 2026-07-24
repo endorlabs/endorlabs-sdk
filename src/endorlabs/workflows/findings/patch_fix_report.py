@@ -54,7 +54,7 @@ import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from endorlabs.context.paths import default_runs_dir
 from endorlabs.filters import FINDING_CATEGORY_VULNERABILITY, MAIN_CONTEXT_CLAUSE
@@ -143,15 +143,23 @@ def _build_finding_filter(
 def _finding_tags(finding: dict[str, Any]) -> list[str]:
     tags = nested_dict(finding, "spec").get("finding_tags")
     if isinstance(tags, list):
-        return [str(tag) for tag in tags]
+        return [str(tag) for tag in cast("list[Any]", tags)]
     return []
+
+
+def _upgrade_list_items(spec: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return typed upgrade-list entries from a Finding ``spec`` dict."""
+    raw = nested_dict(spec, "fixing_upgrades").get("upgrade_list")
+    if not isinstance(raw, list):
+        return []
+    return [item for item in cast("list[Any]", raw) if isinstance(item, dict)]
 
 
 def _finding_signal_flags(finding: dict[str, Any]) -> dict[str, bool]:
     """Compute the patch/fix/reachability booleans carried by one finding."""
     spec = nested_dict(finding, "spec")
     tags = _finding_tags(finding)
-    upgrade_list = nested_dict(spec, "fixing_upgrades").get("upgrade_list") or []
+    upgrade_list = _upgrade_list_items(spec)
     return {
         "fix_available": "FINDING_TAGS_FIX_AVAILABLE" in tags,
         "endor_patch_available": bool(
@@ -196,7 +204,7 @@ def _vuln_fields(finding: dict[str, Any]) -> dict[str, str]:
     aliases = vuln_spec.get("aliases")
     alias_list: list[str] = []
     if isinstance(aliases, list):
-        alias_list = [str(a) for a in aliases if a]
+        alias_list = [str(a) for a in cast("list[Any]", aliases) if a]
     summary = dict_str(vuln_meta, "description") or dict_str(vuln_spec, "summary")
     if not summary and description:
         # Often "GHSA-…: title" when nested vuln is masked away.
@@ -299,7 +307,7 @@ def _extract_patch_rows(findings: Sequence[dict[str, Any]]) -> list[dict[str, An
     detail_rows: list[dict[str, Any]] = []
     for finding in findings:
         spec = nested_dict(finding, "spec")
-        upgrade_list = nested_dict(spec, "fixing_upgrades").get("upgrade_list") or []
+        upgrade_list = _upgrade_list_items(spec)
         if not upgrade_list:
             continue
         flags = _finding_signal_flags(finding)
@@ -336,7 +344,7 @@ def _extract_patch_rows(findings: Sequence[dict[str, Any]]) -> list[dict[str, An
                 "upgrade_risk": dict_str(item, "upgrade_risk"),
             }
             for item in upgrade_list
-            if isinstance(item, dict) and dict_str(item, "direct_dependency_name")
+            if dict_str(item, "direct_dependency_name")
         )
     return detail_rows
 
@@ -476,7 +484,7 @@ def build_patch_fix_report(
     )
     if include_finding_detail:
         # Prefer wire namespace on the Finding; fall back to estate root.
-        detail_out = [
+        detail_out: list[dict[str, Any]] = [
             {**row, "namespace": row.get("namespace") or namespace}
             for row in detail_rows
         ]

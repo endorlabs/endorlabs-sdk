@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-13T17:56:41.354002+00:00",
+  "generated_at": "2026-07-24T16:51:18.460745+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -150,7 +150,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.6.1.dev0",
+  "sdk_version": "0.6.0",
   "skills": [
     {
       "description": "Use when probing, verifying, or refreshing Endor Labs SDK credentials before API\nworkflows\u2014env-key scan, Client whoami check, endorctl detection, and interactive\nbrowser token refresh into .env. Step zero for any tenant session. Not for SSO\npolicy mapping or AuthenticationLog RCA.\n",
@@ -242,7 +242,7 @@
       "refs": []
     },
     {
-      "description": "Use when routing estate-scale data pulls between Query graph joins and facade\nlist/count/shard patterns after bounded topology discovery\u2014choosing how to fetch\ncounts, aggregates, or validated joins across many projects. Not for single-project\nRCA; hand off when full row export is needed without a validated Query join.",
+      "description": "Routes estate-scale data pulls between Query graph joins and facade list/count/shard patterns after bounded topology discovery. Use when choosing how to fetch counts, aggregates, or validated joins across many projects. Not for single-project RCA \u2014 hand off when full row export is needed without a validated Query join.",
       "id": "endor-route-estate-queries",
       "name": "endor-route-estate-queries",
       "path": "skills/endor-route-estate-queries/SKILL.md",
