@@ -6,6 +6,7 @@ import pytest
 
 import endorlabs
 from endorlabs.core.exceptions import ServerError
+from endorlabs.facade.context_partition import context_partition_filter
 from tests.conftest import TEST_MAX_PAGES
 from tests.integration.client.helper_assertions import nested_attr
 
@@ -114,6 +115,26 @@ def _project_scans(client, project: object, *, limit: int = 10) -> list[object]:
         return []
 
 
+def _project_scans_for_context(
+    client, project: object, ctx: object, *, limit: int = 10
+) -> list[object]:
+    """Bounded project scans on the same context partition as *ctx*.
+
+    Row-driven probes must not rely on newest-first unfiltered scans: sparse
+    kinds (e.g. ScanWorkflowResult on a feature-branch plane) are often absent
+    from the latest CI/main pages even when matching scans exist.
+    """
+    try:
+        return client.ScanResult.list_by_project(
+            project,
+            filter=context_partition_filter(ctx),
+            limit=limit,
+            max_pages=1,
+        )
+    except ServerError:
+        return []
+
+
 def _sample_from_row_context(
     client,
     list_method: str,
@@ -148,7 +169,7 @@ def _sample_from_row_context(
                 project = cl.Project.get(str(project_uuid), namespace=ns)
             except Exception:
                 continue
-            for scan in _project_scans(cl, project):
+            for scan in _project_scans_for_context(cl, project, row_ctx):
                 if not _scan_has_context(scan):
                     continue
                 if not _context_matches(row_ctx, scan.context):
