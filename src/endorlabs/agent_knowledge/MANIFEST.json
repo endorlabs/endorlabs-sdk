@@ -409,7 +409,8 @@
         "endorlabs.workflows.estate.analyze_workspace",
         "endorlabs.workflows.estate.fetch_online_dashboard_counts",
         "endorlabs.workflows.estate.export_version_cardinality_for_package_match",
-        "endorlabs.workflows.estate.export_risk_ranked_version_cardinality"
+        "endorlabs.workflows.estate.export_risk_ranked_version_cardinality",
+        "endorlabs.workflows.findings.build_patch_fix_report"
       ],
       "module": "endorlabs.workflows.estate.cli.main",
       "skill": null

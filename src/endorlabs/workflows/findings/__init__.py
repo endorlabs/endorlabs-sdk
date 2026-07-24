@@ -15,6 +15,7 @@ from .finding_log_trends import (
     FINDING_CRITERIA,
     build_finding_log_new_vs_resolved_analysis,
 )
+from .patch_fix_report import build_patch_fix_report
 from .triage import (
     ExceptionPolicyResult,
     TaggingResult,
@@ -30,6 +31,7 @@ __all__ = [
     "TaggingResult",
     "build_exception_rego_rule",
     "build_finding_log_new_vs_resolved_analysis",
+    "build_patch_fix_report",
     "create_exception_policy",
     "finding_log_time_window_filter",
     "main_context_vulnerability_filter",

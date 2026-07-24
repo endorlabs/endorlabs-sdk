@@ -8,9 +8,12 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- New `endor-estate patch-fix-report` subcommand and `endorlabs.workflows.findings.build_patch_fix_report` library entrypoint: findings fixable by a patch, aggregated by package name + current version (mirrors `export-version`'s sort order). Default `--gate any` fetches the union of the Endor Patch catalog (`spec.fixing_patch.endor_patch_available`) and the fix-available tag; narrow with `--gate endor-patch` or `--gate fix-available`. Upgrade targets come from `spec.fixing_upgrades.upgrade_list` on the same Finding.
+
 ### Changed
 
 - Pyright: `reportImportCycles` and missing-import checks elevated to error; strict roots expanded (`facade/__init__`, `query/__init__`, `operations/__init__`); `reportUnknownVariableType` ratcheted to error for `core/`, `workflows/`, and `operations/`. Dev pins: pyright 1.1.411, ruff 0.15.20, pytest 9.1.1.
+- `TabularExport` and CSV helpers moved to `endorlabs.workflows.tabular` (layer-neutral). `endorlabs.workflows.estate.analyze.cardinality.tabular` remains a re-export shim.
 
 ### Fixed
 

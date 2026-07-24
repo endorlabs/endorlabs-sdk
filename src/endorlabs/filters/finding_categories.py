@@ -85,6 +85,14 @@ def prd_vuln_filter() -> str:
     )
 
 
+def fix_available_vuln_filter() -> str:
+    """Main-context vulnerability findings tagged fix-available."""
+    return (
+        f"{MAIN_CONTEXT_CLAUSE} and {VULNERABILITY_CATEGORY} "
+        "and spec.finding_tags contains FINDING_TAGS_FIX_AVAILABLE"
+    )
+
+
 def finding_log_time_window_filter(
     window_start: datetime | str,
     window_end: datetime | str,

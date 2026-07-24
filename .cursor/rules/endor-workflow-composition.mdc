@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: 7f8821893fb65fd492a2c5075ab97c38ff3423eabc6eeec47f9e96033c58ced4
+x-endor-source-sha256: ac21347a1be4d09870cc2cac55ea3d9b895fd2b9b73700b5230e9c3397e531a0
 ---
 
 # Workflow composition
@@ -67,6 +67,7 @@ Generic entrypoints (no estate literals):
 - `client.Project.is_app()` / `.is_cli()` / `.is_sbom()` — project registration inventory (see [facade-helpers.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/facade-helpers.md))
 - `endorlabs.filters` — canonical main-context and finding MQL fragments (replaces removed `workflows.findings.filters` submodule)
 - `endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis` — FindingLog CREATE/DELETE weekly chart data (online aggregated)
+- `endorlabs.workflows.findings.build_patch_fix_report` — findings fixable by a patch, rolled up by package + current version (`endor-estate patch-fix-report`)
 - `endorlabs.workflows.logs.group_by_time.group_by_time_counts` — generic log `list_groups` + `group_by_time` aggregation
 - `endorlabs.workflows.auth.verify_auth` / `refresh_token_to_dotenv` — credential probe and browser refresh (`endor-auth`)
 - `endorlabs.workflows.auth.probe_auth_logs` — tenant list-path auth-log RCA rows
