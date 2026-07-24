@@ -8,6 +8,7 @@ import re
 from collections import defaultdict, deque
 from pathlib import Path
 
+from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.estate.contracts.ir_artifacts import (
     CLUSTERING_GRAPH_IR,
     COMMUNITY_DETECTION_IR,
@@ -567,5 +568,12 @@ def export_compile_graph_viz(
         namespace_label=namespace_label,
         collapse_prefixes=collapse_prefixes,
     )
-    output_path.write_text(document, encoding="utf-8")
+    # Prefer workspace root as the containment base when the dashboard lives
+    # under it; otherwise contain to the output file's parent directory.
+    try:
+        output_path.resolve().relative_to(workspace_root.resolve())
+        base_dir = workspace_root
+    except ValueError:
+        base_dir = output_path.parent
+    safe_write_text(base_dir, output_path, document)
     return output_path

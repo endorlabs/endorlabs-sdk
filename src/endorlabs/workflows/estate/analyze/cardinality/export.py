@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Any
 import endorlabs
 from endorlabs.context.paths import default_runs_dir
 from endorlabs.utils.logging_config import get_resource_logger
+from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.estate.analyze.cardinality.tabular import (
     TabularExport,
     write_table,
@@ -863,9 +864,11 @@ def main(argv: list[str] | None = None) -> int:
     if remediation is not None:
         summary["remediation"] = remediation.to_dict()
         if args.remediation_output:
-            Path(args.remediation_output).write_text(
+            remediation_path = Path(args.remediation_output)
+            safe_write_text(
+                remediation_path.parent,
+                remediation_path,
                 json.dumps(remediation.to_dict(), indent=2) + "\n",
-                encoding="utf-8",
             )
             summary["remediation_output"] = args.remediation_output
     sys.stdout.write(json.dumps(summary, indent=2) + "\n")

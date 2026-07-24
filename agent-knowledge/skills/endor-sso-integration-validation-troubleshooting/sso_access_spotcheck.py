@@ -15,6 +15,7 @@ from typing import Any
 
 import endorlabs
 from endorlabs.context.paths import default_runs_dir
+from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.auth import (
     auth_log_snapshot,
     build_claim_namespace_map,
@@ -27,7 +28,11 @@ RUN_BUCKET = "sso-integration-validation-troubleshooting"
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
-    _ = path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    safe_write_text(
+        path.parent,
+        path,
+        json.dumps(payload, indent=2, sort_keys=True),
+    )
 
 
 def parse_args() -> argparse.Namespace:

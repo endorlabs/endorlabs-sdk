@@ -12,6 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
+from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.estate.contracts.resources import (
     COLLECT_RESOURCE_IDS,
     RESOURCE_ARTIFACT_SCHEMAS,
@@ -212,7 +213,7 @@ def save_collect_manifest(workspace_root: Path, manifest: CollectManifest) -> Pa
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(".json.tmp")
         payload = json.dumps(manifest.to_dict(), indent=2, ensure_ascii=False) + "\n"
-        tmp.write_text(payload, encoding="utf-8")
+        safe_write_text(workspace_root, tmp, payload)
         _atomic_replace(tmp, path)
     return path
 
