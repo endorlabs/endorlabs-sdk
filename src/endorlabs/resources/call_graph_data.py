@@ -40,9 +40,16 @@ def _pv_uuid_and_namespace(
         return uuid, validate_namespace(namespace)
     tenant_meta = getattr(package_version, "tenant_meta", None)
     if tenant_meta is not None:
-        ns = getattr(tenant_meta, "namespace", None)
+        if isinstance(tenant_meta, dict):
+            ns = tenant_meta.get("namespace")
+        else:
+            ns = getattr(tenant_meta, "namespace", None)
         if ns:
             return uuid, validate_namespace(str(ns))
+    # Some list payloads leave tenant_meta empty but set PackageVersion.namespace.
+    ns_attr = getattr(package_version, "namespace", None)
+    if ns_attr:
+        return uuid, validate_namespace(str(ns_attr))
     raise ValueError(
         "namespace required when package_version is a UUID string without tenant_meta"
     )

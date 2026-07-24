@@ -29,6 +29,8 @@ def pv_call_graph_available(pv: Any) -> bool:
     spec = getattr(pv, "spec", None)
     if not spec:
         return False
+    if isinstance(spec, dict):
+        return bool(spec.get("call_graph_available", False))
     return bool(getattr(spec, "call_graph_available", False))
 
 

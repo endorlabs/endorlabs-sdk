@@ -41,6 +41,15 @@ def test_pv_call_graph_available() -> None:
     assert not pv_call_graph_available(_pv("b", ref="main", call_graph_available=False))
 
 
+def test_pv_call_graph_available_dict_spec() -> None:
+    assert pv_call_graph_available(SimpleNamespace(spec={"call_graph_available": True}))
+    assert not pv_call_graph_available(
+        SimpleNamespace(spec={"call_graph_available": False})
+    )
+    assert not pv_call_graph_available(SimpleNamespace(spec={}))
+    assert not pv_call_graph_available(SimpleNamespace(spec=None))
+
+
 def test_order_pvs_for_callgraph_prefers_main_then_other_refs() -> None:
     feature = _pv("f", ref="refs/heads/feature/x", call_graph_available=True)
     main = _pv("m", ref="refs/heads/main", call_graph_available=True)
