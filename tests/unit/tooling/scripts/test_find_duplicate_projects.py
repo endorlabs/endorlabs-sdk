@@ -47,13 +47,13 @@ def test_is_sbom_project_excluded_from_grouping() -> None:
     regular = {
         "uuid": "p-1",
         "meta": {"name": "github.com/org/repo"},
-        "tenant_meta": {"namespace": "tenant.a"},
+        "tenant_meta": {"namespace": "example-tenant.a"},
         "spec": {"git": {}},
     }
     duplicate = {
         "uuid": "p-2",
         "meta": {"name": "github.com/org/repo"},
-        "tenant_meta": {"namespace": "tenant.b"},
+        "tenant_meta": {"namespace": "example-tenant.b"},
         "spec": {"git": {}},
     }
 
@@ -81,13 +81,13 @@ def test_find_duplicate_groups_exact_name_across_namespaces() -> None:
         {
             "uuid": "a",
             "meta": {"name": "github.com/org/repo"},
-            "tenant_meta": {"namespace": "tenant.team-a"},
+            "tenant_meta": {"namespace": "example-tenant.team-a"},
             "spec": {"git": {}},
         },
         {
             "uuid": "b",
             "meta": {"name": "github.com/org/repo"},
-            "tenant_meta": {"namespace": "tenant.team-b"},
+            "tenant_meta": {"namespace": "example-tenant.team-b"},
             "spec": {"git": {"external_installation_id": "99"}},
         },
     ]

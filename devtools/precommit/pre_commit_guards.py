@@ -1001,7 +1001,10 @@ def is_portable_namespace_value(value: str) -> bool:
         return True
     if "." in token:
         root = token.split(".", 1)[0].lower()
-        return root in _NAMESPACE_FLAG_ALLOW or root.startswith("example-")
+        # Documented placeholder roots (tenant.namespace) plus CLI allowlist.
+        if root in {"tenant", "example"} or root.startswith("example-"):
+            return True
+        return root in _NAMESPACE_FLAG_ALLOW
     return False
 
 
