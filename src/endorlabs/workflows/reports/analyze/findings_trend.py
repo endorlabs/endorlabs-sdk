@@ -3,11 +3,16 @@
 FindingLog severity×reach series primitives live in
 ``endorlabs.workflows.findings.finding_log_trends``; this module orchestrates
 path/tag rollups and ScanResult throughput for ``report_packet.v0``.
+
+Tag series use **project-grain** pulls (one matrix per tagged project) then
+local redistribute. Path series still use leaf-namespace aggregates so untagged
+projects are included.
 """
 
 from __future__ import annotations
 
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
@@ -16,6 +21,7 @@ from endorlabs.workflows.findings.finding_log_trends import (
     FINDING_CRITERIA,
     REACHABLE_FUNCTION_CLAUSE,
     compute_window,
+    empty_series_cell,
     query_severity_reach_matrix,
     query_severity_reach_series_cell,
     sum_series_cells,
@@ -26,6 +32,11 @@ if TYPE_CHECKING:
 
 MAIN_LOOKBACK_DAYS = 91
 CI_LOOKBACK_DAYS = 21
+DEFAULT_BURNDOWN_WORKERS = 24
+PULL_MODE_PROJECT_GRAIN = "project_grain_redistribute"
+
+_SEV_KEYS = ("all", "critical", "high")
+_REACH_KEYS = ("all", "reachable", "prf")
 
 
 def _iso(dt: datetime) -> str:
@@ -132,6 +143,100 @@ def _throughput_scope(
     }
 
 
+def _empty_matrix(
+    categories: list[str], period_caption: str
+) -> dict[str, dict[str, dict[str, Any]]]:
+    return {
+        sev: {
+            reach: empty_series_cell(categories, period_caption)
+            for reach in _REACH_KEYS
+        }
+        for sev in _SEV_KEYS
+    }
+
+
+def sum_severity_reach_matrices(
+    parts: list[dict[str, dict[str, dict[str, Any]]]],
+    *,
+    categories: list[str],
+    period_caption: str,
+) -> dict[str, dict[str, dict[str, Any]]]:
+    """Sum severity×reach series matrices cell-wise."""
+    if not parts:
+        return _empty_matrix(categories, period_caption)
+    built: dict[str, dict[str, dict[str, Any]]] = {}
+    for sev in _SEV_KEYS:
+        built[sev] = {}
+        for reach in _REACH_KEYS:
+            cells = [
+                matrix[sev][reach]
+                for matrix in parts
+                if sev in matrix and reach in matrix[sev]
+            ]
+            built[sev][reach] = sum_series_cells(
+                cells, categories=categories, period_caption=period_caption
+            )
+    return built
+
+
+def _roll_project_matrices(
+    project_matrices: dict[str, dict[str, dict[str, dict[str, Any]]]],
+    uuids: list[str],
+    *,
+    categories: list[str],
+    period_caption: str,
+) -> dict[str, dict[str, dict[str, Any]]]:
+    parts = [project_matrices[uid] for uid in uuids if uid in project_matrices]
+    return sum_severity_reach_matrices(
+        parts, categories=categories, period_caption=period_caption
+    )
+
+
+def _pull_project_matrices(
+    client: Client,
+    projects: list[dict[str, Any]],
+    *,
+    window_start: datetime,
+    window_end: datetime,
+    lookback: int,
+    categories: list[str],
+    period_caption: str,
+    max_workers: int,
+) -> dict[str, dict[str, dict[str, dict[str, Any]]]]:
+    """Pull one FindingLog severity×reach matrix per project (parallel)."""
+
+    def _one(
+        project: dict[str, Any],
+    ) -> tuple[str, dict[str, dict[str, dict[str, Any]]]]:
+        uid = str(project["uuid"])
+        ns = str(project.get("namespace") or "")
+        try:
+            matrix = query_severity_reach_matrix(
+                client,
+                namespace=ns,
+                window_start=window_start,
+                window_end=window_end,
+                parent_uuids=[uid],
+                lookback=lookback,
+                categories=categories,
+                period_caption=period_caption,
+            )
+        except Exception:
+            matrix = _empty_matrix(categories, period_caption)
+        return uid, matrix
+
+    out: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
+    if not projects:
+        return out
+    workers = max(1, max_workers)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [pool.submit(_one, project) for project in projects]
+        for fut in as_completed(futures):
+            uid, matrix = fut.result()
+            out[uid] = matrix
+    return out
+
+
 def build_findings_burndown_report(
     client: Client,
     *,
@@ -141,9 +246,16 @@ def build_findings_burndown_report(
     path_options: list[str],
     tag_catalog: list[dict[str, Any]],
     lookback: int = CHART_DEFAULT_LOOKBACK,
-    min_projects: int = 5,
+    min_projects: int = 1,
+    max_workers: int = DEFAULT_BURNDOWN_WORKERS,
 ) -> dict[str, Any]:
-    """Build FindingLog series filters, tag series, and throughput."""
+    """Build FindingLog series filters, tag series, and throughput.
+
+    Path series: one matrix per leaf namespace (includes untagged projects).
+    Tag series: parallel per-tagged-project matrices, then local redistribute.
+    *min_projects* only filters which tags appear in ``tagSeries`` (display);
+    it does not skip project pulls.
+    """
     window_start, window_end = compute_window(lookback=lookback)
     seed = query_severity_reach_series_cell(
         client,
@@ -160,39 +272,48 @@ def build_findings_burndown_report(
 
     leaf_cells: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
     for ns in leaf_namespaces:
-        leaf_cells[ns] = query_severity_reach_matrix(
-            client,
-            namespace=ns,
-            window_start=window_start,
-            window_end=window_end,
-            parent_uuids=None,
-            lookback=lookback,
-            categories=categories,
-            period_caption=period_caption,
-        )
+        try:
+            leaf_cells[ns] = query_severity_reach_matrix(
+                client,
+                namespace=ns,
+                window_start=window_start,
+                window_end=window_end,
+                parent_uuids=None,
+                lookback=lookback,
+                categories=categories,
+                period_caption=period_caption,
+            )
+        except Exception:
+            leaf_cells[ns] = _empty_matrix(categories, period_caption)
 
     def roll_path(path: str) -> dict[str, dict[str, dict[str, Any]]]:
         if path == "all":
             keys = list(leaf_cells)
         else:
             keys = [ns for ns in leaf_cells if ns == path or ns.startswith(path + ".")]
-        built: dict[str, dict[str, dict[str, Any]]] = {}
-        for sev in ("all", "critical", "high"):
-            built[sev] = {}
-            for reach in ("all", "reachable", "prf"):
-                parts = [
-                    leaf_cells[ns][sev][reach]
-                    for ns in keys
-                    if sev in leaf_cells[ns] and reach in leaf_cells[ns][sev]
-                ]
-                built[sev][reach] = sum_series_cells(
-                    parts, categories=categories, period_caption=period_caption
-                )
-        return built
+        return sum_severity_reach_matrices(
+            [leaf_cells[ns] for ns in keys],
+            categories=categories,
+            period_caption=period_caption,
+        )
 
     series_filters = {"perPath": {path: roll_path(path) for path in path_options}}
 
     by_uuid = {p["uuid"]: p for p in projects}
+    tagged_projects = [
+        p for p in projects if p.get("tags") and p.get("namespace") and p.get("uuid")
+    ]
+    project_matrices = _pull_project_matrices(
+        client,
+        tagged_projects,
+        window_start=window_start,
+        window_end=window_end,
+        lookback=lookback,
+        categories=categories,
+        period_caption=period_caption,
+        max_workers=max_workers,
+    )
+
     per_tag: dict[str, dict[str, dict[str, dict[str, dict[str, Any]]]]] = {}
     ready: list[str] = []
     pending: list[str] = []
@@ -202,19 +323,19 @@ def build_findings_burndown_report(
         if len(uuids) < min_projects:
             pending.append(tag)
             continue
-        tagged = [by_uuid[u] for u in uuids]
+        pulled = [u for u in uuids if u in project_matrices]
+        if not pulled:
+            pending.append(tag)
+            continue
+        tagged_rows = [by_uuid[u] for u in pulled]
         tag_leaf: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
         for ns in leaf_namespaces:
-            ns_uuids = [p["uuid"] for p in tagged if p.get("namespace") == ns]
+            ns_uuids = [p["uuid"] for p in tagged_rows if p.get("namespace") == ns]
             if not ns_uuids:
                 continue
-            tag_leaf[ns] = query_severity_reach_matrix(
-                client,
-                namespace=ns,
-                window_start=window_start,
-                window_end=window_end,
-                parent_uuids=ns_uuids,
-                lookback=lookback,
+            tag_leaf[ns] = _roll_project_matrices(
+                project_matrices,
+                ns_uuids,
                 categories=categories,
                 period_caption=period_caption,
             )
@@ -228,19 +349,11 @@ def build_findings_burndown_report(
                 ]
             if not keys:
                 continue
-            built: dict[str, dict[str, dict[str, Any]]] = {}
-            for sev in ("all", "critical", "high"):
-                built[sev] = {}
-                for reach in ("all", "reachable", "prf"):
-                    parts = [
-                        tag_leaf[ns][sev][reach]
-                        for ns in keys
-                        if sev in tag_leaf[ns] and reach in tag_leaf[ns][sev]
-                    ]
-                    built[sev][reach] = sum_series_cells(
-                        parts, categories=categories, period_caption=period_caption
-                    )
-            path_map[path] = built
+            path_map[path] = sum_severity_reach_matrices(
+                [tag_leaf[ns] for ns in keys],
+                categories=categories,
+                period_caption=period_caption,
+            )
         if path_map:
             per_tag[tag] = path_map
             ready.append(tag)
@@ -279,7 +392,12 @@ def build_findings_burndown_report(
             "seriesPending": pending,
             "seriesReadyCount": len(ready),
             "seriesPendingCount": len(pending),
-            "pullPolicy": {"minProjects": min_projects, "mode": "tag_scoped"},
+            "pullPolicy": {
+                "minProjects": min_projects,
+                "mode": PULL_MODE_PROJECT_GRAIN,
+                "taggedProjectsPulled": len(project_matrices),
+                "workers": max(1, max_workers),
+            },
         },
         "throughput": {
             "windows": {"mainDays": MAIN_LOOKBACK_DAYS, "ciRunDays": CI_LOOKBACK_DAYS},

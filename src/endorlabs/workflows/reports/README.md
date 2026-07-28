@@ -32,6 +32,13 @@ uv run endor-reports findings-trend -n <tenant>
 uv run endor-reports prf-analysis -n <tenant>
 ```
 
+## Findings burndown pull
+
+Tag series: one FindingLog severity×reach matrix per **tagged** project
+(parallel `--workers`, default 24), then local redistribute onto tags/paths.
+Path series: leaf-namespace aggregates (includes untagged projects).
+`--min-projects` only filters which tags appear in the packet (default 1).
+
 ## Parity harness
 
 `endorlabs.workflows.reports.parity` compares live packet cubes to gitignored

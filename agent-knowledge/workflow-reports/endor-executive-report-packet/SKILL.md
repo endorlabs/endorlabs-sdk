@@ -30,7 +30,8 @@ runtime required.
 - Tenant/namespace executive HTML under
   `.endorlabs-context/workspace/runs/executive-report-packet/`.
 - Project tag discovery from `Project.meta.tags` (full catalog; no allowlists).
-- FindingLog window-net trends with cost-controlled tag series (`--min-projects`).
+- FindingLog window-net trends; tag series via project-grain pulls + local
+  redistribute (`--workers`); `--min-projects` only filters display.
 
 **Out of scope**
 
@@ -64,7 +65,8 @@ uv run --env-file .env endor-reports packet -n <tenant>
 Optional flags:
 
 - `--lookback 13` — FindingLog weeks
-- `--min-projects 5` — minimum projects for tag FindingLog series
+- `--min-projects 1` — display filter: omit tags with fewer tagged projects
+- `--workers 24` — parallel FindingLog matrix pulls for tagged projects
 - `--output-dir <path>` — override default runs bucket
 - `--skip-version-sprawl` / `--skip-findings-burndown` — partial packets
 

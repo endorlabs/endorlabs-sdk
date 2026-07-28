@@ -45,7 +45,21 @@ def _packet_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
         ),
     )
     packet.add_argument("--lookback", type=int, default=13)
-    packet.add_argument("--min-projects", type=int, default=5)
+    packet.add_argument(
+        "--min-projects",
+        type=int,
+        default=1,
+        help=(
+            "Display filter: omit tag series with fewer than this many tagged "
+            "projects (default: 1 = all tags with series)."
+        ),
+    )
+    packet.add_argument(
+        "--workers",
+        type=int,
+        default=24,
+        help="Parallel FindingLog matrix pulls for tagged projects (default: 24).",
+    )
     packet.add_argument("--skip-version-sprawl", action="store_true")
     packet.add_argument("--skip-findings-burndown", action="store_true")
     packet.add_argument("--timeout", type=float, default=900.0)
@@ -86,7 +100,18 @@ def _parity_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
         ),
     )
     parity.add_argument("--lookback", type=int, default=13)
-    parity.add_argument("--min-projects", type=int, default=5)
+    parity.add_argument(
+        "--min-projects",
+        type=int,
+        default=1,
+        help="Display filter for tag series (default: 1).",
+    )
+    parity.add_argument(
+        "--workers",
+        type=int,
+        default=24,
+        help="Parallel FindingLog matrix pulls for tagged projects (default: 24).",
+    )
     parity.add_argument("--skip-version-sprawl", action="store_true")
     parity.add_argument("--skip-findings-burndown", action="store_true")
     parity.add_argument("--timeout", type=float, default=900.0)
@@ -179,6 +204,7 @@ def _run_packet(args: argparse.Namespace) -> int:
             args.namespace,
             lookback=int(args.lookback),
             min_projects=int(args.min_projects),
+            max_workers=int(args.workers),
             include_version_sprawl=not args.skip_version_sprawl,
             include_findings_burndown=not args.skip_findings_burndown,
         )
@@ -224,6 +250,7 @@ def _run_parity(args: argparse.Namespace) -> int:
             args.namespace,
             lookback=int(args.lookback),
             min_projects=int(args.min_projects),
+            max_workers=int(args.workers),
             include_version_sprawl=not args.skip_version_sprawl,
             include_findings_burndown=not args.skip_findings_burndown,
         )

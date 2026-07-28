@@ -18,6 +18,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 - Workflow report scripts under `agent-knowledge/workflow-reports/*/scripts/` removed; report CLIs and libraries live in `endorlabs.workflows.reports`.
 - `finding_log_trends.query_operation_group_counts` is public (was `_query_operation_group_counts`); report-packet burndown uses the shared severity×reach API instead of a private import.
+- Findings burndown tag series use project-grain FindingLog pulls (parallel per tagged project) with local redistribute; path series remain leaf-namespace aggregates. Default `--min-projects` is `1` (display filter only); `--workers` controls pull parallelism (default 24).
 - Pyright: `reportImportCycles` and missing-import checks elevated to error; strict roots expanded (`facade/__init__`, `query/__init__`, `operations/__init__`); `reportUnknownVariableType` ratcheted to error for `core/`, `workflows/`, and `operations/`. Dev pins: pyright 1.1.411, ruff 0.15.20, pytest 9.1.1.
 - `TabularExport` and CSV helpers moved to `endorlabs.workflows.tabular` (layer-neutral). `endorlabs.workflows.estate.analyze.cardinality.tabular` remains a re-export shim.
 

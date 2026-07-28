@@ -30,7 +30,12 @@
     "seriesPending": ["team-beta"],
     "seriesReadyCount": 1,
     "seriesPendingCount": 1,
-    "pullPolicy": {"minProjects": 5, "mode": "tag_scoped"}
+    "pullPolicy": {
+      "minProjects": 1,
+      "mode": "project_grain_redistribute",
+      "taggedProjectsPulled": 1,
+      "workers": 24
+    }
   },
   "reports": {
     "onboarding": {
@@ -382,7 +387,12 @@
         "seriesPending": ["team-beta"],
         "seriesReadyCount": 1,
         "seriesPendingCount": 1,
-        "pullPolicy": {"minProjects": 5, "mode": "tag_scoped"}
+        "pullPolicy": {
+          "minProjects": 1,
+          "mode": "project_grain_redistribute",
+          "taggedProjectsPulled": 1,
+          "workers": 24
+        }
       },
       "throughput": {
         "windows": {"mainDays": 91, "ciRunDays": 21},

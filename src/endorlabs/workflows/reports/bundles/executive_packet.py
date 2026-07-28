@@ -27,7 +27,8 @@ def build_report_packet(
     namespace: str,
     *,
     lookback: int = 13,
-    min_projects: int = 5,
+    min_projects: int = 1,
+    max_workers: int = 24,
     traverse: bool = True,
     include_version_sprawl: bool = True,
     include_findings_burndown: bool = True,
@@ -71,7 +72,11 @@ def build_report_packet(
             "seriesPending": [e["tag"] for e in tag_catalog],
             "seriesReadyCount": 0,
             "seriesPendingCount": len(tag_catalog),
-            "pullPolicy": {"minProjects": min_projects, "mode": "skipped"},
+            "pullPolicy": {
+                "minProjects": min_projects,
+                "mode": "skipped",
+                "workers": max_workers,
+            },
         },
         "throughput": {"windows": {}, "perPath": {}, "perTag": {}},
     }
@@ -85,6 +90,7 @@ def build_report_packet(
             tag_catalog=tag_catalog,
             lookback=lookback,
             min_projects=min_projects,
+            max_workers=max_workers,
         )
 
     return {
