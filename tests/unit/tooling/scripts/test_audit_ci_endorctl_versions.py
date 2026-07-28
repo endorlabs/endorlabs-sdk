@@ -2,31 +2,15 @@
 
 from __future__ import annotations
 
-import sys
+import importlib
 from datetime import UTC, datetime, timedelta
-from importlib.util import module_from_spec, spec_from_file_location
-from pathlib import Path
 from types import ModuleType
 
 
 def _load_module() -> ModuleType:
-    repo_root = Path(__file__).resolve().parents[4]
-    script_path = (
-        repo_root
-        / "agent-knowledge"
-        / "workflow-reports"
-        / "endor-ci-endorctl-version-audit"
-        / "scripts"
-        / "audit_ci_endorctl_versions.py"
+    return importlib.import_module(
+        "endorlabs.workflows.reports.analyze.ci_endorctl_audit"
     )
-    assert script_path.is_file(), script_path
-    spec = spec_from_file_location("audit_ci_endorctl_versions", script_path)
-    assert spec is not None
-    assert spec.loader is not None
-    module = module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
 
 
 def test_normalize_endorctl_version_strips_prefix() -> None:

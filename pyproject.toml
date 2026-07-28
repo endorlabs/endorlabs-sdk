@@ -62,6 +62,7 @@ endor-vector-query = "endorlabs.workflows.vector_search.cli:main"
 endor-reachability-context = "endorlabs.workflows.reachability.cli:main"
 endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
 endor-auth = "endorlabs.workflows.auth.cli:main"
+endor-reports = "endorlabs.workflows.reports.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/endorlabs/endorlabs-sdk"
@@ -147,7 +148,7 @@ exclude_lines = [
 ]
 
 [tool.codespell]
-skip = ".git,.venv,*.lock,*.json,.endorlabs-context,src/endorlabs/generated"
+skip = ".git,.venv,*.lock,*.json,*.min.js,.endorlabs-context,src/endorlabs/generated"
 ignore-words-list = "endor,endorlabs"
 
 [tool.ruff]
@@ -324,6 +325,8 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 "src/endorlabs/workflows/reachability/context.py" = ["C901"]  # build_reachability_context aggregation
 # Estate workflows: migrated analytics + relationships; staged docstring/line-length ratchet.
 "src/endorlabs/workflows/estate/**" = ["D", "E501", "PERF401", "ARG001", "PLW2901", "SIM117", "C901", "UP047", "T201", "RUF001"]
+# Report packet HTML shells embed long JS/CSS strings and unicode product copy.
+"src/endorlabs/workflows/reports/**" = ["D", "E501", "C901", "RUF001", "RUF002", "S110", "PERF102", "B007", "RUF005", "T201", "E402", "S603", "S607", "PERF401", "PLW0108"]
 "src/endorlabs/workflows/estate/analyze/compile_graph/pipeline.py" = ["C901", "D", "E501", "PERF401"]  # phased pipeline orchestration
 "src/endorlabs/workflows/estate/export/summarize.py" = ["T201", "D103", "PERF401"]
 "src/endorlabs/workflows/estate/analyze/graph_metrics/analytics.py" = ["D103", "E501"]
@@ -374,7 +377,7 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 "src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)
 # --- Tests: broadly relaxed ---
-"tests/**" = ["ANN", "D", "E402", "E501", "SLF001", "ARG001", "ARG002", "S", "T20", "ERA", "TRY", "DTZ", "RET", "A", "PLW", "PT017", "PT018", "RUF100", "SIM117"]
+"tests/**" = ["ANN", "D", "E402", "E501", "SLF001", "ARG001", "ARG002", "S", "T20", "ERA", "TRY", "DTZ", "RET", "A", "PLW", "PT017", "PT018", "RUF100", "RUF001", "SIM117"]
 # --- Context CLI: command-line printing is intentional ---
 "src/endorlabs/context/cli.py" = ["T20"]
 # --- Tools: list sharding; split call-graph/dependency modules live under workflows/ ---
@@ -566,6 +569,8 @@ executionEnvironments = [
     { root = "src/endorlabs/core", pythonVersion = "3.13", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
     # Estate workflows: staged typing (migrated analytics + relationships modules).
     { root = "src/endorlabs/workflows/estate", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportPrivateUsage = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
+    # Report workflows: migrated CLI analytics + HTML packet (staged typing).
+    { root = "src/endorlabs/workflows/reports", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportPrivateUsage = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none", reportOptionalMemberAccess = "none" },
     # Call-graph and dependency hydration workflow modules.
     { root = "src/endorlabs/workflows/callgraph", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
     { root = "src/endorlabs/workflows/dependencies/bom_graph.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },

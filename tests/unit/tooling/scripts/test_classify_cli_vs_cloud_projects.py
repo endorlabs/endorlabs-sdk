@@ -2,31 +2,13 @@
 
 from __future__ import annotations
 
-import sys
-from importlib.util import module_from_spec, spec_from_file_location
-from pathlib import Path
+import importlib
 from types import ModuleType
 from unittest.mock import MagicMock
 
 
 def _load_module() -> ModuleType:
-    repo_root = Path(__file__).resolve().parents[4]
-    script_path = (
-        repo_root
-        / "agent-knowledge"
-        / "workflow-reports"
-        / "endor-cli-vs-cloud-projects"
-        / "scripts"
-        / "classify_cli_vs_cloud_projects.py"
-    )
-    assert script_path.is_file(), script_path
-    spec = spec_from_file_location("classify_cli_vs_cloud_projects", script_path)
-    assert spec is not None
-    assert spec.loader is not None
-    module = module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    return importlib.import_module("endorlabs.workflows.reports.analyze.cli_vs_cloud")
 
 
 def _mock_client() -> MagicMock:

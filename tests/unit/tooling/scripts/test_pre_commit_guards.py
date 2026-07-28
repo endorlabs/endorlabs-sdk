@@ -12,6 +12,7 @@ if str(_DEVTOOLS) not in sys.path:
     sys.path.insert(0, str(_DEVTOOLS))
 
 from pre_commit_guards import (  # noqa: E402
+    _FORBIDDEN_BARE_ESTATE_LITERALS,
     check_accessor_nudge,
     check_agent_knowledge_sync,
     check_blocked_staged_paths,
@@ -450,6 +451,19 @@ def test_check_portable_examples_blocks_customer_tenant(
     err = capsys.readouterr().err
     assert "tenant-path" in err
     assert "error:" in err
+
+
+def test_check_portable_examples_blocks_forbidden_bare_tenant_root(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    monkeypatch.setattr("pre_commit_guards._REPO_ROOT", tmp_path)
+    bad = tmp_path / "tests" / "unit" / "foo.py"
+    bad.parent.mkdir(parents=True)
+    blocked = next(iter(_FORBIDDEN_BARE_ESTATE_LITERALS))
+    bad.write_text(f'ROOT = "{blocked}"\n', encoding="utf-8")
+    assert check_portable_examples(paths=["tests/unit/foo.py"]) == 1
+    err = capsys.readouterr().err
+    assert "forbidden-estate-root" in err
 
 
 # --- select_test_paths -------------------------------------------------------

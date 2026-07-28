@@ -1,0 +1,417 @@
+{
+  "schema": "endor.report_packet.v0",
+  "tenant": "example-tenant",
+  "pulledAt": "2026-07-27T12:00:00+00:00",
+  "pathOptions": ["all", "example-tenant", "example-tenant.child"],
+  "leafNamespaces": ["example-tenant.child"],
+  "tagCatalog": [
+    {
+      "tag": "team-alpha",
+      "projectCount": 5,
+      "projectUuids": [
+        "00000000-0000-4000-8000-000000000001",
+        "00000000-0000-4000-8000-000000000002",
+        "00000000-0000-4000-8000-000000000003",
+        "00000000-0000-4000-8000-000000000004",
+        "00000000-0000-4000-8000-000000000005"
+      ]
+    },
+    {
+      "tag": "team-beta",
+      "projectCount": 2,
+      "projectUuids": [
+        "00000000-0000-4000-8000-000000000006",
+        "00000000-0000-4000-8000-000000000007"
+      ]
+    }
+  ],
+  "tagSeriesMeta": {
+    "seriesReady": ["team-alpha"],
+    "seriesPending": ["team-beta"],
+    "seriesReadyCount": 1,
+    "seriesPendingCount": 1,
+    "pullPolicy": {"minProjects": 5, "mode": "tag_scoped"}
+  },
+  "reports": {
+    "onboarding": {
+      "allRegistrations": 7,
+      "distinctRepositories": 6,
+      "duplicateRegistrations": 1,
+      "weeklyAll": [
+        {"w": "2026-01-05", "n": 3, "c": 3},
+        {"w": "2026-01-12", "n": 4, "c": 7}
+      ],
+      "weeklyDistinct": [
+        {"w": "2026-01-05", "n": 3, "c": 3},
+        {"w": "2026-01-12", "n": 3, "c": 6}
+      ],
+      "hierarchyAll": [
+        {"namespace": "example-tenant", "count": 7},
+        {"namespace": "example-tenant.child", "count": 7}
+      ],
+      "hierarchyDistinct": [
+        {"namespace": "example-tenant", "count": 6},
+        {"namespace": "example-tenant.child", "count": 6}
+      ],
+      "weekFirst": "2026-01-05",
+      "weekLast": "2026-01-12"
+    },
+    "versionSprawl": {
+      "histKeys": ["1", "2-3", "4-5", "6-10", "11-25", "26+"],
+      "ecosystems": ["npm", "PyPI"],
+      "estate": {
+        "all": {
+          "p": 2,
+          "v": 5,
+          "max": 3,
+          "avg": 2.5,
+          "h": [0, 1, 1, 0, 0, 0],
+          "hv": [0, 2, 3, 0, 0, 0],
+          "t": [["npm://example-pkg", 3], ["pypi://example-lib", 2]]
+        }
+      },
+      "perPath": {
+        "all": {
+          "all": {
+            "p": 2,
+            "v": 5,
+            "max": 3,
+            "avg": 2.5,
+            "h": [0, 1, 1, 0, 0, 0],
+            "hv": [0, 2, 3, 0, 0, 0],
+            "t": [["npm://example-pkg", 3], ["pypi://example-lib", 2]]
+          }
+        },
+        "example-tenant": {
+          "all": {
+            "p": 2,
+            "v": 5,
+            "max": 3,
+            "avg": 2.5,
+            "h": [0, 1, 1, 0, 0, 0],
+            "hv": [0, 2, 3, 0, 0, 0],
+            "t": [["npm://example-pkg", 3], ["pypi://example-lib", 2]]
+          }
+        },
+        "example-tenant.child": {
+          "all": {
+            "p": 2,
+            "v": 5,
+            "max": 3,
+            "avg": 2.5,
+            "h": [0, 1, 1, 0, 0, 0],
+            "hv": [0, 2, 3, 0, 0, 0],
+            "t": [["npm://example-pkg", 3], ["pypi://example-lib", 2]]
+          }
+        }
+      },
+      "perTag": {
+        "team-alpha": {
+          "all": {
+            "p": 1,
+            "v": 3,
+            "max": 3,
+            "avg": 3.0,
+            "h": [0, 0, 1, 0, 0, 0],
+            "hv": [0, 0, 3, 0, 0, 0],
+            "t": [["npm://example-pkg", 3]]
+          }
+        },
+        "team-beta": {
+          "all": {
+            "p": 1,
+            "v": 2,
+            "max": 2,
+            "avg": 2.0,
+            "h": [0, 1, 0, 0, 0, 0],
+            "hv": [0, 2, 0, 0, 0, 0],
+            "t": [["pypi://example-lib", 2]]
+          }
+        }
+      }
+    },
+    "findingsBurndown": {
+      "findingCriteria": "Critical/High severity · reachable & potentially reachable · main context",
+      "lookback": 2,
+      "interval": "week",
+      "seriesFilters": {
+        "perPath": {
+          "all": {
+            "all": {
+              "all": {
+                "categories": ["2026-01-05", "2026-01-12"],
+                "weeklyNew": [4, 2],
+                "weeklyResolved": [1, 3],
+                "cumulativeNew": [4, 6],
+                "cumulativeResolved": [1, 4],
+                "gaps": [3, 2],
+                "gapStart": 3,
+                "gapEnd": 2,
+                "gapTrend": "narrowing",
+                "periodCaption": "2 complete weeks"
+              },
+              "reachable": {
+                "categories": ["2026-01-05", "2026-01-12"],
+                "weeklyNew": [3, 1],
+                "weeklyResolved": [1, 2],
+                "cumulativeNew": [3, 4],
+                "cumulativeResolved": [1, 3],
+                "gaps": [2, 1],
+                "gapStart": 2,
+                "gapEnd": 1,
+                "gapTrend": "narrowing",
+                "periodCaption": "2 complete weeks"
+              },
+              "prf": {
+                "categories": ["2026-01-05", "2026-01-12"],
+                "weeklyNew": [1, 1],
+                "weeklyResolved": [0, 1],
+                "cumulativeNew": [1, 2],
+                "cumulativeResolved": [0, 1],
+                "gaps": [1, 1],
+                "gapStart": 1,
+                "gapEnd": 1,
+                "gapTrend": "stable",
+                "periodCaption": "2 complete weeks"
+              }
+            },
+            "critical": {
+              "all": {
+                "categories": ["2026-01-05", "2026-01-12"],
+                "weeklyNew": [2, 1],
+                "weeklyResolved": [0, 2],
+                "cumulativeNew": [2, 3],
+                "cumulativeResolved": [0, 2],
+                "gaps": [2, 1],
+                "gapStart": 2,
+                "gapEnd": 1,
+                "gapTrend": "narrowing",
+                "periodCaption": "2 complete weeks"
+              },
+              "reachable": {
+                "categories": ["2026-01-05", "2026-01-12"],
+                "weeklyNew": [2, 0],
+                "weeklyResolved": [0, 1],
+                "cumulativeNew": [2, 2],
+                "cumulativeResolved": [0, 1],
+                "gaps": [2, 1],
+                "gapStart": 2,
+                "gapEnd": 1,
+                "gapTrend": "narrowing",
+                "periodCaption": "2 complete weeks"
+              },
+              "prf": {
+                "categories": ["2026-01-05", "2026-01-12"],
+                "weeklyNew": [0, 1],
+                "weeklyResolved": [0, 1],
+                "cumulativeNew": [0, 1],
+                "cumulativeResolved": [0, 1],
+                "gaps": [0, 0],
+                "gapStart": 0,
+                "gapEnd": 0,
+                "gapTrend": "stable",
+                "periodCaption": "2 complete weeks"
+              }
+            },
+            "high": {
+              "all": {
+                "categories": ["2026-01-05", "2026-01-12"],
+                "weeklyNew": [2, 1],
+                "weeklyResolved": [1, 1],
+                "cumulativeNew": [2, 3],
+                "cumulativeResolved": [1, 2],
+                "gaps": [1, 1],
+                "gapStart": 1,
+                "gapEnd": 1,
+                "gapTrend": "stable",
+                "periodCaption": "2 complete weeks"
+              },
+              "reachable": {
+                "categories": ["2026-01-05", "2026-01-12"],
+                "weeklyNew": [1, 1],
+                "weeklyResolved": [1, 1],
+                "cumulativeNew": [1, 2],
+                "cumulativeResolved": [1, 2],
+                "gaps": [0, 0],
+                "gapStart": 0,
+                "gapEnd": 0,
+                "gapTrend": "stable",
+                "periodCaption": "2 complete weeks"
+              },
+              "prf": {
+                "categories": ["2026-01-05", "2026-01-12"],
+                "weeklyNew": [1, 0],
+                "weeklyResolved": [0, 0],
+                "cumulativeNew": [1, 1],
+                "cumulativeResolved": [0, 0],
+                "gaps": [1, 1],
+                "gapStart": 1,
+                "gapEnd": 1,
+                "gapTrend": "stable",
+                "periodCaption": "2 complete weeks"
+              }
+            }
+          }
+        }
+      },
+      "tagSeries": {
+        "tags": ["team-alpha"],
+        "perTag": {
+          "team-alpha": {
+            "all": {
+              "all": {
+                "all": {
+                  "categories": ["2026-01-05", "2026-01-12"],
+                  "weeklyNew": [1, 0],
+                  "weeklyResolved": [0, 1],
+                  "cumulativeNew": [1, 1],
+                  "cumulativeResolved": [0, 1],
+                  "gaps": [1, 0],
+                  "gapStart": 1,
+                  "gapEnd": 0,
+                  "gapTrend": "narrowing",
+                  "periodCaption": "2 complete weeks"
+                },
+                "reachable": {
+                  "categories": ["2026-01-05", "2026-01-12"],
+                  "weeklyNew": [1, 0],
+                  "weeklyResolved": [0, 1],
+                  "cumulativeNew": [1, 1],
+                  "cumulativeResolved": [0, 1],
+                  "gaps": [1, 0],
+                  "gapStart": 1,
+                  "gapEnd": 0,
+                  "gapTrend": "narrowing",
+                  "periodCaption": "2 complete weeks"
+                },
+                "prf": {
+                  "categories": ["2026-01-05", "2026-01-12"],
+                  "weeklyNew": [0, 0],
+                  "weeklyResolved": [0, 0],
+                  "cumulativeNew": [0, 0],
+                  "cumulativeResolved": [0, 0],
+                  "gaps": [0, 0],
+                  "gapStart": 0,
+                  "gapEnd": 0,
+                  "gapTrend": "stable",
+                  "periodCaption": "2 complete weeks"
+                }
+              },
+              "critical": {
+                "all": {
+                  "categories": ["2026-01-05", "2026-01-12"],
+                  "weeklyNew": [1, 0],
+                  "weeklyResolved": [0, 1],
+                  "cumulativeNew": [1, 1],
+                  "cumulativeResolved": [0, 1],
+                  "gaps": [1, 0],
+                  "gapStart": 1,
+                  "gapEnd": 0,
+                  "gapTrend": "narrowing",
+                  "periodCaption": "2 complete weeks"
+                },
+                "reachable": {
+                  "categories": ["2026-01-05", "2026-01-12"],
+                  "weeklyNew": [1, 0],
+                  "weeklyResolved": [0, 1],
+                  "cumulativeNew": [1, 1],
+                  "cumulativeResolved": [0, 1],
+                  "gaps": [1, 0],
+                  "gapStart": 1,
+                  "gapEnd": 0,
+                  "gapTrend": "narrowing",
+                  "periodCaption": "2 complete weeks"
+                },
+                "prf": {
+                  "categories": ["2026-01-05", "2026-01-12"],
+                  "weeklyNew": [0, 0],
+                  "weeklyResolved": [0, 0],
+                  "cumulativeNew": [0, 0],
+                  "cumulativeResolved": [0, 0],
+                  "gaps": [0, 0],
+                  "gapStart": 0,
+                  "gapEnd": 0,
+                  "gapTrend": "stable",
+                  "periodCaption": "2 complete weeks"
+                }
+              },
+              "high": {
+                "all": {
+                  "categories": ["2026-01-05", "2026-01-12"],
+                  "weeklyNew": [0, 0],
+                  "weeklyResolved": [0, 0],
+                  "cumulativeNew": [0, 0],
+                  "cumulativeResolved": [0, 0],
+                  "gaps": [0, 0],
+                  "gapStart": 0,
+                  "gapEnd": 0,
+                  "gapTrend": "stable",
+                  "periodCaption": "2 complete weeks"
+                },
+                "reachable": {
+                  "categories": ["2026-01-05", "2026-01-12"],
+                  "weeklyNew": [0, 0],
+                  "weeklyResolved": [0, 0],
+                  "cumulativeNew": [0, 0],
+                  "cumulativeResolved": [0, 0],
+                  "gaps": [0, 0],
+                  "gapStart": 0,
+                  "gapEnd": 0,
+                  "gapTrend": "stable",
+                  "periodCaption": "2 complete weeks"
+                },
+                "prf": {
+                  "categories": ["2026-01-05", "2026-01-12"],
+                  "weeklyNew": [0, 0],
+                  "weeklyResolved": [0, 0],
+                  "cumulativeNew": [0, 0],
+                  "cumulativeResolved": [0, 0],
+                  "gaps": [0, 0],
+                  "gapStart": 0,
+                  "gapEnd": 0,
+                  "gapTrend": "stable",
+                  "periodCaption": "2 complete weeks"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tagSeriesMeta": {
+        "seriesReady": ["team-alpha"],
+        "seriesPending": ["team-beta"],
+        "seriesReadyCount": 1,
+        "seriesPendingCount": 1,
+        "pullPolicy": {"minProjects": 5, "mode": "tag_scoped"}
+      },
+      "throughput": {
+        "windows": {"mainDays": 91, "ciRunDays": 21},
+        "perPath": {
+          "all": {
+            "projectCount": 7,
+            "mainScans91d": 20,
+            "ciRunScans21d": 8,
+            "avgMainPerWeek": 0.22
+          }
+        },
+        "perTag": {
+          "team-alpha": {
+            "projectCount": 5,
+            "mainScans91d": 15,
+            "ciRunScans21d": 5,
+            "avgMainPerWeek": 0.23,
+            "topProjects": []
+          },
+          "team-beta": {
+            "projectCount": 2,
+            "mainScans91d": 5,
+            "ciRunScans21d": 3,
+            "avgMainPerWeek": 0.19,
+            "topProjects": []
+          }
+        }
+      },
+      "periodCaption": "2 complete weeks"
+    }
+  }
+}

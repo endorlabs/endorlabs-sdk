@@ -145,13 +145,10 @@ client.close()
 ```
 
 ```bash
-uv run --env-file .env python \
-  agent-knowledge/workflow-reports/endor-audit-authorization-policies/scripts/audit_authorization_policies.py \
-  --tenant-hint <tenant> \
+uv run --env-file .env endor-reports auth-policies -n <tenant> \
   --output-dir .endorlabs-context/workspace/runs/audit-authorization-policies
 ```
 
-Authoring path (this repo): `agent-knowledge/workflow-reports/endor-audit-authorization-policies/scripts/…`.
 Library: `endorlabs.workflows.auth.list_authorization_policies`,
 `audit_authorization_policy_forms`.
 

@@ -56,6 +56,21 @@ _PROJECT_UUID_FILTER = re.compile(r"spec\.(?:importer_data\.)?project_uuid\s*=="
 
 # High-confidence estate literals (fail on staged checked-in text paths).
 _HEX_UUID = re.compile(r"\b[0-9a-f]{24}\b", re.IGNORECASE)
+# Bare customer tenant roots — no dotted path required (blocks tests/docs too).
+_FORBIDDEN_BARE_ESTATE_LITERALS = frozenset(
+    {
+        "cccis",
+        "smarsh",
+    }
+)
+_FORBIDDEN_BARE_ESTATE_LITERAL = re.compile(
+    r"(?<![A-Za-z0-9_-])(?:"
+    + "|".join(re.escape(token) for token in _FORBIDDEN_BARE_ESTATE_LITERALS)
+    + r")(?![A-Za-z0-9_-])",
+    re.IGNORECASE,
+)
+# Blocklist source is exempt from its own bare-root scan (definitions must name tokens).
+_BARE_ESTATE_LITERAL_SCAN_SKIP = frozenset({"devtools/precommit/pre_commit_guards.py"})
 _GITHUB_ORG_REPO = re.compile(
     r"https?://github\.com/"
     r"(?P<org>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)",
@@ -816,6 +831,8 @@ def check_portable_examples(*, paths: list[str] | None = None) -> int:
         # Guard unit tests intentionally embed disallowed literals.
         if path.endswith("test_pre_commit_guards.py"):
             continue
+        if _is_vendored_report_shell_asset(path):
+            continue
         source = _read_staged_text(path)
         if source is None:
             continue
@@ -826,6 +843,13 @@ def check_portable_examples(*, paths: list[str] | None = None) -> int:
                 continue
             if _is_disallowed_github_url(line):
                 hits.append(f"{path}:{line_no}: github-url")
+                continue
+            bare_match = None
+            if _normalize_path(path) not in _BARE_ESTATE_LITERAL_SCAN_SKIP:
+                bare_match = _FORBIDDEN_BARE_ESTATE_LITERAL.search(lower)
+            if bare_match is not None:
+                root = bare_match.group(0).lower()
+                hits.append(f"{path}:{line_no}: forbidden-estate-root {root}")
                 continue
             for match in _TENANT_PATH.finditer(line):
                 token = match.group(0)
@@ -985,6 +1009,12 @@ def iter_namespace_flag_hits(path: str, text: str) -> list[str]:
     return hits
 
 
+def _is_vendored_report_shell_asset(path: str) -> bool:
+    """Skip portable/URL guards for bundled third-party report shell assets."""
+    normalized = _normalize_path(path).replace("\\", "/")
+    return "/shell/assets/" in normalized and normalized.endswith(".min.js")
+
+
 def find_external_pii_url_hits(
     lines: list[tuple[str, int, str]],
 ) -> list[str]:
@@ -995,6 +1025,8 @@ def find_external_pii_url_hits(
             continue
         # Guard unit tests intentionally embed disallowed literals.
         if path.endswith("test_pre_commit_guards.py"):
+            continue
+        if _is_vendored_report_shell_asset(path):
             continue
         for match in _EMAIL_RE.finditer(text):
             addr = match.group(0)

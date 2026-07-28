@@ -2,11 +2,11 @@
 name: endor-workflow-reports
 description: |
   Use when the user asks for tenant or namespace-level Endor Labs audit reports,
-  CSV exports, Cursor canvases, or executive-style workflow summaries that are
-  backed by bundled report scripts rather than day-0 SDK troubleshooting skills.
-  Routes to auth, project inventory, CI version, finding trend, and PRF report
-  playbooks. Not for single-project scan RCA, finding retrieval, SDK debugging,
-  or policy validation.
+  CSV exports, Cursor canvases, executive HTML report packets, or workflow
+  summaries backed by bundled report scripts rather than day-0 SDK troubleshooting
+  skills. Routes to auth, project inventory, CI version, finding trend,
+  executive HTML packet, and PRF report playbooks. Not for single-project scan
+  RCA, finding retrieval, SDK debugging, or policy validation.
 ---
 
 # Workflow reports
@@ -41,16 +41,19 @@ Do not use this skill for:
 
 ## Report catalog
 
-| User asks for | Use report playbook | Default output |
+| User asks for | CLI subcommand | Default output |
 | --- | --- | --- |
-| Login counts by user, identity, or group | `workflow-reports/endor-auth-login-count/SKILL.md` | `.endorlabs-context/workspace/runs/auth-login-count/` |
-| API key / credential expiry audit | `workflow-reports/endor-auth-credential-expiry/SKILL.md` | `.endorlabs-context/workspace/runs/auth-credential-expiry/` |
-| AuthorizationPolicy claim / namespace form audit | `workflow-reports/endor-audit-authorization-policies/SKILL.md` | User-supplied CSV / JSON paths |
-| CLI-scanned vs Cloud-integrated project classification | `workflow-reports/endor-cli-vs-cloud-projects/SKILL.md` | `.endorlabs-context/workspace/runs/cli-vs-cloud-projects/` |
-| CI `endorctl` version inventory across latest CLI scans | `workflow-reports/endor-ci-endorctl-version-audit/SKILL.md` | `.endorlabs-context/workspace/runs/ci-endorctl-version-audit/` |
-| Duplicate project registrations across namespaces | `workflow-reports/endor-duplicate-projects/SKILL.md` | `.endorlabs-context/workspace/runs/duplicate-projects/` |
-| New vs resolved findings trend chart | `workflow-reports/endor-chart-new-vs-resolved-findings/SKILL.md` | `.endorlabs-context/workspace/runs/finding-log-weekly-trends/` |
-| Potentially reachable finding approximation + PV resolution errors | `workflow-reports/endor-potentially-reachable-analysis/SKILL.md` | `.endorlabs-context/workspace/runs/potentially-reachable-analysis/` |
+| Login counts by user, identity, or group | `endor-reports login-count -n <tenant>` | `.endorlabs-context/workspace/runs/auth-login-count/` |
+| API key / credential expiry audit | `endor-reports credential-expiry -n <tenant>` | `.endorlabs-context/workspace/runs/auth-credential-expiry/` |
+| AuthorizationPolicy claim / namespace form audit | `endor-reports auth-policies -n <tenant>` | User-supplied CSV / JSON paths |
+| CLI-scanned vs Cloud-integrated project classification | `endor-reports cli-vs-cloud -n <tenant>` | `.endorlabs-context/workspace/runs/cli-vs-cloud-projects/` |
+| CI `endorctl` version inventory across latest CLI scans | `endor-reports ci-endorctl -n <tenant>` | `.endorlabs-context/workspace/runs/ci-endorctl-version-audit/` |
+| Duplicate project registrations across namespaces | `endor-reports duplicates -n <tenant>` | `.endorlabs-context/workspace/runs/duplicate-projects/` |
+| New vs resolved findings trend chart | `endor-reports findings-trend -n <tenant>` | `.endorlabs-context/workspace/runs/finding-log-weekly-trends/` |
+| Executive interactive HTML packet (onboarding, sprawl, findings trend) | `endor-reports packet -n <tenant>` | `.endorlabs-context/workspace/runs/executive-report-packet/` |
+| Potentially reachable finding approximation + PV resolution errors | `endor-reports prf-analysis -n <tenant>` | `.endorlabs-context/workspace/runs/potentially-reachable-analysis/` |
+
+Playbooks (filters, schemas, edge cases): `agent-knowledge/workflow-reports/<id>/SKILL.md`.
 
 ## Intake
 
@@ -75,7 +78,7 @@ already established in the session.
    specific filters, schemas, and artifact contracts.
 3. Confirm credentials with the normal SDK auth path when needed (`endor-auth`
    or existing environment variables). Do not print secrets.
-4. Run the available workflow entrypoint or repo script with placeholder-safe
+4. Run the matching `endor-reports <subcommand>` with placeholder-safe
    output paths under
    `.endorlabs-context/workspace/runs/<report-id>/`.
 5. Summarize artifact paths, key counts, date windows, and any data gaps.

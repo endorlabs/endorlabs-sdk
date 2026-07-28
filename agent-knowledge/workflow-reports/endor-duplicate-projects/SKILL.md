@@ -118,8 +118,7 @@ Use `max_pages` when the user requests a bounded audit; otherwise paginate until
 `mirror`, `shadow`, `clone`), pass them to the bundled script:
 
 ```bash
-uv run python agent-knowledge/workflow-reports/endor-duplicate-projects/scripts/find_duplicate_projects.py \
-  --tenant <tenant> --name-strip-tokens mirror,shadow,clone
+uv run --env-file .env endor-reports duplicates -n <tenant> --name-strip-tokens mirror,shadow,clone
 ```
 
 SDK helpers for the `source` column: `client.Project.is_app(row)` → `Cloud Scan`, else `CLI`.
@@ -173,8 +172,7 @@ with output.open("w", newline="", encoding="utf-8") as f:
 Or run the bundled helper:
 
 ```bash
-uv run python agent-knowledge/workflow-reports/endor-duplicate-projects/scripts/find_duplicate_projects.py \
-  --tenant <tenant> \
+uv run --env-file .env endor-reports duplicates -n <tenant> \
   --output .endorlabs-context/workspace/runs/duplicate-projects/<tenant>-duplicates.csv
 ```
 

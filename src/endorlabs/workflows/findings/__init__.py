@@ -13,7 +13,13 @@ from endorlabs.filters import (
 
 from .finding_log_trends import (
     FINDING_CRITERIA,
+    append_parent_uuid_filter,
     build_finding_log_new_vs_resolved_analysis,
+    empty_series_cell,
+    expand_severity_reach_matrix,
+    query_severity_reach_matrix,
+    query_severity_reach_series_cell,
+    sum_series_cells,
 )
 from .patch_fix_report import build_patch_fix_report
 from .triage import (
@@ -29,16 +35,22 @@ __all__ = [
     "FINDING_CRITERIA",
     "ExceptionPolicyResult",
     "TaggingResult",
+    "append_parent_uuid_filter",
     "build_exception_rego_rule",
     "build_finding_log_new_vs_resolved_analysis",
     "build_patch_fix_report",
     "create_exception_policy",
+    "empty_series_cell",
+    "expand_severity_reach_matrix",
     "finding_log_time_window_filter",
     "main_context_vulnerability_filter",
     "prd_vuln_filter",
     "prf_vuln_filter",
     "pv_main_context_filter",
+    "query_severity_reach_matrix",
+    "query_severity_reach_series_cell",
     "reachable_vuln_log_base_filter",
     "resolve_rego_package",
+    "sum_series_cells",
     "tag_findings_by_criteria",
 ]

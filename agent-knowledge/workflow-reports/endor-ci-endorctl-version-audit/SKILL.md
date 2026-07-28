@@ -47,12 +47,11 @@ Projects whose latest scan is Cloud/agentless or older than the window are exclu
 Default output: `.endorlabs-context/workspace/runs/ci-endorctl-version-audit/<tenant>-ci-endorctl-versions.csv`
 
 ```bash
-uv run python agent-knowledge/workflow-reports/endor-ci-endorctl-version-audit/scripts/audit_ci_endorctl_versions.py \
-  --tenant <tenant> \
+uv run --env-file .env endor-reports ci-endorctl -n <tenant> \
   --output .endorlabs-context/workspace/runs/ci-endorctl-version-audit/<tenant>-ci-endorctl-versions.csv
 ```
 
-Optional flags:
+Optional flags (forwarded to the report module):
 
 - `--days <n>` — lookback window (default 7).
 - `--version <semver>` — list projects on that endorctl version (e.g. `1.7.980`).
@@ -61,7 +60,7 @@ Optional flags:
 - `--max-workers <n>` — parallel latest-scan lookup (default 12).
 - `--summary-json <path>` — machine-readable summary alongside chat output.
 
-After `endorlabs.init()`, the script path is also under `sdk/skills/endor-ci-endorctl-version-audit/scripts/`.
+Implementation: `endorlabs.workflows.reports.analyze.ci_endorctl_audit`.
 
 ### Step 2: Summarize in chat (required)
 

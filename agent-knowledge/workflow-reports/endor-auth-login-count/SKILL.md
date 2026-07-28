@@ -78,15 +78,10 @@ Header example for the default window:
 identity,user identifiers,last login,login count in 90 days
 ```
 
-## Bundled CLI (`login_count_report.py`)
-
-Run from repo authoring path or from `agent-knowledge/workflow-reports/endor-auth-login-count/scripts/`
-after `init()`.
+## Bundled CLI
 
 ```bash
-uv run --env-file .env python agent-knowledge/workflow-reports/endor-auth-login-count/scripts/login_count_report.py \
-  --tenant <tenant> \
-  --days 90
+uv run --env-file .env endor-reports login-count -n <tenant> --days 90
 ```
 
 | Flag | Default | Meaning |

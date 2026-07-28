@@ -82,12 +82,11 @@ Exclude **SBOM projects** (`spec.sbom` set) from the scan and CSV.
 Default output: `.endorlabs-context/workspace/runs/cli-vs-cloud-projects/<tenant>-cli-vs-cloud.csv`
 
 ```bash
-uv run python agent-knowledge/workflow-reports/endor-cli-vs-cloud-projects/scripts/classify_cli_vs_cloud_projects.py \
-  --tenant <tenant> \
+uv run --env-file .env endor-reports cli-vs-cloud -n <tenant> \
   --output .endorlabs-context/workspace/runs/cli-vs-cloud-projects/<tenant>-cli-vs-cloud.csv
 ```
 
-Optional flags:
+Optional flags (pass after the command; forwarded to the report module):
 
 - `--project-uuid <uuid>` — classify one or more projects (repeatable).
 - `--max-pages <n>` — bound list pagination when requested.
@@ -95,7 +94,7 @@ Optional flags:
 - `--skip-scan-enrichment` — registration-only (`source` column) without scan execution.
 - `--summary-json <path>` — optional machine-readable summary alongside chat output.
 
-After `endorlabs.init()`, scripts live under `agent-knowledge/workflow-reports/endor-cli-vs-cloud-projects/scripts/` (SDK repo maintainers: `agent-knowledge/workflow-reports/…`).
+Implementation: `endorlabs.workflows.reports.analyze.cli_vs_cloud`.
 
 ### Step 2: Summarize in chat (required)
 

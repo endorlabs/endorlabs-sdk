@@ -1,23 +1,24 @@
 # Workflow report playbooks (not shipped individually)
 
-Detailed report playbooks and scripts live here. The shipped discovery entrypoint
+Detailed report playbooks live here. The shipped discovery entrypoint
 is `agent-knowledge/skills/endor-workflow-reports/SKILL.md`; keep these report
 directories out of `src/endorlabs/agent_knowledge/skills/` as individual skills.
 
-These workflows generate tenant/namespace reports (CSV, JSON, Cursor canvas,
-HTML, or PDF). They are script-backed report routines, not day-0 SDK RCA
-playbooks.
+Report logic ships in the wheel under `endorlabs.workflows.reports` and is
+invoked via **`endor-reports <subcommand>`** (see
+`src/endorlabs/workflows/reports/README.md`).
 
-| Id | Scripts / module |
-| --- | --- |
-| `endor-auth-login-count` | `scripts/login_count_report.py` · `endorlabs.workflows.auth` |
-| `endor-auth-credential-expiry` | `scripts/credential_expiry_report.py` · `endorlabs.workflows.auth` |
-| `endor-audit-authorization-policies` | `scripts/audit_authorization_policies.py` |
-| `endor-cli-vs-cloud-projects` | `scripts/classify_cli_vs_cloud_projects.py` |
-| `endor-ci-endorctl-version-audit` | `scripts/audit_ci_endorctl_versions.py` |
-| `endor-duplicate-projects` | `scripts/find_duplicate_projects.py` |
-| `endor-chart-new-vs-resolved-findings` | `scripts/` · `finding_log_trends` |
-| `endor-potentially-reachable-analysis` | `scripts/` · PRF analysis |
+| Id | CLI subcommand | SDK module |
+| --- | --- | --- |
+| `endor-auth-login-count` | `login-count` | `reports.analyze.auth_login_count` |
+| `endor-auth-credential-expiry` | `credential-expiry` | `reports.analyze.auth_credential_expiry` |
+| `endor-audit-authorization-policies` | `auth-policies` | `reports.analyze.auth_policies_audit` |
+| `endor-cli-vs-cloud-projects` | `cli-vs-cloud` | `reports.analyze.cli_vs_cloud` |
+| `endor-ci-endorctl-version-audit` | `ci-endorctl` | `reports.analyze.ci_endorctl_audit` |
+| `endor-duplicate-projects` | `duplicates` | `reports.analyze.duplicate_projects` |
+| `endor-chart-new-vs-resolved-findings` | `findings-trend` | `reports.analyze.findings_chart_analysis` |
+| `endor-executive-report-packet` | `packet` / `parity` | `reports.bundles.executive_packet` |
+| `endor-potentially-reachable-analysis` | `prf-analysis` | `reports.analyze.prf_report_analysis` |
 
 Library-backed report workflow rows live in `agent-knowledge/workflows.yaml`
 with `skill: endor-workflow-reports` and `agent_visible: false`; detailed

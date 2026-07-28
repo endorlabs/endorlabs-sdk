@@ -46,16 +46,7 @@ Produce the **PRF vulnerability & PV resolution errors — main context** report
 From the repo root with credentials configured (`ENDOR_TOKEN` or API key/secret):
 
 ```bash
-uv run python agent-knowledge/workflow-reports/endor-potentially-reachable-analysis/scripts/run_report.py \
-  <tenant> \
-  --output-dir .endorlabs-context/workspace/runs/potentially-reachable-analysis
-```
-
-After `init()`, use the materialized skill path:
-
-```bash
-uv run python agent-knowledge/workflow-reports/endor-potentially-reachable-analysis/scripts/run_report.py \
-  <tenant> \
+uv run --env-file .env endor-reports prf-analysis -n <tenant> \
   --output-dir .endorlabs-context/workspace/runs/potentially-reachable-analysis
 ```
 
@@ -79,33 +70,16 @@ Canvas (Cursor preview):
 
 Open the canvas in Cursor after generation (Canvas panel).
 
-## Scripts
+## SDK modules
 
-All under `scripts/`:
-
-| Script | Role |
+| Module | Role |
 |--------|------|
-| `run_report.py` | Orchestrator: analysis → canvas → PDF |
-| `run_analysis.py` | API queries → JSON |
-| `generate_canvas.py` | JSON → `.canvas.tsx` |
-| `generate_report_pdf.py` | JSON → HTML + PDF |
+| `export.canvas.prf_report` | Orchestrator: analysis → canvas → PDF |
+| `analyze.prf_report_analysis` | API queries → JSON |
+| `export.canvas.prf_canvas` | JSON → `.canvas.tsx` |
+| `export.canvas.prf_pdf` | JSON → HTML + PDF |
 
-`run_report.py` flags: `--analysis-only`, `--skip-canvas`, `--html-only` (HTML without PDF), `--skip-pdf` (skip all HTML/PDF output), `--canvas-dir`, `--chrome`.
-
-Run steps individually when iterating on layout without re-querying:
-
-```bash
-uv run python agent-knowledge/workflow-reports/endor-potentially-reachable-analysis/scripts/run_analysis.py \
-  <tenant> \
-  --output-dir .endorlabs-context/workspace/runs/potentially-reachable-analysis
-
-uv run python agent-knowledge/workflow-reports/endor-potentially-reachable-analysis/scripts/generate_canvas.py \
-  .endorlabs-context/workspace/runs/potentially-reachable-analysis/<tenant>-prf-analysis.json
-
-uv run python agent-knowledge/workflow-reports/endor-potentially-reachable-analysis/scripts/generate_report_pdf.py \
-  .endorlabs-context/workspace/runs/potentially-reachable-analysis/<tenant>-prf-analysis.json \
-  --output-dir .endorlabs-context/workspace/runs/potentially-reachable-analysis
-```
+`endor-reports prf-analysis` flags: `--analysis-only`, `--skip-canvas`, `--html-only`, `--skip-pdf`, `--canvas-dir`, `--chrome`.
 
 ## Authentication
 

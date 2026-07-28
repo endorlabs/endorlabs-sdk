@@ -73,16 +73,11 @@ Write CSV with **exactly these columns**, in this order:
 | **`propagate`** | `yes` / `no` from `propagate` |
 | **`issuing user`** | Best-effort label from `spec.issuing_user` |
 
-## Bundled CLI (`credential_expiry_report.py`)
-
-Run from repo authoring path or from `agent-knowledge/workflow-reports/endor-auth-credential-expiry/scripts/`
-after `init()`.
+## Bundled CLI
 
 ```bash
-uv run --env-file .env python agent-knowledge/workflow-reports/endor-auth-credential-expiry/scripts/credential_expiry_report.py \
-  --tenant <tenant> \
-  --within-days 30 \
-  --platform-wide
+uv run --env-file .env endor-reports credential-expiry -n <tenant> \
+  --within-days 30 --platform-wide
 ```
 
 | Flag | Default | Meaning |
