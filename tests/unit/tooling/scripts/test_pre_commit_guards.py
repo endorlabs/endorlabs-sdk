@@ -12,7 +12,6 @@ if str(_DEVTOOLS) not in sys.path:
     sys.path.insert(0, str(_DEVTOOLS))
 
 from pre_commit_guards import (  # noqa: E402
-    _FORBIDDEN_BARE_ESTATE_LITERALS,
     check_accessor_nudge,
     check_agent_knowledge_sync,
     check_blocked_staged_paths,
@@ -379,8 +378,9 @@ def test_check_external_pii_urls_blocks_email_and_url(capsys) -> None:
 
 
 def test_check_external_pii_urls_blocks_namespace_flag(capsys) -> None:
+    blocked = "customer" + "-prod"
     lines = [
-        ("devtools/README.md", 1, "uv run probe -n " + "smarsh"),
+        ("devtools/README.md", 1, "uv run probe -n " + blocked),
         ("tests/unit/foo.py", 2, "-n example-tenant"),
         ("docs/x.md", 3, "-n example-tenant.child"),
         ("docs/x.md", 4, "-n <tenant>"),
@@ -388,7 +388,7 @@ def test_check_external_pii_urls_blocks_namespace_flag(capsys) -> None:
     assert check_external_pii_urls(lines=lines) == 1
     err = capsys.readouterr().err
     assert "namespace-flag" in err
-    assert "smarsh" in err
+    assert blocked in err
 
 
 def test_check_external_pii_urls_allows_clean_lines() -> None:
@@ -424,7 +424,6 @@ def test_is_allowed_namespace_token_placeholders() -> None:
     assert is_allowed_namespace_token("$ENDOR_NAMESPACE")
     assert is_allowed_namespace_token("or")  # prose
     assert is_allowed_namespace_token("NS")
-    assert not is_allowed_namespace_token("smarsh")
     assert not is_allowed_namespace_token("customer" + "-prod")
 
 
@@ -449,21 +448,21 @@ def test_check_portable_examples_blocks_customer_tenant(
     )
     assert check_portable_examples(paths=["tests/unit/foo.py"]) == 1
     err = capsys.readouterr().err
-    assert "tenant-path" in err
-    assert "error:" in err
+    assert "tenant-literal" in err
+    assert "customer.child-ns.prod" in err
 
 
-def test_check_portable_examples_blocks_forbidden_bare_tenant_root(
+def test_check_portable_examples_blocks_non_portable_tenant_binding(
     tmp_path: Path, monkeypatch, capsys
 ) -> None:
     monkeypatch.setattr("pre_commit_guards._REPO_ROOT", tmp_path)
     bad = tmp_path / "tests" / "unit" / "foo.py"
     bad.parent.mkdir(parents=True)
-    blocked = next(iter(_FORBIDDEN_BARE_ESTATE_LITERALS))
-    bad.write_text(f'ROOT = "{blocked}"\n', encoding="utf-8")
+    bad.write_text('Client(tenant="nonexample-root")\n', encoding="utf-8")
     assert check_portable_examples(paths=["tests/unit/foo.py"]) == 1
     err = capsys.readouterr().err
-    assert "forbidden-estate-root" in err
+    assert "tenant-literal" in err
+    assert "nonexample-root" in err
 
 
 # --- select_test_paths -------------------------------------------------------

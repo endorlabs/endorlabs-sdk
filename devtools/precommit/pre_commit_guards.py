@@ -56,21 +56,14 @@ _PROJECT_UUID_FILTER = re.compile(r"spec\.(?:importer_data\.)?project_uuid\s*=="
 
 # High-confidence estate literals (fail on staged checked-in text paths).
 _HEX_UUID = re.compile(r"\b[0-9a-f]{24}\b", re.IGNORECASE)
-# Bare customer tenant roots — no dotted path required (blocks tests/docs too).
-_FORBIDDEN_BARE_ESTATE_LITERALS = frozenset(
-    {
-        "cccis",
-        "smarsh",
-    }
+# Tenant/namespace string literals in binding contexts (JSON keys, Client(), TENANT=).
+_TENANT_BINDING_PATTERNS = (
+    re.compile(r"""Client\s*\(\s*tenant\s*=\s*["']([^"']+)["']""", re.IGNORECASE),
+    re.compile(r"""(?:^|[^\w])tenant\s*=\s*["']([^"']+)["']""", re.IGNORECASE),
+    re.compile(r"""\bTENANT\s*=\s*["']([^"']+)["']"""),
+    re.compile(r"""["']tenant["']\s*:\s*["']([^"']+)["']""", re.IGNORECASE),
+    re.compile(r"""["']namespace["']\s*:\s*["']([^"']+)["']""", re.IGNORECASE),
 )
-_FORBIDDEN_BARE_ESTATE_LITERAL = re.compile(
-    r"(?<![A-Za-z0-9_-])(?:"
-    + "|".join(re.escape(token) for token in _FORBIDDEN_BARE_ESTATE_LITERALS)
-    + r")(?![A-Za-z0-9_-])",
-    re.IGNORECASE,
-)
-# Blocklist source is exempt from its own bare-root scan (definitions must name tokens).
-_BARE_ESTATE_LITERAL_SCAN_SKIP = frozenset({"devtools/precommit/pre_commit_guards.py"})
 _GITHUB_ORG_REPO = re.compile(
     r"https?://github\.com/"
     r"(?P<org>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)",
@@ -844,12 +837,10 @@ def check_portable_examples(*, paths: list[str] | None = None) -> int:
             if _is_disallowed_github_url(line):
                 hits.append(f"{path}:{line_no}: github-url")
                 continue
-            bare_match = None
-            if _normalize_path(path) not in _BARE_ESTATE_LITERAL_SCAN_SKIP:
-                bare_match = _FORBIDDEN_BARE_ESTATE_LITERAL.search(lower)
-            if bare_match is not None:
-                root = bare_match.group(0).lower()
-                hits.append(f"{path}:{line_no}: forbidden-estate-root {root}")
+            tenant_literals = iter_non_portable_tenant_literals(line)
+            if tenant_literals:
+                for literal in tenant_literals:
+                    hits.append(f"{path}:{line_no}: tenant-literal {literal}")
                 continue
             for match in _TENANT_PATH.finditer(line):
                 token = match.group(0)
@@ -996,6 +987,33 @@ def is_allowed_namespace_token(token: str) -> bool:
     if token.isupper() and 1 <= len(token) <= 16 and token.isalpha():
         return True
     return False
+
+
+def is_portable_namespace_value(value: str) -> bool:
+    """Return True when a tenant/namespace literal is safe for git-tracked content."""
+    token = value.strip()
+    if not token or token == "all":
+        return True
+    if is_allowed_namespace_token(token):
+        return True
+    lower = token.lower()
+    if lower.startswith("example-"):
+        return True
+    if "." in token:
+        root = token.split(".", 1)[0].lower()
+        return root in _NAMESPACE_FLAG_ALLOW or root.startswith("example-")
+    return False
+
+
+def iter_non_portable_tenant_literals(line: str) -> list[str]:
+    """Return disallowed tenant/namespace string values on *line*."""
+    hits: list[str] = []
+    for pattern in _TENANT_BINDING_PATTERNS:
+        for match in pattern.finditer(line):
+            value = match.group(1)
+            if not is_portable_namespace_value(value):
+                hits.append(value)
+    return hits
 
 
 def iter_namespace_flag_hits(path: str, text: str) -> list[str]:

@@ -11,15 +11,19 @@ summary: >-
 
 **All git-tracked content** must not embed **estate identifiers** or **PII** from
 customer organizations. That includes agent skills and docs **and** unit-test
-fixtures, module docstrings, argparse help, probe/CLI examples, changelogs, and
-comments. There is **no** automated substring allowlist for every case—apply
+fixtures, module docstrings, argparse help, probe/CLI examples, changelogs,
+comments, pre-commit guard blocklists, and negative-test tuples. **No real
+customer-associated strings in git — period.** The only exception is a
+**documented platform integration surface** (product connector vocabulary), not
+tenant-owned inventory (namespaces, project URLs, production UUIDs, customer
+emails). There is **no** automated substring allowlist for every case—apply
 judgment using the classes below; pre-commit covers the high-confidence patterns.
 
 ## Surfaces in scope
 
 | Surface | Rule |
 |---------|------|
-| **Unit tests / fixtures** | Use `example-tenant`, `user@example.com` / `user@endor.ai`, `example-tenant.child`, fake opaque ids. Never paste real login-count rows, auth identities, or customer tenants into `tests/`. |
+| **Unit tests / fixtures** | Use `example-tenant`, `user@example.com` / `user@endor.ai`, `example-tenant.child`, fake opaque ids. Never paste real login-count rows, auth identities, or customer tenants into `tests/` — **including as forbidden-substring negative tests or guard blocklists.** Use synthetic non-customer tokens (`nonexample-root`, `customer.child-ns.prod`). |
 | **Integration tests** | Real tenant via **env** only (`ENDOR_NAMESPACE`, secrets)—not committed literals. Default local namespace may be a non-customer lab value (e.g. `auri`); never a customer root. |
 | **Docstrings / CLI help / comments** | Same placeholders as docs. No `-n <customer>` or `tenant="<customer>"` in examples. |
 | **Agent skills, contracts, rules** | Placeholders in commands and snippets (`<tenant>`, `<namespace>`, `<project-uuid>`). |
@@ -35,7 +39,7 @@ judgment using the classes below; pre-commit covers the high-confidence patterns
 |-------|---------|------------------------|
 | **Placeholders** | `<tenant>`, `<namespace>`, `<project-uuid>`, `tenant.namespace`, `example-tenant`, `https://github.com/org/repo.git`, `user@example.com`, `user@endor.ai` | **Required** in commands, snippets, and fixtures |
 | **Product vocabulary** | Platform features, connector types, resource kinds, scan categories | OK when describing *how the product works* |
-| **Estate identifiers** | Customer tenant roots, child namespaces, registered project URLs/names, production UUIDs | **Never** commit; resolve from env, user input, or API at runtime |
+| **Estate identifiers** | Customer tenant roots, child namespaces, registered project URLs/names, production UUIDs | **Never** commit anywhere in git (tests, guards, docs); resolve from env, user input, or API at runtime |
 | **PII** | Customer or end-user emails, names, auth identities, account ids | **Never** commit; use placeholders above |
 
 ## Secrets
@@ -49,7 +53,7 @@ Pre-commit also **fails** (checked-in staged paths) on:
   `example-tenant`, `<tenant>`, `{tenant}`, `$ENDOR_NAMESPACE`, `auri`, `oss`, …)
 - **Shipped** `src/endorlabs/**` (full tree, every commit): same `-n` / `--namespace` /
   `--tenant` placeholder rule — non-placeholder values cannot ship in the wheel
-- High-confidence estate literals (`portable-examples`: customer GitHub URLs, dotted tenant paths)
+- High-confidence estate literals (`portable-examples`: customer GitHub URLs, dotted tenant paths, non-portable `tenant`/`namespace` string bindings)
 
 Allowed email domains: `@example.*`, `@endorlabs.com`, `@endor.ai`.
 
@@ -61,7 +65,8 @@ repository URL). Portable docs and tests use only the former class generically;
 inventory records are session data or env-driven integration inputs.
 
 When unsure, prefer a placeholder. Do not add repo-specific "exceptions" for
-particular customer names, tenant paths, or UUIDs.
+particular customer names, tenant paths, or UUIDs — **not even in tests that assert
+they are absent.**
 
 ## Runtime resolution
 
