@@ -12,6 +12,9 @@ from typing import Any
 
 from endorlabs.context.paths import sanitize_path_segment
 from endorlabs.utils.path_safety import safe_write_text
+from endorlabs.workflows.reports.export.csv.packet_exports import (
+    write_packet_raw_exports,
+)
 from endorlabs.workflows.reports.schemas.packet_v0 import (
     REPORT_PACKET_SCHEMA,
     RUN_BUCKET,
@@ -84,8 +87,14 @@ def _nav(active: str) -> str:
     return f"""<div class="nav">
   <a{cls("on")} href="01-onboarding.html">Onboarding</a>
   <a{cls("vs")} href="02-version-sprawl.html">Version sprawl</a>
-  <a{cls("fb")} href="03-findings-burndown.html">Findings trend</a>
+  <a{cls("sca")} href="03-sca-burndown.html">SCA burndown</a>
+  <a{cls("sast")} href="04-sast-burndown.html">SAST burndown</a>
 </div>"""
+
+
+def _sca_burndown_report(cube: dict[str, Any]) -> dict[str, Any]:
+    reports = cube.get("reports") or {}
+    return reports.get("scaBurndown") or reports.get("findingsBurndown") or {}
 
 
 def _header(
@@ -236,6 +245,8 @@ def _render_version_sprawl(cube: dict[str, Any]) -> str:
         "pulledAt": pulled,
         "histKeys": report.get("histKeys") or [],
         "ecosystems": report.get("ecosystems") or [],
+        "relations": report.get("relations") or ["all", "direct", "transitive"],
+        "visibilities": report.get("visibilities") or ["all", "public", "private"],
         "pathOptions": cube.get("pathOptions") or ["all"],
         "tags": [
             {"tag": t["tag"], "projectCount": t["projectCount"]}
@@ -257,15 +268,29 @@ def _render_version_sprawl(cube: dict[str, Any]) -> str:
     <label class="field">Project tag<select id="tag"></select></label>
     <label class="field">Ecosystem<select id="eco"></select></label>
   </div>
-  <p class="muted" style="margin:10px 0 0">{copy_mod.TAG_HELP}. Selecting a tag scopes to namespaces that contain projects with that tag.</p>
-  <div class="toggles"><span class="pill info" id="scope"></span></div>
+  <div class="toggles">
+    <label class="toggle"><input type="checkbox" id="direct"/> Direct only</label>
+    <label class="toggle"><input type="checkbox" id="transitive"/> Transitive only</label>
+    <label class="toggle"><input type="checkbox" id="publicOnly"/> Public only</label>
+    <label class="toggle"><input type="checkbox" id="privateOnly"/> Private only</label>
+    <span class="pill info" id="scope"></span>
+  </div>
+  <p class="muted" style="margin:10px 0 0">{copy_mod.TAG_HELP}. Selecting a tag scopes to namespaces that contain projects with that tag. Direct/transitive and public/private use DependencyMetadata flags.</p>
 </div>
 <div class="stats" id="stats"></div>
 <div class="callout" id="callout"></div>
 <div class="card">
   <div class="card-h">Where version inventory sits</div>
-  <p class="caption">Packages grouped by how many distinct versions are in use. Source: DependencyMetadata list_groups (package name × resolved version).</p>
+  <p class="caption">Packages grouped by how many distinct versions are in use. Source: DependencyMetadata list_groups (package name × resolved version × direct × public).</p>
   <div class="chart-box"><canvas id="histChart"></canvas></div>
+</div>
+<div class="card">
+  <div class="card-h">Per-ecosystem summary</div>
+  <p class="caption">Package and version counts for the current namespace / tag / relation / visibility filters (ecosystem column is not constrained by the ecosystem dropdown).</p>
+  <table class="data" id="ecoTable"><thead><tr>
+    <th>Ecosystem</th><th class="num">Packages</th><th class="num">Versions</th>
+    <th class="num">Avg ver/pkg</th><th class="num">Max</th>
+  </tr></thead><tbody></tbody></table>
 </div>
 <h2>Packages with the most versions in use</h2>
 <p class="caption">Top packages by distinct versions under the active filters.</p>
@@ -275,11 +300,37 @@ def _render_version_sprawl(cube: dict[str, Any]) -> str:
 const CUBE = {payload};
 const HIST_LABELS = {{"1":"1 version","2-3":"2–3 versions","4-5":"4–5 versions","6-10":"6–10 versions","11-25":"11–25 versions","26+":"26+ versions"}};
 function emptyCell() {{ return {{p:0,v:0,max:0,avg:0,h:[0,0,0,0,0,0],hv:[0,0,0,0,0,0],t:[]}}; }}
-function resolveCell(eco, ns, tag) {{
+function relationMode() {{
+  const d = document.getElementById("direct").checked;
+  const t = document.getElementById("transitive").checked;
+  if (d && !t) return "direct";
+  if (t && !d) return "transitive";
+  return "all";
+}}
+function visibilityMode() {{
+  const pub = document.getElementById("publicOnly").checked;
+  const priv = document.getElementById("privateOnly").checked;
+  if (pub && !priv) return "public";
+  if (priv && !pub) return "private";
+  return "all";
+}}
+function cellAt(map, eco, relation, visibility) {{
+  const node = (map||{{}})[eco||"all"];
+  if (!node) return emptyCell();
+  // New shape: [eco][relation][visibility]
+  if (node[relation] && typeof node[relation] === "object" && ("all" in node[relation] || "public" in node[relation] || "private" in node[relation] || visibility in node[relation])) {{
+    return node[relation][visibility] || emptyCell();
+  }}
+  // Legacy shape: [eco][relation] was the cell itself (relation key "all" only)
+  if (node[relation] && typeof node[relation].p === "number") return node[relation];
+  if (node.all && typeof node.all.p === "number") return node.all;
+  return emptyCell();
+}}
+function resolveCell(eco, ns, tag, relation, visibility) {{
   eco = eco || "all";
-  if (tag && tag !== "all") return (CUBE.perTag[tag]||{{}})[eco]?.all ?? emptyCell();
-  if (ns && ns !== "all") return (CUBE.perPath[ns]||{{}})[eco]?.all ?? emptyCell();
-  return (CUBE.estate[eco]||{{}})?.all ?? emptyCell();
+  if (tag && tag !== "all") return cellAt(CUBE.perTag[tag], eco, relation, visibility);
+  if (ns && ns !== "all") return cellAt(CUBE.perPath[ns], eco, relation, visibility);
+  return cellAt(CUBE.estate, eco, relation, visibility);
 }}
 function fillSelect(el, options) {{
   el.innerHTML = options.map(o => `<option value="${{o.v}}">${{o.l}}</option>`).join("");
@@ -290,11 +341,17 @@ function render() {{
   const eco = document.getElementById("eco").value;
   const ns = document.getElementById("ns").value;
   const tag = document.getElementById("tag").value;
-  const cell = resolveCell(eco, ns, tag);
+  const relation = relationMode();
+  const visibility = visibilityMode();
+  const cell = resolveCell(eco, ns, tag, relation, visibility);
   const bits = [];
   if (ns !== "all") bits.push(ns);
   if (tag !== "all") bits.push("tag:" + tag);
   if (eco !== "all") bits.push(eco);
+  if (relation === "direct") bits.push("direct only");
+  if (relation === "transitive") bits.push("transitive only");
+  if (visibility === "public") bits.push("public only");
+  if (visibility === "private") bits.push("private only");
   document.getElementById("scope").textContent = bits.length ? bits.join(" · ") : "Entire organization";
   document.getElementById("stats").innerHTML = `
     <div class="stat info"><b>${{cell.p.toLocaleString()}}</b><span>Distinct packages</span></div>
@@ -320,6 +377,14 @@ function render() {{
       scales: chartScales(theme)
     }}
   }});
+  const ecos = ["all", ...(CUBE.ecosystems||[])];
+  document.querySelector("#ecoTable tbody").innerHTML = ecos.map(e => {{
+    const c = resolveCell(e, ns, tag, relation, visibility);
+    const label = e === "all" ? "All ecosystems" : e;
+    return `<tr><td>${{label}}</td><td class="num">${{(c.p||0).toLocaleString()}}</td>
+      <td class="num">${{(c.v||0).toLocaleString()}}</td>
+      <td class="num">${{c.avg ?? 0}}</td><td class="num">${{(c.max||0).toLocaleString()}}</td></tr>`;
+  }}).join("");
   const top = cell.t || [];
   document.querySelector("#topTable tbody").innerHTML = top.length
     ? top.map(([n,v]) => `<tr><td>${{n}}</td><td class="num"><b>${{v}}</b></td></tr>`).join("")
@@ -337,7 +402,17 @@ fillSelect(document.getElementById("eco"), [
   {{v:"all", l:"All ecosystems"}},
   ...(CUBE.ecosystems||[]).map(e => ({{v:e,l:e}}))
 ]);
+function wireExclusive(a, b) {{
+  document.getElementById(a).addEventListener("change", () => {{
+    if (document.getElementById(a).checked) document.getElementById(b).checked = false;
+    render();
+  }});
+}}
 ["ns","tag","eco"].forEach(id => document.getElementById(id).addEventListener("change", render));
+wireExclusive("direct", "transitive");
+wireExclusive("transitive", "direct");
+wireExclusive("publicOnly", "privateOnly");
+wireExclusive("privateOnly", "publicOnly");
 render();
 </script>
 """,
@@ -345,10 +420,10 @@ render();
     )
 
 
-def _render_findings_burndown(cube: dict[str, Any]) -> str:
+def _render_sca_burndown(cube: dict[str, Any]) -> str:
     tenant = cube.get("tenant") or ""
     pulled = cube.get("pulledAt") or ""
-    report = (cube.get("reports") or {}).get("findingsBurndown") or {}
+    report = _sca_burndown_report(cube)
     # Slim throughput topProjects to names only for size
     tp = report.get("throughput") or {}
     per_tag = {}
@@ -357,6 +432,7 @@ def _render_findings_burndown(cube: dict[str, Any]) -> str:
             "projectCount": scope.get("projectCount"),
             "mainScans91d": scope.get("mainScans91d"),
             "ciRunScans21d": scope.get("ciRunScans21d"),
+            "avgMainScansPerProject": scope.get("avgMainScansPerProject"),
             "avgMainPerWeek": scope.get("avgMainPerWeek"),
             "topProjects": [
                 {
@@ -388,6 +464,7 @@ def _render_findings_burndown(cube: dict[str, Any]) -> str:
                     "projectCount": v.get("projectCount"),
                     "mainScans91d": v.get("mainScans91d"),
                     "ciRunScans21d": v.get("ciRunScans21d"),
+                    "avgMainScansPerProject": v.get("avgMainScansPerProject"),
                     "avgMainPerWeek": v.get("avgMainPerWeek"),
                 }
                 for k, v in (tp.get("perPath") or {}).items()
@@ -399,10 +476,14 @@ def _render_findings_burndown(cube: dict[str, Any]) -> str:
     pending_caption = copy_mod.PENDING_TAG_CAPTION
     window_net = copy_mod.STAT_WINDOW_NET
     main_label = copy_mod.MAIN_THROUGHPUT_LABEL
+    avg_scans_label = copy_mod.AVG_SCANS_PER_PROJECT_LABEL
     tag_help = copy_mod.TAG_HELP
+    gap_diff_help = copy_mod.GAP_DIFF_HELP
+    leaders_narrow = copy_mod.TAG_LEADERS_NARROWING
+    leaders_widen = copy_mod.TAG_LEADERS_WIDENING
     return _page(
-        f"""{_nav("fb")}
-{_header(title=copy_mod.H1_FINDINGS_BURNDOWN, purpose=copy_mod.PURPOSE_FINDINGS_BURNDOWN, tenant=tenant, pulled_at=pulled)}
+        f"""{_nav("sca")}
+{_header(title=copy_mod.H1_SCA_BURNDOWN, purpose=copy_mod.PURPOSE_SCA_BURNDOWN, tenant=tenant, pulled_at=pulled)}
 {copy_mod.GLOSSARY_HTML}
 <div class="card">
   <div class="card-h">Filters</div>
@@ -422,6 +503,11 @@ const CUBE = {payload};
 const PENDING_CAPTION = {json.dumps(pending_caption)};
 const WINDOW_NET = {json.dumps(window_net)};
 const MAIN_LABEL = {json.dumps(main_label)};
+const AVG_SCANS_LABEL = {json.dumps(avg_scans_label)};
+const GAP_DIFF_HELP = {json.dumps(gap_diff_help)};
+const LEADERS_NARROW = {json.dumps(leaders_narrow)};
+const LEADERS_WIDEN = {json.dumps(leaders_widen)};
+const LEADER_LIMIT = 10;
 function pathKey(ns) {{ return ns && ns !== "all" ? ns : "all"; }}
 function resolveSeries(ns, sev, reach, tag) {{
   if (tag && tag !== "all" && CUBE.tagSeries?.perTag?.[tag]) {{
@@ -444,6 +530,119 @@ function tagLabel(t) {{
   const base = pc != null ? `${{t}} (${{pc}} projects)` : t;
   return ready ? base : `${{base}} — series pending`;
 }}
+function signed(n) {{
+  const v = Number(n) || 0;
+  if (v > 0) return `+${{v.toLocaleString()}}`;
+  return v.toLocaleString();
+}}
+function gapTrendLabel(cell) {{
+  const start = Number(cell.gapStart) || 0;
+  const end = Number(cell.gapEnd) || 0;
+  const delta = end - start;
+  if (delta > 0) return `Widening (${{signed(delta)}})`;
+  if (delta < 0) return `Narrowing (${{signed(delta)}})`;
+  return "Stable (0)";
+}}
+function gapTrendClass(cell) {{
+  const delta = (Number(cell.gapEnd) || 0) - (Number(cell.gapStart) || 0);
+  if (delta > 0) return "warn";
+  if (delta < 0) return "ok";
+  return "";
+}}
+function tagGapRows(ns, sev, reach) {{
+  const pk = pathKey(ns);
+  const catalog = Object.fromEntries((CUBE.tagCatalog||[]).map(r => [r.tag, r.projectCount]));
+  const rows = [];
+  for (const [tag, pathMap] of Object.entries(CUBE.tagSeries?.perTag || {{}})) {{
+    const cell = pathMap?.[pk]?.[sev]?.[reach];
+    if (!cell) continue;
+    const gapStart = Number(cell.gapStart) || 0;
+    const gapEnd = Number(cell.gapEnd) || 0;
+    rows.push({{
+      tag,
+      projectCount: catalog[tag] ?? 0,
+      gapStart,
+      gapEnd,
+      delta: gapEnd - gapStart,
+    }});
+  }}
+  return rows;
+}}
+function leaderTable(rows, selectedTag) {{
+  if (!rows.length) {{
+    return `<p class="muted">No tagged series for this filter combination.</p>`;
+  }}
+  const body = rows.map(r => {{
+    const deltaCls = r.delta > 0 ? "delta-widen" : (r.delta < 0 ? "delta-narrow" : "");
+    const sel = r.tag === selectedTag ? " selected" : "";
+    return `<tr class="clickable${{sel}}" data-tag="${{r.tag}}">
+      <td>${{r.tag}}</td>
+      <td class="num">${{(r.projectCount||0).toLocaleString()}}</td>
+      <td class="num">${{r.gapStart.toLocaleString()}}</td>
+      <td class="num">${{r.gapEnd.toLocaleString()}}</td>
+      <td class="num ${{deltaCls}}">${{signed(r.delta)}}</td>
+    </tr>`;
+  }}).join("");
+  return `<table class="data"><thead><tr>
+    <th>Tag</th><th class="num">Projects</th>
+    <th class="num">Gap start</th><th class="num">Gap end</th>
+    <th class="num">Δ gap</th>
+  </tr></thead><tbody>${{body}}</tbody></table>`;
+}}
+function tagLeaderboardsHtml(ns, sev, reach, selectedTag) {{
+  const rows = tagGapRows(ns, sev, reach);
+  if (!rows.length) return "";
+  const narrowing = [...rows].filter(r => r.delta < 0).sort((a,b) => a.delta - b.delta).slice(0, LEADER_LIMIT);
+  const widening = [...rows].filter(r => r.delta > 0).sort((a,b) => b.delta - a.delta).slice(0, LEADER_LIMIT);
+  return `<div class="card">
+    <div class="card-h">Tag gap leaders</div>
+    <p class="caption">${{GAP_DIFF_HELP}} Ranked for the current namespace / severity / reachability filters (all tags with series). Click a row to focus that tag.</p>
+    <div class="grid-2">
+      <div>
+        <div class="card-h">${{LEADERS_NARROW}}</div>
+        ${{leaderTable(narrowing, selectedTag)}}
+      </div>
+      <div>
+        <div class="card-h">${{LEADERS_WIDEN}}</div>
+        ${{leaderTable(widening, selectedTag)}}
+      </div>
+    </div>
+  </div>`;
+}}
+function throughputStatsHtml(tp, pending) {{
+  if (!tp) return "";
+  const mainDays = CUBE.throughput?.windows?.mainDays ?? 91;
+  const avg = tp.avgMainScansPerProject;
+  const avgText = (avg == null || Number.isNaN(Number(avg)))
+    ? "—"
+    : Number(avg).toLocaleString(undefined, {{ maximumFractionDigits: 2 }});
+  const win = CUBE.throughput?.windows || {{}};
+  const last = win.lastScanAt ? String(win.lastScanAt).slice(0, 19).replace("T", " ") + "Z" : null;
+  const oldest = win.oldestScanAt ? String(win.oldestScanAt).slice(0, 10) : null;
+  const ret = win.observedRetentionDays;
+  const boundBits = [];
+  if (last) boundBits.push(`newest ScanResult ${{last}}`);
+  if (oldest) boundBits.push(`oldest retained ${{oldest}}`);
+  if (ret != null) boundBits.push(`~${{ret}}d observed history`);
+  const bound = boundBits.length
+    ? `<p class="caption">Scan history bounds: ${{boundBits.join(" · ")}}. MAIN window is ${{mainDays}}d (must fit inside retained history).</p>`
+    : "";
+  return `<div class="stats">
+    <div class="stat"><b>${{(tp.projectCount||0).toLocaleString()}}</b><span>${{pending ? "Projects with tag" : "Projects in scope"}}</span></div>
+    <div class="stat"><b>${{(tp.mainScans91d||0).toLocaleString()}}</b><span>${{MAIN_LABEL}} (${{mainDays}}d)</span></div>
+    <div class="stat info"><b>${{avgText}}</b><span>${{AVG_SCANS_LABEL}} (${{mainDays}}d)</span></div>
+    <div class="stat"><b>${{(tp.ciRunScans21d||0).toLocaleString()}}</b><span>CI / PR scans (21d)</span></div>
+  </div>${{bound}}`;
+}}
+function wireLeaderClicks(root) {{
+  root.querySelectorAll("tr.clickable[data-tag]").forEach(tr => {{
+    tr.addEventListener("click", () => {{
+      const tag = tr.getAttribute("data-tag");
+      const sel = document.getElementById("tag");
+      if (tag && sel) {{ sel.value = tag; render(); }}
+    }});
+  }});
+}}
 let gapChart, weekChart;
 function destroyCharts() {{
   if (gapChart) {{ gapChart.destroy(); gapChart = null; }}
@@ -461,44 +660,52 @@ function render() {{
   if (ns === "all") bits.push("Entire organization"); else bits.push(ns);
   if (tag !== "all") bits.push("tag:" + tag);
   if (sev !== "all") bits.push(sev);
-  if (reach !== "all") bits.push(reach === "prf" ? "PRF" : "reachable");
+  if (reach !== "all") {{
+    const reachLabels = {{
+      reachable: "reachable function",
+      prf: "PRF",
+      prd: "PRD",
+      unreachable: "unreachable",
+      unreachable_function: "unreachable function",
+      unreachable_dependency: "unreachable dependency",
+    }};
+    bits.push(reachLabels[reach] || reach);
+  }}
   document.getElementById("pills").innerHTML = `<span class="pill info">${{bits.join(" · ")}}</span>`;
   destroyCharts();
   const body = document.getElementById("body");
+  const leaders = tagLeaderboardsHtml(ns, sev, reach, tag);
   const pending = tag !== "all" && !CUBE.tagSeries?.perTag?.[tag];
   if (pending) {{
     body.innerHTML = `<div class="callout warn">${{PENDING_CAPTION}}</div>` +
-      (tp ? `<div class="stats">
-        <div class="stat"><b>${{(tp.projectCount||0).toLocaleString()}}</b><span>Projects with tag</span></div>
-        <div class="stat"><b>${{(tp.mainScans91d||0).toLocaleString()}}</b><span>${{MAIN_LABEL}}</span></div>
-        <div class="stat"><b>${{(tp.ciRunScans21d||0).toLocaleString()}}</b><span>CI / PR scans (21d)</span></div>
-      </div>` : "");
+      throughputStatsHtml(tp, true) + leaders;
+    wireLeaderClicks(body);
     return;
   }}
   if (!cell) {{
-    body.innerHTML = `<div class="callout warn">No trend series for this filter combination.</div>`;
+    body.innerHTML = `<div class="callout warn">No trend series for this filter combination.</div>` + leaders;
+    wireLeaderClicks(body);
     return;
   }}
   const lastNew = cell.weeklyNew.at(-1) || 0;
   const lastRes = cell.weeklyResolved.at(-1) || 0;
-  const mainDays = CUBE.throughput?.windows?.mainDays ?? 91;
+  const trendLabel = gapTrendLabel(cell);
+  const trendCls = gapTrendClass(cell);
   body.innerHTML = `<div class="stats">
     <div class="stat ${{cell.gapEnd>0?"warn":"ok"}}"><b>${{cell.gapEnd.toLocaleString()}}</b><span>${{WINDOW_NET}}</span></div>
     <div class="stat"><b>${{lastNew.toLocaleString()}}</b><span>New (last week)</span></div>
     <div class="stat info"><b>${{lastRes.toLocaleString()}}</b><span>Resolved (last week)</span></div>
-    <div class="stat"><b>${{cell.gapTrend}}</b><span>Gap trend</span></div>
+    <div class="stat ${{trendCls}}"><b>${{trendLabel}}</b><span>Gap trend</span></div>
   </div>
-  ${{tp ? `<div class="stats">
-    <div class="stat"><b>${{(tp.projectCount||0).toLocaleString()}}</b><span>Projects in scope</span></div>
-    <div class="stat"><b>${{(tp.mainScans91d||0).toLocaleString()}}</b><span>${{MAIN_LABEL}} (${{mainDays}}d)</span></div>
-    <div class="stat"><b>${{(tp.ciRunScans21d||0).toLocaleString()}}</b><span>CI / PR scans (21d)</span></div>
-  </div>` : ""}}
+  ${{throughputStatsHtml(tp, false)}}
   <div class="card"><div class="card-h">Cumulative new vs resolved · window net</div>
     <p class="caption">Source: FindingLog CREATE/DELETE · ${{CUBE.findingCriteria||""}} · ${{cell.periodCaption||""}} · filters: ${{bits.join(" · ")}}</p>
     <div class="chart-box"><canvas id="gapChart"></canvas></div></div>
   <div class="card"><div class="card-h">Weekly new vs resolved</div>
     <p class="caption">Weekly FindingLog event counts under the same filters.</p>
-    <div class="chart-box sm"><canvas id="weekChart"></canvas></div></div>`;
+    <div class="chart-box sm"><canvas id="weekChart"></canvas></div></div>
+  ${{leaders}}`;
+  wireLeaderClicks(body);
   const cats = (cell.categories||[]).map(c => String(c).slice(0,12));
   const opts = {{
     responsive: true, maintainAspectRatio: false,
@@ -545,23 +752,341 @@ fillSelect(document.getElementById("sev"), [
 fillSelect(document.getElementById("reach"), [
   {{v:"all", l:"All reachability (RF + PRF)"}},
   {{v:"reachable", l:"Reachable function only"}},
-  {{v:"prf", l:"Potentially reachable only"}},
+  {{v:"prf", l:"Potentially reachable function (PRF)"}},
+  {{v:"prd", l:"Potentially reachable dependency (PRD)"}},
+  {{v:"unreachable", l:"Unreachable (function + dependency)"}},
+  {{v:"unreachable_function", l:"Unreachable function only"}},
+  {{v:"unreachable_dependency", l:"Unreachable dependency only"}},
 ]);
 ["ns","tag","sev","reach"].forEach(id => document.getElementById(id).addEventListener("change", render));
 render();
 </script>
 """,
-        title=f"{copy_mod.H1_FINDINGS_BURNDOWN} — {tenant}",
+        title=f"{copy_mod.H1_SCA_BURNDOWN} — {tenant}",
     )
+
+
+def _render_sast_burndown(cube: dict[str, Any]) -> str:
+    tenant = cube.get("tenant") or ""
+    pulled = cube.get("pulledAt") or ""
+    report = (cube.get("reports") or {}).get("codeFindingsBurndown") or {}
+    slim = {
+        "tenant": tenant,
+        "pulledAt": pulled,
+        "lookback": report.get("lookback"),
+        "periodCaption": report.get("periodCaption"),
+        "pathOptions": cube.get("pathOptions") or ["all"],
+        "tagCatalog": [
+            {"tag": t["tag"], "projectCount": t["projectCount"]}
+            for t in (cube.get("tagCatalog") or [])
+        ],
+        "tagSeriesMeta": report.get("tagSeriesMeta") or cube.get("tagSeriesMeta"),
+        "byCategory": report.get("byCategory") or {},
+        "categories": report.get("categories") or ["sast", "ai_sast", "secrets"],
+    }
+    payload = json.dumps(slim, separators=(",", ":"))
+    pending_caption = copy_mod.PENDING_TAG_CAPTION
+    window_net = copy_mod.STAT_WINDOW_NET
+    tag_help = copy_mod.TAG_HELP
+    gap_diff_help = copy_mod.GAP_DIFF_HELP
+    leaders_narrow = copy_mod.TAG_LEADERS_NARROWING
+    leaders_widen = copy_mod.TAG_LEADERS_WIDENING
+    return _page(
+        f"""{_nav("sast")}
+{_header(title=copy_mod.H1_SAST_BURNDOWN, purpose=copy_mod.PURPOSE_SAST_BURNDOWN, tenant=tenant, pulled_at=pulled)}
+{copy_mod.GLOSSARY_HTML}
+<div class="card">
+  <div class="card-h">Filters</div>
+  <div class="filters">
+    <label class="field">Namespace<select id="ns"></select></label>
+    <label class="field">Project tag<select id="tag"></select></label>
+    <label class="field">Category<select id="category"></select></label>
+    <label class="field">Severity<select id="sev"></select></label>
+    <label class="field" id="facetField">Facet<select id="facet"></select></label>
+  </div>
+  <div class="toggles" id="pills"></div>
+  <p class="muted" style="margin:10px 0 0">{tag_help}. Tag selection scopes to projects that carry that tag.</p>
+</div>
+<div id="body"></div>
+<script>
+{_chart_helpers_js()}
+const CUBE = {payload};
+const PENDING_CAPTION = {json.dumps(pending_caption)};
+const WINDOW_NET = {json.dumps(window_net)};
+const GAP_DIFF_HELP = {json.dumps(gap_diff_help)};
+const LEADERS_NARROW = {json.dumps(leaders_narrow)};
+const LEADERS_WIDEN = {json.dumps(leaders_widen)};
+const LEADER_LIMIT = 10;
+const FACET_OPTIONS = {{
+  sast: [
+    {{v:"all", l:"All (category)"}},
+    {{v:"true_positive", l:"True positive"}},
+    {{v:"false_positive", l:"False positive"}},
+  ],
+  ai_sast: [
+    {{v:"all", l:"All AI-SAST"}},
+  ],
+  secrets: [
+    {{v:"all", l:"All secrets"}},
+    {{v:"valid", l:"Valid secret"}},
+    {{v:"invalid", l:"Invalid secret"}},
+  ],
+}};
+const CATEGORY_LABELS = {{
+  sast: "SAST (OpenGrep)",
+  ai_sast: "AI-SAST (detection)",
+  secrets: "Secrets",
+}};
+function pathKey(ns) {{ return ns && ns !== "all" ? ns : "all"; }}
+function catBlock() {{
+  const key = document.getElementById("category").value;
+  return CUBE.byCategory?.[key] || null;
+}}
+function resolveSeries(ns, sev, facet, tag) {{
+  const block = catBlock();
+  if (!block) return null;
+  if (tag && tag !== "all" && block.tagSeries?.perTag?.[tag]) {{
+    return block.tagSeries.perTag[tag][pathKey(ns)]?.[sev]?.[facet] ?? null;
+  }}
+  return block.seriesFilters?.perPath?.[pathKey(ns)]?.[sev]?.[facet] ?? null;
+}}
+function fillSelect(el, options) {{
+  el.innerHTML = options.map(o => `<option value="${{o.v}}">${{o.l}}</option>`).join("");
+}}
+function tagLabel(t) {{
+  if (t === "all") return "All project tags";
+  const cat = (CUBE.tagCatalog||[]).find(r => r.tag === t);
+  const pc = cat?.projectCount;
+  const block = catBlock();
+  const ready = !!(block?.tagSeries?.perTag?.[t]);
+  const base = pc != null ? `${{t}} (${{pc}} projects)` : t;
+  return ready ? base : `${{base}} — series pending`;
+}}
+function signed(n) {{
+  const v = Number(n) || 0;
+  if (v > 0) return `+${{v.toLocaleString()}}`;
+  return v.toLocaleString();
+}}
+function gapTrendLabel(cell) {{
+  const start = Number(cell.gapStart) || 0;
+  const end = Number(cell.gapEnd) || 0;
+  const delta = end - start;
+  if (delta > 0) return `Widening (${{signed(delta)}})`;
+  if (delta < 0) return `Narrowing (${{signed(delta)}})`;
+  return "Stable (0)";
+}}
+function gapTrendClass(cell) {{
+  const delta = (Number(cell.gapEnd) || 0) - (Number(cell.gapStart) || 0);
+  if (delta > 0) return "warn";
+  if (delta < 0) return "ok";
+  return "";
+}}
+function tagGapRows(ns, sev, facet) {{
+  const pk = pathKey(ns);
+  const catalog = Object.fromEntries((CUBE.tagCatalog||[]).map(r => [r.tag, r.projectCount]));
+  const block = catBlock();
+  const rows = [];
+  for (const [tag, pathMap] of Object.entries(block?.tagSeries?.perTag || {{}})) {{
+    const cell = pathMap?.[pk]?.[sev]?.[facet];
+    if (!cell) continue;
+    const gapStart = Number(cell.gapStart) || 0;
+    const gapEnd = Number(cell.gapEnd) || 0;
+    rows.push({{
+      tag,
+      projectCount: catalog[tag] ?? 0,
+      gapStart,
+      gapEnd,
+      delta: gapEnd - gapStart,
+    }});
+  }}
+  return rows;
+}}
+function leaderTable(rows, selectedTag) {{
+  if (!rows.length) {{
+    return `<p class="muted">No tagged series for this filter combination.</p>`;
+  }}
+  const body = rows.map(r => {{
+    const deltaCls = r.delta > 0 ? "delta-widen" : (r.delta < 0 ? "delta-narrow" : "");
+    const sel = r.tag === selectedTag ? " selected" : "";
+    return `<tr class="clickable${{sel}}" data-tag="${{r.tag}}">
+      <td>${{r.tag}}</td>
+      <td class="num">${{(r.projectCount||0).toLocaleString()}}</td>
+      <td class="num">${{r.gapStart.toLocaleString()}}</td>
+      <td class="num">${{r.gapEnd.toLocaleString()}}</td>
+      <td class="num ${{deltaCls}}">${{signed(r.delta)}}</td>
+    </tr>`;
+  }}).join("");
+  return `<table class="data"><thead><tr>
+    <th>Tag</th><th class="num">Projects</th>
+    <th class="num">Gap start</th><th class="num">Gap end</th>
+    <th class="num">Δ gap</th>
+  </tr></thead><tbody>${{body}}</tbody></table>`;
+}}
+function tagLeaderboardsHtml(ns, sev, facet, selectedTag) {{
+  const rows = tagGapRows(ns, sev, facet);
+  if (!rows.length) return "";
+  const narrowing = [...rows].filter(r => r.delta < 0).sort((a,b) => a.delta - b.delta).slice(0, LEADER_LIMIT);
+  const widening = [...rows].filter(r => r.delta > 0).sort((a,b) => b.delta - a.delta).slice(0, LEADER_LIMIT);
+  return `<div class="card">
+    <div class="card-h">Tag gap leaders</div>
+    <p class="caption">${{GAP_DIFF_HELP}} Ranked for the current filters. Click a row to focus that tag.</p>
+    <div class="grid-2">
+      <div>
+        <div class="card-h">${{LEADERS_NARROW}}</div>
+        ${{leaderTable(narrowing, selectedTag)}}
+      </div>
+      <div>
+        <div class="card-h">${{LEADERS_WIDEN}}</div>
+        ${{leaderTable(widening, selectedTag)}}
+      </div>
+    </div>
+  </div>`;
+}}
+function wireLeaderClicks(root) {{
+  root.querySelectorAll("tr.clickable[data-tag]").forEach(tr => {{
+    tr.addEventListener("click", () => {{
+      const tag = tr.getAttribute("data-tag");
+      const sel = document.getElementById("tag");
+      if (tag && sel) {{ sel.value = tag; render(); }}
+    }});
+  }});
+}}
+function syncFacetOptions() {{
+  const cat = document.getElementById("category").value;
+  const opts = FACET_OPTIONS[cat] || FACET_OPTIONS.sast;
+  const facetEl = document.getElementById("facet");
+  const prev = facetEl.value;
+  fillSelect(facetEl, opts);
+  if (opts.some(o => o.v === prev)) facetEl.value = prev;
+  document.getElementById("facetField").style.display =
+    opts.length <= 1 ? "none" : "";
+}}
+let gapChart, weekChart;
+function destroyCharts() {{
+  if (gapChart) {{ gapChart.destroy(); gapChart = null; }}
+  if (weekChart) {{ weekChart.destroy(); weekChart = null; }}
+}}
+function render() {{
+  const theme = chartTheme();
+  syncFacetOptions();
+  const ns = document.getElementById("ns").value;
+  const tag = document.getElementById("tag").value;
+  const category = document.getElementById("category").value;
+  const sev = document.getElementById("sev").value;
+  const facet = document.getElementById("facet").value;
+  const block = catBlock();
+  const cell = resolveSeries(ns, sev, facet, tag);
+  const bits = [];
+  if (ns === "all") bits.push("Entire organization"); else bits.push(ns);
+  if (tag !== "all") bits.push("tag:" + tag);
+  bits.push(CATEGORY_LABELS[category] || category);
+  if (sev !== "all") bits.push(sev);
+  if (facet !== "all") bits.push(facet.replaceAll("_", " "));
+  document.getElementById("pills").innerHTML = `<span class="pill info">${{bits.join(" · ")}}</span>`;
+  destroyCharts();
+  const body = document.getElementById("body");
+  const leaders = tagLeaderboardsHtml(ns, sev, facet, tag);
+  const pending = tag !== "all" && !block?.tagSeries?.perTag?.[tag];
+  if (!block || !(Object.keys(CUBE.byCategory||{{}}).length)) {{
+    body.innerHTML = `<div class="callout warn">No code-findings burndown series in this packet (skipped or empty).</div>`;
+    return;
+  }}
+  if (pending) {{
+    body.innerHTML = `<div class="callout warn">${{PENDING_CAPTION}}</div>` + leaders;
+    wireLeaderClicks(body);
+    return;
+  }}
+  if (!cell) {{
+    body.innerHTML = `<div class="callout warn">No trend series for this filter combination.</div>` + leaders;
+    wireLeaderClicks(body);
+    return;
+  }}
+  const lastNew = cell.weeklyNew.at(-1) || 0;
+  const lastRes = cell.weeklyResolved.at(-1) || 0;
+  const trendLabel = gapTrendLabel(cell);
+  const trendCls = gapTrendClass(cell);
+  const criteria = block.findingCriteria || "";
+  body.innerHTML = `<div class="stats">
+    <div class="stat ${{cell.gapEnd>0?"warn":"ok"}}"><b>${{cell.gapEnd.toLocaleString()}}</b><span>${{WINDOW_NET}}</span></div>
+    <div class="stat"><b>${{lastNew.toLocaleString()}}</b><span>New (last week)</span></div>
+    <div class="stat info"><b>${{lastRes.toLocaleString()}}</b><span>Resolved (last week)</span></div>
+    <div class="stat ${{trendCls}}"><b>${{trendLabel}}</b><span>Gap trend</span></div>
+  </div>
+  <div class="card"><div class="card-h">Cumulative new vs resolved · window net</div>
+    <p class="caption">Source: FindingLog CREATE/DELETE · ${{criteria}} · ${{cell.periodCaption||""}} · filters: ${{bits.join(" · ")}}</p>
+    <div class="chart-box"><canvas id="gapChart"></canvas></div></div>
+  <div class="card"><div class="card-h">Weekly new vs resolved</div>
+    <p class="caption">Weekly FindingLog event counts under the same filters.</p>
+    <div class="chart-box sm"><canvas id="weekChart"></canvas></div></div>
+  ${{leaders}}`;
+  wireLeaderClicks(body);
+  const cats = (cell.categories||[]).map(c => String(c).slice(0,12));
+  const opts = {{
+    responsive: true, maintainAspectRatio: false,
+    plugins: {{ legend: {{ labels: {{ color: theme.muted }} }} }},
+    scales: chartScales(theme)
+  }};
+  gapChart = new Chart(document.getElementById("gapChart"), {{
+    type: "line",
+    data: {{
+      labels: cats,
+      datasets: [
+        {{ label: "Cumulative new", data: cell.cumulativeNew, borderColor: theme.danger, tension: 0.2 }},
+        {{ label: "Cumulative resolved", data: cell.cumulativeResolved, borderColor: theme.ok, tension: 0.2 }},
+        {{ label: "Window net", data: cell.gaps, borderColor: theme.warn, borderDash: [4,4], tension: 0.2 }},
+      ]
+    }},
+    options: opts
+  }});
+  weekChart = new Chart(document.getElementById("weekChart"), {{
+    type: "bar",
+    data: {{
+      labels: cats,
+      datasets: [
+        {{ label: "New", data: cell.weeklyNew, backgroundColor: theme.danger + "99" }},
+        {{ label: "Resolved", data: cell.weeklyResolved, backgroundColor: theme.ok + "99" }},
+      ]
+    }},
+    options: opts
+  }});
+}}
+fillSelect(document.getElementById("ns"), [
+  {{v:"all", l:"All namespaces"}},
+  ...(CUBE.pathOptions||[]).filter(p => p!=="all").map(p => ({{v:p,l:p}}))
+]);
+fillSelect(document.getElementById("tag"), [
+  {{v:"all", l:"All project tags"}},
+  ...(CUBE.tagCatalog||[]).map(t => ({{v:t.tag, l: tagLabel(t.tag)}}))
+]);
+fillSelect(document.getElementById("category"), [
+  {{v:"sast", l:"SAST (OpenGrep)"}},
+  {{v:"ai_sast", l:"AI-SAST (detection)"}},
+  {{v:"secrets", l:"Secrets"}},
+]);
+fillSelect(document.getElementById("sev"), [
+  {{v:"all", l:"All severities (Critical + High)"}},
+  {{v:"critical", l:"Critical only"}},
+  {{v:"high", l:"High only"}},
+]);
+syncFacetOptions();
+["ns","tag","category","sev","facet"].forEach(id => document.getElementById(id).addEventListener("change", render));
+render();
+</script>
+""",
+        title=f"{copy_mod.H1_SAST_BURNDOWN} — {tenant}",
+    )
+
+
+_render_findings_burndown = _render_sca_burndown
 
 
 def render_report_packet(
     cube: dict[str, Any],
     out_dir: str | Path,
 ) -> list[Path]:
-    """Write HTML packet + cube JSON + README under *out_dir*.
+    """Write HTML packet + cube JSON + raw CSV exports + README under *out_dir*.
 
-    Returns paths written (relative order: onboarding, sprawl, burndown, cube, README).
+    Returns paths written (assets, HTML, cube, CSVs, README).
     """
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -571,7 +1096,8 @@ def render_report_packet(
     files = [
         (out / "01-onboarding.html", _render_onboarding(cube)),
         (out / "02-version-sprawl.html", _render_version_sprawl(cube)),
-        (out / "03-findings-burndown.html", _render_findings_burndown(cube)),
+        (out / "03-sca-burndown.html", _render_sca_burndown(cube)),
+        (out / "04-sast-burndown.html", _render_sast_burndown(cube)),
         (data_dir / "packet.cube.json", json.dumps(cube, indent=2) + "\n"),
         (out / "README.txt", copy_mod.README_TEXT),
     ]
@@ -579,6 +1105,7 @@ def render_report_packet(
     for path, content in files:
         safe_write_text(out, path, content)
         written.append(path)
+    written.extend(write_packet_raw_exports(cube, data_dir))
     return written
 
 

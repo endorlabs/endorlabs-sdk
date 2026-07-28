@@ -39,6 +39,9 @@ Tag series: one FindingLog severity×reach matrix per **tagged** project
 Path series: leaf-namespace aggregates (includes untagged projects).
 `--min-projects` only filters which tags appear in the packet (default 1).
 
+Packet `data/` includes `packet.cube.json` plus CSV raw exports (gap
+differentials, onboarding, throughput, tag catalog) — see `data/EXPORTS.txt`.
+
 ## Parity harness
 
 `endorlabs.workflows.reports.parity` compares live packet cubes to gitignored

@@ -6,8 +6,10 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from endorlabs.workflows.findings.finding_log_trends import empty_series_cell
-from endorlabs.workflows.reports.analyze.findings_trend import (
+from endorlabs.workflows.reports.analyze.burndown_common import (
     PULL_MODE_PROJECT_GRAIN,
+)
+from endorlabs.workflows.reports.analyze.findings_trend import (
     build_findings_burndown_report,
     sum_severity_reach_matrices,
 )
@@ -31,7 +33,18 @@ def _matrix(
     resolved = weekly_resolved or [0] * len(cats)
     cell = _cell(cats, weekly_new, resolved)
     return {
-        sev: {reach: dict(cell) for reach in ("all", "reachable", "prf")}
+        sev: {
+            reach: dict(cell)
+            for reach in (
+                "all",
+                "reachable",
+                "prf",
+                "prd",
+                "unreachable",
+                "unreachable_function",
+                "unreachable_dependency",
+            )
+        }
         for sev in ("all", "critical", "high")
     }
 
@@ -103,11 +116,13 @@ def test_tag_redistribute_sums_project_matrices() -> None:
 
     with (
         patch(
-            "endorlabs.workflows.reports.analyze.findings_trend.query_severity_reach_series_cell",
+            "endorlabs.workflows.findings.finding_log_trends."
+            "query_severity_facet_series_cell",
             return_value=seed,
         ),
         patch(
-            "endorlabs.workflows.reports.analyze.findings_trend.query_severity_reach_matrix",
+            "endorlabs.workflows.findings.finding_log_trends."
+            "query_severity_facet_matrix",
             side_effect=fake_matrix,
         ),
         patch(
@@ -116,6 +131,14 @@ def test_tag_redistribute_sums_project_matrices() -> None:
                 uid_a: {"mainScans91d": 0, "ciRunScans21d": 0},
                 uid_b: {"mainScans91d": 0, "ciRunScans21d": 0},
                 uid_c: {"mainScans91d": 0, "ciRunScans21d": 0},
+            },
+        ),
+        patch(
+            "endorlabs.workflows.reports.analyze.findings_trend.probe_scan_history_bounds",
+            return_value={
+                "lastScanAt": None,
+                "oldestScanAt": None,
+                "observedRetentionDays": None,
             },
         ),
     ):
@@ -148,3 +171,35 @@ def test_tag_redistribute_sums_project_matrices() -> None:
     # Path series from leaf aggregate, not tagged-only sum.
     path_all = report["seriesFilters"]["perPath"]["all"]["critical"]["reachable"]
     assert path_all["weeklyNew"] == [10, 0]
+
+
+def test_avg_main_scans_per_project() -> None:
+    from endorlabs.workflows.reports.analyze.findings_trend import _throughput_scope
+
+    projects = [
+        {
+            "uuid": "00000000-0000-4000-8000-000000000001",
+            "name": "https://github.com/org/a.git",
+            "namespace": "example-tenant.child",
+            "tags": [],
+        },
+        {
+            "uuid": "00000000-0000-4000-8000-000000000002",
+            "name": "https://github.com/org/b.git",
+            "namespace": "example-tenant.child",
+            "tags": [],
+        },
+    ]
+    scans = {
+        "00000000-0000-4000-8000-000000000001": {
+            "mainScans91d": 10,
+            "ciRunScans21d": 1,
+        },
+        "00000000-0000-4000-8000-000000000002": {
+            "mainScans91d": 30,
+            "ciRunScans21d": 2,
+        },
+    }
+    scope = _throughput_scope(projects, scans)
+    assert scope["mainScans91d"] == 40
+    assert scope["avgMainScansPerProject"] == 20.0

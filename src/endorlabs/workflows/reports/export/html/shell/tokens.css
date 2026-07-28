@@ -119,6 +119,21 @@ table.data th { background: var(--endor-bg); color: var(--endor-muted); font-wei
 table.data td.num, table.data th.num {
   text-align: right; font-variant-numeric: tabular-nums;
 }
+table.data tr.clickable { cursor: pointer; }
+table.data tr.clickable:hover td {
+  background: color-mix(in srgb, var(--endor-accent) 12%, transparent);
+}
+table.data tr.selected td {
+  background: color-mix(in srgb, var(--endor-accent) 18%, transparent);
+}
+table.data td.delta-widen { color: var(--endor-warn); font-weight: 600; }
+table.data td.delta-narrow { color: var(--endor-ok); font-weight: 600; }
+.grid-2 {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px;
+}
+@media (max-width: 900px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
 .chart-box { position: relative; height: 280px; margin-top: 8px; }
 .chart-box.sm { height: 220px; }
 .nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }

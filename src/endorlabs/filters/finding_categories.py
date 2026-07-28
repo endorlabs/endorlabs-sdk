@@ -15,12 +15,20 @@ REACHABLE_FUNCTION_TAGS = (
 
 FINDING_CATEGORY_SCA = "FINDING_CATEGORY_SCA"
 FINDING_CATEGORY_VULNERABILITY = "FINDING_CATEGORY_VULNERABILITY"
+FINDING_CATEGORY_SAST = "FINDING_CATEGORY_SAST"
+FINDING_CATEGORY_SECRETS = "FINDING_CATEGORY_SECRETS"
 
 FINDING_CATEGORIES: dict[str, str] = {
     "VULNERABILITY": FINDING_CATEGORY_VULNERABILITY,
-    "SECRETS": "FINDING_CATEGORY_SECRETS",
+    "SECRETS": FINDING_CATEGORY_SECRETS,
     "MALWARE": "FINDING_CATEGORY_MALWARE",
 }
+
+TRUE_POSITIVE_TAG_CLAUSE = "spec.finding_tags contains FINDING_TAGS_TRUE_POSITIVE"
+FALSE_POSITIVE_TAG_CLAUSE = "spec.finding_tags contains FINDING_TAGS_FALSE_POSITIVE"
+AI_TAG_CLAUSE = "spec.finding_tags contains FINDING_TAGS_AI"
+VALID_SECRET_TAG_CLAUSE = "spec.finding_tags contains FINDING_TAGS_VALID_SECRET"  # noqa: S105
+INVALID_SECRET_TAG_CLAUSE = "spec.finding_tags contains FINDING_TAGS_INVALID_SECRET"  # noqa: S105
 
 CATEGORY_QUERY_REFS: dict[str, str] = {
     "VULNERABILITY": "VulnerabilityFindingsCount",
@@ -59,6 +67,27 @@ def severity_level_filter(level_enum: str) -> str:
 def main_context_vulnerability_filter() -> str:
     """Main-context vulnerability findings filter fragment."""
     return f"{MAIN_CONTEXT_CLAUSE} and {VULNERABILITY_CATEGORY}"
+
+
+def sast_log_base_filter() -> str:
+    """Main-context SAST (OpenGrep / rule-based) FindingLog base filter.
+
+    Includes all ``FINDING_CATEGORY_SAST`` events. AI detection findings also
+    carry this category plus ``FINDING_TAGS_AI``; use ``ai_sast_log_base_filter``
+    for the AI-only subset. FindingLog MQL exclusion of the AI tag is not used
+    in v1 (positive tag matches only).
+    """
+    return category_filter(FINDING_CATEGORY_SAST)
+
+
+def ai_sast_log_base_filter() -> str:
+    """Main-context AI-SAST detection FindingLog base (SAST category + AI tag)."""
+    return f"{sast_log_base_filter()} and {AI_TAG_CLAUSE}"
+
+
+def secrets_log_base_filter() -> str:
+    """Main-context Secrets FindingLog base filter."""
+    return category_filter(FINDING_CATEGORY_SECRETS)
 
 
 def reachable_vuln_log_base_filter() -> str:

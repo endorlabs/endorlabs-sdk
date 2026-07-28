@@ -1,4 +1,4 @@
-"""Findings burndown + scan throughput for the report packet.
+"""SCA (vulnerability) burndown + scan throughput for the report packet.
 
 FindingLog severity×reach series primitives live in
 ``endorlabs.workflows.findings.finding_log_trends``; this module orchestrates
@@ -12,19 +12,22 @@ projects are included.
 from __future__ import annotations
 
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 from endorlabs.workflows.findings.finding_log_trends import (
     CHART_DEFAULT_LOOKBACK,
     FINDING_CRITERIA,
-    REACHABLE_FUNCTION_CLAUSE,
-    compute_window,
-    empty_series_cell,
-    query_severity_reach_matrix,
-    query_severity_reach_series_cell,
-    sum_series_cells,
+)
+from endorlabs.workflows.reports.analyze.burndown_common import (
+    DEFAULT_BURNDOWN_WORKERS,
+    SEV_KEYS,
+    build_category_burndown_block,
+    sum_severity_facet_matrices,
+)
+from endorlabs.workflows.reports.analyze.finding_burndown_specs import (
+    CATEGORY_SCA,
+    SCA_FACET_KEYS,
 )
 
 if TYPE_CHECKING:
@@ -32,15 +35,86 @@ if TYPE_CHECKING:
 
 MAIN_LOOKBACK_DAYS = 91
 CI_LOOKBACK_DAYS = 21
-DEFAULT_BURNDOWN_WORKERS = 24
-PULL_MODE_PROJECT_GRAIN = "project_grain_redistribute"
 
-_SEV_KEYS = ("all", "critical", "high")
-_REACH_KEYS = ("all", "reachable", "prf")
+_SEV_KEYS = SEV_KEYS
+_REACH_KEYS = SCA_FACET_KEYS
 
 
 def _iso(dt: datetime) -> str:
     return dt.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _row_create_time(row: Any) -> datetime | None:
+    raw: Any
+    if isinstance(row, dict):
+        raw = (row.get("meta") or {}).get("create_time")
+    else:
+        meta = getattr(row, "meta", None)
+        raw = getattr(meta, "create_time", None)
+    if raw is None:
+        return None
+    if isinstance(raw, datetime):
+        return raw if raw.tzinfo else raw.replace(tzinfo=UTC)
+    text = str(raw).replace("Z", "+00:00")
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+
+def probe_scan_history_bounds(
+    client: Client,
+    leaf_namespaces: list[str],
+) -> dict[str, Any]:
+    """Return newest/oldest ScanResult create times across *leaf_namespaces*.
+
+    Used as an observed retention / activity bound for throughput captions.
+    One newest + one oldest list per leaf (``max_pages=1``); no full scan pull.
+    """
+    newest: datetime | None = None
+    oldest: datetime | None = None
+    for ns in leaf_namespaces:
+        if not ns:
+            continue
+        try:
+            newest_rows = client.ScanResult.list(
+                namespace=ns,
+                traverse=False,
+                sort_by="meta.create_time",
+                desc=True,
+                mask="uuid,meta.create_time",
+                max_pages=1,
+                page_size=1,
+            )
+            oldest_rows = client.ScanResult.list(
+                namespace=ns,
+                traverse=False,
+                sort_by="meta.create_time",
+                desc=False,
+                mask="uuid,meta.create_time",
+                max_pages=1,
+                page_size=1,
+            )
+        except Exception:
+            newest_rows = []
+            oldest_rows = []
+        if newest_rows:
+            ct = _row_create_time(newest_rows[0])
+            if ct is not None and (newest is None or ct > newest):
+                newest = ct
+        if oldest_rows:
+            ct = _row_create_time(oldest_rows[0])
+            if ct is not None and (oldest is None or ct < oldest):
+                oldest = ct
+    span_days: float | None = None
+    if newest is not None and oldest is not None:
+        span_days = round((newest - oldest).total_seconds() / 86400.0, 1)
+    return {
+        "lastScanAt": newest.isoformat() if newest else None,
+        "oldestScanAt": oldest.isoformat() if oldest else None,
+        "observedRetentionDays": span_days,
+    }
 
 
 def collect_scan_throughput(
@@ -129,29 +203,20 @@ def _throughput_scope(
                 "mainScansPerWeek": round(main / (MAIN_LOOKBACK_DAYS / 7), 2),
             }
         )
+    project_count = len(enriched)
+    main_total = sum(int(p["mainScans91d"]) for p in enriched)
     return {
-        "projectCount": len(enriched),
-        "mainScans91d": sum(int(p["mainScans91d"]) for p in enriched),
+        "projectCount": project_count,
+        "mainScans91d": main_total,
         "ciRunScans21d": sum(int(p["ciRunScans21d"]) for p in enriched),
+        "avgMainScansPerProject": round(main_total / max(1, project_count), 2),
         "avgMainPerWeek": round(
-            sum(float(p["mainScansPerWeek"]) for p in enriched) / max(1, len(enriched)),
+            sum(float(p["mainScansPerWeek"]) for p in enriched) / max(1, project_count),
             2,
         ),
         "topProjects": sorted(
             enriched, key=lambda r: int(r["mainScans91d"]), reverse=True
         )[:15],
-    }
-
-
-def _empty_matrix(
-    categories: list[str], period_caption: str
-) -> dict[str, dict[str, dict[str, Any]]]:
-    return {
-        sev: {
-            reach: empty_series_cell(categories, period_caption)
-            for reach in _REACH_KEYS
-        }
-        for sev in _SEV_KEYS
     }
 
 
@@ -162,82 +227,15 @@ def sum_severity_reach_matrices(
     period_caption: str,
 ) -> dict[str, dict[str, dict[str, Any]]]:
     """Sum severity×reach series matrices cell-wise."""
-    if not parts:
-        return _empty_matrix(categories, period_caption)
-    built: dict[str, dict[str, dict[str, Any]]] = {}
-    for sev in _SEV_KEYS:
-        built[sev] = {}
-        for reach in _REACH_KEYS:
-            cells = [
-                matrix[sev][reach]
-                for matrix in parts
-                if sev in matrix and reach in matrix[sev]
-            ]
-            built[sev][reach] = sum_series_cells(
-                cells, categories=categories, period_caption=period_caption
-            )
-    return built
-
-
-def _roll_project_matrices(
-    project_matrices: dict[str, dict[str, dict[str, dict[str, Any]]]],
-    uuids: list[str],
-    *,
-    categories: list[str],
-    period_caption: str,
-) -> dict[str, dict[str, dict[str, Any]]]:
-    parts = [project_matrices[uid] for uid in uuids if uid in project_matrices]
-    return sum_severity_reach_matrices(
-        parts, categories=categories, period_caption=period_caption
+    return sum_severity_facet_matrices(
+        parts,
+        categories=categories,
+        period_caption=period_caption,
+        facet_keys=_REACH_KEYS,
     )
 
 
-def _pull_project_matrices(
-    client: Client,
-    projects: list[dict[str, Any]],
-    *,
-    window_start: datetime,
-    window_end: datetime,
-    lookback: int,
-    categories: list[str],
-    period_caption: str,
-    max_workers: int,
-) -> dict[str, dict[str, dict[str, dict[str, Any]]]]:
-    """Pull one FindingLog severity×reach matrix per project (parallel)."""
-
-    def _one(
-        project: dict[str, Any],
-    ) -> tuple[str, dict[str, dict[str, dict[str, Any]]]]:
-        uid = str(project["uuid"])
-        ns = str(project.get("namespace") or "")
-        try:
-            matrix = query_severity_reach_matrix(
-                client,
-                namespace=ns,
-                window_start=window_start,
-                window_end=window_end,
-                parent_uuids=[uid],
-                lookback=lookback,
-                categories=categories,
-                period_caption=period_caption,
-            )
-        except Exception:
-            matrix = _empty_matrix(categories, period_caption)
-        return uid, matrix
-
-    out: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
-    if not projects:
-        return out
-    workers = max(1, max_workers)
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = [pool.submit(_one, project) for project in projects]
-        for fut in as_completed(futures):
-            uid, matrix = fut.result()
-            out[uid] = matrix
-    return out
-
-
-def build_findings_burndown_report(
+def build_sca_burndown_report(
     client: Client,
     *,
     tenant: str,
@@ -249,118 +247,26 @@ def build_findings_burndown_report(
     min_projects: int = 1,
     max_workers: int = DEFAULT_BURNDOWN_WORKERS,
 ) -> dict[str, Any]:
-    """Build FindingLog series filters, tag series, and throughput.
+    """Build SCA (vulnerability) FindingLog series filters, tag series, and throughput.
 
-    Path series: one matrix per leaf namespace (includes untagged projects).
-    Tag series: parallel per-tagged-project matrices, then local redistribute.
-    *min_projects* only filters which tags appear in ``tagSeries`` (display);
-    it does not skip project pulls.
+    Uses the same category-spec + path/tag redistribute path as code findings,
+    with ``expand="reach"`` so ``all`` remains RF+PRF.
     """
-    window_start, window_end = compute_window(lookback=lookback)
-    seed = query_severity_reach_series_cell(
+    block = build_category_burndown_block(
         client,
-        namespace=tenant,
-        window_start=window_start,
-        window_end=window_end,
-        reach_clause=REACHABLE_FUNCTION_CLAUSE,
-        level="CRITICAL",
-        parent_uuids=None,
+        tenant=tenant,
+        projects=projects,
+        leaf_namespaces=leaf_namespaces,
+        path_options=path_options,
+        tag_catalog=tag_catalog,
+        category_key=CATEGORY_SCA,
         lookback=lookback,
-    )
-    categories = list(seed["categories"])
-    period_caption = str(seed["periodCaption"])
-
-    leaf_cells: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
-    for ns in leaf_namespaces:
-        try:
-            leaf_cells[ns] = query_severity_reach_matrix(
-                client,
-                namespace=ns,
-                window_start=window_start,
-                window_end=window_end,
-                parent_uuids=None,
-                lookback=lookback,
-                categories=categories,
-                period_caption=period_caption,
-            )
-        except Exception:
-            leaf_cells[ns] = _empty_matrix(categories, period_caption)
-
-    def roll_path(path: str) -> dict[str, dict[str, dict[str, Any]]]:
-        if path == "all":
-            keys = list(leaf_cells)
-        else:
-            keys = [ns for ns in leaf_cells if ns == path or ns.startswith(path + ".")]
-        return sum_severity_reach_matrices(
-            [leaf_cells[ns] for ns in keys],
-            categories=categories,
-            period_caption=period_caption,
-        )
-
-    series_filters = {"perPath": {path: roll_path(path) for path in path_options}}
-
-    by_uuid = {p["uuid"]: p for p in projects}
-    tagged_projects = [
-        p for p in projects if p.get("tags") and p.get("namespace") and p.get("uuid")
-    ]
-    project_matrices = _pull_project_matrices(
-        client,
-        tagged_projects,
-        window_start=window_start,
-        window_end=window_end,
-        lookback=lookback,
-        categories=categories,
-        period_caption=period_caption,
+        min_projects=min_projects,
         max_workers=max_workers,
     )
 
-    per_tag: dict[str, dict[str, dict[str, dict[str, dict[str, Any]]]]] = {}
-    ready: list[str] = []
-    pending: list[str] = []
-    for entry in tag_catalog:
-        tag = entry["tag"]
-        uuids = [u for u in entry.get("projectUuids") or [] if u in by_uuid]
-        if len(uuids) < min_projects:
-            pending.append(tag)
-            continue
-        pulled = [u for u in uuids if u in project_matrices]
-        if not pulled:
-            pending.append(tag)
-            continue
-        tagged_rows = [by_uuid[u] for u in pulled]
-        tag_leaf: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
-        for ns in leaf_namespaces:
-            ns_uuids = [p["uuid"] for p in tagged_rows if p.get("namespace") == ns]
-            if not ns_uuids:
-                continue
-            tag_leaf[ns] = _roll_project_matrices(
-                project_matrices,
-                ns_uuids,
-                categories=categories,
-                period_caption=period_caption,
-            )
-        path_map: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
-        for path in path_options:
-            if path == "all":
-                keys = list(tag_leaf)
-            else:
-                keys = [
-                    ns for ns in tag_leaf if ns == path or ns.startswith(path + ".")
-                ]
-            if not keys:
-                continue
-            path_map[path] = sum_severity_reach_matrices(
-                [tag_leaf[ns] for ns in keys],
-                categories=categories,
-                period_caption=period_caption,
-            )
-        if path_map:
-            per_tag[tag] = path_map
-            ready.append(tag)
-        else:
-            pending.append(tag)
-
     scan_by_uuid = collect_scan_throughput(client, projects, leaf_namespaces)
+    scan_bounds = probe_scan_history_bounds(client, leaf_namespaces)
     tp_per_path = {
         path: _throughput_scope(
             [
@@ -382,27 +288,48 @@ def build_findings_burndown_report(
         tp_per_tag[tag] = _throughput_scope(rows, scan_by_uuid)
 
     return {
-        "findingCriteria": FINDING_CRITERIA,
+        "findingCriteria": block.get("findingCriteria") or FINDING_CRITERIA,
         "lookback": lookback,
         "interval": "week",
-        "seriesFilters": series_filters,
-        "tagSeries": {"tags": ready, "perTag": per_tag},
-        "tagSeriesMeta": {
-            "seriesReady": ready,
-            "seriesPending": pending,
-            "seriesReadyCount": len(ready),
-            "seriesPendingCount": len(pending),
-            "pullPolicy": {
-                "minProjects": min_projects,
-                "mode": PULL_MODE_PROJECT_GRAIN,
-                "taggedProjectsPulled": len(project_matrices),
-                "workers": max(1, max_workers),
-            },
-        },
+        "facetKeys": block.get("facetKeys") or list(SCA_FACET_KEYS),
+        "expand": block.get("expand") or "reach",
+        "seriesFilters": block["seriesFilters"],
+        "tagSeries": block["tagSeries"],
+        "tagSeriesMeta": block["tagSeriesMeta"],
         "throughput": {
-            "windows": {"mainDays": MAIN_LOOKBACK_DAYS, "ciRunDays": CI_LOOKBACK_DAYS},
+            "windows": {
+                "mainDays": MAIN_LOOKBACK_DAYS,
+                "ciRunDays": CI_LOOKBACK_DAYS,
+                **scan_bounds,
+            },
             "perPath": tp_per_path,
             "perTag": tp_per_tag,
         },
-        "periodCaption": period_caption,
+        "periodCaption": block.get("periodCaption"),
     }
+
+
+def build_findings_burndown_report(
+    client: Client,
+    *,
+    tenant: str,
+    projects: list[dict[str, Any]],
+    leaf_namespaces: list[str],
+    path_options: list[str],
+    tag_catalog: list[dict[str, Any]],
+    lookback: int = CHART_DEFAULT_LOOKBACK,
+    min_projects: int = 1,
+    max_workers: int = DEFAULT_BURNDOWN_WORKERS,
+) -> dict[str, Any]:
+    """Compat alias for :func:`build_sca_burndown_report`."""
+    return build_sca_burndown_report(
+        client,
+        tenant=tenant,
+        projects=projects,
+        leaf_namespaces=leaf_namespaces,
+        path_options=path_options,
+        tag_catalog=tag_catalog,
+        lookback=lookback,
+        min_projects=min_projects,
+        max_workers=max_workers,
+    )

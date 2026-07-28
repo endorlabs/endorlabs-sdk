@@ -1,11 +1,19 @@
 """Canonical domain MQL filter fragments for SDK, Query, and workflows."""
 
 from endorlabs.filters.finding_categories import (
+    AI_TAG_CLAUSE,
     CATEGORY_QUERY_REFS,
     DEFAULT_ESTATE_FINDING_CATEGORIES,
+    FALSE_POSITIVE_TAG_CLAUSE,
     FINDING_CATEGORIES,
+    FINDING_CATEGORY_SAST,
     FINDING_CATEGORY_SCA,
+    FINDING_CATEGORY_SECRETS,
     FINDING_CATEGORY_VULNERABILITY,
+    INVALID_SECRET_TAG_CLAUSE,
+    TRUE_POSITIVE_TAG_CLAUSE,
+    VALID_SECRET_TAG_CLAUSE,
+    ai_sast_log_base_filter,
     category_filter,
     estate_findings_filter,
     finding_log_time_window_filter,
@@ -14,6 +22,8 @@ from endorlabs.filters.finding_categories import (
     prd_vuln_filter,
     prf_vuln_filter,
     reachable_vuln_log_base_filter,
+    sast_log_base_filter,
+    secrets_log_base_filter,
 )
 from endorlabs.filters.main_context import (
     MAIN_CONTEXT_CLAUSE,
@@ -33,15 +43,23 @@ from endorlabs.filters.project_scope import (
 from endorlabs.filters.query_wire import to_query_filter
 
 __all__ = [
+    "AI_TAG_CLAUSE",
     "CATEGORY_QUERY_REFS",
     "DEFAULT_ESTATE_FINDING_CATEGORIES",
+    "FALSE_POSITIVE_TAG_CLAUSE",
     "FINDING_CATEGORIES",
+    "FINDING_CATEGORY_SAST",
     "FINDING_CATEGORY_SCA",
+    "FINDING_CATEGORY_SECRETS",
     "FINDING_CATEGORY_VULNERABILITY",
+    "INVALID_SECRET_TAG_CLAUSE",
     "MAIN_CONTEXT_CLAUSE",
     "MAIN_CONTEXT_LIST_FILTER",
     "MAIN_CONTEXT_TYPE",
     "PROJECT_UUID_FILTER_FIELD",
+    "TRUE_POSITIVE_TAG_CLAUSE",
+    "VALID_SECRET_TAG_CLAUSE",
+    "ai_sast_log_base_filter",
     "category_filter",
     "context_partition_filter",
     "dm_importer_project_filter",
@@ -57,5 +75,7 @@ __all__ = [
     "pv_count_filter",
     "pv_main_context_filter",
     "reachable_vuln_log_base_filter",
+    "sast_log_base_filter",
+    "secrets_log_base_filter",
     "to_query_filter",
 ]

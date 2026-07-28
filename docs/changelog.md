@@ -15,10 +15,17 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - New `endor-estate patch-fix-report` subcommand and `endorlabs.workflows.findings.build_patch_fix_report` library entrypoint: findings fixable by a patch, aggregated by package name + current version (mirrors `export-version`'s sort order). Default `--gate any` fetches the union of the Endor Patch catalog (`spec.fixing_patch.endor_patch_available`) and the fix-available tag; narrow with `--gate endor-patch` or `--gate fix-available`. Upgrade targets come from `spec.fixing_upgrades.upgrade_list` on the same Finding.
 
 ### Changed
+- Executive packet SCA burndown renamed (`scaBurndown` / `03-sca-burndown.html`; legacy `findingsBurndown` still accepted).
+- Executive packet SAST / AI-SAST / Secrets FindingLog burndown (`codeFindingsBurndown` / `04-sast-burndown.html`) with shared category-spec path; `endor-reports upsert-code-findings` rebuilds only that block.
 
 - Workflow report scripts under `agent-knowledge/workflow-reports/*/scripts/` removed; report CLIs and libraries live in `endorlabs.workflows.reports`.
 - `finding_log_trends.query_operation_group_counts` is public (was `_query_operation_group_counts`); report-packet burndown uses the shared severity×reach API instead of a private import.
 - Findings burndown tag series use project-grain FindingLog pulls (parallel per tagged project) with local redistribute; path series remain leaf-namespace aggregates. Default `--min-projects` is `1` (display filter only); `--workers` controls pull parallelism (default 24).
+- Findings burndown HTML shows signed gap differentials (e.g. Widening (+240) / Narrowing (−420)) and best/worst tag leaderboards by Δ gap.
+- Executive report packet `data/` includes spreadsheet CSV exports (tag/path gap differentials, onboarding, throughput, tag catalog) alongside `packet.cube.json`.
+- Findings burndown throughput shows avg MAIN scans per project and observed ScanResult history bounds (newest/oldest).
+- Version sprawl packet supports direct/transitive and public/private toggles, plus a per-ecosystem summary table (DependencyMetadata ``direct`` / ``public``).
+- Findings burndown reach filter adds PRD and unreachable function/dependency (default ``all`` remains RF+PRF).
 - Pyright: `reportImportCycles` and missing-import checks elevated to error; strict roots expanded (`facade/__init__`, `query/__init__`, `operations/__init__`); `reportUnknownVariableType` ratcheted to error for `core/`, `workflows/`, and `operations/`. Dev pins: pyright 1.1.411, ruff 0.15.20, pytest 9.1.1.
 - `TabularExport` and CSV helpers moved to `endorlabs.workflows.tabular` (layer-neutral). `endorlabs.workflows.estate.analyze.cardinality.tabular` remains a re-export shim.
 
@@ -40,6 +47,8 @@ Repository history starts from a single clean root; sdists ship package content 
 - Always-on CI Security Content Guards and expanded pre-commit portable-examples / content checks (emails, non-Endor URLs, estate `-n` literals). Shipped `src/endorlabs` requires placeholder-only `-n` / `--namespace` / `--tenant` values.
 
 ### Changed
+- Executive packet SCA burndown renamed (`scaBurndown` / `03-sca-burndown.html`; legacy `findingsBurndown` still accepted).
+- Executive packet SAST / AI-SAST / Secrets FindingLog burndown (`codeFindingsBurndown` / `04-sast-burndown.html`) with shared category-spec path; `endor-reports upsert-code-findings` rebuilds only that block.
 
 - Product user-docs scrape removed: prefer Docs MCP (`https://docs.endorlabs.com/mcp`; unsupported harnesses: `https://docs.endorlabs.com/llms.txt`). Removed `include_user_docs` / `--sync-user-docs` / `sync_user_docs()`, the `[docs]` extra, and `InitStatus` user-docs fields.
 - Marked `REMOVE_BY_0_7_0` on remaining 0.6.x compat: `InitStatus.openapi_path` alias, flat-OpenAPI reconcile, `session_workspace_dir`, and `workflow_artifacts_root`.
@@ -64,6 +73,8 @@ Auth hardening, Query collect pagination, credential/AuthorizationPolicy audit s
 - `reference_next_page_cursor()` / `wire_spec_with_reference_page_cursor()` — nested reference list pagination helpers for custom Query joins.
 
 ### Changed
+- Executive packet SCA burndown renamed (`scaBurndown` / `03-sca-burndown.html`; legacy `findingsBurndown` still accepted).
+- Executive packet SAST / AI-SAST / Secrets FindingLog burndown (`codeFindingsBurndown` / `04-sast-burndown.html`) with shared category-spec path; `endor-reports upsert-code-findings` rebuilds only that block.
 
 - Auth env parity: removed `ENDOR_AUTH_TENANT` / `ENDOR_INIT_AUTH_TENANT` reads from `Client`; no new auth env vars. Bearer refresh hints are learned in-memory from `GET /v1/auth` (not from namespace), but bearer sessions no longer reauthenticate mid-run. `Client` never writes `ENDOR_TOKEN` or mutates `os.environ`; bearer expiry/401 now fail closed with refresh guidance, while API-key auth retains transport-level reauthentication. Proactive expiry prints a one-time stderr warning (no secrets). `endor-auth check --json` adds `auth_mode_resolved`, `sso_tenant_resolved`, `browser_auth_method_resolved`. Disk persistence remains `endor-auth refresh` only.
 - Browser OAuth: live-verified interactive methods are `sso` (explicit tenant required; no silent `endor-admin`), `google`, `github`, `gitlab`, and `email` (requires `--email`). `azureadv2` and `browser-auth` remain experimental. Bare `Client()` without credentials does not open a browser. Only SSO hard-requires `-n` at refresh; social/email tenant access comes from AuthorizationPolicy grants on the resulting token.
@@ -101,6 +112,8 @@ Auth workflows, workspace layout, and maintainer tooling. Generated models pinne
 - Agent skill `endor-auth-login-count` and `endorlabs.workflows.auth` — AuthenticationLog login-activity CSV via tenant list-path `list_groups` on `spec.claims` with interactive URI filter.
 
 ### Changed
+- Executive packet SCA burndown renamed (`scaBurndown` / `03-sca-burndown.html`; legacy `findingsBurndown` still accepted).
+- Executive packet SAST / AI-SAST / Secrets FindingLog burndown (`codeFindingsBurndown` / `04-sast-burndown.html`) with shared category-spec path; `endor-reports upsert-code-findings` rebuilds only that block.
 
 - Replaced maintainer-only `devtools/refresh_token_to_dotenv.py` with shipped `endor-auth refresh` and `refresh_token_to_dotenv`.
 - Workflow default outputs migrated to three-bucket workspace layout: `workspace/projects/`, `workspace/runs/<run-bucket>/`, `workspace/inventory/` (legacy `workspace/sessions/` and `workspace/artifacts/` deprecated).
@@ -136,6 +149,8 @@ Query module, canonical filters, estate Query migration, and agent-knowledge exp
 - **Agent skills** — `endor-author-agent-skill`, `endor-cli-vs-cloud-projects`, `endor-duplicate-projects`, `endor-potentially-reachable-analysis`, `endor-chart-new-vs-resolved-findings`, `endor-ci-endorctl-version-audit`.
 
 ### Changed
+- Executive packet SCA burndown renamed (`scaBurndown` / `03-sca-burndown.html`; legacy `findingsBurndown` still accepted).
+- Executive packet SAST / AI-SAST / Secrets FindingLog burndown (`codeFindingsBurndown` / `04-sast-burndown.html`) with shared category-spec path; `endor-reports upsert-code-findings` rebuilds only that block.
 
 - **`ParentShard` → `ProjectShard`**; **`NamespaceShard` → `NamespaceGeometry`**; estate workflows and dashboard use **`client.Query.Project.*`** and **`topology.project_shards()`** / **`query_scopes()`**.
 - Estate collect uses **`discover_topology`** + Query PV preflight in compile graph; manifest `expected_count` on shard preflight.
@@ -164,6 +179,8 @@ Call-graph export/path workflows, vector-store query CLI, and sweep→export bre
 - **CLIs** — `endor-callgraph-path` (live project path search); `endor-callgraph-search` path mode (`--path-from`, `--path-to`, `--max-depth`); `endor-vector-query` (list/probe/query tenant vector stores).
 
 ### Changed
+- Executive packet SCA burndown renamed (`scaBurndown` / `03-sca-burndown.html`; legacy `findingsBurndown` still accepted).
+- Executive packet SAST / AI-SAST / Secrets FindingLog burndown (`codeFindingsBurndown` / `04-sast-burndown.html`) with shared category-spec path; `endor-reports upsert-code-findings` rebuilds only that block.
 
 - **Pass 3 naming** — `endor-agent-context` uses `--callgraph-export`, output subdir `callgraph_export/`, and manifest key `artifacts.callgraph_export`.
 - **Call-graph search** — multi-hop BFS is a first-class library/CLI primitive; skills updated accordingly.
@@ -188,6 +205,8 @@ V1 consumer facade cutover: package split, contract-driven routes, `search_by_*`
 - **Facade sugar** — `CallGraphData.decode()` / `fetch()`, `ScanResult.get_logs()`, `ScanResult.latest_created(parent=…)`.
 
 ### Changed
+- Executive packet SCA burndown renamed (`scaBurndown` / `03-sca-burndown.html`; legacy `findingsBurndown` still accepted).
+- Executive packet SAST / AI-SAST / Secrets FindingLog burndown (`codeFindingsBurndown` / `04-sast-burndown.html`) with shared category-spec path; `endor-reports upsert-code-findings` rebuilds only that block.
 
 - **Discovery** — use `search_by_*` + explicit disambiguation or `get(uuid)` instead of `lookup()` / `Project.resolve()`. See [facade-helpers.md](guides/facade-helpers.md) and `resource-discovery` contract.
 - Troubleshooting scan workflows use `ScanResult.list_by_project` and `Project.search_by_name` instead of hand-built filters / `workflows.projects.resolve`.
@@ -232,6 +251,8 @@ First release candidate validated via TestPyPI; consolidates estate workflow uni
 - **`endorlabs.tools.list_sharding`** — `ParentShard`, `parallel_map_shards`, and `list_for_shards` for per-project parallel SDK lists.
 
 ### Changed
+- Executive packet SCA burndown renamed (`scaBurndown` / `03-sca-burndown.html`; legacy `findingsBurndown` still accepted).
+- Executive packet SAST / AI-SAST / Secrets FindingLog burndown (`codeFindingsBurndown` / `04-sast-burndown.html`) with shared category-spec path; `endor-reports upsert-code-findings` rebuilds only that block.
 
 - **`init(sync_skills="claude")`** — generates repo-root `CLAUDE.md` (bootstrap rules + skill index) and `.claude/commands/` slash commands instead of mirroring `.claude/skills/`.
 - **Release and TestPyPI workflows** — full ship-artifact verification before publish; optional `--verify-changelog` on release cuts.
@@ -340,6 +361,8 @@ First public pre-release on TestPyPI.
 - **Public API** — `agent_bootstrap_contract_ids()` removed; use `agent_knowledge_rule_ids()`.
 
 ### Changed
+- Executive packet SCA burndown renamed (`scaBurndown` / `03-sca-burndown.html`; legacy `findingsBurndown` still accepted).
+- Executive packet SAST / AI-SAST / Secrets FindingLog burndown (`codeFindingsBurndown` / `04-sast-burndown.html`) with shared category-spec path; `endor-reports upsert-code-findings` rebuilds only that block.
 
 - **Model-sync pipeline** — in-memory staging (dicts + in-process `datamodel_code_generator`); removed committed `workspace/model-sync/` tree; disk writes limited to ship surface (`src/endorlabs/generated/`, stub, reference docs). Path safety via `find_repo_root()` + `safe_repo_output_path()`; removed `--output-root` and `--spec-path` from maintainer CLI.
 - **Model-sync maintainer tooling** — removed git-baseline PR delta helpers (`model_sync_pr_deltas.py`, `--delta-summary`); SHA verify (`--verify-upstream-only`), deterministic regen, and CI/pre-push drift gates unchanged.

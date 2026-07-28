@@ -11,7 +11,10 @@ from pathlib import Path
 
 import endorlabs
 from endorlabs.context.paths import default_runs_dir, sanitize_path_segment
-from endorlabs.workflows.reports.bundles.executive_packet import build_report_packet
+from endorlabs.workflows.reports.bundles.executive_packet import (
+    build_report_packet,
+    upsert_code_findings_burndown,
+)
 from endorlabs.workflows.reports.export.html.render import (
     default_packet_output_dir,
     render_report_packet,
@@ -61,9 +64,44 @@ def _packet_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
         help="Parallel FindingLog matrix pulls for tagged projects (default: 24).",
     )
     packet.add_argument("--skip-version-sprawl", action="store_true")
-    packet.add_argument("--skip-findings-burndown", action="store_true")
+    packet.add_argument(
+        "--skip-findings-burndown",
+        action="store_true",
+        help="Skip SCA (vulnerability) FindingLog burndown.",
+    )
+    packet.add_argument(
+        "--skip-sca-burndown",
+        action="store_true",
+        help="Alias for --skip-findings-burndown.",
+    )
+    packet.add_argument(
+        "--skip-code-findings-burndown",
+        action="store_true",
+        help="Skip SAST / AI-SAST / Secrets FindingLog burndown.",
+    )
     packet.add_argument("--timeout", type=float, default=900.0)
     return packet
+
+
+def _upsert_code_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    upsert = sub.add_parser(
+        "upsert-code-findings",
+        help=(
+            "Rebuild only SAST/AI-SAST/Secrets burndown into an existing packet "
+            "directory (keeps onboarding, sprawl, SCA)."
+        ),
+    )
+    upsert.add_argument(
+        "--packet-dir",
+        type=Path,
+        required=True,
+        help="Existing packet output dir containing data/packet.cube.json.",
+    )
+    upsert.add_argument("--lookback", type=int, default=None)
+    upsert.add_argument("--min-projects", type=int, default=1)
+    upsert.add_argument("--workers", type=int, default=24)
+    upsert.add_argument("--timeout", type=float, default=900.0)
+    return upsert
 
 
 def _parity_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
@@ -113,7 +151,21 @@ def _parity_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
         help="Parallel FindingLog matrix pulls for tagged projects (default: 24).",
     )
     parity.add_argument("--skip-version-sprawl", action="store_true")
-    parity.add_argument("--skip-findings-burndown", action="store_true")
+    parity.add_argument(
+        "--skip-findings-burndown",
+        action="store_true",
+        help="Skip SCA (vulnerability) FindingLog burndown.",
+    )
+    parity.add_argument(
+        "--skip-sca-burndown",
+        action="store_true",
+        help="Alias for --skip-findings-burndown.",
+    )
+    parity.add_argument(
+        "--skip-code-findings-burndown",
+        action="store_true",
+        help="Skip SAST / AI-SAST / Secrets FindingLog burndown.",
+    )
     parity.add_argument("--timeout", type=float, default=900.0)
     return parity
 
@@ -142,6 +194,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
     _packet_parser(sub)
+    _upsert_code_parser(sub)
     _parity_parser(sub)
     _tenant_report_parser(sub, "duplicates", "Find duplicate project registrations.")
     _tenant_report_parser(
@@ -191,6 +244,48 @@ def _default_parity_dir(namespace: str) -> Path:
     return default_runs_dir("report-parity") / f"{slug}-{day}"
 
 
+def _run_upsert_code_findings(args: argparse.Namespace) -> int:
+    packet_dir = Path(args.packet_dir)
+    cube_path = packet_dir / "data" / "packet.cube.json"
+    if not cube_path.is_file():
+        print(f"Missing cube: {cube_path}", file=sys.stderr)
+        return 2
+    cube = json.loads(cube_path.read_text(encoding="utf-8"))
+    tenant = str(cube.get("tenant") or "")
+    if not tenant:
+        print("Cube missing tenant", file=sys.stderr)
+        return 2
+    print(f"upsert code findings into {packet_dir} …", flush=True)
+    client = endorlabs.Client(tenant=tenant, timeout=float(args.timeout))
+    try:
+        cube = upsert_code_findings_burndown(
+            client,
+            cube,
+            lookback=args.lookback,
+            min_projects=int(args.min_projects),
+            max_workers=int(args.workers),
+        )
+    finally:
+        client.close()
+    print("rendering…", flush=True)
+    written = render_report_packet(cube, packet_dir)
+    code = (cube.get("reports") or {}).get("codeFindingsBurndown") or {}
+    print(
+        "code categories:",
+        list((code.get("byCategory") or {}).keys()),
+        flush=True,
+    )
+    for key, block in (code.get("byCategory") or {}).items():
+        meta = block.get("tagSeriesMeta") or {}
+        print(
+            f"  {key}: ready={meta.get('seriesReadyCount')} "
+            f"facets={block.get('facetKeys')}",
+            flush=True,
+        )
+    print(f"Wrote {len(written)} files under {packet_dir}", flush=True)
+    return 0
+
+
 def _run_packet(args: argparse.Namespace) -> int:
     out_dir = (
         Path(args.output_dir)
@@ -199,6 +294,10 @@ def _run_packet(args: argparse.Namespace) -> int:
     )
     client = endorlabs.Client(tenant=args.namespace, timeout=float(args.timeout))
     try:
+        skip_sca = bool(
+            getattr(args, "skip_findings_burndown", False)
+            or getattr(args, "skip_sca_burndown", False)
+        )
         cube = build_report_packet(
             client,
             args.namespace,
@@ -206,7 +305,10 @@ def _run_packet(args: argparse.Namespace) -> int:
             min_projects=int(args.min_projects),
             max_workers=int(args.workers),
             include_version_sprawl=not args.skip_version_sprawl,
-            include_findings_burndown=not args.skip_findings_burndown,
+            include_sca_burndown=not skip_sca,
+            include_code_findings_burndown=not getattr(
+                args, "skip_code_findings_burndown", False
+            ),
         )
     finally:
         client.close()
@@ -245,6 +347,10 @@ def _run_parity(args: argparse.Namespace) -> int:
 
     client = endorlabs.Client(tenant=args.namespace, timeout=float(args.timeout))
     try:
+        skip_sca = bool(
+            getattr(args, "skip_findings_burndown", False)
+            or getattr(args, "skip_sca_burndown", False)
+        )
         cube = build_report_packet(
             client,
             args.namespace,
@@ -252,7 +358,10 @@ def _run_parity(args: argparse.Namespace) -> int:
             min_projects=int(args.min_projects),
             max_workers=int(args.workers),
             include_version_sprawl=not args.skip_version_sprawl,
-            include_findings_burndown=not args.skip_findings_burndown,
+            include_sca_burndown=not skip_sca,
+            include_code_findings_burndown=not getattr(
+                args, "skip_code_findings_burndown", False
+            ),
         )
     finally:
         client.close()
@@ -304,6 +413,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "packet":
         return _run_packet(args)
+    if args.command == "upsert-code-findings":
+        return _run_upsert_code_findings(args)
     if args.command == "parity":
         return _run_parity(args)
     if args.command == "duplicates":

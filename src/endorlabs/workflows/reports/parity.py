@@ -212,12 +212,13 @@ def compare_packet_cube(
 ) -> ParityReport:
     """Compare a packet cube against scratch baseline JSON blobs."""
     reports = cube.get("reports") or {}
+    sca = reports.get("scaBurndown") or reports.get("findingsBurndown") or {}
     rows: list[MetricDelta] = []
     rows.extend(compare_onboarding(reports.get("onboarding") or {}, baseline_adoption))
     rows.extend(compare_sprawl(reports.get("versionSprawl") or {}, baseline_sprawl))
     rows.extend(
         compare_findings_burndown(
-            reports.get("findingsBurndown") or {},
+            sca,
             baseline_burndown,
             tag_catalog_count=len(cube.get("tagCatalog") or []),
         )

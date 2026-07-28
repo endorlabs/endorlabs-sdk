@@ -17,15 +17,14 @@ if TYPE_CHECKING:
 
 _PACKAGE_NAME_PATH = "spec.dependency_data.package_name"
 _PACKAGE_VERSION_PATH = "spec.dependency_data.resolved_version"
+_DIRECT_PATH = "spec.dependency_data.direct"
+_PUBLIC_PATH = "spec.dependency_data.public"
 
+_RELATION_KEYS = ("all", "direct", "transitive")
+_VISIBILITY_KEYS = ("all", "public", "private")
 
-def _grouped_count_list_parameters(*, page_size: int) -> ListParameters:
-    return ListParameters(
-        traverse=False,
-        page_size=page_size,
-        group_aggregation_paths=[_PACKAGE_NAME_PATH, _PACKAGE_VERSION_PATH],
-    )
-
+# Leaf record: package name, resolved version, is_direct, is_public (None = unknown).
+LeafPair = tuple[str, str, bool | None, bool | None]
 
 _ECOSYSTEM_PREFIX = {
     "npm://": "npm",
@@ -45,6 +44,27 @@ def _ecosystem(package_name: str) -> str:
     if "://" in package_name:
         return package_name.split("://", 1)[0]
     return "other"
+
+
+def _as_bool(value: Any) -> bool | None:
+    if value is True or str(value).lower() == "true":
+        return True
+    if value is False or str(value).lower() == "false":
+        return False
+    return None
+
+
+def _normalize_leaf_record(item: Any) -> LeafPair | None:
+    """Accept ``(name, ver)`` or ``(name, ver, direct, public)`` tuples."""
+    if not isinstance(item, (list, tuple)) or len(item) < 2:
+        return None
+    name = str(item[0] or "")
+    ver = str(item[1] or "")
+    if not name or not ver:
+        return None
+    if len(item) >= 4:
+        return name, ver, _as_bool(item[2]), _as_bool(item[3])
+    return name, ver, None, None
 
 
 def _summarize(
@@ -75,11 +95,31 @@ def _summarize(
     }
 
 
-def _pair_from_bucket(bucket: Any) -> tuple[str, str]:
+def _grouped_count_list_parameters(*, page_size: int) -> ListParameters:
+    return ListParameters(
+        traverse=False,
+        page_size=page_size,
+        group_aggregation_paths=[
+            _PACKAGE_NAME_PATH,
+            _PACKAGE_VERSION_PATH,
+            _DIRECT_PATH,
+            _PUBLIC_PATH,
+        ],
+    )
+
+
+def _record_from_bucket(bucket: Any) -> LeafPair | None:
     parsed = getattr(bucket, "parsed", None) or {}
     name = str(parsed.get(_PACKAGE_NAME_PATH) or "")
     ver = str(parsed.get(_PACKAGE_VERSION_PATH) or "")
-    return name, ver
+    if not name or not ver:
+        return None
+    return (
+        name,
+        ver,
+        _as_bool(parsed.get(_DIRECT_PATH)),
+        _as_bool(parsed.get(_PUBLIC_PATH)),
+    )
 
 
 def collect_leaf_pairs(
@@ -87,45 +127,79 @@ def collect_leaf_pairs(
     leaf_namespaces: list[str],
     *,
     page_size: int = 500,
-) -> dict[str, list[tuple[str, str]]]:
-    """Return ``{namespace: [(package_name, version), ...]}`` distinct pairs."""
-    out: dict[str, list[tuple[str, str]]] = {}
+) -> dict[str, list[LeafPair]]:
+    """Return ``{namespace: [(name, version, direct, public), ...]}`` distinct rows."""
+    out: dict[str, list[LeafPair]] = {}
     lp = _grouped_count_list_parameters(page_size=page_size)
+    paths = [
+        _PACKAGE_NAME_PATH,
+        _PACKAGE_VERSION_PATH,
+        _DIRECT_PATH,
+        _PUBLIC_PATH,
+    ]
     for ns in leaf_namespaces:
         buckets = list(
             client.DependencyMetadata.list_groups(
                 namespace=ns,
                 list_params=lp,
-                paths=[_PACKAGE_NAME_PATH, _PACKAGE_VERSION_PATH],
+                paths=paths,
                 max_pages=None,
             )
         )
-        seen: set[tuple[str, str]] = set()
-        pairs: list[tuple[str, str]] = []
+        seen: set[LeafPair] = set()
+        pairs: list[LeafPair] = []
         for b in buckets:
-            name, ver = _pair_from_bucket(b)
-            if not name or not ver:
+            rec = _record_from_bucket(b)
+            if rec is None or rec in seen:
                 continue
-            key = (name, ver)
-            if key in seen:
-                continue
-            seen.add(key)
-            pairs.append(key)
+            seen.add(rec)
+            pairs.append(rec)
         out[ns] = pairs
     return out
 
 
+def _passes_relation(direct: bool | None, relation: str) -> bool:
+    if relation == "all":
+        return True
+    if relation == "direct":
+        return direct is True
+    if relation == "transitive":
+        return direct is False
+    return False
+
+
+def _passes_visibility(public: bool | None, visibility: str) -> bool:
+    if visibility == "all":
+        return True
+    if visibility == "public":
+        return public is True
+    if visibility == "private":
+        return public is False
+    return False
+
+
 def build_version_sprawl_report(
     *,
-    leaf_pairs: dict[str, list[tuple[str, str]]],
+    leaf_pairs: dict[str, list[Any]],
     path_options: list[str],
     projects: list[dict[str, Any]],
     tag_catalog: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Roll leaf package x version pairs into estate / path / tag grids."""
-    # UUID → namespace
+    """Roll leaf package×version rows into estate / path / tag grids.
+
+    Grid shape: ``[ecosystem][relation][visibility]`` where relation is
+    ``all|direct|transitive`` and visibility is ``all|public|private``.
+    """
+    normalized: dict[str, list[LeafPair]] = {}
+    for ns, rows in leaf_pairs.items():
+        kept: list[LeafPair] = []
+        for item in rows:
+            rec = _normalize_leaf_record(item)
+            if rec is not None:
+                kept.append(rec)
+        normalized[ns] = kept
+
     uuid_ns = {p["uuid"]: p.get("namespace") or "" for p in projects}
-    # tag → namespaces that contain tagged projects
     tag_namespaces: dict[str, set[str]] = {}
     for entry in tag_catalog:
         tag = entry["tag"]
@@ -136,38 +210,53 @@ def build_version_sprawl_report(
                 nss.add(ns)
         tag_namespaces[tag] = nss
 
-    def versions_for_namespaces(nss: set[str]) -> dict[str, set[str]]:
+    def versions_for_namespaces(
+        nss: set[str],
+        *,
+        relation: str = "all",
+        visibility: str = "all",
+        ecosystem: str = "all",
+    ) -> dict[str, set[str]]:
         by: dict[str, set[str]] = defaultdict(set)
         for ns in nss:
-            for name, ver in leaf_pairs.get(ns, []):
+            for name, ver, direct, public in normalized.get(ns, []):
+                if not _passes_relation(direct, relation):
+                    continue
+                if not _passes_visibility(public, visibility):
+                    continue
+                if ecosystem != "all" and _ecosystem(name) != ecosystem:
+                    continue
                 by[name].add(ver)
         return by
 
-    all_leaves = set(leaf_pairs)
-    estate_all = _summarize(versions_for_namespaces(all_leaves))
-
+    all_leaves = set(normalized)
     ecosystems = sorted(
-        {_ecosystem(name) for pairs in leaf_pairs.values() for name, _ver in pairs}
+        {
+            _ecosystem(name)
+            for pairs in normalized.values()
+            for name, _ver, _d, _p in pairs
+        }
     )
 
-    def eco_filter(
-        versions_by_pkg: dict[str, set[str]], ecosystem: str
-    ) -> dict[str, set[str]]:
-        if ecosystem == "all":
-            return versions_by_pkg
-        return {
-            n: vs for n, vs in versions_by_pkg.items() if _ecosystem(n) == ecosystem
-        }
-
-    def grid_for(nss: set[str]) -> dict[str, dict[str, dict[str, Any]]]:
-        base = versions_for_namespaces(nss)
-        grid: dict[str, dict[str, dict[str, Any]]] = {"all": {"all": _summarize(base)}}
-        for eco in ecosystems:
-            filtered = eco_filter(base, eco)
-            grid[eco] = {"all": _summarize(filtered)}
+    def grid_for(nss: set[str]) -> dict[str, dict[str, dict[str, dict[str, Any]]]]:
+        grid: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
+        eco_keys = ["all", *ecosystems]
+        for eco in eco_keys:
+            grid[eco] = {}
+            for relation in _RELATION_KEYS:
+                grid[eco][relation] = {}
+                for visibility in _VISIBILITY_KEYS:
+                    grid[eco][relation][visibility] = _summarize(
+                        versions_for_namespaces(
+                            nss,
+                            relation=relation,
+                            visibility=visibility,
+                            ecosystem=eco,
+                        )
+                    )
         return grid
 
-    per_path: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
+    per_path: dict[str, dict[str, dict[str, dict[str, dict[str, Any]]]]] = {}
     for path in path_options:
         if path == "all":
             nss = all_leaves
@@ -175,9 +264,8 @@ def build_version_sprawl_report(
             nss = {ns for ns in all_leaves if ns == path or ns.startswith(path + ".")}
         per_path[path] = grid_for(nss)
 
-    per_tag: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
+    per_tag: dict[str, dict[str, dict[str, dict[str, dict[str, Any]]]]] = {}
     for tag, nss in tag_namespaces.items():
-        # UUID-set parity: only leaves that actually hold tagged projects
         scoped = nss & all_leaves
         if not scoped:
             continue
@@ -186,7 +274,9 @@ def build_version_sprawl_report(
     return {
         "histKeys": list(HIST_KEYS),
         "ecosystems": ecosystems,
-        "estate": per_path.get("all", {"all": {"all": estate_all}}),
+        "relations": list(_RELATION_KEYS),
+        "visibilities": list(_VISIBILITY_KEYS),
+        "estate": per_path.get("all", grid_for(all_leaves)),
         "perPath": per_path,
         "perTag": per_tag,
     }

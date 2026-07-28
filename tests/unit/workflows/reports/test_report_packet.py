@@ -64,16 +64,29 @@ def test_render_packet_captions_and_glossary(tmp_path: Path) -> None:
     assert names >= {
         "01-onboarding.html",
         "02-version-sprawl.html",
-        "03-findings-burndown.html",
+        "03-sca-burndown.html",
+        "04-sast-burndown.html",
         "packet.cube.json",
         "README.txt",
     }
     assert (tmp_path / "assets" / "endor-logo.png").is_file()
     assert (tmp_path / "assets" / "endor-wordmark.png").is_file()
+    data = tmp_path / "data"
+    assert (data / "tag-gap-differentials.csv").is_file()
+    assert (data / "path-gap-differentials.csv").is_file()
+    assert (data / "code-path-gap-differentials.csv").is_file()
+    assert (data / "code-tag-gap-differentials.csv").is_file()
+    assert (data / "tag-catalog.csv").is_file()
+    assert (data / "onboarding-weekly.csv").is_file()
+    assert (data / "EXPORTS.txt").is_file()
+    gap_csv = (data / "tag-gap-differentials.csv").read_text(encoding="utf-8")
+    assert "gap_delta" in gap_csv
+    assert "team-alpha" in gap_csv
 
     onboarding = (tmp_path / "01-onboarding.html").read_text(encoding="utf-8")
     sprawl = (tmp_path / "02-version-sprawl.html").read_text(encoding="utf-8")
-    burndown = (tmp_path / "03-findings-burndown.html").read_text(encoding="utf-8")
+    burndown = (tmp_path / "03-sca-burndown.html").read_text(encoding="utf-8")
+    sast = (tmp_path / "04-sast-burndown.html").read_text(encoding="utf-8")
     readme = (tmp_path / "README.txt").read_text(encoding="utf-8")
 
     assert copy_mod.H1_ONBOARDING in onboarding
@@ -81,19 +94,31 @@ def test_render_packet_captions_and_glossary(tmp_path: Path) -> None:
     assert "footer-mark" in onboarding
     assert "site-header" in onboarding
     assert copy_mod.H1_VERSION_SPRAWL in sprawl
-    assert copy_mod.H1_FINDINGS_BURNDOWN in burndown
+    assert "Direct only" in sprawl
+    assert "Private only" in sprawl
+    assert "Per-ecosystem summary" in sprawl
+    assert copy_mod.H1_SCA_BURNDOWN in burndown
+    assert copy_mod.H1_SAST_BURNDOWN in sast
+    assert 'id="category"' in sast
     assert "How to read these metrics" in onboarding
     assert copy_mod.STAT_WINDOW_NET in burndown
     assert copy_mod.PENDING_TAG_CAPTION in burndown
     assert copy_mod.MAIN_THROUGHPUT_LABEL in burndown
     assert copy_mod.TAG_HELP in burndown
+    assert copy_mod.AVG_SCANS_PER_PROJECT_LABEL in burndown
+    assert copy_mod.TAG_LEADERS_NARROWING in burndown
+    assert copy_mod.TAG_LEADERS_WIDENING in burndown
+    assert "Gap differential" in burndown
+    assert "gapTrendLabel" in burndown
     assert "team-alpha" in burndown
     assert "team-beta" in burndown
     assert "series pending" in burndown
     assert "Window net (CREATE−DELETE)" in readme
+    assert "03-sca-burndown.html" in readme
+    assert "04-sast-burndown.html" in readme
     assert REPORT_PACKET_SCHEMA in onboarding
 
-    for text in (onboarding, sprawl, burndown):
+    for text in (onboarding, sprawl, burndown, sast):
         assert "example-tenant" in text.lower()
 
 
@@ -170,9 +195,9 @@ def test_sum_series_and_hist_bucket() -> None:
 def test_version_sprawl_tag_uuid_rollups() -> None:
     leaf_pairs = {
         "example-tenant.child": [
-            ("npm://example-pkg", "1.0.0"),
-            ("npm://example-pkg", "2.0.0"),
-            ("pypi://example-lib", "0.1.0"),
+            ("npm://example-pkg", "1.0.0", True, True),
+            ("npm://example-pkg", "2.0.0", False, True),
+            ("pypi://example-lib", "0.1.0", True, False),
         ]
     }
     projects = [
@@ -207,6 +232,13 @@ def test_version_sprawl_tag_uuid_rollups() -> None:
         projects=projects,
         tag_catalog=catalog,
     )
-    assert report["estate"]["all"]["all"]["p"] == 2
+    estate_all = report["estate"]["all"]["all"]["all"]
+    assert estate_all["p"] == 2
+    assert report["estate"]["all"]["direct"]["all"]["p"] == 2
+    assert report["estate"]["all"]["transitive"]["all"]["p"] == 1
+    assert report["estate"]["all"]["all"]["public"]["p"] == 1
+    assert report["estate"]["all"]["all"]["private"]["p"] == 1
     assert "team-alpha" in report["perTag"]
     assert "team-beta" in report["perTag"]
+    assert "npm" in report["ecosystems"]
+    assert "PyPI" in report["ecosystems"]
