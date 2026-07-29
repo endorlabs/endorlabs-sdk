@@ -14,11 +14,16 @@ from endorlabs.filters import (
 from endorlabs.workflows.findings.finding_log_trends import (
     empty_series_cell,
     expand_severity_facet_matrix,
+    expand_severity_reach_matrix,
 )
 from endorlabs.workflows.reports.analyze.code_findings_trend import (
     CODE_CATEGORIES,
     SAST_FACET_KEYS,
     build_code_findings_burndown_report,
+)
+from endorlabs.workflows.reports.analyze.finding_burndown_specs import (
+    SECRETS_CELLS,
+    sev_facet_cells,
 )
 
 
@@ -41,6 +46,8 @@ def test_expand_severity_facet_matrix() -> None:
     raw = {
         "critical": {"all": cell(1), "true_positive": cell(2)},
         "high": {"all": cell(3), "true_positive": cell(4)},
+        "medium": {"all": cell(5), "true_positive": cell(6)},
+        "low": {"all": cell(7), "true_positive": cell(8)},
     }
     expanded = expand_severity_facet_matrix(
         raw,
@@ -48,8 +55,47 @@ def test_expand_severity_facet_matrix() -> None:
         categories=cats,
         period_caption=caption,
     )
-    assert expanded["all"]["all"]["weeklyNew"] == [4, 0]
-    assert expanded["all"]["true_positive"]["weeklyNew"] == [6, 0]
+    assert expanded["all"]["all"]["weeklyNew"] == [16, 0]
+    assert expanded["all"]["true_positive"]["weeklyNew"] == [20, 0]
+    assert expanded["medium"]["all"]["weeklyNew"] == [5, 0]
+    assert expanded["low"]["all"]["weeklyNew"] == [7, 0]
+
+
+def test_expand_severity_reach_matrix_sums_four_levels() -> None:
+    cats = ["01/05"]
+    caption = "1w"
+
+    def cell(n: int) -> dict[str, Any]:
+        c = empty_series_cell(cats, caption)
+        c["weeklyNew"] = [n]
+        c["weeklyResolved"] = [0]
+        return c
+
+    raw = {
+        sev: {
+            "reachable": cell(1),
+            "prf": cell(2),
+            "prd": cell(0),
+            "unreachable_function": cell(0),
+            "unreachable_dependency": cell(0),
+        }
+        for sev in ("critical", "high", "medium", "low")
+    }
+    expanded = expand_severity_reach_matrix(
+        raw, categories=cats, period_caption=caption
+    )
+    # per-sev all = RF+PRF = 1+2
+    assert expanded["critical"]["all"]["weeklyNew"] == [3]
+    # top-level all = 4 * 3
+    assert expanded["all"]["all"]["weeklyNew"] == [12]
+    assert expanded["all"]["reachable"]["weeklyNew"] == [4]
+
+
+def test_sev_facet_cells_include_medium_low() -> None:
+    cells = sev_facet_cells((("all", ""),))
+    levels = {row[0] for row in cells}
+    assert levels == {"critical", "high", "medium", "low"}
+    assert len(SECRETS_CELLS) == 4 * 3  # four sevs x all/valid/invalid
 
 
 def test_build_code_findings_burndown_report_shape() -> None:
@@ -63,7 +109,7 @@ def test_build_code_findings_burndown_report_shape() -> None:
         cell = empty_series_cell(cats, caption)
         return {
             sev: {facet: dict(cell) for facet in facets}
-            for sev in ("all", "critical", "high")
+            for sev in ("all", "critical", "high", "medium", "low")
         }
 
     seed = empty_series_cell(cats, caption)

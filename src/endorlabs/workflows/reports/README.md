@@ -33,6 +33,21 @@ uv run endor-reports prf-analysis -n <tenant>
 uv run endor-reports package-resolution -n <tenant>
 ```
 
+## Executive packet
+
+`endor-reports packet` writes a browser-ready HTML set under
+`.endorlabs-context/workspace/runs/executive-report-packet/`:
+
+| Page | Content |
+|------|---------|
+| `01-onboarding.html` | Project registration + MAIN/CI scan cadence + tag/project ranks |
+| `02-version-sprawl.html` | Dependency version sprawl |
+| `03-sca-burndown.html` | SCA FindingLog burndown |
+| `04-sast-burndown.html` | SAST / AI-SAST / Secrets FindingLog burndown |
+
+Guide: [docs/guides/executive-report-packet.md](../../../../docs/guides/executive-report-packet.md).
+Agent router: skill **endor-workflow-reports**.
+
 ## Findings burndown pull
 
 Tag series: one FindingLog severity×reach matrix per **tagged** project

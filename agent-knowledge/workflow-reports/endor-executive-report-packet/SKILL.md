@@ -2,9 +2,9 @@
 name: endor-executive-report-packet
 description: |
   Use when producing a tenant-level executive interactive HTML report packet
-  (onboarding, dependency version sprawl, vulnerability FindingLog trends) for
-  browser handoff. Not for single-project RCA, estate IR collect, or Cursor
-  canvas-only artifacts.
+  (onboarding + scan/PR cadence, dependency version sprawl, SCA and
+  SAST/AI-SAST/Secrets FindingLog burndown) for browser handoff. Not for
+  single-project RCA, estate IR collect, or Cursor canvas-only artifacts.
 endorlabs:
   catalog:
     workflow_id: executive-report-packet
@@ -19,9 +19,9 @@ endorlabs:
 # Executive report packet
 
 Build a **self-contained HTML packet** for a tenant or namespace: organization
-onboarding, dependency version sprawl, and vulnerability findings trend
-(FindingLog CREATE/DELETE). Open the HTML files in any browser — no Cursor
-runtime required.
+onboarding (registration + ScanResult MAIN/CI cadence), dependency version
+sprawl, and FindingLog CREATE/DELETE burndown (SCA + SAST/AI-SAST/Secrets).
+Open the HTML files in any browser — no Cursor runtime required.
 
 ## Scope
 
@@ -30,6 +30,8 @@ runtime required.
 - Tenant/namespace executive HTML under
   `.endorlabs-context/workspace/runs/executive-report-packet/`.
 - Project tag discovery from `Project.meta.tags` (full catalog; no allowlists).
+- Onboarding scan cadence: weekly MAIN `TYPE_ALL_SCANS` + `CONTEXT_TYPE_CI_RUN`
+  (analytics off by default); tag/project leaderboards by cadence.
 - FindingLog window-net trends; tag series via project-grain pulls + local
   redistribute (`--workers`); `--min-projects` only filters display.
 
@@ -109,17 +111,25 @@ only). Accept small live drift (≤1–2%); fail on structural breaks or large c
 
 | File | Content |
 |------|---------|
-| `01-onboarding.html` | Organization onboarding |
+| `01-onboarding.html` | Onboarding + scan/PR cadence + tag/project ranks |
 | `02-version-sprawl.html` | Dependency version sprawl |
-| `03-findings-burndown.html` | Vulnerability findings trend |
+| `03-sca-burndown.html` | SCA FindingLog burndown |
+| `04-sast-burndown.html` | SAST / AI-SAST / Secrets FindingLog burndown |
 | `data/packet.cube.json` | Portable cube (`endor.report_packet.v0`) |
 | `README.txt` | Metric definitions for handoff |
+
+### Onboarding cadence (`reports.onboarding.cadence`)
+
+- `weeklyMainFull` / `weeklyMainWithAnalytics` / `weeklyCi` — estate weekly ScanResult counts (~90d).
+- `byProject` / `byTag` / `topProjects` / `topTags` — rank by MAIN full scans then CI.
+- UI: project-tag filter (scopes registration/hierarchy/ranks); **Include analytics** toggles MAIN series; weekly scan chart stays org-wide.
 
 ## Metric captions (must preserve)
 
 - Primary burndown stat: **Window net (CREATE−DELETE)** (may be negative; not open inventory).
 - MAIN throughput: **Main-context scans (activity proxy)**.
 - Tags without FindingLog series: **Trend charts not loaded for this tag yet…**
+- Onboarding cadence default excludes `TYPE_ANALYTICS` / `TYPE_ANALYTICS_CHECK`.
 
 ## Library
 

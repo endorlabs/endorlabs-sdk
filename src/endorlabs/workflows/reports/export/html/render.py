@@ -77,6 +77,78 @@ function chartScales(theme) {
     y: { ticks: { color: theme.muted }, grid: { color: theme.grid } },
   };
 }
+const SEV_OPTIONS = [
+  {v:"critical", l:"Critical and higher"},
+  {v:"high_plus", l:"High and higher"},
+  {v:"medium_plus", l:"Medium and higher"},
+  {v:"all", l:"All severities"},
+];
+const SEV_LABELS = Object.fromEntries(SEV_OPTIONS.map(o => [o.v, o.l]));
+const SEV_THRESHOLD_BANDS = {
+  critical: ["critical"],
+  high_plus: ["critical", "high"],
+  medium_plus: ["critical", "high", "medium"],
+  all: ["all"],
+};
+function sumSeriesCells(parts) {
+  if (!parts.length) return null;
+  const cats = parts[0].categories || [];
+  const n = cats.length;
+  const weeklyNew = Array(n).fill(0);
+  const weeklyResolved = Array(n).fill(0);
+  for (const p of parts) {
+    const wn = p.weeklyNew || [];
+    const wr = p.weeklyResolved || [];
+    for (let i = 0; i < n; i++) {
+      weeklyNew[i] += Number(wn[i]) || 0;
+      weeklyResolved[i] += Number(wr[i]) || 0;
+    }
+  }
+  const cumulativeNew = [];
+  const cumulativeResolved = [];
+  const gaps = [];
+  let cn = 0, cr = 0;
+  for (let i = 0; i < n; i++) {
+    cn += weeklyNew[i];
+    cr += weeklyResolved[i];
+    cumulativeNew.push(cn);
+    cumulativeResolved.push(cr);
+    gaps.push(cn - cr);
+  }
+  const gapStart = gaps.length ? gaps[0] : 0;
+  const gapEnd = gaps.length ? gaps[gaps.length - 1] : 0;
+  let gapTrend = "stable";
+  if (gapEnd > gapStart) gapTrend = "widening";
+  else if (gapEnd < gapStart) gapTrend = "narrowing";
+  return {
+    categories: cats,
+    weeklyNew,
+    weeklyResolved,
+    cumulativeNew,
+    cumulativeResolved,
+    gaps,
+    gapStart,
+    gapEnd,
+    gapTrend,
+    periodCaption: parts[0].periodCaption || "",
+  };
+}
+function resolveSevCell(matrix, sevKey, facet) {
+  if (!matrix) return null;
+  const bands = SEV_THRESHOLD_BANDS[sevKey];
+  if (!bands) {
+    const cell = matrix[sevKey]?.[facet];
+    return cell || null;
+  }
+  if (bands.length === 1 && bands[0] === "all") {
+    return matrix.all?.[facet] ?? null;
+  }
+  if (bands.length === 1) {
+    return matrix[bands[0]]?.[facet] ?? null;
+  }
+  const parts = bands.map(b => matrix[b]?.[facet]).filter(Boolean);
+  return sumSeriesCells(parts);
+}
 """
 
 
@@ -146,53 +218,201 @@ def _render_onboarding(cube: dict[str, Any]) -> str:
     tenant = cube.get("tenant") or ""
     pulled = cube.get("pulledAt") or ""
     report = (cube.get("reports") or {}).get("onboarding") or {}
-    payload = json.dumps(report, separators=(",", ":"))
+    slim = {
+        **report,
+        "tagCatalog": [
+            {"tag": t["tag"], "projectCount": t["projectCount"]}
+            for t in (cube.get("tagCatalog") or [])
+            if t.get("tag")
+        ],
+    }
+    payload = json.dumps(slim, separators=(",", ":"))
     return _page(
         f"""{_nav("on")}
 {_header(title=copy_mod.H1_ONBOARDING, purpose=copy_mod.PURPOSE_ONBOARDING, tenant=tenant, pulled_at=pulled)}
 {copy_mod.GLOSSARY_HTML}
-<div class="toggles">
-  <label class="toggle"><input type="checkbox" id="once"/> Count each repository only once (earliest registration wins)</label>
-  <span class="pill" id="modePill"></span>
+<div class="card">
+  <div class="card-h">Filters</div>
+  <div class="filters">
+    <label class="field">Project tag<select id="tag"></select></label>
+  </div>
+  <div class="toggles">
+    <label class="toggle"><input type="checkbox" id="once"/> Count each repository only once (earliest registration wins)</label>
+    <label class="toggle"><input type="checkbox" id="analytics"/> Include analytics ScanResults in MAIN weekly series</label>
+    <span class="pill" id="modePill"></span>
+  </div>
 </div>
 <div class="stats" id="stats"></div>
 <div class="card">
   <div class="card-h">Onboarding progress · cumulative</div>
-  <p class="caption">Cumulative project registrations by ISO week (Monday UTC). Source: Project.meta.create_time.</p>
+  <p class="caption">Cumulative project registrations by ISO week (Monday UTC). Source: Project.meta.create_time. Tag filter scopes this series.</p>
   <div class="chart-box"><canvas id="cumChart"></canvas></div>
 </div>
 <div class="card">
-  <div class="card-h">New registrations per week</div>
-  <p class="caption">Weekly new registrations under the active count mode.</p>
+  <div class="card-h">Scan &amp; PR cadence · weekly</div>
+  <p class="caption" id="cadenceCaption">Organization-wide ScanResult counts (~90d). Default MAIN = TYPE_ALL_SCANS only; CI = CONTEXT_TYPE_CI_RUN.</p>
   <div class="chart-box sm"><canvas id="weekChart"></canvas></div>
 </div>
+<div class="grid-2" id="leaders"></div>
 <h2>Inclusive namespace hierarchy</h2>
-<p class="caption">Each path includes projects in that namespace and its children.</p>
+<p class="caption">Each path includes projects in that namespace and its children (tag filter applied).</p>
 <table class="data" id="hierTable"><thead><tr><th>Namespace</th><th class="num">Count</th></tr></thead><tbody></tbody></table>
 <script>
 {_chart_helpers_js()}
 const R = {payload};
 let cumChart, weekChart;
+function fillSelect(el, options) {{
+  el.innerHTML = options.map(o => `<option value="${{o.v}}">${{o.l}}</option>`).join("");
+}}
+function weekMonday(iso) {{
+  const d = new Date(iso + (iso.endsWith("Z") ? "" : "T00:00:00Z"));
+  if (Number.isNaN(d.getTime())) return "";
+  const day = d.getUTCDay();
+  const diff = (day + 6) % 7; // Monday=0
+  d.setUTCDate(d.getUTCDate() - diff);
+  return d.toISOString().slice(0, 10);
+}}
+function filteredProjects() {{
+  const tag = document.getElementById("tag").value;
+  const all = R.projects || [];
+  if (!tag || tag === "all") return all;
+  const uuids = new Set((R.cadence?.tagProjectUuids || {{}})[tag] || []);
+  if (uuids.size) return all.filter(p => uuids.has(p.uuid));
+  return all.filter(p => (p.tags || []).includes(tag));
+}}
+function weeklyFromProjects(projects, once) {{
+  const byName = new Map();
+  const dated = [];
+  for (const p of projects) {{
+    const ct = p.create_time;
+    if (!ct) continue;
+    const w = weekMonday(String(ct).slice(0, 10));
+    if (!w) continue;
+    dated.push({{ w, name: p.name || p.uuid, t: ct }});
+  }}
+  dated.sort((a, b) => String(a.t).localeCompare(String(b.t)));
+  let items = dated;
+  if (once) {{
+    for (const row of dated) {{
+      if (!byName.has(row.name)) byName.set(row.name, row);
+    }}
+    items = [...byName.values()].sort((a, b) => String(a.t).localeCompare(String(b.t)));
+  }}
+  const buckets = new Map();
+  for (const row of items) buckets.set(row.w, (buckets.get(row.w) || 0) + 1);
+  const weeks = [...buckets.keys()].sort();
+  let c = 0;
+  return weeks.map(w => {{ const n = buckets.get(w) || 0; c += n; return {{ w, n, c }}; }});
+}}
+function hierarchyFromProjects(projects) {{
+  const totals = new Map();
+  for (const p of projects) {{
+    const ns = p.namespace || "";
+    if (!ns) continue;
+    const parts = ns.split(".");
+    for (let i = 1; i <= parts.length; i++) {{
+      const key = parts.slice(0, i).join(".");
+      totals.set(key, (totals.get(key) || 0) + 1);
+    }}
+  }}
+  return [...totals.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([namespace, count]) => ({{ namespace, count }}));
+}}
+function alignWeekly(series) {{
+  const map = new Map((series || []).map(r => [r.w, r.n || 0]));
+  return map;
+}}
+function unionWeeks(...maps) {{
+  const s = new Set();
+  for (const m of maps) for (const k of m.keys()) s.add(k);
+  return [...s].sort();
+}}
+function leaderTable(rows, cols, selectedTag) {{
+  if (!rows.length) return `<p class="muted">No cadence rows for this filter.</p>`;
+  const head = cols.map(c => `<th class="${{c.num ? "num" : ""}}">${{c.l}}</th>`).join("");
+  const body = rows.map(r => {{
+    const sel = r.tag && r.tag === selectedTag ? " selected" : "";
+    const click = r.tag ? ` class="clickable${{sel}}" data-tag="${{r.tag}}"` : "";
+    const cells = cols.map(c => {{
+      const v = r[c.k];
+      const text = c.num ? Number(v || 0).toLocaleString() : (v || "");
+      return `<td class="${{c.num ? "num" : ""}}">${{text}}</td>`;
+    }}).join("");
+    return `<tr${{click}}>${{cells}}</tr>`;
+  }}).join("");
+  return `<table class="data"><thead><tr>${{head}}</tr></thead><tbody>${{body}}</tbody></table>`;
+}}
+function renderLeaders(tag) {{
+  const cad = R.cadence || {{}};
+  let tagRows = [...(cad.topTags || cad.byTag || [])];
+  let projRows = [...(cad.topProjects || [])];
+  if (tag && tag !== "all") {{
+    const uuids = new Set((cad.tagProjectUuids || {{}})[tag] || []);
+    const byP = cad.byProject || {{}};
+    const projects = R.projects || [];
+    const byUuid = Object.fromEntries(projects.map(p => [p.uuid, p]));
+    projRows = [...uuids].map(uid => {{
+      const cell = byP[uid] || {{}};
+      const p = byUuid[uid] || {{}};
+      return {{
+        uuid: uid,
+        name: p.name || uid,
+        namespace: p.namespace || "",
+        mainFullScans: cell.mainFullScans || 0,
+        ciScans: cell.ciScans || 0,
+      }};
+    }}).sort((a, b) => (b.mainFullScans - a.mainFullScans) || (b.ciScans - a.ciScans));
+    tagRows = (cad.byTag || []).filter(t => t.tag === tag);
+  }}
+  const tagHtml = leaderTable(tagRows.slice(0, 25), [
+    {{k:"tag", l:"Tag"}}, {{k:"projectCount", l:"Projects", num:true}},
+    {{k:"mainFullScans", l:"MAIN full", num:true}}, {{k:"ciScans", l:"CI/PR", num:true}},
+    {{k:"mainPerProject", l:"MAIN / project", num:true}},
+  ], tag);
+  const projHtml = leaderTable(projRows.slice(0, 25), [
+    {{k:"name", l:"Project"}}, {{k:"namespace", l:"Namespace"}},
+    {{k:"mainFullScans", l:"MAIN full", num:true}}, {{k:"ciScans", l:"CI/PR", num:true}},
+  ], tag);
+  document.getElementById("leaders").innerHTML = `
+    <div class="card"><div class="card-h">Tags by scan cadence</div>
+      <p class="caption">Ranked by MAIN TYPE_ALL_SCANS then CI (~90d). Click a tag to filter.</p>
+      ${{tagHtml}}</div>
+    <div class="card"><div class="card-h">Projects by scan cadence</div>
+      <p class="caption">Top projects by MAIN full scans then CI (~90d).</p>
+      ${{projHtml}}</div>`;
+  document.getElementById("leaders").querySelectorAll("tr.clickable[data-tag]").forEach(tr => {{
+    tr.addEventListener("click", () => {{
+      const t = tr.getAttribute("data-tag");
+      const sel = document.getElementById("tag");
+      if (t && sel) {{ sel.value = t; render(); }}
+    }});
+  }});
+}}
 function render() {{
   const theme = chartTheme();
   const once = document.getElementById("once").checked;
-  document.getElementById("modePill").textContent = once
-    ? "Distinct repositories" : "All registrations";
-  document.getElementById("modePill").className = "pill " + (once ? "info" : "");
+  const analytics = document.getElementById("analytics").checked;
+  const tag = document.getElementById("tag").value;
+  document.getElementById("modePill").textContent = [
+    once ? "Distinct repositories" : "All registrations",
+    analytics ? "MAIN includes analytics" : "MAIN full scans only",
+    tag !== "all" ? ("tag:" + tag) : "all tags",
+  ].join(" · ");
+  document.getElementById("modePill").className = "pill info";
+  const projects = filteredProjects();
+  const weeklyReg = weeklyFromProjects(projects, once);
+  const cad = R.cadence || {{}};
+  const totals = cad.totals || {{}};
+  const lookback = cad.lookbackDays || 91;
   document.getElementById("stats").innerHTML = `
-    <div class="stat"><b>${{(R.allRegistrations||0).toLocaleString()}}</b><span>All project registrations</span></div>
-    <div class="stat info"><b>${{(R.distinctRepositories||0).toLocaleString()}}</b><span>Distinct repositories</span></div>
-    <div class="stat warn"><b>${{(R.duplicateRegistrations||0).toLocaleString()}}</b><span>Duplicate registrations</span></div>`;
-  const seriesAll = R.weeklyAll || [];
-  const seriesDistinct = R.weeklyDistinct || [];
-  const cats = seriesAll.map(r => (r.w||"").slice(5));
-  const distinctByWeek = new Map(seriesDistinct.map(r => [r.w, r]));
-  let lastD = 0;
-  const merged = seriesAll.map(r => {{
-    const d = distinctByWeek.get(r.w);
-    if (d) lastD = d.c;
-    return {{ allCum: r.c, allNew: r.n, distinctCum: lastD, distinctNew: d ? d.n : 0 }};
-  }});
+    <div class="stat"><b>${{projects.length.toLocaleString()}}</b><span>${{once ? "Distinct repos (filter)" : "Projects (filter)"}}</span></div>
+    <div class="stat info"><b>${{(totals.mainFullScans||0).toLocaleString()}}</b><span>MAIN full scans (${{lookback}}d, org)</span></div>
+    <div class="stat"><b>${{(totals.ciScans||0).toLocaleString()}}</b><span>CI / PR scans (${{lookback}}d, org)</span></div>
+    <div class="stat warn"><b>${{(totals.distinctPrContextIds||0).toLocaleString()}}</b><span>Distinct PR contexts</span></div>`;
+  const mainMap = alignWeekly(analytics ? cad.weeklyMainWithAnalytics : cad.weeklyMainFull);
+  const ciMap = alignWeekly(cad.weeklyCi);
+  const weeks = unionWeeks(mainMap, ciMap);
+  const weekLabels = weeks.map(w => String(w).slice(5));
   const opts = {{
     responsive: true, maintainAspectRatio: false,
     plugins: {{ legend: {{ labels: {{ color: theme.muted }} }} }},
@@ -200,13 +420,14 @@ function render() {{
   }};
   if (cumChart) cumChart.destroy();
   if (weekChart) weekChart.destroy();
+  const regLabels = weeklyReg.map(r => String(r.w||"").slice(5));
   cumChart = new Chart(document.getElementById("cumChart"), {{
     type: "line",
     data: {{
-      labels: cats,
+      labels: regLabels,
       datasets: [
-        {{ label: "All registrations", data: merged.map(r => r.allCum), borderColor: theme.neutral, tension: 0.15 }},
-        {{ label: "Distinct repositories", data: merged.map(r => r.distinctCum), borderColor: theme.accent, tension: 0.15 }},
+        {{ label: once ? "Distinct repositories" : "All registrations",
+           data: weeklyReg.map(r => r.c), borderColor: theme.accent, tension: 0.15 }},
       ]
     }},
     options: opts
@@ -214,21 +435,44 @@ function render() {{
   weekChart = new Chart(document.getElementById("weekChart"), {{
     type: "bar",
     data: {{
-      labels: cats,
-      datasets: [{{
-        label: once ? "Distinct new" : "All new",
-        data: merged.map(r => once ? r.distinctNew : r.allNew),
-        backgroundColor: once ? theme.accent + "99" : theme.neutral + "99"
-      }}]
+      labels: weekLabels,
+      datasets: [
+        {{ label: analytics ? "MAIN (incl. analytics)" : "MAIN full scans",
+           data: weeks.map(w => mainMap.get(w) || 0), backgroundColor: theme.accent + "99" }},
+        {{ label: "CI / PR scans",
+           data: weeks.map(w => ciMap.get(w) || 0), backgroundColor: theme.warn + "99" }},
+      ]
     }},
     options: opts
   }});
-  const hier = once ? (R.hierarchyDistinct||[]) : (R.hierarchyAll||[]);
+  document.getElementById("cadenceCaption").textContent =
+    `Organization-wide ScanResult counts (~${{lookback}}d). ` +
+    (analytics
+      ? "MAIN includes TYPE_ANALYTICS / TYPE_ANALYTICS_CHECK."
+      : "MAIN = TYPE_ALL_SCANS only (analytics excluded).") +
+    " CI = CONTEXT_TYPE_CI_RUN.";
+  const hier = hierarchyFromProjects(
+    once
+      ? (() => {{
+          const seen = new Map();
+          for (const p of projects) {{
+            const n = p.name || p.uuid;
+            if (!seen.has(n)) seen.set(n, p);
+          }}
+          return [...seen.values()];
+        }})()
+      : projects
+  );
   document.querySelector("#hierTable tbody").innerHTML = hier.map(h =>
     `<tr><td>${{h.namespace}}</td><td class="num">${{h.count.toLocaleString()}}</td></tr>`
   ).join("");
+  renderLeaders(tag);
 }}
-document.getElementById("once").addEventListener("change", render);
+fillSelect(document.getElementById("tag"), [
+  {{v:"all", l:"All project tags"}},
+  ...(R.tagCatalog||[]).map(t => ({{v:t.tag, l: `${{t.tag}} (${{t.projectCount}} projects)`}}))
+]);
+["tag","once","analytics"].forEach(id => document.getElementById(id).addEventListener("change", render));
 render();
 </script>
 """,
@@ -510,10 +754,13 @@ const LEADERS_WIDEN = {json.dumps(leaders_widen)};
 const LEADER_LIMIT = 10;
 function pathKey(ns) {{ return ns && ns !== "all" ? ns : "all"; }}
 function resolveSeries(ns, sev, reach, tag) {{
+  let matrix = null;
   if (tag && tag !== "all" && CUBE.tagSeries?.perTag?.[tag]) {{
-    return CUBE.tagSeries.perTag[tag][pathKey(ns)]?.[sev]?.[reach] ?? null;
+    matrix = CUBE.tagSeries.perTag[tag][pathKey(ns)] ?? null;
+  }} else {{
+    matrix = CUBE.seriesFilters?.perPath?.[pathKey(ns)] ?? null;
   }}
-  return CUBE.seriesFilters?.perPath?.[pathKey(ns)]?.[sev]?.[reach] ?? null;
+  return resolveSevCell(matrix, sev, reach);
 }}
 function resolveTp(ns, tag) {{
   if (tag && tag !== "all") return CUBE.throughput?.perTag?.[tag] ?? null;
@@ -554,7 +801,7 @@ function tagGapRows(ns, sev, reach) {{
   const catalog = Object.fromEntries((CUBE.tagCatalog||[]).map(r => [r.tag, r.projectCount]));
   const rows = [];
   for (const [tag, pathMap] of Object.entries(CUBE.tagSeries?.perTag || {{}})) {{
-    const cell = pathMap?.[pk]?.[sev]?.[reach];
+    const cell = resolveSevCell(pathMap?.[pk], sev, reach);
     if (!cell) continue;
     const gapStart = Number(cell.gapStart) || 0;
     const gapEnd = Number(cell.gapEnd) || 0;
@@ -659,7 +906,7 @@ function render() {{
   const bits = [];
   if (ns === "all") bits.push("Entire organization"); else bits.push(ns);
   if (tag !== "all") bits.push("tag:" + tag);
-  if (sev !== "all") bits.push(sev);
+  if (sev !== "high_plus") bits.push(SEV_LABELS[sev] || sev);
   if (reach !== "all") {{
     const reachLabels = {{
       reachable: "reachable function",
@@ -744,11 +991,8 @@ fillSelect(document.getElementById("tag"), [
   {{v:"all", l:"All project tags"}},
   ...(CUBE.tagCatalog||[]).map(t => ({{v:t.tag, l: tagLabel(t.tag)}}))
 ]);
-fillSelect(document.getElementById("sev"), [
-  {{v:"all", l:"All severities (Critical + High)"}},
-  {{v:"critical", l:"Critical only"}},
-  {{v:"high", l:"High only"}},
-]);
+fillSelect(document.getElementById("sev"), SEV_OPTIONS);
+document.getElementById("sev").value = "high_plus";
 fillSelect(document.getElementById("reach"), [
   {{v:"all", l:"All reachability (RF + PRF)"}},
   {{v:"reachable", l:"Reachable function only"}},
@@ -845,10 +1089,13 @@ function catBlock() {{
 function resolveSeries(ns, sev, facet, tag) {{
   const block = catBlock();
   if (!block) return null;
+  let matrix = null;
   if (tag && tag !== "all" && block.tagSeries?.perTag?.[tag]) {{
-    return block.tagSeries.perTag[tag][pathKey(ns)]?.[sev]?.[facet] ?? null;
+    matrix = block.tagSeries.perTag[tag][pathKey(ns)] ?? null;
+  }} else {{
+    matrix = block.seriesFilters?.perPath?.[pathKey(ns)] ?? null;
   }}
-  return block.seriesFilters?.perPath?.[pathKey(ns)]?.[sev]?.[facet] ?? null;
+  return resolveSevCell(matrix, sev, facet);
 }}
 function fillSelect(el, options) {{
   el.innerHTML = options.map(o => `<option value="${{o.v}}">${{o.l}}</option>`).join("");
@@ -887,7 +1134,7 @@ function tagGapRows(ns, sev, facet) {{
   const block = catBlock();
   const rows = [];
   for (const [tag, pathMap] of Object.entries(block?.tagSeries?.perTag || {{}})) {{
-    const cell = pathMap?.[pk]?.[sev]?.[facet];
+    const cell = resolveSevCell(pathMap?.[pk], sev, facet);
     if (!cell) continue;
     const gapStart = Number(cell.gapStart) || 0;
     const gapEnd = Number(cell.gapEnd) || 0;
@@ -980,7 +1227,7 @@ function render() {{
   if (ns === "all") bits.push("Entire organization"); else bits.push(ns);
   if (tag !== "all") bits.push("tag:" + tag);
   bits.push(CATEGORY_LABELS[category] || category);
-  if (sev !== "all") bits.push(sev);
+  if (sev !== "high_plus") bits.push(SEV_LABELS[sev] || sev);
   if (facet !== "all") bits.push(facet.replaceAll("_", " "));
   document.getElementById("pills").innerHTML = `<span class="pill info">${{bits.join(" · ")}}</span>`;
   destroyCharts();
@@ -1063,11 +1310,8 @@ fillSelect(document.getElementById("category"), [
   {{v:"ai_sast", l:"AI-SAST (detection)"}},
   {{v:"secrets", l:"Secrets"}},
 ]);
-fillSelect(document.getElementById("sev"), [
-  {{v:"all", l:"All severities (Critical + High)"}},
-  {{v:"critical", l:"Critical only"}},
-  {{v:"high", l:"High only"}},
-]);
+fillSelect(document.getElementById("sev"), SEV_OPTIONS);
+document.getElementById("sev").value = "high_plus";
 syncFacetOptions();
 ["ns","tag","category","sev","facet"].forEach(id => document.getElementById(id).addEventListener("change", render));
 render();

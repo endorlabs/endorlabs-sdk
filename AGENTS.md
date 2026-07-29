@@ -102,6 +102,8 @@ Maintainers editing authoring: `uv run python devtools/codegen/sync_agent_knowle
 
 Common entry skills: **endor-auth-setup**, **endor-retrieve-scan-results**, **endor-troubleshooting-scans**, **endor-troubleshoot-sdk**, **endor-troubleshoot-authlog**. Full list: `MANIFEST.json` → `skills[]`.
 
+Tenant / namespace **executive HTML reports** (QBR read-out, onboarding growth, sprawl, FindingLog burndown): skill **endor-workflow-reports** → `uv run endor-reports packet -n <tenant>` — see [docs/guides/executive-report-packet.md](docs/guides/executive-report-packet.md).
+
 Skills compose with handoffs — [agent-knowledge/schema/README.md — Skill composition](agent-knowledge/schema/README.md#skill-composition-and-handoffs).
 
 ## Further reading

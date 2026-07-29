@@ -14,24 +14,30 @@ H1_SAST_BURNDOWN = "SAST burndown"
 
 
 PURPOSE_ONBOARDING = (
-    "How repositories were registered over time and across the namespace hierarchy."
+    "How repositories were registered over time, how MAIN and PR scan cadence "
+    "kept up (~90d), and which project tags / projects lead by full-scan activity. "
+    "Analytics-only ScanResults are excluded by default."
 )
 
 PURPOSE_VERSION_SPRAWL = "How many distinct package versions are in use, and where version sprawl concentrates."
 
 PURPOSE_SCA_BURNDOWN = (
-    "Weekly new versus resolved Critical/High vulnerability (SCA) events "
-    "(FindingLog CREATE/DELETE) by reachability — default RF+PRF, with PRD and "
-    "unreachable function/dependency filters — plus main-context scan activity."
+    "Weekly new versus resolved vulnerability (SCA) FindingLog CREATE/DELETE "
+    "events by reachability — default RF+PRF, with PRD and unreachable "
+    "function/dependency filters — plus main-context scan activity. Severity "
+    "defaults to High and higher; switch to Medium and higher or All severities "
+    "to include Medium/Low bands."
 )
 
 PURPOSE_FINDINGS_BURNDOWN = PURPOSE_SCA_BURNDOWN  # compat alias
 
 PURPOSE_SAST_BURNDOWN = (
-    "Weekly new versus resolved Critical/High SAST, AI-SAST, and Secrets events "
-    "(FindingLog CREATE/DELETE). SAST uses triage tags (true/false positive); "
-    "AI-SAST is FINDING_CATEGORY_SAST + FINDING_TAGS_AI; Secrets uses valid/invalid "
-    "secret tags. Same namespace and project-tag filters as SCA burndown."
+    "Weekly new versus resolved SAST, AI-SAST, and Secrets FindingLog "
+    "CREATE/DELETE events. SAST uses triage tags (true/false positive); "
+    "AI-SAST is FINDING_CATEGORY_SAST + FINDING_TAGS_AI; Secrets uses "
+    "valid/invalid secret tags. Severity defaults to High and higher "
+    "(Critical–Low available via Medium+ / All). Same namespace and "
+    "project-tag filters as SCA burndown."
 )
 
 
@@ -73,6 +79,18 @@ GLOSSARY_HTML = """
 
       the same relation/visibility scope.</li>
 
+    <li><strong>Onboarding cadence</strong> uses ScanResult counts over ~90 days:
+
+      MAIN <code>TYPE_ALL_SCANS</code> (full repo scans) and
+
+      <code>CONTEXT_TYPE_CI_RUN</code> (PR scans). Toggle <em>Include analytics</em>
+
+      to add <code>TYPE_ANALYTICS</code> / <code>TYPE_ANALYTICS_CHECK</code> into the
+
+      MAIN weekly series. Tag filter scopes registration, hierarchy, and
+
+      cadence leaderboards; the weekly scan chart remains organization-wide.</li>
+
     <li><strong>Window net (CREATE−DELETE)</strong> is cumulative FindingLog creates
 
       minus deletes inside the lookback window only. It can be negative when older
@@ -91,13 +109,19 @@ GLOSSARY_HTML = """
 
     <li><strong>SCA burndown</strong> filters vulnerability FindingLog events by
 
-      reachability (RF / PRF / PRD / unreachable).</li>
+      reachability (RF / PRF / PRD / unreachable). Severity uses cumulative
+
+      thresholds (Critical and higher / High and higher / Medium and higher /
+
+      All severities).</li>
 
     <li><strong>SAST burndown</strong> covers OpenGrep SAST (triage TP/FP), AI-SAST
 
-      detection (<code>FINDING_TAGS_AI</code>), and Secrets (valid/invalid). CodeOwners
+      detection (<code>FINDING_TAGS_AI</code>), and Secrets (valid/invalid), with
 
-      filtering is not included in this packet (FindingLog has no code_owners field).</li>
+      the same severity thresholds. CodeOwners filtering is not included in this
+
+      packet (FindingLog has no code_owners field).</li>
 
     <li><strong>Main-context scans</strong> count ScanResult events with
 
@@ -150,6 +174,12 @@ onboarding-weekly.csv            Weekly registration counts
 
 onboarding-hierarchy.csv         Namespace hierarchy rollups
 
+onboarding-cadence-weekly.csv    MAIN full / with-analytics / CI weekly scans
+
+onboarding-cadence-by-tag.csv    Tag ranks by MAIN full + CI cadence
+
+onboarding-cadence-by-project.csv Project ranks by MAIN full + CI cadence
+
 tag-catalog.csv                  Project.meta.tags catalog + series status
 
 path-gap-differentials.csv       SCA path × severity × reach gap deltas
@@ -177,6 +207,12 @@ Namespace and Project tag controls appear at the top of each interactive report.
 Project tags are discovered from Project.meta.tags for this tenant.
 
 SAST burndown adds category (SAST / AI-SAST / Secrets) and facet controls.
+
+Severity on SCA and SAST burndown uses cumulative thresholds:
+
+Critical and higher / High and higher (default) / Medium and higher /
+
+All severities (Critical–Low).
 
 
 

@@ -23,8 +23,9 @@ if TYPE_CHECKING:
     from endorlabs import Client
 
 FINDING_CRITERIA = (
-    "Critical/High severity · main context · reach filters "
-    "(default RF+PRF; also PRD / unreachable function & dependency)"
+    "All severities (Critical-Low) · main context · reach filters "
+    "(default RF+PRF; also PRD / unreachable function & dependency); "
+    "UI severity thresholds (Critical+ / High+ / Medium+ / All)"
 )
 
 CHART_DEFAULT_INTERVAL = "week"
@@ -294,7 +295,8 @@ UNREACHABLE_FUNCTION_CLAUSE = (
 UNREACHABLE_DEPENDENCY_CLAUSE = (
     "spec.finding_tags contains FINDING_TAGS_UNREACHABLE_DEPENDENCY"
 )
-# Base pull cells (Crit/High x each). ``all`` / ``unreachable`` rollups are derived.
+# Base pull cells (Crit/High/Med/Low x each). ``all`` / ``unreachable`` rollups
+# are derived in ``expand_severity_reach_matrix``.
 BASE_REACH_KEYS: tuple[str, ...] = (
     "reachable",
     "prf",
@@ -302,17 +304,23 @@ BASE_REACH_KEYS: tuple[str, ...] = (
     "unreachable_function",
     "unreachable_dependency",
 )
-SEVERITY_REACH_CELLS: tuple[tuple[str, str, str, str], ...] = (
-    ("critical", "reachable", "CRITICAL", REACHABLE_FUNCTION_CLAUSE),
-    ("critical", "prf", "CRITICAL", PRF_FUNCTION_CLAUSE),
-    ("critical", "prd", "CRITICAL", PRD_CLAUSE),
-    ("critical", "unreachable_function", "CRITICAL", UNREACHABLE_FUNCTION_CLAUSE),
-    ("critical", "unreachable_dependency", "CRITICAL", UNREACHABLE_DEPENDENCY_CLAUSE),
-    ("high", "reachable", "HIGH", REACHABLE_FUNCTION_CLAUSE),
-    ("high", "prf", "HIGH", PRF_FUNCTION_CLAUSE),
-    ("high", "prd", "HIGH", PRD_CLAUSE),
-    ("high", "unreachable_function", "HIGH", UNREACHABLE_FUNCTION_CLAUSE),
-    ("high", "unreachable_dependency", "HIGH", UNREACHABLE_DEPENDENCY_CLAUSE),
+EXACT_SEVERITY_LEVELS: tuple[tuple[str, str], ...] = (
+    ("critical", "CRITICAL"),
+    ("high", "HIGH"),
+    ("medium", "MEDIUM"),
+    ("low", "LOW"),
+)
+_REACH_CLAUSES: tuple[tuple[str, str], ...] = (
+    ("reachable", REACHABLE_FUNCTION_CLAUSE),
+    ("prf", PRF_FUNCTION_CLAUSE),
+    ("prd", PRD_CLAUSE),
+    ("unreachable_function", UNREACHABLE_FUNCTION_CLAUSE),
+    ("unreachable_dependency", UNREACHABLE_DEPENDENCY_CLAUSE),
+)
+SEVERITY_REACH_CELLS: tuple[tuple[str, str, str, str], ...] = tuple(
+    (sev, reach, level, clause)
+    for sev, level in EXACT_SEVERITY_LEVELS
+    for reach, clause in _REACH_CLAUSES
 )
 
 
@@ -416,10 +424,11 @@ def expand_severity_reach_matrix(
     categories: list[str],
     period_caption: str,
 ) -> dict[str, dict[str, dict[str, Any]]]:
-    """Fill severity/reach rollups from Crit/High x base reach cells.
+    """Fill severity/reach rollups from Crit/High/Med/Low x base reach cells.
 
-    ``all`` reach remains the executive RF+PRF union. ``unreachable`` sums
-    unreachable function + dependency. Missing base cells become zeros.
+    Per-severity ``all`` reach remains the RF+PRF union. ``unreachable`` sums
+    unreachable function + dependency. Top-level ``all`` sums all four exact
+    severity rows. Missing base cells become zeros.
     """
 
     def combine(parts: list[dict[str, Any]]) -> dict[str, Any]:
@@ -433,9 +442,6 @@ def expand_severity_reach_matrix(
         if isinstance(found, dict):
             return found
         return empty_series_cell(categories, period_caption)
-
-    crit_rf_prf = combine([cell("critical", "reachable"), cell("critical", "prf")])
-    high_rf_prf = combine([cell("high", "reachable"), cell("high", "prf")])
 
     def sev_row(sev: str) -> dict[str, dict[str, Any]]:
         reachable = cell(sev, "reachable")
@@ -453,24 +459,22 @@ def expand_severity_reach_matrix(
             "unreachable": combine([uf, ud]),
         }
 
-    critical = sev_row("critical")
-    high = sev_row("high")
+    exact = {sev: sev_row(sev) for sev, _level in EXACT_SEVERITY_LEVELS}
+    reach_keys = (
+        "all",
+        "reachable",
+        "prf",
+        "prd",
+        "unreachable_function",
+        "unreachable_dependency",
+        "unreachable",
+    )
     return {
         "all": {
-            "all": combine([crit_rf_prf, high_rf_prf]),
-            "reachable": combine([critical["reachable"], high["reachable"]]),
-            "prf": combine([critical["prf"], high["prf"]]),
-            "prd": combine([critical["prd"], high["prd"]]),
-            "unreachable_function": combine(
-                [critical["unreachable_function"], high["unreachable_function"]]
-            ),
-            "unreachable_dependency": combine(
-                [critical["unreachable_dependency"], high["unreachable_dependency"]]
-            ),
-            "unreachable": combine([critical["unreachable"], high["unreachable"]]),
+            reach: combine([exact[sev][reach] for sev, _ in EXACT_SEVERITY_LEVELS])
+            for reach in reach_keys
         },
-        "critical": critical,
-        "high": high,
+        **exact,
     }
 
 
@@ -490,7 +494,11 @@ def query_operation_group_counts(
     if level is not None:
         filt += f" and spec.level==FINDING_LEVEL_{level}"
     else:
-        filt += " and spec.level in [FINDING_LEVEL_CRITICAL, FINDING_LEVEL_HIGH]"
+        filt += (
+            " and spec.level in ["
+            "FINDING_LEVEL_CRITICAL, FINDING_LEVEL_HIGH, "
+            "FINDING_LEVEL_MEDIUM, FINDING_LEVEL_LOW]"
+        )
     if project_uuid is not None:
         filt = project_scoped_filter(filt, project_uuid)
 
@@ -574,7 +582,7 @@ def expand_severity_facet_matrix(
     categories: list[str],
     period_caption: str,
 ) -> dict[str, dict[str, dict[str, Any]]]:
-    """Fill severity ``all`` rollups from Crit/High x facet base cells."""
+    """Fill severity ``all`` rollups from Crit/High/Med/Low x facet base cells."""
 
     def combine(parts: list[dict[str, Any]]) -> dict[str, Any]:
         return sum_series_cells(
@@ -588,12 +596,16 @@ def expand_severity_facet_matrix(
             return found
         return empty_series_cell(categories, period_caption)
 
-    critical = {facet: cell("critical", facet) for facet in facet_keys}
-    high = {facet: cell("high", facet) for facet in facet_keys}
+    exact = {
+        sev: {facet: cell(sev, facet) for facet in facet_keys}
+        for sev, _level in EXACT_SEVERITY_LEVELS
+    }
     return {
-        "all": {facet: combine([critical[facet], high[facet]]) for facet in facet_keys},
-        "critical": critical,
-        "high": high,
+        "all": {
+            facet: combine([exact[sev][facet] for sev, _ in EXACT_SEVERITY_LEVELS])
+            for facet in facet_keys
+        },
+        **exact,
     }
 
 
@@ -613,13 +625,13 @@ def query_severity_facet_matrix(
     interval: str = CHART_DEFAULT_INTERVAL,
     expand: str = "severity",
 ) -> dict[str, dict[str, dict[str, Any]]]:
-    """Query Crit/High x facet cells and expand rollups.
+    """Query severity x facet cells and expand rollups.
 
     *cells* rows are ``(severity, facet, level, facet_clause)``. Failed cells
     become zeros so callers can still roll up partial results.
 
     *expand*:
-    - ``"severity"`` — sum Crit+High per facet (SAST / Secrets / AI-SAST).
+    - ``"severity"`` — sum Crit+High+Med+Low per facet (SAST / Secrets / AI-SAST).
     - ``"reach"`` — SCA reach rollups (``all`` = RF+PRF; ``unreachable`` =
       function+dependency). *facet_keys* is unused for the expand step.
     """
@@ -640,8 +652,9 @@ def query_severity_facet_matrix(
         categories = list(seed["categories"])
         period_caption = str(seed["periodCaption"])
 
-    matrix: dict[str, dict[str, dict[str, Any]]] = {"critical": {}, "high": {}}
+    matrix: dict[str, dict[str, dict[str, Any]]] = {}
     for sev, facet, level, clause in cells:
+        matrix.setdefault(sev, {})
         try:
             matrix[sev][facet] = query_severity_facet_series_cell(
                 client,

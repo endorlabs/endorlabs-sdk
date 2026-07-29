@@ -109,6 +109,31 @@ def build_report_packet(
     leaves = discovered["leafNamespaces"] or [namespace]
 
     onboarding = build_onboarding_report(projects)
+    onboarding["projects"] = [
+        {
+            "uuid": str(p.get("uuid") or ""),
+            "name": str(p.get("name") or ""),
+            "namespace": str(p.get("namespace") or ""),
+            "tags": list(p.get("tags") or []),
+            "create_time": str(p.get("create_time") or ""),
+        }
+        for p in projects
+        if p.get("uuid")
+    ]
+    try:
+        from endorlabs.workflows.reports.analyze.onboarding_cadence import (
+            collect_onboarding_cadence,
+        )
+
+        onboarding["cadence"] = collect_onboarding_cadence(
+            client,
+            tenant=namespace,
+            projects=projects,
+            leaf_namespaces=leaves,
+            tag_catalog=tag_catalog,
+        )
+    except Exception:
+        onboarding["cadence"] = {}
 
     version_sprawl: dict[str, Any] = {
         "histKeys": [],

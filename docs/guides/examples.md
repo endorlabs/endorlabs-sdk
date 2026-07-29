@@ -200,5 +200,17 @@ After **endor-troubleshooting-scans**, use scan UUIDs from the pairs/diff artifa
 For policy, reachability, or dependency lineage questions, follow the **Related skills**
 tables in each skill's `SKILL.md`.
 
+### Tenant executive HTML packet
+
+For a browser handoff covering onboarding growth, scan/PR cadence, version sprawl,
+and FindingLog burndown:
+
+```bash
+uv run --env-file .env endor-reports packet -n <tenant>
+```
+
+See [executive-report-packet.md](executive-report-packet.md). Agents: skill
+**endor-workflow-reports**.
+
 Production automation should call `endorlabs.Client` and workflow modules directly;
 skills are playbooks, not runtime dependencies.

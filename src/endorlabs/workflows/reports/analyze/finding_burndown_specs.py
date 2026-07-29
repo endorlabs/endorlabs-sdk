@@ -21,6 +21,7 @@ from endorlabs.filters import (
     secrets_log_base_filter,
 )
 from endorlabs.workflows.findings.finding_log_trends import (
+    EXACT_SEVERITY_LEVELS,
     FINDING_CRITERIA,
     SEVERITY_REACH_CELLS,
 )
@@ -50,25 +51,28 @@ AI_SAST_FACET_KEYS: tuple[str, ...] = ("all",)
 SECRETS_FACET_KEYS: tuple[str, ...] = ("all", "valid", "invalid")
 
 SAST_CRITERIA = (
-    "Critical/High · main context · FINDING_CATEGORY_SAST · "
-    "triage facets (all / true_positive / false_positive)"
+    "All severities (Critical–Low) · main context · FINDING_CATEGORY_SAST · "
+    "triage facets (all / true_positive / false_positive); "
+    "UI severity thresholds (Critical+ / High+ / Medium+ / All)"
 )
 AI_SAST_CRITERIA = (
-    "Critical/High · main context · FINDING_CATEGORY_SAST + FINDING_TAGS_AI "
-    "(AI detection agent)"
+    "All severities (Critical–Low) · main context · FINDING_CATEGORY_SAST + "
+    "FINDING_TAGS_AI (AI detection agent); "
+    "UI severity thresholds (Critical+ / High+ / Medium+ / All)"
 )
 SECRETS_CRITERIA = (
-    "Critical/High · main context · FINDING_CATEGORY_SECRETS · "
-    "validity facets (all / valid / invalid)"
+    "All severities (Critical–Low) · main context · FINDING_CATEGORY_SECRETS · "
+    "validity facets (all / valid / invalid); "
+    "UI severity thresholds (Critical+ / High+ / Medium+ / All)"
 )
 
 
 def sev_facet_cells(
     facets: tuple[tuple[str, str], ...],
 ) -> tuple[tuple[str, str, str, str], ...]:
-    """Build Crit/High × facet cell rows ``(sev, facet, level, clause)``."""
+    """Build Crit/High/Med/Low × facet cell rows ``(sev, facet, level, clause)``."""
     cells: list[tuple[str, str, str, str]] = []
-    for sev, level in (("critical", "CRITICAL"), ("high", "HIGH")):
+    for sev, level in EXACT_SEVERITY_LEVELS:
         for facet, clause in facets:
             cells.append((sev, facet, level, clause))
     return tuple(cells)

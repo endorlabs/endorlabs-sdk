@@ -15,7 +15,7 @@ from endorlabs.workflows.findings.finding_log_trends import (
 if TYPE_CHECKING:
     from endorlabs import Client
 
-SEV_KEYS = ("all", "critical", "high")
+SEV_KEYS = ("all", "critical", "high", "medium", "low")
 PULL_MODE_PROJECT_GRAIN = "project_grain_redistribute"
 DEFAULT_BURNDOWN_WORKERS = 24
 

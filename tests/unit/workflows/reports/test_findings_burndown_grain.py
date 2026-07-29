@@ -45,7 +45,7 @@ def _matrix(
                 "unreachable_dependency",
             )
         }
-        for sev in ("all", "critical", "high")
+        for sev in ("all", "critical", "high", "medium", "low")
     }
 
 

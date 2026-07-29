@@ -9,8 +9,13 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 ### Added
 
 - `endor-reports package-resolution` — tenant-wide main-context PackageVersion resolution CSV plus interactive HTML (unresolved/manifest, dependency resolution, reachability); playbook `agent-knowledge/workflow-reports/endor-package-resolution-report/`.
+- Executive packet onboarding ScanResult cadence (`reports.onboarding.cadence`): weekly MAIN `TYPE_ALL_SCANS` + CI/PR series (~90d), tag/project leaderboards, analytics toggle; CSV exports `onboarding-cadence-*.csv`.
+- Guide [docs/guides/executive-report-packet.md](guides/executive-report-packet.md); README / AGENTS pointers; **endor-workflow-reports** use-case routing for QBR / onboarding / burndown packet.
 
 ### Changed
+
+- Executive packet onboarding page: replace weekly registration bar with MAIN/CI scan cadence; project-tag filter scopes registration, hierarchy, and cadence ranks.
+- FindingLog burndown severity matrices include Medium/Low; HTML severity control uses cumulative “and higher” thresholds (default High and higher).
 
 ### Fixed
 
@@ -30,7 +35,6 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 - Executive packet SCA burndown renamed (`scaBurndown` / `03-sca-burndown.html`; legacy `findingsBurndown` still accepted).
 - Executive packet SAST / AI-SAST / Secrets FindingLog burndown (`codeFindingsBurndown` / `04-sast-burndown.html`) with shared category-spec path; `endor-reports upsert-code-findings` rebuilds only that block.
-
 - Workflow report scripts under `agent-knowledge/workflow-reports/*/scripts/` removed; report CLIs and libraries live in `endorlabs.workflows.reports`.
 - `finding_log_trends.query_operation_group_counts` is public (was `_query_operation_group_counts`); report-packet burndown uses the shared severity×reach API instead of a private import.
 - Findings burndown tag series use project-grain FindingLog pulls (parallel per tagged project) with local redistribute; path series remain leaf-namespace aggregates. Default `--min-projects` is `1` (display filter only); `--workers` controls pull parallelism (default 24).
@@ -64,7 +68,6 @@ Repository history starts from a single clean root; sdists ship package content 
 - Always-on CI Security Content Guards and expanded pre-commit portable-examples / content checks (emails, non-Endor URLs, estate `-n` literals). Shipped `src/endorlabs` requires placeholder-only `-n` / `--namespace` / `--tenant` values.
 
 ### Changed
-
 - Product user-docs scrape removed: prefer Docs MCP (`https://docs.endorlabs.com/mcp`; unsupported harnesses: `https://docs.endorlabs.com/llms.txt`). Removed `include_user_docs` / `--sync-user-docs` / `sync_user_docs()`, the `[docs]` extra, and `InitStatus` user-docs fields.
 - Marked `REMOVE_BY_0_7_0` on remaining 0.6.x compat: `InitStatus.openapi_path` alias, flat-OpenAPI reconcile, `session_workspace_dir`, and `workflow_artifacts_root`.
 - Hatch sdist target uses `only-packages = true` (aligned with the wheel: `src/endorlabs` only). Historical note: some 0.5.x sdists could include `tests/`; those dirty artifacts were removed from PyPI.
@@ -88,7 +91,6 @@ Auth hardening, Query collect pagination, credential/AuthorizationPolicy audit s
 - `reference_next_page_cursor()` / `wire_spec_with_reference_page_cursor()` — nested reference list pagination helpers for custom Query joins.
 
 ### Changed
-
 - Auth env parity: removed `ENDOR_AUTH_TENANT` / `ENDOR_INIT_AUTH_TENANT` reads from `Client`; no new auth env vars. Bearer refresh hints are learned in-memory from `GET /v1/auth` (not from namespace), but bearer sessions no longer reauthenticate mid-run. `Client` never writes `ENDOR_TOKEN` or mutates `os.environ`; bearer expiry/401 now fail closed with refresh guidance, while API-key auth retains transport-level reauthentication. Proactive expiry prints a one-time stderr warning (no secrets). `endor-auth check --json` adds `auth_mode_resolved`, `sso_tenant_resolved`, `browser_auth_method_resolved`. Disk persistence remains `endor-auth refresh` only.
 - Browser OAuth: live-verified interactive methods are `sso` (explicit tenant required; no silent `endor-admin`), `google`, `github`, `gitlab`, and `email` (requires `--email`). `azureadv2` and `browser-auth` remain experimental. Bare `Client()` without credentials does not open a browser. Only SSO hard-requires `-n` at refresh; social/email tenant access comes from AuthorizationPolicy grants on the resulting token.
 - Browser OAuth UX: localhost callback success page and `endor-auth refresh` stdout show whoami identity + token TTL (never the bearer). Shared helpers: `identity_from_auth_payload`, `format_ttl_label` / `expiration_from_auth_payload` in `bearer_token`. Refresh-hint mapping covers `authentication_source=endor` → `email` and IdP object ids → `sso`.

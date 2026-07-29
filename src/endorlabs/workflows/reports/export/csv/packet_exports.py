@@ -8,7 +8,7 @@ from typing import Any
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.tabular import TabularExport
 
-_SEV = ("all", "critical", "high")
+_SEV = ("all", "critical", "high", "medium", "low")
 _REACH = ("all", "reachable", "prf")
 
 
@@ -100,6 +100,69 @@ def onboarding_hierarchy_rows(cube: dict[str, Any]) -> list[dict[str, Any]]:
         )
         slot["count_distinct"] = int(row.get("count") or 0)
     return [by_ns[k] for k in sorted(by_ns)]
+
+
+def onboarding_cadence_weekly_rows(cube: dict[str, Any]) -> list[dict[str, Any]]:
+    cad = ((cube.get("reports") or {}).get("onboarding") or {}).get("cadence") or {}
+    full = {
+        str(r.get("w")): int(r.get("n") or 0) for r in (cad.get("weeklyMainFull") or [])
+    }
+    with_a = {
+        str(r.get("w")): int(r.get("n") or 0)
+        for r in (cad.get("weeklyMainWithAnalytics") or [])
+    }
+    ci = {str(r.get("w")): int(r.get("n") or 0) for r in (cad.get("weeklyCi") or [])}
+    weeks = sorted(set(full) | set(with_a) | set(ci))
+    return [
+        {
+            "week_start": w,
+            "main_full_scans": full.get(w, 0),
+            "main_with_analytics": with_a.get(w, 0),
+            "ci_scans": ci.get(w, 0),
+        }
+        for w in weeks
+        if w
+    ]
+
+
+def onboarding_cadence_by_tag_rows(cube: dict[str, Any]) -> list[dict[str, Any]]:
+    cad = ((cube.get("reports") or {}).get("onboarding") or {}).get("cadence") or {}
+    rows = []
+    for r in cad.get("byTag") or []:
+        rows.append(
+            {
+                "tag": r.get("tag"),
+                "project_count": int(r.get("projectCount") or 0),
+                "main_full_scans": int(r.get("mainFullScans") or 0),
+                "ci_scans": int(r.get("ciScans") or 0),
+                "main_per_project": float(r.get("mainPerProject") or 0),
+            }
+        )
+    rows.sort(key=lambda x: (-int(x["main_full_scans"]), str(x["tag"])))
+    return rows
+
+
+def onboarding_cadence_by_project_rows(cube: dict[str, Any]) -> list[dict[str, Any]]:
+    report = (cube.get("reports") or {}).get("onboarding") or {}
+    cad = report.get("cadence") or {}
+    by_p = cad.get("byProject") or {}
+    projects = {
+        str(p.get("uuid")): p for p in (report.get("projects") or []) if p.get("uuid")
+    }
+    rows = []
+    for uid, cell in by_p.items():
+        p = projects.get(str(uid)) or {}
+        rows.append(
+            {
+                "uuid": uid,
+                "name": p.get("name") or "",
+                "namespace": p.get("namespace") or "",
+                "main_full_scans": int(cell.get("mainFullScans") or 0),
+                "ci_scans": int(cell.get("ciScans") or 0),
+            }
+        )
+    rows.sort(key=lambda x: (-int(x["main_full_scans"]), str(x["name"])))
+    return rows
 
 
 def tag_catalog_rows(cube: dict[str, Any]) -> list[dict[str, Any]]:
@@ -377,6 +440,35 @@ def write_packet_raw_exports(cube: dict[str, Any], data_dir: str | Path) -> list
         ),
         _write_export(
             out,
+            "onboarding-cadence-weekly.csv",
+            onboarding_cadence_weekly_rows(cube),
+            [
+                "week_start",
+                "main_full_scans",
+                "main_with_analytics",
+                "ci_scans",
+            ],
+        ),
+        _write_export(
+            out,
+            "onboarding-cadence-by-tag.csv",
+            onboarding_cadence_by_tag_rows(cube),
+            [
+                "tag",
+                "project_count",
+                "main_full_scans",
+                "ci_scans",
+                "main_per_project",
+            ],
+        ),
+        _write_export(
+            out,
+            "onboarding-cadence-by-project.csv",
+            onboarding_cadence_by_project_rows(cube),
+            ["uuid", "name", "namespace", "main_full_scans", "ci_scans"],
+        ),
+        _write_export(
+            out,
             "tag-catalog.csv",
             tag_catalog_rows(cube),
             ["tag", "project_count", "series_status"],
@@ -470,6 +562,9 @@ def write_packet_raw_exports(cube: dict[str, Any], data_dir: str | Path) -> list
         "packet.cube.json                 Full interactive cube (source of truth)",
         "onboarding-weekly.csv            Weekly registration counts",
         "onboarding-hierarchy.csv         Namespace hierarchy rollups",
+        "onboarding-cadence-weekly.csv    MAIN full / with-analytics / CI weekly",
+        "onboarding-cadence-by-tag.csv    Tag ranks by MAIN full + CI cadence",
+        "onboarding-cadence-by-project.csv Project ranks by MAIN full + CI",
         "tag-catalog.csv                  Project.meta.tags catalog + series status",
         "path-gap-differentials.csv       SCA path × severity × reach gap deltas",
         "tag-gap-differentials.csv        SCA tag × path × severity × reach gap deltas",

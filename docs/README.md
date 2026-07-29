@@ -31,6 +31,7 @@ Index for SDK-specific documentation.
 
 - [guides/README.md](guides/README.md) — List of guides.
 - [guides/examples.md](guides/examples.md) — Skill walkthrough and minimal API snippets for a first tenant session.
+- [guides/executive-report-packet.md](guides/executive-report-packet.md) — Tenant executive HTML packet (`endor-reports packet`).
 - [guides/facade-helpers.md](guides/facade-helpers.md) — When to use `search_by_*`, relationship accessors, `RouteResult`, wire helpers.
 - [guides/query-recipes.md](guides/query-recipes.md) — Query vs facade routing, supported `list_parameters`, and estate join recipes.
 - [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; SDK consumer UX.
