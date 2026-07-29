@@ -69,7 +69,7 @@ def test_main_defaults_call_init(monkeypatch: object, tmp_path: Path) -> None:
     class _Status:
         agent_knowledge_path = tmp_path / "sdk"
         context_json_path = tmp_path / "context.json"
-        openapi_path = None
+        platform_openapi_path = None
         synced_skill_paths: ClassVar[dict[str, Path]] = {}
 
     def _fake_init(**kwargs: object) -> _Status:
@@ -93,7 +93,9 @@ def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
     class _Status:
         agent_knowledge_path = tmp_path / "sdk"
         context_json_path = tmp_path / "context.json"
-        openapi_path = tmp_path / "platform" / "openapi" / "openapiv2.swagger.json"
+        platform_openapi_path = (
+            tmp_path / "platform" / "openapi" / "openapiv2.swagger.json"
+        )
         synced_skill_paths: ClassVar[dict[str, Path]] = {}
 
     def _fake_init(**kwargs: object) -> _Status:

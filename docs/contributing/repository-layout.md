@@ -62,9 +62,6 @@ Edit `agent-knowledge/` → `uv run python devtools/codegen/sync_agent_knowledge
 | `workspace/inventory/` | Namespace inventories (e.g. **`SemgrepRule`** metadata from `endor-semgrep-inventory`) |
 | `workspace/<slug>-<YYYYMMDD>/` | Estate pull/analyze workspaces — [estate/workspace.md](../estate/workspace.md) |
 
-Legacy paths `workspace/sessions/` and `workspace/artifacts/` are deprecated — see shipped `rules/endor-workspace-layout.md`.
-<!-- REMOVE_BY_0_7_0: drop legacy path callouts once helpers/aliases are removed. -->
-
 Path helpers: `endorlabs.context.paths`.
 
 Consumer projects should **gitignore** `.endorlabs-context/`. Print the line: `uv run endor-context --print-gitignore-line`.

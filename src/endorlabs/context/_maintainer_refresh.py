@@ -126,7 +126,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             logger.info(
                 "Refreshed local context at %s%s.",
                 CONTEXT_DIR,
-                " (OpenAPI)" if status.openapi_path is not None else "",
+                " (OpenAPI)" if status.platform_openapi_path is not None else "",
             )
         return 0
     except Exception as exc:

@@ -78,16 +78,6 @@ def project_workspace_dir(context_dir: str | Path, project_uuid: str) -> Path:
     return workspace_dir(context_dir) / "projects" / project_uuid
 
 
-def session_workspace_dir(context_dir: str | Path, user: str) -> Path:
-    """Legacy path under ``workspace/sessions/<user>/``.
-
-    Prefer :func:`default_runs_dir` for new workflow output.
-
-    REMOVE_BY_0_7_0: drop this helper once callers use workspace/runs/ only.
-    """
-    return workspace_dir(context_dir) / "sessions" / user
-
-
 def context_json_path(context_dir: str | Path) -> Path:
     """Return path to init manifest JSON."""
     return Path(context_dir) / CONTEXT_JSON_FILENAME
@@ -152,14 +142,6 @@ def workflow_inventory_root(context_dir: str | Path | None = None) -> Path:
     return workspace_dir(_context_root(context_dir)) / "inventory"
 
 
-def workflow_artifacts_root(context_dir: str | Path | None = None) -> Path:
-    """Alias for :func:`workflow_inventory_root` (legacy name ``artifacts/``).
-
-    REMOVE_BY_0_7_0: drop this alias; callers should use workflow_inventory_root.
-    """
-    return workflow_inventory_root(context_dir)
-
-
 def sanitize_path_segment(value: str) -> str:
     """Normalize a namespace or tenant segment for use in filesystem paths."""
     cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip())
@@ -204,8 +186,6 @@ __all__ = [
     "resolve_session_user_slug",
     "sanitize_path_segment",
     "sdk_dir",
-    "session_workspace_dir",
-    "workflow_artifacts_root",
     "workflow_inventory_root",
     "workflow_projects_root",
     "workflow_sessions_root",

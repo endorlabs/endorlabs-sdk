@@ -8,7 +8,6 @@ from endorlabs.context.paths import (
     context_json_path,
     platform_openapi_path,
     project_workspace_dir,
-    session_workspace_dir,
     workflow_projects_root,
     workflow_sessions_root,
     workspace_dir,
@@ -25,7 +24,6 @@ def test_workspace_layout(tmp_path: Path) -> None:
     root = tmp_path / ".endorlabs-context"
     assert workspace_dir(root).name == "workspace"
     assert project_workspace_dir(root, "abc").parts[-2:] == ("projects", "abc")
-    assert session_workspace_dir(root, "tim").parts[-2:] == ("sessions", "tim")
 
 
 def test_context_json_path(tmp_path: Path) -> None:

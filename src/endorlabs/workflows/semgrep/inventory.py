@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.context.paths import workflow_artifacts_root
+from endorlabs.context.paths import workflow_inventory_root
 from endorlabs.tools.list_bounds import (
     is_list_truncated,
     resolve_max_pages,
@@ -136,13 +136,13 @@ def main() -> int:
     parser.add_argument(
         "--json-out",
         type=Path,
-        default=workflow_artifacts_root() / "semgrep_rule_metadata_inventory.json",
+        default=workflow_inventory_root() / "semgrep_rule_metadata_inventory.json",
         help="JSON artifact output path",
     )
     parser.add_argument(
         "--summary-out",
         type=Path,
-        default=workflow_artifacts_root() / "semgrep_rule_metadata_inventory.md",
+        default=workflow_inventory_root() / "semgrep_rule_metadata_inventory.md",
         help="Markdown summary output path",
     )
     args = parser.parse_args()

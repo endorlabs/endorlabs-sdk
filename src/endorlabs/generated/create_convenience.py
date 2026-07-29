@@ -459,7 +459,11 @@ REPOSITORY_SPEC_REQUIRED = ("platform_source", "http_clone_url", "default_branch
 REPOSITORY_META_FIELDS = ()
 REPOSITORY_PAYLOAD_TOP_LEVEL_FIELDS = ("ingested_object", "meta", "tenant_meta")
 
-REPOSITORY_VERSION_SPEC_FIELDS = ("version", "last_commit_date")
+REPOSITORY_VERSION_SPEC_FIELDS = (
+    "version",
+    "last_commit_date",
+    "allow_ref_as_pr_scan_base",
+)
 REPOSITORY_VERSION_SPEC_REQUIRED = ()
 REPOSITORY_VERSION_META_FIELDS = ()
 REPOSITORY_VERSION_PAYLOAD_TOP_LEVEL_FIELDS = (

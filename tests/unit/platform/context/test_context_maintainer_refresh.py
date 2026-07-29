@@ -78,7 +78,7 @@ def test_main_refreshes_context_without_openapi_when_auth_missing(
     """Context refresh should skip OpenAPI when auth is unavailable."""
     context_dir = tmp_path / ".endorlabs-context"
     context_dir.mkdir()
-    status = Mock(openapi_path=None)
+    status = Mock(platform_openapi_path=None)
     init_mock = Mock(return_value=status)
 
     monkeypatch.setattr(_maintainer_refresh, "CONTEXT_DIR", context_dir)

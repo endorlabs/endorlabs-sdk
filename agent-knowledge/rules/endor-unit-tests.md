@@ -92,7 +92,6 @@ fix the fixture; do not weaken the guard or `--no-verify`.
   `test_api_client_auth.py`
 - Per-resource integration list/get when
   `test_resource_list_get_roundtrip.py` covers it
-- Tests for `REMOVE_BY_0_7_0` shims once the shim is gone
 - Real customer tenants, emails, or production UUIDs in unit fixtures
   (guards will fail the commit)
 

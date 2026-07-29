@@ -1,6 +1,6 @@
 [project]
 name = "endorlabs"
-version = "0.6.0"
+version = "0.7.0"
 description = "Type-safe Python SDK for the Endor Labs REST API — resource facades, operational workflows, and optional agent-context bootstrap"
 authors = [
     { name = "Tim Gowan", email = "tgowan@endor.ai" }
