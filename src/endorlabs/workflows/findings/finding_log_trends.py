@@ -23,7 +23,8 @@ if TYPE_CHECKING:
     from endorlabs import Client
 
 FINDING_CRITERIA = (
-    "Critical/High severity · reachable & potentially reachable · main context"
+    "Critical/High severity · main context · reach filters "
+    "(default RF+PRF; also PRD / unreachable function & dependency)"
 )
 
 CHART_DEFAULT_INTERVAL = "week"
@@ -281,7 +282,199 @@ def merge_count_dicts(dicts: list[dict[str, int]]) -> dict[str, int]:
     return merged
 
 
-def _query_operation_group_counts(
+# Severity x reachability cells for executive / multi-series FindingLog pulls.
+REACHABLE_FUNCTION_CLAUSE = "spec.finding_tags contains FINDING_TAGS_REACHABLE_FUNCTION"
+PRF_FUNCTION_CLAUSE = (
+    "spec.finding_tags contains FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION"
+)
+PRD_CLAUSE = "spec.finding_tags contains FINDING_TAGS_POTENTIALLY_REACHABLE_DEPENDENCY"
+UNREACHABLE_FUNCTION_CLAUSE = (
+    "spec.finding_tags contains FINDING_TAGS_UNREACHABLE_FUNCTION"
+)
+UNREACHABLE_DEPENDENCY_CLAUSE = (
+    "spec.finding_tags contains FINDING_TAGS_UNREACHABLE_DEPENDENCY"
+)
+# Base pull cells (Crit/High x each). ``all`` / ``unreachable`` rollups are derived.
+BASE_REACH_KEYS: tuple[str, ...] = (
+    "reachable",
+    "prf",
+    "prd",
+    "unreachable_function",
+    "unreachable_dependency",
+)
+SEVERITY_REACH_CELLS: tuple[tuple[str, str, str, str], ...] = (
+    ("critical", "reachable", "CRITICAL", REACHABLE_FUNCTION_CLAUSE),
+    ("critical", "prf", "CRITICAL", PRF_FUNCTION_CLAUSE),
+    ("critical", "prd", "CRITICAL", PRD_CLAUSE),
+    ("critical", "unreachable_function", "CRITICAL", UNREACHABLE_FUNCTION_CLAUSE),
+    ("critical", "unreachable_dependency", "CRITICAL", UNREACHABLE_DEPENDENCY_CLAUSE),
+    ("high", "reachable", "HIGH", REACHABLE_FUNCTION_CLAUSE),
+    ("high", "prf", "HIGH", PRF_FUNCTION_CLAUSE),
+    ("high", "prd", "HIGH", PRD_CLAUSE),
+    ("high", "unreachable_function", "HIGH", UNREACHABLE_FUNCTION_CLAUSE),
+    ("high", "unreachable_dependency", "HIGH", UNREACHABLE_DEPENDENCY_CLAUSE),
+)
+
+
+def append_parent_uuid_filter(
+    base_filter: str,
+    parent_uuids: list[str] | None,
+) -> str:
+    """Scope a FindingLog filter to ``meta.parent_uuid`` (project UUID set).
+
+    ``None`` leaves the filter unchanged (whole namespace). An empty list forces
+    a no-match sentinel so callers can represent an empty project set.
+    """
+    if parent_uuids is None:
+        return base_filter
+    if not parent_uuids:
+        return f'{base_filter} and meta.parent_uuid=="__none__"'
+    inner = ", ".join(f'"{u}"' for u in parent_uuids)
+    return f"{base_filter} and meta.parent_uuid in [{inner}]"
+
+
+def series_cell_from_analysis(analysis: dict[str, Any]) -> dict[str, Any]:
+    """Map ``build_analysis`` output to a compact series cell (camelCase keys)."""
+    return {
+        "categories": analysis["categories"],
+        "weeklyNew": analysis["weekly_new"],
+        "weeklyResolved": analysis["weekly_resolved"],
+        "cumulativeNew": analysis["cumulative_new"],
+        "cumulativeResolved": analysis["cumulative_resolved"],
+        "gaps": analysis["gaps"],
+        "gapStart": analysis["gap_start"],
+        "gapEnd": analysis["gap_end"],
+        "gapTrend": analysis["gap_trend"],
+        "periodCaption": analysis["period_caption"],
+    }
+
+
+def empty_series_cell(
+    categories: list[str],
+    period_caption: str,
+) -> dict[str, Any]:
+    """Zero-filled series cell matching *categories* length."""
+    z = [0] * len(categories)
+    return {
+        "categories": categories,
+        "weeklyNew": list(z),
+        "weeklyResolved": list(z),
+        "cumulativeNew": list(z),
+        "cumulativeResolved": list(z),
+        "gaps": list(z),
+        "gapStart": 0,
+        "gapEnd": 0,
+        "gapTrend": "stable",
+        "periodCaption": period_caption,
+    }
+
+
+def sum_series_cells(
+    parts: list[dict[str, Any]],
+    *,
+    categories: list[str],
+    period_caption: str,
+) -> dict[str, Any]:
+    """Sum weekly new/resolved across cells and recompute cumulative gap series."""
+    if not parts:
+        return empty_series_cell(categories, period_caption)
+    n = len(categories)
+    weekly_new = [0] * n
+    weekly_resolved = [0] * n
+    for part in parts:
+        for i in range(n):
+            weekly_new[i] += int(part["weeklyNew"][i])
+            weekly_resolved[i] += int(part["weeklyResolved"][i])
+    cum_new: list[int] = []
+    cum_res: list[int] = []
+    rn = rr = 0
+    for a, b in zip(weekly_new, weekly_resolved, strict=True):
+        rn += a
+        rr += b
+        cum_new.append(rn)
+        cum_res.append(rr)
+    gaps = [a - b for a, b in zip(cum_new, cum_res, strict=True)]
+    gap_start = gaps[0] if gaps else 0
+    gap_end = gaps[-1] if gaps else 0
+    return {
+        "categories": categories,
+        "weeklyNew": weekly_new,
+        "weeklyResolved": weekly_resolved,
+        "cumulativeNew": cum_new,
+        "cumulativeResolved": cum_res,
+        "gaps": gaps,
+        "gapStart": gap_start,
+        "gapEnd": gap_end,
+        "gapTrend": gap_trend(gap_start, gap_end),
+        "periodCaption": period_caption,
+    }
+
+
+def expand_severity_reach_matrix(
+    matrix: dict[str, dict[str, dict[str, Any]]],
+    *,
+    categories: list[str],
+    period_caption: str,
+) -> dict[str, dict[str, dict[str, Any]]]:
+    """Fill severity/reach rollups from Crit/High x base reach cells.
+
+    ``all`` reach remains the executive RF+PRF union. ``unreachable`` sums
+    unreachable function + dependency. Missing base cells become zeros.
+    """
+
+    def combine(parts: list[dict[str, Any]]) -> dict[str, Any]:
+        return sum_series_cells(
+            parts, categories=categories, period_caption=period_caption
+        )
+
+    def cell(sev: str, reach: str) -> dict[str, Any]:
+        row = matrix.get(sev) or {}
+        found = row.get(reach)
+        if isinstance(found, dict):
+            return found
+        return empty_series_cell(categories, period_caption)
+
+    crit_rf_prf = combine([cell("critical", "reachable"), cell("critical", "prf")])
+    high_rf_prf = combine([cell("high", "reachable"), cell("high", "prf")])
+
+    def sev_row(sev: str) -> dict[str, dict[str, Any]]:
+        reachable = cell(sev, "reachable")
+        prf = cell(sev, "prf")
+        prd = cell(sev, "prd")
+        uf = cell(sev, "unreachable_function")
+        ud = cell(sev, "unreachable_dependency")
+        return {
+            "all": combine([reachable, prf]),
+            "reachable": reachable,
+            "prf": prf,
+            "prd": prd,
+            "unreachable_function": uf,
+            "unreachable_dependency": ud,
+            "unreachable": combine([uf, ud]),
+        }
+
+    critical = sev_row("critical")
+    high = sev_row("high")
+    return {
+        "all": {
+            "all": combine([crit_rf_prf, high_rf_prf]),
+            "reachable": combine([critical["reachable"], high["reachable"]]),
+            "prf": combine([critical["prf"], high["prf"]]),
+            "prd": combine([critical["prd"], high["prd"]]),
+            "unreachable_function": combine(
+                [critical["unreachable_function"], high["unreachable_function"]]
+            ),
+            "unreachable_dependency": combine(
+                [critical["unreachable_dependency"], high["unreachable_dependency"]]
+            ),
+            "unreachable": combine([critical["unreachable"], high["unreachable"]]),
+        },
+        "critical": critical,
+        "high": high,
+    }
+
+
+def query_operation_group_counts(
     client: Client,
     *,
     namespace: str,
@@ -292,6 +485,7 @@ def _query_operation_group_counts(
     interval: str,
     project_uuid: str | None = None,
 ) -> dict[str, int]:
+    """Run one FindingLog ``group_by_time`` count for CREATE or DELETE."""
     filt = f"{base_filter} and spec.operation==OPERATION_{operation}"
     if level is not None:
         filt += f" and spec.level==FINDING_LEVEL_{level}"
@@ -306,6 +500,243 @@ def _query_operation_group_counts(
         filter=filt,
         traverse=traverse,
         interval=interval,
+    )
+
+
+# Compat alias for older call sites / tests that imported the private name.
+_query_operation_group_counts = query_operation_group_counts
+
+
+def query_severity_facet_series_cell(
+    client: Client,
+    *,
+    namespace: str,
+    window_start: datetime,
+    window_end: datetime,
+    category_base_filter: str,
+    facet_clause: str,
+    level: str,
+    parent_uuids: list[str] | None = None,
+    lookback: int = CHART_DEFAULT_LOOKBACK,
+    interval: str = CHART_DEFAULT_INTERVAL,
+) -> dict[str, Any]:
+    """Query one severity x facet FindingLog CREATE/DELETE series cell.
+
+    *facet_clause* may be empty (category-only / ``all`` facet). *parent_uuids*
+    scopes to ``meta.parent_uuid``; ``None`` means the whole namespace path.
+    """
+    clause = category_base_filter
+    extra = (facet_clause or "").strip()
+    if extra:
+        clause = f"{clause} and {extra}"
+    base = finding_log_time_window_filter(
+        window_start,
+        window_end,
+        base_filter=clause,
+    )
+    base = append_parent_uuid_filter(base, parent_uuids)
+    create = query_operation_group_counts(
+        client,
+        namespace=namespace,
+        base_filter=base,
+        operation="CREATE",
+        level=level,
+        traverse=False,
+        interval=interval,
+    )
+    delete = query_operation_group_counts(
+        client,
+        namespace=namespace,
+        base_filter=base,
+        operation="DELETE",
+        level=level,
+        traverse=False,
+        interval=interval,
+    )
+    return series_cell_from_analysis(
+        build_analysis(
+            namespace=namespace,
+            window_start=window_start,
+            window_end=window_end,
+            create_counts=create,
+            delete_counts=delete,
+            severity_split=True,
+            interval=interval,
+            lookback=lookback,
+        )
+    )
+
+
+def expand_severity_facet_matrix(
+    matrix: dict[str, dict[str, dict[str, Any]]],
+    *,
+    facet_keys: tuple[str, ...] | list[str],
+    categories: list[str],
+    period_caption: str,
+) -> dict[str, dict[str, dict[str, Any]]]:
+    """Fill severity ``all`` rollups from Crit/High x facet base cells."""
+
+    def combine(parts: list[dict[str, Any]]) -> dict[str, Any]:
+        return sum_series_cells(
+            parts, categories=categories, period_caption=period_caption
+        )
+
+    def cell(sev: str, facet: str) -> dict[str, Any]:
+        row = matrix.get(sev) or {}
+        found = row.get(facet)
+        if isinstance(found, dict):
+            return found
+        return empty_series_cell(categories, period_caption)
+
+    critical = {facet: cell("critical", facet) for facet in facet_keys}
+    high = {facet: cell("high", facet) for facet in facet_keys}
+    return {
+        "all": {facet: combine([critical[facet], high[facet]]) for facet in facet_keys},
+        "critical": critical,
+        "high": high,
+    }
+
+
+def query_severity_facet_matrix(
+    client: Client,
+    *,
+    namespace: str,
+    window_start: datetime,
+    window_end: datetime,
+    category_base_filter: str,
+    cells: tuple[tuple[str, str, str, str], ...],
+    facet_keys: tuple[str, ...] | list[str],
+    parent_uuids: list[str] | None = None,
+    lookback: int = CHART_DEFAULT_LOOKBACK,
+    categories: list[str] | None = None,
+    period_caption: str | None = None,
+    interval: str = CHART_DEFAULT_INTERVAL,
+    expand: str = "severity",
+) -> dict[str, dict[str, dict[str, Any]]]:
+    """Query Crit/High x facet cells and expand rollups.
+
+    *cells* rows are ``(severity, facet, level, facet_clause)``. Failed cells
+    become zeros so callers can still roll up partial results.
+
+    *expand*:
+    - ``"severity"`` — sum Crit+High per facet (SAST / Secrets / AI-SAST).
+    - ``"reach"`` — SCA reach rollups (``all`` = RF+PRF; ``unreachable`` =
+      function+dependency). *facet_keys* is unused for the expand step.
+    """
+    if categories is None or period_caption is None:
+        _seed_sev, _seed_facet, seed_level, seed_clause = cells[0]
+        seed = query_severity_facet_series_cell(
+            client,
+            namespace=namespace,
+            window_start=window_start,
+            window_end=window_end,
+            category_base_filter=category_base_filter,
+            facet_clause=seed_clause,
+            level=seed_level,
+            parent_uuids=parent_uuids,
+            lookback=lookback,
+            interval=interval,
+        )
+        categories = list(seed["categories"])
+        period_caption = str(seed["periodCaption"])
+
+    matrix: dict[str, dict[str, dict[str, Any]]] = {"critical": {}, "high": {}}
+    for sev, facet, level, clause in cells:
+        try:
+            matrix[sev][facet] = query_severity_facet_series_cell(
+                client,
+                namespace=namespace,
+                window_start=window_start,
+                window_end=window_end,
+                category_base_filter=category_base_filter,
+                facet_clause=clause,
+                level=level,
+                parent_uuids=parent_uuids,
+                lookback=lookback,
+                interval=interval,
+            )
+        except Exception:
+            matrix[sev][facet] = empty_series_cell(categories, period_caption)
+    if expand == "reach":
+        return expand_severity_reach_matrix(
+            matrix, categories=categories, period_caption=period_caption
+        )
+    if expand != "severity":
+        msg = f"Unsupported expand mode {expand!r}; expected 'severity' or 'reach'"
+        raise ValueError(msg)
+    return expand_severity_facet_matrix(
+        matrix,
+        facet_keys=facet_keys,
+        categories=categories,
+        period_caption=period_caption,
+    )
+
+
+def query_severity_reach_series_cell(
+    client: Client,
+    *,
+    namespace: str,
+    window_start: datetime,
+    window_end: datetime,
+    reach_clause: str,
+    level: str,
+    parent_uuids: list[str] | None = None,
+    lookback: int = CHART_DEFAULT_LOOKBACK,
+    interval: str = CHART_DEFAULT_INTERVAL,
+) -> dict[str, Any]:
+    """Query one severity x reach FindingLog CREATE/DELETE series cell.
+
+    *parent_uuids* scopes to ``meta.parent_uuid`` (project UUID set). Pass
+    ``None`` for the whole namespace path.
+    """
+    from endorlabs.filters import main_context_vulnerability_filter
+
+    return query_severity_facet_series_cell(
+        client,
+        namespace=namespace,
+        window_start=window_start,
+        window_end=window_end,
+        category_base_filter=main_context_vulnerability_filter(),
+        facet_clause=reach_clause,
+        level=level,
+        parent_uuids=parent_uuids,
+        lookback=lookback,
+        interval=interval,
+    )
+
+
+def query_severity_reach_matrix(
+    client: Client,
+    *,
+    namespace: str,
+    window_start: datetime,
+    window_end: datetime,
+    parent_uuids: list[str] | None = None,
+    lookback: int = CHART_DEFAULT_LOOKBACK,
+    categories: list[str] | None = None,
+    period_caption: str | None = None,
+    interval: str = CHART_DEFAULT_INTERVAL,
+) -> dict[str, dict[str, dict[str, Any]]]:
+    """Query Crit/High x base reach cells and expand severity/reach rollups.
+
+    Thin wrapper over :func:`query_severity_facet_matrix` with ``expand="reach"``.
+    """
+    from endorlabs.filters import main_context_vulnerability_filter
+
+    return query_severity_facet_matrix(
+        client,
+        namespace=namespace,
+        window_start=window_start,
+        window_end=window_end,
+        category_base_filter=main_context_vulnerability_filter(),
+        cells=SEVERITY_REACH_CELLS,
+        facet_keys=BASE_REACH_KEYS,
+        parent_uuids=parent_uuids,
+        lookback=lookback,
+        categories=categories,
+        period_caption=period_caption,
+        interval=interval,
+        expand="reach",
     )
 
 

@@ -276,9 +276,9 @@ repos:
     hooks:
       - id: codespell
         stages: [pre-commit]
-        args: [--skip, "*.json,*.lock,.git,.endorlabs-context,src/endorlabs/generated"]
+        args: [--skip, "*.json,*.lock,*.min.js,.git,.endorlabs-context,src/endorlabs/generated"]
         # pre-push passes explicit paths; --skip alone does not ignore them.
-        exclude: ^src/endorlabs/generated/.*$
+        exclude: ^(src/endorlabs/generated/.*|.*\.min\.js)$
 
   # --- Python SAST ---
   - repo: https://github.com/PyCQA/bandit

@@ -18,8 +18,8 @@ Subpackages:
     notifications: Notification targets and policies.
     platform: Namespaces, installations, scan profiles, auth policies.
     reachability: PV/finding reachability context and stitched evidence helpers.
-    relationships: Project relationship graph helpers.
-    analytics: Estate DependencyMetadata aggregates and tabular exports.
+    estate: Estate analytics, cardinality, dashboard counts, topology.
+    reports: Tenant report analyze → export → bundle workflows (``endor-reports``).
     semgrep: Semgrep rule import/export, calibration, metadata inventory.
     troubleshooting_scans: Scan result/log triage scripts (CLI-oriented).
 """

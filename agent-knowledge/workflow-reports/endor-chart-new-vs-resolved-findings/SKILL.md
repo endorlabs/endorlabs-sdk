@@ -123,7 +123,7 @@ Filters: `endorlabs.filters.reachable_vuln_log_base_filter()`.
 Bundled script (preferred for agents):
 
 ```bash
-uv run python agent-knowledge/workflow-reports/endor-chart-new-vs-resolved-findings/scripts/run_analysis.py <namespace>
+uv run --env-file .env endor-reports findings-trend -n <namespace>
 ```
 
 Uses `client.FindingLog.list_groups(..., list_params=ListParameters(group_by_time=True, ...))`

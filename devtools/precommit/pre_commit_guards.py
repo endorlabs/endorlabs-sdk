@@ -56,6 +56,14 @@ _PROJECT_UUID_FILTER = re.compile(r"spec\.(?:importer_data\.)?project_uuid\s*=="
 
 # High-confidence estate literals (fail on staged checked-in text paths).
 _HEX_UUID = re.compile(r"\b[0-9a-f]{24}\b", re.IGNORECASE)
+# Tenant/namespace string literals in binding contexts (JSON keys, Client(), TENANT=).
+_TENANT_BINDING_PATTERNS = (
+    re.compile(r"""Client\s*\(\s*tenant\s*=\s*["']([^"']+)["']""", re.IGNORECASE),
+    re.compile(r"""(?:^|[^\w])tenant\s*=\s*["']([^"']+)["']""", re.IGNORECASE),
+    re.compile(r"""\bTENANT\s*=\s*["']([^"']+)["']"""),
+    re.compile(r"""["']tenant["']\s*:\s*["']([^"']+)["']""", re.IGNORECASE),
+    re.compile(r"""["']namespace["']\s*:\s*["']([^"']+)["']""", re.IGNORECASE),
+)
 _GITHUB_ORG_REPO = re.compile(
     r"https?://github\.com/"
     r"(?P<org>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)",
@@ -816,6 +824,8 @@ def check_portable_examples(*, paths: list[str] | None = None) -> int:
         # Guard unit tests intentionally embed disallowed literals.
         if path.endswith("test_pre_commit_guards.py"):
             continue
+        if _is_vendored_report_shell_asset(path):
+            continue
         source = _read_staged_text(path)
         if source is None:
             continue
@@ -826,6 +836,11 @@ def check_portable_examples(*, paths: list[str] | None = None) -> int:
                 continue
             if _is_disallowed_github_url(line):
                 hits.append(f"{path}:{line_no}: github-url")
+                continue
+            tenant_literals = iter_non_portable_tenant_literals(line)
+            if tenant_literals:
+                for literal in tenant_literals:
+                    hits.append(f"{path}:{line_no}: tenant-literal {literal}")
                 continue
             for match in _TENANT_PATH.finditer(line):
                 token = match.group(0)
@@ -974,6 +989,36 @@ def is_allowed_namespace_token(token: str) -> bool:
     return False
 
 
+def is_portable_namespace_value(value: str) -> bool:
+    """Return True when a tenant/namespace literal is safe for git-tracked content."""
+    token = value.strip()
+    if not token or token == "all":
+        return True
+    if is_allowed_namespace_token(token):
+        return True
+    lower = token.lower()
+    if lower.startswith("example-"):
+        return True
+    if "." in token:
+        root = token.split(".", 1)[0].lower()
+        # Documented placeholder roots (tenant.namespace) plus CLI allowlist.
+        if root in {"tenant", "example"} or root.startswith("example-"):
+            return True
+        return root in _NAMESPACE_FLAG_ALLOW
+    return False
+
+
+def iter_non_portable_tenant_literals(line: str) -> list[str]:
+    """Return disallowed tenant/namespace string values on *line*."""
+    hits: list[str] = []
+    for pattern in _TENANT_BINDING_PATTERNS:
+        for match in pattern.finditer(line):
+            value = match.group(1)
+            if not is_portable_namespace_value(value):
+                hits.append(value)
+    return hits
+
+
 def iter_namespace_flag_hits(path: str, text: str) -> list[str]:
     """Return ``path:lineno: namespace-flag token`` hits for disallowed values."""
     hits: list[str] = []
@@ -983,6 +1028,12 @@ def iter_namespace_flag_hits(path: str, text: str) -> list[str]:
             if not is_allowed_namespace_token(token):
                 hits.append(f"{path}:{line_no}: namespace-flag {token}")
     return hits
+
+
+def _is_vendored_report_shell_asset(path: str) -> bool:
+    """Skip portable/URL guards for bundled third-party report shell assets."""
+    normalized = _normalize_path(path).replace("\\", "/")
+    return "/shell/assets/" in normalized and normalized.endswith(".min.js")
 
 
 def find_external_pii_url_hits(
@@ -995,6 +1046,8 @@ def find_external_pii_url_hits(
             continue
         # Guard unit tests intentionally embed disallowed literals.
         if path.endswith("test_pre_commit_guards.py"):
+            continue
+        if _is_vendored_report_shell_asset(path):
             continue
         for match in _EMAIL_RE.finditer(text):
             addr = match.group(0)

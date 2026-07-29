@@ -62,31 +62,95 @@ workflows:
 
   # Workflow report workflows — routed through endor-workflow-reports, not shown independently.
   - id: auth-login-count
-    cli: null
-    module: endorlabs.workflows.auth.authentication_log
+    cli: endor-reports
+    module: endorlabs.workflows.reports.cli
     skill: endor-workflow-reports
     default_output: .endorlabs-context/workspace/runs/auth-login-count/
     agent_visible: false
     composition: library_api
     library_entrypoints:
+      - endorlabs.workflows.reports.analyze.auth_login_count
       - endorlabs.workflows.auth.count_logins_from_groups
       - endorlabs.workflows.auth.list_auth_logs
   - id: auth-credential-expiry
-    cli: null
-    module: endorlabs.workflows.auth.credential_expiry
+    cli: endor-reports
+    module: endorlabs.workflows.reports.cli
     skill: endor-workflow-reports
     default_output: .endorlabs-context/workspace/runs/auth-credential-expiry/
     agent_visible: false
     composition: library_api
     library_entrypoints:
+      - endorlabs.workflows.reports.analyze.auth_credential_expiry
       - endorlabs.workflows.auth.audit_api_key_expiry
       - endorlabs.workflows.auth.list_api_keys
+  - id: auth-policy-audit
+    cli: endor-reports
+    module: endorlabs.workflows.reports.cli
+    skill: endor-workflow-reports
+    default_output: user-supplied CSV path
+    agent_visible: false
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.reports.analyze.auth_policies_audit
+      - endorlabs.workflows.auth.audit_authorization_policy_forms
+  - id: cli-vs-cloud-projects
+    cli: endor-reports
+    module: endorlabs.workflows.reports.cli
+    skill: endor-workflow-reports
+    default_output: .endorlabs-context/workspace/runs/cli-vs-cloud-projects/
+    agent_visible: false
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.reports.analyze.cli_vs_cloud
+  - id: ci-endorctl-version-audit
+    cli: endor-reports
+    module: endorlabs.workflows.reports.cli
+    skill: endor-workflow-reports
+    default_output: .endorlabs-context/workspace/runs/ci-endorctl-version-audit/
+    agent_visible: false
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.reports.analyze.ci_endorctl_audit
+  - id: duplicate-projects
+    cli: endor-reports
+    module: endorlabs.workflows.reports.cli
+    skill: endor-workflow-reports
+    default_output: .endorlabs-context/workspace/runs/duplicate-projects/
+    agent_visible: false
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.reports.analyze.duplicate_projects
   - id: finding-log-weekly-trends
-    cli: null
-    module: endorlabs.workflows.findings.finding_log_trends
+    cli: endor-reports
+    module: endorlabs.workflows.reports.cli
     skill: endor-workflow-reports
     default_output: .endorlabs-context/workspace/runs/finding-log-weekly-trends/
     agent_visible: false
     composition: library_api
     library_entrypoints:
+      - endorlabs.workflows.reports.analyze.findings_chart_analysis
       - endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis
+      - endorlabs.workflows.findings.finding_log_trends.query_severity_reach_matrix
+      - endorlabs.workflows.findings.finding_log_trends.query_severity_reach_series_cell
+      - endorlabs.workflows.findings.finding_log_trends.sum_series_cells
+  - id: executive-report-packet
+    cli: endor-reports
+    module: endorlabs.workflows.reports.cli
+    skill: endor-workflow-reports
+    default_output: .endorlabs-context/workspace/runs/executive-report-packet/
+    agent_visible: false
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.reports.bundles.executive_packet.build_report_packet
+      - endorlabs.workflows.reports.export.html.render.render_report_packet
+      - endorlabs.workflows.reports.parity.compare_packet_cube
+  - id: potentially-reachable-analysis
+    cli: endor-reports
+    module: endorlabs.workflows.reports.cli
+    skill: endor-workflow-reports
+    default_output: .endorlabs-context/workspace/runs/potentially-reachable-analysis/
+    agent_visible: false
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.reports.analyze.prf_report_analysis
+      - endorlabs.workflows.findings.prf_analysis

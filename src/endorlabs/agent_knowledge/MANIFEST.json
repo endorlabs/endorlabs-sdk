@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-24T16:51:18.460745+00:00",
+  "generated_at": "2026-07-28T07:01:54.121918+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -299,7 +299,7 @@
       ]
     },
     {
-      "description": "Use when the user asks for tenant or namespace-level Endor Labs audit reports,\nCSV exports, Cursor canvases, or executive-style workflow summaries that are\nbacked by bundled report scripts rather than day-0 SDK troubleshooting skills.\nRoutes to auth, project inventory, CI version, finding trend, and PRF report\nplaybooks. Not for single-project scan RCA, finding retrieval, SDK debugging,\nor policy validation.",
+      "description": "Use when the user asks for tenant or namespace-level Endor Labs audit reports,\nCSV exports, Cursor canvases, executive HTML report packets, or workflow\nsummaries backed by bundled report scripts rather than day-0 SDK troubleshooting\nskills. Routes to auth, project inventory, CI version, finding trend,\nexecutive HTML packet, and PRF report playbooks. Not for single-project scan\nRCA, finding retrieval, SDK debugging, or policy validation.",
       "id": "endor-workflow-reports",
       "name": "endor-workflow-reports",
       "path": "skills/endor-workflow-reports/SKILL.md",
@@ -323,28 +323,43 @@
     },
     {
       "agent_visible": false,
-      "cli": null,
+      "cli": "endor-reports",
       "composition": "library_api",
       "default_output": ".endorlabs-context/workspace/runs/auth-credential-expiry/",
       "id": "auth-credential-expiry",
       "library_entrypoints": [
+        "endorlabs.workflows.reports.analyze.auth_credential_expiry",
         "endorlabs.workflows.auth.audit_api_key_expiry",
         "endorlabs.workflows.auth.list_api_keys"
       ],
-      "module": "endorlabs.workflows.auth.credential_expiry",
+      "module": "endorlabs.workflows.reports.cli",
       "skill": "endor-workflow-reports"
     },
     {
       "agent_visible": false,
-      "cli": null,
+      "cli": "endor-reports",
       "composition": "library_api",
       "default_output": ".endorlabs-context/workspace/runs/auth-login-count/",
       "id": "auth-login-count",
       "library_entrypoints": [
+        "endorlabs.workflows.reports.analyze.auth_login_count",
         "endorlabs.workflows.auth.count_logins_from_groups",
         "endorlabs.workflows.auth.list_auth_logs"
       ],
-      "module": "endorlabs.workflows.auth.authentication_log",
+      "module": "endorlabs.workflows.reports.cli",
+      "skill": "endor-workflow-reports"
+    },
+    {
+      "agent_visible": false,
+      "cli": "endor-reports",
+      "composition": "library_api",
+      "default_output": "user-supplied CSV path",
+      "id": "auth-policy-audit",
+      "library_entrypoints": [
+        "endorlabs.workflows.reports.analyze.auth_policies_audit",
+        "endorlabs.workflows.auth.audit_authorization_policy_forms"
+      ],
+      "module": "endorlabs.workflows.reports.cli",
       "skill": "endor-workflow-reports"
     },
     {
@@ -391,12 +406,48 @@
       "skill": "endor-fetch-and-search-call-graph"
     },
     {
+      "agent_visible": false,
+      "cli": "endor-reports",
+      "composition": "library_api",
+      "default_output": ".endorlabs-context/workspace/runs/ci-endorctl-version-audit/",
+      "id": "ci-endorctl-version-audit",
+      "library_entrypoints": [
+        "endorlabs.workflows.reports.analyze.ci_endorctl_audit"
+      ],
+      "module": "endorlabs.workflows.reports.cli",
+      "skill": "endor-workflow-reports"
+    },
+    {
+      "agent_visible": false,
+      "cli": "endor-reports",
+      "composition": "library_api",
+      "default_output": ".endorlabs-context/workspace/runs/cli-vs-cloud-projects/",
+      "id": "cli-vs-cloud-projects",
+      "library_entrypoints": [
+        "endorlabs.workflows.reports.analyze.cli_vs_cloud"
+      ],
+      "module": "endorlabs.workflows.reports.cli",
+      "skill": "endor-workflow-reports"
+    },
+    {
       "agent_visible": true,
       "cli": "endor-context",
       "default_output": ".endorlabs-context/",
       "id": "context-bootstrap",
       "module": "endorlabs.context.cli",
       "skill": null
+    },
+    {
+      "agent_visible": false,
+      "cli": "endor-reports",
+      "composition": "library_api",
+      "default_output": ".endorlabs-context/workspace/runs/duplicate-projects/",
+      "id": "duplicate-projects",
+      "library_entrypoints": [
+        "endorlabs.workflows.reports.analyze.duplicate_projects"
+      ],
+      "module": "endorlabs.workflows.reports.cli",
+      "skill": "endor-workflow-reports"
     },
     {
       "agent_visible": false,
@@ -417,14 +468,32 @@
     },
     {
       "agent_visible": false,
-      "cli": null,
+      "cli": "endor-reports",
+      "composition": "library_api",
+      "default_output": ".endorlabs-context/workspace/runs/executive-report-packet/",
+      "id": "executive-report-packet",
+      "library_entrypoints": [
+        "endorlabs.workflows.reports.bundles.executive_packet.build_report_packet",
+        "endorlabs.workflows.reports.export.html.render.render_report_packet",
+        "endorlabs.workflows.reports.parity.compare_packet_cube"
+      ],
+      "module": "endorlabs.workflows.reports.cli",
+      "skill": "endor-workflow-reports"
+    },
+    {
+      "agent_visible": false,
+      "cli": "endor-reports",
       "composition": "library_api",
       "default_output": ".endorlabs-context/workspace/runs/finding-log-weekly-trends/",
       "id": "finding-log-weekly-trends",
       "library_entrypoints": [
-        "endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis"
+        "endorlabs.workflows.reports.analyze.findings_chart_analysis",
+        "endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis",
+        "endorlabs.workflows.findings.finding_log_trends.query_severity_reach_matrix",
+        "endorlabs.workflows.findings.finding_log_trends.query_severity_reach_series_cell",
+        "endorlabs.workflows.findings.finding_log_trends.sum_series_cells"
       ],
-      "module": "endorlabs.workflows.findings.finding_log_trends",
+      "module": "endorlabs.workflows.reports.cli",
       "skill": "endor-workflow-reports"
     },
     {
@@ -438,6 +507,19 @@
       ],
       "module": "endorlabs.workflows.policies.validate",
       "skill": "endor-validate-policy"
+    },
+    {
+      "agent_visible": false,
+      "cli": "endor-reports",
+      "composition": "library_api",
+      "default_output": ".endorlabs-context/workspace/runs/potentially-reachable-analysis/",
+      "id": "potentially-reachable-analysis",
+      "library_entrypoints": [
+        "endorlabs.workflows.reports.analyze.prf_report_analysis",
+        "endorlabs.workflows.findings.prf_analysis"
+      ],
+      "module": "endorlabs.workflows.reports.cli",
+      "skill": "endor-workflow-reports"
     },
     {
       "agent_visible": true,

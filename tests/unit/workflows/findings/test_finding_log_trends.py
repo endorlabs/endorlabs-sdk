@@ -241,5 +241,41 @@ def test_chart_canvas_filename_uses_interval_and_lookback() -> None:
     )
 
 
+def test_append_parent_uuid_filter() -> None:
+    from endorlabs.workflows.findings.finding_log_trends import (
+        append_parent_uuid_filter,
+    )
+
+    base = "context.type==CONTEXT_TYPE_MAIN"
+    assert append_parent_uuid_filter(base, None) == base
+    assert "__none__" in append_parent_uuid_filter(base, [])
+    scoped = append_parent_uuid_filter(
+        base,
+        ["00000000-0000-4000-8000-000000000001"],
+    )
+    assert "meta.parent_uuid in" in scoped
+    assert "00000000-0000-4000-8000-000000000001" in scoped
+
+
+def test_sum_series_cells_recomputes_gap() -> None:
+    from endorlabs.workflows.findings.finding_log_trends import (
+        empty_series_cell,
+        sum_series_cells,
+    )
+
+    cats = ["a", "b"]
+    a = empty_series_cell(cats, "cap")
+    a["weeklyNew"] = [2, 0]
+    a["weeklyResolved"] = [0, 1]
+    b = empty_series_cell(cats, "cap")
+    b["weeklyNew"] = [1, 1]
+    b["weeklyResolved"] = [1, 0]
+    merged = sum_series_cells([a, b], categories=cats, period_caption="cap")
+    assert merged["weeklyNew"] == [3, 1]
+    assert merged["cumulativeNew"] == [3, 4]
+    assert merged["gaps"] == [2, 2]
+    assert merged["gapTrend"] == "stable"
+
+
 def test_chart_defaults_match_quarter_window() -> None:
     assert CHART_DEFAULT_LOOKBACK == 13
