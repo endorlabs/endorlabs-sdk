@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workspace-layout.md
-x-endor-source-sha256: 537ad864e8978b52f422c9fe76ac385006e2b9c7f004c7309b558591bfefeaba
+x-endor-source-sha256: 8c5218a2e95d7d614334fff5f489af77ce3625342163d39e2bf071b556f8dae4
 ---
 
 # Workspace layout
@@ -63,10 +63,3 @@ Do not commit under `docs/`.
 3. **Temp scripts** — `runs/scratch/`; never commit to `src/` or repo root.
 4. **Do not** assume `.endorlabs-context/` exists; create parent dirs before writing.
 5. **Gitignore** — consumer projects should ignore `.endorlabs-context/` (`uv run endor-context --print-gitignore-line`).
-
-## Legacy paths
-
-<!-- REMOVE_BY_0_7_0: drop this section with session_workspace_dir / workflow_artifacts_root. -->
-Older docs used `workspace/sessions/<user>/exports/…` and `workspace/artifacts/`.
-Prefer the three-bucket layout above. `workflow_artifacts_root()` aliases
-`workflow_inventory_root()` (`inventory/`).

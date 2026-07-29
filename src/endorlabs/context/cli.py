@@ -119,8 +119,8 @@ def main(argv: list[str] | None = None) -> None:
     if status.agent_knowledge_path is not None:
         print(f"Agent knowledge: {status.agent_knowledge_path}")
 
-    if status.openapi_path is not None:
-        print(f"OpenAPI: {status.openapi_path}")
+    if status.platform_openapi_path is not None:
+        print(f"OpenAPI: {status.platform_openapi_path}")
 
     for target_name, path in sorted(status.synced_skill_paths.items()):
         print(f"{target_name.title()} skills: {path}")

@@ -164,7 +164,7 @@ class TestInit:
         mock_cls.assert_not_called()
         assert status.agent_knowledge_path == output_dir / "sdk"
         assert status.context_json_path == output_dir / "context.json"
-        assert status.openapi_path is None
+        assert status.platform_openapi_path is None
 
     def test_init_openapi_only(self, tmp_path: Path) -> None:
         """Test init with only OpenAPI download."""
@@ -184,7 +184,6 @@ class TestInit:
         assert status.platform_openapi_path == (
             output_dir / "platform" / "openapi" / "openapiv2.swagger.json"
         )
-        assert status.openapi_path == status.platform_openapi_path
         assert status.agent_knowledge_path is None
         assert status.context_json_path == output_dir / "context.json"
         assert status.downloaded_at is not None
@@ -226,8 +225,8 @@ class TestInit:
         )
 
         assert output_dir.exists()
-        assert status.openapi_path is not None
-        assert status.openapi_path.exists()
+        assert status.platform_openapi_path is not None
+        assert status.platform_openapi_path.exists()
 
     def test_init_with_force_redownloads(self, tmp_path: Path) -> None:
         """Test init with force=True re-downloads existing files."""
@@ -249,7 +248,7 @@ class TestInit:
         )
 
         # File should be updated
-        with open(status.openapi_path) as f:
+        with open(status.platform_openapi_path) as f:
             data = json.load(f)
         assert data == {"new": True}
 
@@ -273,7 +272,7 @@ class TestInit:
         )
 
         # File should NOT be updated
-        with open(status.openapi_path) as f:
+        with open(status.platform_openapi_path) as f:
             data = json.load(f)
         assert data == {"old": True}
 
@@ -304,7 +303,7 @@ class TestInit:
         mock_cls.assert_not_called()
         assert output_dir.exists()
         assert not (output_dir / "sdk" / "INDEX.md").exists()
-        assert status.openapi_path is None
+        assert status.platform_openapi_path is None
         assert status.synced_skill_paths == {"cursor": mirrored_path}
         mock_sync.assert_called_once()
         assert mock_sync.call_args.kwargs["source_dir"] == (

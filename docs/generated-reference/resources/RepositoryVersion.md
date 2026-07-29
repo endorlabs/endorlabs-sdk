@@ -38,6 +38,7 @@ Versioned snapshot of a repository.
 
 Optional:
 
+- `allow_ref_as_pr_scan_base`
 - `last_commit_date`
 - `version`
 

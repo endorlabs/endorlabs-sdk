@@ -14,7 +14,6 @@ class InitStatus:
         agent_knowledge_path: Materialized agent knowledge under context (sdk/).
         context_json_path: Path to context.json init manifest.
         platform_openapi_path: Path to downloaded OpenAPI spec (None if skipped).
-        openapi_path: Alias for platform_openapi_path (REMOVE_BY_0_7_0).
         synced_skill_paths: Runtime skill mirrors refreshed during bootstrap.
         downloaded_at: Timestamp when bootstrap completed.
 
@@ -25,14 +24,6 @@ class InitStatus:
     platform_openapi_path: Path | None
     downloaded_at: datetime
     synced_skill_paths: dict[str, Path] = field(default_factory=dict)
-
-    @property
-    def openapi_path(self) -> Path | None:
-        """Alias for :attr:`platform_openapi_path`.
-
-        REMOVE_BY_0_7_0: drop this alias; callers should use platform_openapi_path.
-        """
-        return self.platform_openapi_path
 
     @property
     def agent_knowledge_index_path(self) -> Path | None:

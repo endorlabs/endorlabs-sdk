@@ -1628,6 +1628,7 @@ class _RepositoryVersionFacade(ResourceRuntimeFacade[RepositoryVersion]):
         namespace: str | None = None,
         version: Any | None = None,
         last_commit_date: Any | None = None,
+        allow_ref_as_pr_scan_base: Any | None = None,
         **kwargs: Any,
     ) -> RepositoryVersion: ...
 

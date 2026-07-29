@@ -755,7 +755,7 @@ class V1ConanSpec(BaseModel):
     """
     The logical name of the remote in the Conan client configuration.
     """
-    url: str
+    url: str | None = None
     """
     The URL of the Conan remote registry.
     """

@@ -58,10 +58,3 @@ Do not commit under `docs/`.
 3. **Temp scripts** — `runs/scratch/`; never commit to `src/` or repo root.
 4. **Do not** assume `.endorlabs-context/` exists; create parent dirs before writing.
 5. **Gitignore** — consumer projects should ignore `.endorlabs-context/` (`uv run endor-context --print-gitignore-line`).
-
-## Legacy paths
-
-<!-- REMOVE_BY_0_7_0: drop this section with session_workspace_dir / workflow_artifacts_root. -->
-Older docs used `workspace/sessions/<user>/exports/…` and `workspace/artifacts/`.
-Prefer the three-bucket layout above. `workflow_artifacts_root()` aliases
-`workflow_inventory_root()` (`inventory/`).

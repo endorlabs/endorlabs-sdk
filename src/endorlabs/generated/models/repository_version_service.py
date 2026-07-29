@@ -526,6 +526,10 @@ class V1GroupResponse(BaseModel):
 
 
 class V1RepositoryVersionSpec(BaseModel):
+    allow_ref_as_pr_scan_base: bool | None = None
+    """
+    Allows this monitored branch to be used as the base for automated PR scans when PR scans are enabled for the project.
+    """
     last_commit_date: AwareDatetime | None = None
     """
     The last known time when the repository version was updated.

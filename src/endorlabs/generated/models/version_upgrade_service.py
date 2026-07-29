@@ -4108,66 +4108,6 @@ class DataflowItem(BaseModel):
     """
 
 
-class AIResultSAST(BaseModel):
-    attack_vector: str | None = None
-    """
-    Attack vector breakdown table when no exploit reproduction is emitted (the "## Attack Vector" section).
-    """
-    classification: V1FindingClassification | None = (
-        'FINDING_CLASSIFICATION_UNSPECIFIED'
-    )
-    """
-    Classification of the finding type.
-    """
-    cwes: list[str] | None = None
-    """
-    The CWEs of the vulnerability.
-    """
-    dataflow: list[DataflowItem] | None = None
-    """
-    Deprecated: use call_stack instead.
-    One or more source locations representing the data flow path from a source to a sink.
-    The locations are ordered and include the source, any intermediate nodes, and the sink.
-    If only a single location is provided, it represents the sink location only.
-    """
-    exploit_reproduction: str | None = None
-    """
-    Step-by-step exploit reproduction for high/critical true positives (the "## Exploit Reproduction" section).
-    """
-    language: str | None = None
-    """
-    Programming language of the file where this result was found.
-    """
-    location: V1SourceLocation | None = None
-    """
-    The main location of the vulnerability.
-    """
-    remediation: str | None = None
-    """
-    Recommended remediation, including any unified-diff fix (the "## Remediation Guidance" section).
-    """
-    security_controls: str | None = None
-    """
-    Security controls assessment table (the "## Security Controls" section).
-    """
-    severity_scoring: str | None = None
-    """
-    Severity scoring breakdown (the "## Severity Scoring" section).
-    """
-    summary: str | None = None
-    """
-    Short prose summary of the vulnerability (the "## Summary" section).
-    """
-    validation_outcome: str | None = None
-    """
-    Validation outcome for unknown findings (the "## Validation Outcome" section).
-    """
-    verification_scorecard: str | None = None
-    """
-    Verification scorecard with per-criterion verdicts (the "## Verification Scorecard" section).
-    """
-
-
 class Digest(BaseModel):
     """
     Digest is a digest of a file/container image.
@@ -4895,6 +4835,82 @@ class V1AIMeta(BaseModel):
     llm_context: V1LLMContext | None = None
     """
     LLM context for the finding.
+    """
+
+
+class Callee(BaseModel):
+    """
+    A source region whose content is hashed so a scheduled AI SAST refresh can
+    detect whether that region changed since the finding was last scanned.
+    """
+
+    content_hash: str | None = None
+    """
+    SHA-256 hex hash of the region's source at scan time.
+    """
+    location: V1SourceLocation | None = None
+    """
+    Where the hashed region lives. relative_path, start_line and end_line
+    delimit the hashed source. Regions are not always whole functions (e.g. a
+    dataflow step); when the region is or sits inside a function,
+    function_name carries its fully qualified name.
+    """
+
+
+class Caller(BaseModel):
+    """
+    A source region whose content is hashed so a scheduled AI SAST refresh can
+    detect whether that region changed since the finding was last scanned.
+    """
+
+    content_hash: str | None = None
+    """
+    SHA-256 hex hash of the region's source at scan time.
+    """
+    location: V1SourceLocation | None = None
+    """
+    Where the hashed region lives. relative_path, start_line and end_line
+    delimit the hashed source. Regions are not always whole functions (e.g. a
+    dataflow step); when the region is or sits inside a function,
+    function_name carries its fully qualified name.
+    """
+
+
+class DataflowItem1(BaseModel):
+    """
+    A source region whose content is hashed so a scheduled AI SAST refresh can
+    detect whether that region changed since the finding was last scanned.
+    """
+
+    content_hash: str | None = None
+    """
+    SHA-256 hex hash of the region's source at scan time.
+    """
+    location: V1SourceLocation | None = None
+    """
+    Where the hashed region lives. relative_path, start_line and end_line
+    delimit the hashed source. Regions are not always whole functions (e.g. a
+    dataflow step); when the region is or sits inside a function,
+    function_name carries its fully qualified name.
+    """
+
+
+class V1AISASTContextRegion(BaseModel):
+    """
+    A source region whose content is hashed so a scheduled AI SAST refresh can
+    detect whether that region changed since the finding was last scanned.
+    """
+
+    content_hash: str | None = None
+    """
+    SHA-256 hex hash of the region's source at scan time.
+    """
+    location: V1SourceLocation | None = None
+    """
+    Where the hashed region lives. relative_path, start_line and end_line
+    delimit the hashed source. Regions are not always whole functions (e.g. a
+    dataflow step); when the region is or sits inside a function,
+    function_name carries its fully qualified name.
     """
 
 
@@ -6085,6 +6101,45 @@ class RootCveCVSSMetric(BaseModel):
     cvss_metric_v40: list[CvssMetricV40Item] | None = None
 
 
+class V1AISASTContext(BaseModel):
+    """
+    The code context an AI SAST finding depends on, hashed at scan time, so a
+    scheduled refresh can detect modified context by re-hashing these regions.
+    """
+
+    callees: list[Callee] | None = None
+    """
+    Regions of functions the scanned segment calls.
+    """
+    callers: list[Caller] | None = None
+    """
+    Regions of functions that call into the scanned segment.
+    """
+    dataflow: list[DataflowItem1] | None = None
+    """
+    The finding's dataflow step regions, in order.
+    """
+    fp_summary_hash: str | None = None
+    """
+    SHA-256 hex of the project's false-positive context summary at scan time.
+    A change here can flip the agent's verdict, so it participates in
+    refresh change detection alongside the code regions.
+    """
+    hash: str | None = None
+    """
+    Denormalized SHA-256 hex rollup over all component hashes (segment,
+    dataflow, callers, callees, fp_summary_hash). Stored so findings can be
+    grouped or queried by context fingerprint.
+    """
+    segment: V1AISASTContextRegion | None = None
+    """
+    The scanned segment that contains the finding's sink. Not always a whole
+    function: a segment may also be a config-file region, a template block, a
+    module preamble, or an entire non-code file. When it is a function, its
+    location.function_name carries the fully qualified function name.
+    """
+
+
 class Dependency(BaseModel):
     abstract: bool | None = None
     """
@@ -6246,6 +6301,88 @@ class V1PackageVersionMetadata(BaseModel):
     uuid: str | None = None
     """
     The UUID of the package version metadata.
+    """
+
+
+class AIResultSAST(BaseModel):
+    attack_vector: str | None = None
+    """
+    Attack vector breakdown table when no exploit reproduction is emitted (the "## Attack Vector" section).
+    """
+    classification: V1FindingClassification | None = (
+        'FINDING_CLASSIFICATION_UNSPECIFIED'
+    )
+    """
+    Classification of the finding type.
+    """
+    context: V1AISASTContext | None = None
+    """
+    Hashed code regions this finding depends on, captured at scan time so a
+    scheduled refresh can detect when the surrounding code changed.
+    """
+    cwes: list[str] | None = None
+    """
+    The CWEs of the vulnerability.
+    """
+    dataflow: list[DataflowItem] | None = None
+    """
+    Deprecated: use call_stack instead.
+    One or more source locations representing the data flow path from a source to a sink.
+    The locations are ordered and include the source, any intermediate nodes, and the sink.
+    If only a single location is provided, it represents the sink location only.
+    """
+    exploit_reproduction: str | None = None
+    """
+    Step-by-step exploit reproduction for high/critical true positives (the "## Exploit Reproduction" section).
+    """
+    fixed_strikes: int | None = None
+    """
+    Strictly consecutive scheduled-refresh FIXED verdicts. Deletion requires
+    two: the first only stamps this counter and keeps the finding due. Reset
+    by any non-FIXED outcome (STILL_PRESENT, UNKNOWN, agent error).
+    """
+    language: str | None = None
+    """
+    Programming language of the file where this result was found.
+    """
+    last_scan: AwareDatetime | None = None
+    """
+    When the scheduled AI SAST refresh last revalidated this finding. Unset
+    for findings created before refresh tracking; drives refresh staleness.
+    """
+    location: V1SourceLocation | None = None
+    """
+    The main location of the vulnerability.
+    """
+    refresh_attempts: int | None = None
+    """
+    Consecutive inconclusive scheduled-refresh attempts (agent error or
+    UNKNOWN verdict); at the retry cap the refresh re-baselines last_scan
+    instead of retrying forever. Reset on a definitive verdict.
+    """
+    remediation: str | None = None
+    """
+    Recommended remediation, including any unified-diff fix (the "## Remediation Guidance" section).
+    """
+    security_controls: str | None = None
+    """
+    Security controls assessment table (the "## Security Controls" section).
+    """
+    severity_scoring: str | None = None
+    """
+    Severity scoring breakdown (the "## Severity Scoring" section).
+    """
+    summary: str | None = None
+    """
+    Short prose summary of the vulnerability (the "## Summary" section).
+    """
+    validation_outcome: str | None = None
+    """
+    Validation outcome for unknown findings (the "## Validation Outcome" section).
+    """
+    verification_scorecard: str | None = None
+    """
+    Verification scorecard with per-criterion verdicts (the "## Verification Scorecard" section).
     """
 
 
