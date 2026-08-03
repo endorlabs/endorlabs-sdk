@@ -13,6 +13,8 @@ if TYPE_CHECKING:
     from endorlabs import Client
 
 CADENCE_LOOKBACK_DAYS = MAIN_LOOKBACK_DAYS
+# Platform CI/PR ScanResult retention is typically ~30d (shorter than MAIN).
+CI_LOOKBACK_DAYS = 30
 TOP_N = 25
 
 MAIN_FULL_CLAUSE = "context.type==CONTEXT_TYPE_MAIN and spec.type==TYPE_ALL_SCANS"
@@ -205,16 +207,25 @@ def collect_onboarding_cadence(
     leaf_namespaces: list[str],
     tag_catalog: list[dict[str, Any]],
     lookback_days: int = CADENCE_LOOKBACK_DAYS,
+    ci_lookback_days: int = CI_LOOKBACK_DAYS,
     top_n: int = TOP_N,
 ) -> dict[str, Any]:
-    """Build ScanResult cadence block for ``reports.onboarding.cadence``."""
+    """Build ScanResult cadence block for ``reports.onboarding.cadence``.
+
+    MAIN series use ``lookback_days`` (~90d). CI/PR uses ``ci_lookback_days``
+    (~30d) to match typical platform retention for CI ScanResults.
+    """
     window, start, end = cadence_window_filter(lookback_days=lookback_days)
+    ci_window, ci_start, _ci_end = cadence_window_filter(
+        lookback_days=ci_lookback_days, now=end
+    )
     full_f = main_full_filter(window)
     any_f = main_with_analytics_filter(window)
-    ci_f = ci_filter(window)
+    ci_f = ci_filter(ci_window)
 
     weekly_main_full = _safe_weekly(client, tenant, full_f)
     weekly_main_analytics = _safe_weekly(client, tenant, any_f)
+    # Optional short CI weekly series (for CSV); HTML chart is MAIN-only.
     weekly_ci = _safe_weekly(client, tenant, ci_f)
 
     main_map: dict[str, int] = defaultdict(int)
@@ -253,8 +264,10 @@ def collect_onboarding_cadence(
 
     return {
         "lookbackDays": lookback_days,
+        "ciLookbackDays": ci_lookback_days,
         "windowStart": start.isoformat(),
         "windowEnd": end.isoformat(),
+        "ciWindowStart": ci_start.isoformat(),
         "weeklyMainFull": weekly_main_full,
         "weeklyMainWithAnalytics": weekly_main_analytics,
         "weeklyCi": weekly_ci,

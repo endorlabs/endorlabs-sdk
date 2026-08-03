@@ -3,8 +3,8 @@ name: endor-executive-report-packet
 description: |
   Use when producing a tenant-level executive interactive HTML report packet
   (onboarding + scan/PR cadence, dependency version sprawl, SCA and
-  SAST/AI-SAST/Secrets FindingLog burndown) for browser handoff. Not for
-  single-project RCA, estate IR collect, or Cursor canvas-only artifacts.
+  SAST/AI-SAST/Secrets FindingLog burndown, Endor Patches) for browser handoff.
+  Not for single-project RCA, estate IR collect, or Cursor canvas-only artifacts.
 endorlabs:
   catalog:
     workflow_id: executive-report-packet
@@ -13,6 +13,7 @@ endorlabs:
     library_entrypoints:
       - endorlabs.workflows.reports.bundles.executive_packet.build_report_packet
       - endorlabs.workflows.reports.export.html.render.render_report_packet
+      - endorlabs.workflows.reports.analyze.patches.collect_patches_report
       - endorlabs.workflows.reports.parity.compare_packet_cube
 ---
 
@@ -20,8 +21,9 @@ endorlabs:
 
 Build a **self-contained HTML packet** for a tenant or namespace: organization
 onboarding (registration + ScanResult MAIN/CI cadence), dependency version
-sprawl, and FindingLog CREATE/DELETE burndown (SCA + SAST/AI-SAST/Secrets).
-Open the HTML files in any browser — no Cursor runtime required.
+sprawl, FindingLog CREATE/DELETE burndown (SCA + SAST/AI-SAST/Secrets), and
+Endor Patches impact. Open the HTML files in any browser — no Cursor runtime
+required.
 
 ## Scope
 
@@ -70,7 +72,12 @@ Optional flags:
 - `--min-projects 1` — display filter: omit tags with fewer tagged projects
 - `--workers 24` — parallel FindingLog matrix pulls for tagged projects
 - `--output-dir <path>` — override default runs bucket
-- `--skip-version-sprawl` / `--skip-findings-burndown` — partial packets
+- `--skip-version-sprawl` / `--skip-findings-burndown` / `--skip-patches` —
+  partial packets
+- `--patches-only` — Endor Patches page only (Finding list); default output
+  `.endorlabs-context/workspace/runs/patches-reports/<tenant>-MMDDYY/`. Writes
+  only `05-endor-patches.html` + `patches-*.csv`; pages 01–04 are not emitted.
+- `--patches-date-suffix 072926` — override the patches-only date folder suffix
 
 ## Scratch parity (gitignored baselines)
 
@@ -120,9 +127,10 @@ only). Accept small live drift (≤1–2%); fail on structural breaks or large c
 
 ### Onboarding cadence (`reports.onboarding.cadence`)
 
-- `weeklyMainFull` / `weeklyMainWithAnalytics` / `weeklyCi` — estate weekly ScanResult counts (~90d).
+- `weeklyMainFull` / `weeklyMainWithAnalytics` — estate MAIN weekly ScanResult counts (~90d).
+- `weeklyCi` / CI project ranks use ~30d retention (`ciLookbackDays`); CI is not plotted on the 90d weekly chart.
 - `byProject` / `byTag` / `topProjects` / `topTags` — rank by MAIN full scans then CI.
-- UI: project-tag filter (scopes registration/hierarchy/ranks); **Include analytics** toggles MAIN series; weekly scan chart stays org-wide.
+- UI: project-tag filter scopes registration, hierarchy, **scan-count tiles**, and ranks; **Exclude analytics** (on by default) opts out of `TYPE_ANALYTICS` / `TYPE_ANALYTICS_CHECK` on the MAIN weekly series; weekly chart stays org-wide.
 
 ## Metric captions (must preserve)
 

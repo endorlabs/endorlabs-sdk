@@ -2,7 +2,8 @@
 
 Build a self-contained interactive HTML packet for a tenant or namespace:
 organization onboarding (registration + scan/PR cadence), dependency version
-sprawl, and FindingLog burndown (SCA + SAST / AI-SAST / Secrets).
+sprawl, FindingLog burndown (SCA + SAST / AI-SAST / Secrets), and Endor Patches
+impact.
 
 Open the HTML files in any browser — no Cursor runtime required.
 
@@ -17,7 +18,12 @@ pass the **customer** namespace only on `-n` (see skill **endor-auth-setup** /
 employee auth notes).
 
 Optional flags: `--lookback`, `--min-projects`, `--workers`, `--output-dir`,
-`--skip-version-sprawl`, `--skip-findings-burndown`.
+`--skip-version-sprawl`, `--skip-findings-burndown`, `--skip-patches`,
+`--patches-only` (Patches page only → `runs/patches-reports/<tenant>-MMDDYY/`).
+
+`--patches-only` writes just `05-endor-patches.html` and the `patches-*.csv`
+exports — pages 01–04 are omitted rather than rendered from slices the run never
+collected.
 
 ## Outputs
 
@@ -30,6 +36,7 @@ Default directory:
 | `02-version-sprawl.html` | Dependency version sprawl |
 | `03-sca-burndown.html` | SCA FindingLog burndown |
 | `04-sast-burndown.html` | SAST / AI-SAST / Secrets FindingLog burndown |
+| `05-endor-patches.html` | Endor Patches impact (Available / To Request) |
 | `data/packet.cube.json` | Portable cube (`endor.report_packet.v0`) |
 | `data/*.csv` | Raw exports (see `data/EXPORTS.txt`) |
 

@@ -17,10 +17,11 @@ from endorlabs.workflows.reports.bundles.executive_packet import (
 )
 from endorlabs.workflows.reports.export.html.render import (
     default_packet_output_dir,
+    default_patches_report_dir,
     render_report_packet,
 )
 from endorlabs.workflows.reports.parity import compare_packet_cube
-from endorlabs.workflows.reports.schemas.packet_v0 import RUN_BUCKET
+from endorlabs.workflows.reports.schemas.packet_v0 import PATCHES_RUN_BUCKET, RUN_BUCKET
 
 
 def _add_namespace(parser: argparse.ArgumentParser) -> None:
@@ -78,6 +79,29 @@ def _packet_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
         "--skip-code-findings-burndown",
         action="store_true",
         help="Skip SAST / AI-SAST / Secrets FindingLog burndown.",
+    )
+    packet.add_argument(
+        "--skip-patches",
+        action="store_true",
+        help="Skip Endor Patches executive page (Finding list pull).",
+    )
+    packet.add_argument(
+        "--patches-only",
+        action="store_true",
+        help=(
+            "Build and render only the Endor Patches page (skip onboarding, "
+            "sprawl, burndowns). Default output under "
+            f".endorlabs-context/workspace/runs/{PATCHES_RUN_BUCKET}/"
+            "<namespace>-MMDDYY/."
+        ),
+    )
+    packet.add_argument(
+        "--patches-date-suffix",
+        default=None,
+        help=(
+            "Date suffix for --patches-only output dirs (default: today's "
+            "MMDDYY). Example: 072926."
+        ),
     )
     packet.add_argument("--timeout", type=float, default=900.0)
     return packet
@@ -332,32 +356,53 @@ def _run_upsert_code_findings(args: argparse.Namespace) -> int:
 
 
 def _run_packet(args: argparse.Namespace) -> int:
-    out_dir = (
-        Path(args.output_dir)
-        if args.output_dir
-        else default_packet_output_dir(args.namespace)
-    )
+    patches_only = bool(getattr(args, "patches_only", False))
+    skip_patches = bool(getattr(args, "skip_patches", False))
+    if patches_only and skip_patches:
+        print("error: --patches-only conflicts with --skip-patches", file=sys.stderr)
+        return 2
+
+    if args.output_dir:
+        out_dir = Path(args.output_dir)
+    elif patches_only:
+        suffix = getattr(args, "patches_date_suffix", None)
+        out_dir = default_patches_report_dir(args.namespace, date_suffix=suffix)
+    else:
+        out_dir = default_packet_output_dir(args.namespace)
+
     client = endorlabs.Client(tenant=args.namespace, timeout=float(args.timeout))
     try:
         skip_sca = bool(
             getattr(args, "skip_findings_burndown", False)
             or getattr(args, "skip_sca_burndown", False)
         )
-        cube = build_report_packet(
-            client,
-            args.namespace,
-            lookback=int(args.lookback),
-            min_projects=int(args.min_projects),
-            max_workers=int(args.workers),
-            include_version_sprawl=not args.skip_version_sprawl,
-            include_sca_burndown=not skip_sca,
-            include_code_findings_burndown=not getattr(
-                args, "skip_code_findings_burndown", False
-            ),
-        )
+        if patches_only:
+            cube = build_report_packet(
+                client,
+                args.namespace,
+                lookback=int(args.lookback),
+                min_projects=int(args.min_projects),
+                max_workers=int(args.workers),
+                patches_only=True,
+                include_patches=True,
+            )
+        else:
+            cube = build_report_packet(
+                client,
+                args.namespace,
+                lookback=int(args.lookback),
+                min_projects=int(args.min_projects),
+                max_workers=int(args.workers),
+                include_version_sprawl=not args.skip_version_sprawl,
+                include_sca_burndown=not skip_sca,
+                include_code_findings_burndown=not getattr(
+                    args, "skip_code_findings_burndown", False
+                ),
+                include_patches=not skip_patches,
+            )
     finally:
         client.close()
-    written = render_report_packet(cube, out_dir)
+    written = render_report_packet(cube, out_dir, patches_only=patches_only)
     print(f"Wrote report packet to {out_dir}")
     for path in written:
         rel = path.name if path.parent == out_dir else path.relative_to(out_dir)

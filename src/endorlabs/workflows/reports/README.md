@@ -44,6 +44,17 @@ uv run endor-reports package-resolution -n <tenant>
 | `02-version-sprawl.html` | Dependency version sprawl |
 | `03-sca-burndown.html` | SCA FindingLog burndown |
 | `04-sast-burndown.html` | SAST / AI-SAST / Secrets FindingLog burndown |
+| `05-endor-patches.html` | Endor Patches impact (Available / To Request) |
+
+Default full packet includes Patches (Finding list pull — can be slow on large
+estates). Use `--skip-patches` to omit, or `--patches-only` for a campaign
+batch that writes under
+`.endorlabs-context/workspace/runs/patches-reports/<tenant>-MMDDYY/`
+(override date with `--patches-date-suffix 072926`). A `--patches-only` run
+emits only page 05 and the `patches-*.csv` exports.
+
+When a slice is skipped in a full packet, its page renders an explicit callout
+rather than empty charts — `_render_*` empty states in `export/html/render.py`.
 
 Guide: [docs/guides/executive-report-packet.md](../../../../docs/guides/executive-report-packet.md).
 Agent router: skill **endor-workflow-reports**.

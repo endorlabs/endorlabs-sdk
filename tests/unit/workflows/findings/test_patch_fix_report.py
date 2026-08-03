@@ -6,12 +6,14 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from endorlabs.tools.list_sharding import ProjectShard
+from endorlabs.workflows.findings.patch_core import (
+    build_finding_filter,
+    compute_signal_breakdown,
+    extract_patch_rows,
+    filter_by_reachability,
+    finding_signal_flags,
+)
 from endorlabs.workflows.findings.patch_fix_report import (
-    _build_finding_filter,
-    _compute_signal_breakdown,
-    _extract_patch_rows,
-    _filter_by_reachability,
-    _finding_signal_flags,
     _rollup_patch_fix_rows,
     build_patch_fix_report,
     parse_args,
@@ -81,30 +83,33 @@ def _upgrade_item(
 
 
 def test_build_finding_filter_default_gate_is_union() -> None:
-    filt = _build_finding_filter(("FINDING_CATEGORY_VULNERABILITY",), None, gate="any")
+    filt = build_finding_filter(("FINDING_CATEGORY_VULNERABILITY",), None, gate="any")
+    assert "spec.dismiss != true" in filt
     assert "spec.fixing_patch.endor_patch_available==true" in filt
     assert "spec.finding_tags contains FINDING_TAGS_FIX_AVAILABLE" in filt
     assert " or " in filt
 
 
 def test_build_finding_filter_endor_patch_gate_is_strict() -> None:
-    filt = _build_finding_filter(
+    filt = build_finding_filter(
         ("FINDING_CATEGORY_VULNERABILITY",), None, gate="endor-patch"
     )
+    assert "spec.dismiss != true" in filt
     assert "spec.fixing_patch.endor_patch_available==true" in filt
     assert "FINDING_TAGS_FIX_AVAILABLE" not in filt
 
 
 def test_build_finding_filter_fix_available_gate_is_broad_only() -> None:
-    filt = _build_finding_filter(
+    filt = build_finding_filter(
         ("FINDING_CATEGORY_VULNERABILITY",), None, gate="fix-available"
     )
+    assert "spec.dismiss != true" in filt
     assert "spec.finding_tags contains FINDING_TAGS_FIX_AVAILABLE" in filt
     assert "endor_patch_available" not in filt
 
 
 def test_build_finding_filter_includes_severity_and_category() -> None:
-    filt = _build_finding_filter(
+    filt = build_finding_filter(
         ("FINDING_CATEGORY_VULNERABILITY", "FINDING_CATEGORY_SCA"),
         ("critical", "high"),
         gate="any",
@@ -123,7 +128,7 @@ def test_finding_signal_flags_reads_tags_and_patch_fields() -> None:
         upgrade_list=[_upgrade_item()],
     )
 
-    flags = _finding_signal_flags(finding)
+    flags = finding_signal_flags(finding)
 
     assert flags == {
         "fix_available": True,
@@ -136,7 +141,7 @@ def test_finding_signal_flags_reads_tags_and_patch_fields() -> None:
 
 def test_filter_by_reachability_any_is_noop() -> None:
     findings = [_finding("f-1"), _finding("f-2")]
-    assert _filter_by_reachability(findings, "any") == findings
+    assert filter_by_reachability(findings, "any") == findings
 
 
 def test_filter_by_reachability_reachable_keeps_tagged_only() -> None:
@@ -146,7 +151,7 @@ def test_filter_by_reachability_reachable_keeps_tagged_only() -> None:
         _finding("f-3", finding_tags=["FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION"]),
     ]
 
-    kept = _filter_by_reachability(findings, "reachable")
+    kept = filter_by_reachability(findings, "reachable")
 
     assert {f["uuid"] for f in kept} == {"f-1", "f-3"}
 
@@ -157,7 +162,7 @@ def test_filter_by_reachability_unreachable_keeps_untagged_only() -> None:
         _finding("f-2", finding_tags=[]),
     ]
 
-    kept = _filter_by_reachability(findings, "unreachable")
+    kept = filter_by_reachability(findings, "unreachable")
 
     assert {f["uuid"] for f in kept} == {"f-2"}
 
@@ -185,7 +190,7 @@ def test_compute_signal_breakdown_confirms_set_relationship() -> None:
         ),
     ]
 
-    breakdown = _compute_signal_breakdown(findings)
+    breakdown = compute_signal_breakdown(findings)
 
     assert breakdown["total_findings"] == 3
     assert breakdown["endor_patch_available_count"] == 2
@@ -203,8 +208,9 @@ def test_extract_patch_rows_flattens_upgrade_list() -> None:
         )
     ]
 
-    rows = _extract_patch_rows(findings)
+    rows, mode = extract_patch_rows(findings)
 
+    assert mode == "upgrade_list"
     assert len(rows) == 1
     row = rows[0]
     assert row["finding_uuid"] == "f-1"
@@ -227,7 +233,7 @@ def test_extract_patch_rows_marks_available_status() -> None:
             upgrade_list=[_upgrade_item()],
         )
     ]
-    rows = _extract_patch_rows(findings)
+    rows, _mode = extract_patch_rows(findings)
     assert rows[0]["patch_status"] == "available"
 
 
@@ -237,8 +243,9 @@ def test_extract_patch_rows_skips_findings_without_upgrade_list() -> None:
         _finding("f-2", upgrade_list=[]),
     ]
 
-    rows = _extract_patch_rows(findings)
+    rows, mode = extract_patch_rows(findings)
 
+    assert mode == "upgrade_list"
     assert rows == []
 
 
@@ -255,10 +262,25 @@ def test_extract_patch_rows_handles_multiple_candidates_per_finding() -> None:
         )
     ]
 
-    rows = _extract_patch_rows(findings)
+    rows, _mode = extract_patch_rows(findings)
 
     assert len(rows) == 2
     assert {row["package_name"] for row in rows} == {"npm://hbs", "npm://pdfkit"}
+
+
+def test_extract_patch_rows_target_dependency_fallback() -> None:
+    findings = [
+        _finding("f-1", upgrade_list=None, endor_patch_available=True),
+    ]
+    rows, mode = extract_patch_rows(findings, allow_target_dependency_fallback=True)
+    assert mode == "target_dependency_fallback"
+    assert len(rows) == 1
+    assert rows[0]["package_name"] == "npm://hbs@4.2.0"
+    assert rows[0]["current_version"] == "4.2.0"
+    assert rows[0]["patch_version"] == ""
+    assert rows[0]["upgrade_risk"] == ""
+    assert "vuln_aliases" in rows[0]
+    assert rows[0]["patch_status"] == "available"
 
 
 def test_rollup_patch_fix_rows_sorts_by_name_then_version() -> None:

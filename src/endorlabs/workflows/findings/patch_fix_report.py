@@ -43,6 +43,8 @@ Design notes (verified against real tenants before writing this module — see
   clauses, so "no reachability tag present" has no safe server-side
   expression here. Every detail row still carries its own reachability
   columns regardless of this flag, for post-hoc pivoting.
+- Finding pulls exclude dismissed rows (``spec.dismiss != true``), matching
+  the product findings UI default exception filter.
 """
 
 from __future__ import annotations
@@ -54,10 +56,21 @@ import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from endorlabs.context.paths import default_runs_dir
-from endorlabs.filters import FINDING_CATEGORY_VULNERABILITY, MAIN_CONTEXT_CLAUSE
+from endorlabs.filters import FINDING_CATEGORY_VULNERABILITY
+from endorlabs.workflows.findings.patch_core import (
+    FINDING_MASK,
+    GATE_CHOICES,
+    NOT_DISMISSED_CLAUSE,
+    REACHABILITY_CHOICES,
+    build_finding_filter,
+    compute_signal_breakdown,
+    discover_and_list,
+    extract_patch_rows,
+    filter_by_reachability,
+)
 from endorlabs.workflows.findings.patch_fix_columns import (
     PATCH_FIX_FINDING_DETAIL_COLUMNS,
     PATCH_FIX_REPORT_COLUMNS,
@@ -66,287 +79,21 @@ from endorlabs.workflows.findings.patch_fix_types import (
     PatchFixReportResult,
     PatchFixReportStats,
 )
-from endorlabs.workflows.findings.prf_analysis import list_findings_tenant
 from endorlabs.workflows.tabular import TabularExport, write_table
-from endorlabs.workflows.wire_access import dict_str, nested_dict
 
 if TYPE_CHECKING:
     from endorlabs import Client
 
 logger = logging.getLogger(__name__)
 
-FINDING_MASK = (
-    "uuid,meta.name,meta.description,tenant_meta.namespace,spec.project_uuid,"
-    "spec.level,spec.extra_key,spec.target_dependency_package_name,"
-    "spec.target_dependency_version,spec.fixing_patch,spec.fixing_upgrades,"
-    "spec.finding_tags,spec.finding_metadata"
-)
-_ENDOR_PATCH_AVAILABLE = "spec.fixing_patch.endor_patch_available==true"
-_FIX_AVAILABLE_TAG = "spec.finding_tags contains FINDING_TAGS_FIX_AVAILABLE"
-_REACHABLE_FUNCTION_TAG = "FINDING_TAGS_REACHABLE_FUNCTION"
-_POTENTIALLY_REACHABLE_FUNCTION_TAG = "FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION"
-
-GATE_CHOICES: tuple[str, ...] = ("any", "endor-patch", "fix-available")
-REACHABILITY_CHOICES: tuple[str, ...] = ("any", "reachable", "unreachable")
-
-_SEVERITY_ALIASES: dict[str, str] = {
-    "CRITICAL": "FINDING_LEVEL_CRITICAL",
-    "HIGH": "FINDING_LEVEL_HIGH",
-    "MEDIUM": "FINDING_LEVEL_MEDIUM",
-    "LOW": "FINDING_LEVEL_LOW",
-}
+# Re-exported for historical imports / docs (collection core lives in patch_core).
+_ = (FINDING_MASK, NOT_DISMISSED_CLAUSE)
 
 
 def _namespace_slug(namespace: str) -> str:
     """Local slug helper — do not import estate's ``namespace_slug`` (layer ban)."""
     cleaned = namespace.strip().rstrip(".")
     return cleaned.replace(".", "_") if cleaned else "unknown"
-
-
-def _severity_enum(token: str) -> str:
-    upper = token.strip().upper()
-    return _SEVERITY_ALIASES.get(upper, token)
-
-
-def _build_finding_filter(
-    finding_categories: Sequence[str],
-    severities: Sequence[str] | None,
-    *,
-    gate: str,
-) -> str:
-    """Main-context Finding filter for categories/severities + the patch gate.
-
-    ``gate="any"`` (default) is the union of both patch/fix signals — the
-    broadest single-query dataset, so patch-available vs. patch-to-request
-    (and reachable vs. not) can be sliced post-hoc from one export.
-    ``"endor-patch"`` / ``"fix-available"`` narrow to one signal only.
-    """
-    parts = [MAIN_CONTEXT_CLAUSE]
-    if finding_categories:
-        clause = " or ".join(
-            f"spec.finding_categories contains [{c}]" for c in finding_categories
-        )
-        parts.append(f"({clause})" if len(finding_categories) > 1 else clause)
-    if severities:
-        levels = [_severity_enum(s) for s in severities]
-        clause = " or ".join(f"spec.level=={lvl}" for lvl in levels)
-        parts.append(f"({clause})" if len(levels) > 1 else clause)
-    if gate == "endor-patch":
-        parts.append(_ENDOR_PATCH_AVAILABLE)
-    elif gate == "fix-available":
-        parts.append(_FIX_AVAILABLE_TAG)
-    else:
-        parts.append(f"({_ENDOR_PATCH_AVAILABLE} or {_FIX_AVAILABLE_TAG})")
-    return " and ".join(parts)
-
-
-def _finding_tags(finding: dict[str, Any]) -> list[str]:
-    tags = nested_dict(finding, "spec").get("finding_tags")
-    if isinstance(tags, list):
-        return [str(tag) for tag in cast("list[Any]", tags)]
-    return []
-
-
-def _upgrade_list_items(spec: dict[str, Any]) -> list[dict[str, Any]]:
-    """Return typed upgrade-list entries from a Finding ``spec`` dict."""
-    raw = nested_dict(spec, "fixing_upgrades").get("upgrade_list")
-    if not isinstance(raw, list):
-        return []
-    return [item for item in cast("list[Any]", raw) if isinstance(item, dict)]
-
-
-def _finding_signal_flags(finding: dict[str, Any]) -> dict[str, bool]:
-    """Compute the patch/fix/reachability booleans carried by one finding."""
-    spec = nested_dict(finding, "spec")
-    tags = _finding_tags(finding)
-    upgrade_list = _upgrade_list_items(spec)
-    return {
-        "fix_available": "FINDING_TAGS_FIX_AVAILABLE" in tags,
-        "endor_patch_available": bool(
-            nested_dict(spec, "fixing_patch").get("endor_patch_available")
-        ),
-        "has_upgrade_path": bool(upgrade_list),
-        "reachable_function": _REACHABLE_FUNCTION_TAG in tags,
-        "potentially_reachable_function": _POTENTIALLY_REACHABLE_FUNCTION_TAG in tags,
-    }
-
-
-def _patch_status(flags: dict[str, bool]) -> str:
-    """Map Finding signals to Available vs inferred To Request.
-
-    ``to_request_inferred`` is not a platform enum — see module docstring.
-    """
-    if flags["endor_patch_available"]:
-        return "available"
-    if flags["fix_available"] or flags["has_upgrade_path"]:
-        return "to_request_inferred"
-    return "other"
-
-
-def _severity_label(level: str) -> str:
-    raw = (level or "").strip()
-    if raw.startswith("FINDING_LEVEL_"):
-        return raw.removeprefix("FINDING_LEVEL_")
-    return raw
-
-
-def _vuln_fields(finding: dict[str, Any]) -> dict[str, str]:
-    """Prefer advisory id from nested Vuln metadata over generic finding type name."""
-    meta = nested_dict(finding, "meta")
-    spec = nested_dict(finding, "spec")
-    finding_type = dict_str(meta, "name")
-    description = dict_str(meta, "description")
-    extra_key = dict_str(spec, "extra_key")
-    vuln = nested_dict(nested_dict(spec, "finding_metadata"), "vulnerability")
-    vuln_meta = nested_dict(vuln, "meta")
-    vuln_spec = nested_dict(vuln, "spec")
-    vuln_id = dict_str(vuln_meta, "name") or extra_key
-    aliases = vuln_spec.get("aliases")
-    alias_list: list[str] = []
-    if isinstance(aliases, list):
-        alias_list = [str(a) for a in cast("list[Any]", aliases) if a]
-    summary = dict_str(vuln_meta, "description") or dict_str(vuln_spec, "summary")
-    if not summary and description:
-        # Often "GHSA-…: title" when nested vuln is masked away.
-        summary = description
-    if not vuln_id and description:
-        vuln_id = description.split(":", 1)[0].strip()
-    return {
-        "finding_type_name": finding_type,
-        "vuln_id": vuln_id,
-        "vuln_aliases": ";".join(alias_list),
-        "vuln_summary": summary,
-    }
-
-
-def _filter_by_reachability(
-    findings: Sequence[dict[str, Any]],
-    reachability: str,
-) -> list[dict[str, Any]]:
-    """Client-side reachability filter (no safe server-side negation for this)."""
-    if reachability == "any":
-        return list(findings)
-    kept: list[dict[str, Any]] = []
-    for finding in findings:
-        tags = _finding_tags(finding)
-        is_reachable = (
-            _REACHABLE_FUNCTION_TAG in tags
-            or _POTENTIALLY_REACHABLE_FUNCTION_TAG in tags
-        )
-        if (reachability == "reachable" and is_reachable) or (
-            reachability == "unreachable" and not is_reachable
-        ):
-            kept.append(finding)
-    return kept
-
-
-def _compute_signal_breakdown(findings: Sequence[dict[str, Any]]) -> dict[str, int]:
-    """Counts confirming the patch/fix/reachability set relationships empirically.
-
-    ``patches_to_request`` is an *inferred* category (fix-available or has a
-    computed upgrade path, but not Endor-patch-available) — there is no
-    dedicated platform field for it.
-    """
-    endor_patch = 0
-    fix_tag = 0
-    both = 0
-    neither = 0
-    has_upgrade_path = 0
-    patches_to_request = 0
-    reachable = 0
-    potentially_reachable = 0
-    no_reachability_tag = 0
-
-    for finding in findings:
-        flags = _finding_signal_flags(finding)
-        if flags["endor_patch_available"]:
-            endor_patch += 1
-        if flags["fix_available"]:
-            fix_tag += 1
-        if flags["endor_patch_available"] and flags["fix_available"]:
-            both += 1
-        if not flags["endor_patch_available"] and not flags["fix_available"]:
-            neither += 1
-        if flags["has_upgrade_path"]:
-            has_upgrade_path += 1
-        if not flags["endor_patch_available"] and (
-            flags["fix_available"] or flags["has_upgrade_path"]
-        ):
-            patches_to_request += 1
-        if flags["reachable_function"]:
-            reachable += 1
-        if flags["potentially_reachable_function"]:
-            potentially_reachable += 1
-        if (
-            not flags["reachable_function"]
-            and not flags["potentially_reachable_function"]
-        ):
-            no_reachability_tag += 1
-
-    return {
-        "total_findings": len(findings),
-        "endor_patch_available_count": endor_patch,
-        "fix_available_tag_count": fix_tag,
-        "both_endor_patch_and_fix_tag_count": both,
-        "neither_endor_patch_nor_fix_tag_count": neither,
-        "has_upgrade_path_count": has_upgrade_path,
-        "patches_to_request_count": patches_to_request,
-        "reachable_function_count": reachable,
-        "potentially_reachable_function_count": potentially_reachable,
-        "no_reachability_tag_count": no_reachability_tag,
-    }
-
-
-def _extract_patch_rows(findings: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Flatten each finding's ``fixing_upgrades.upgrade_list`` into detail rows.
-
-    A finding with no computed upgrade path yet contributes no rows (see
-    ``_compute_signal_breakdown`` for counts over the full gated population,
-    including findings without a computed path).
-    """
-    detail_rows: list[dict[str, Any]] = []
-    for finding in findings:
-        spec = nested_dict(finding, "spec")
-        upgrade_list = _upgrade_list_items(spec)
-        if not upgrade_list:
-            continue
-        flags = _finding_signal_flags(finding)
-        project_uuid = dict_str(spec, "project_uuid")
-        finding_uuid = dict_str(finding, "uuid")
-        target_package = dict_str(spec, "target_dependency_package_name")
-        target_version = dict_str(spec, "target_dependency_version")
-        tenant_meta = nested_dict(finding, "tenant_meta")
-        severity = _severity_label(dict_str(spec, "level"))
-        finding_ns = dict_str(tenant_meta, "namespace")
-        vuln = _vuln_fields(finding)
-        detail_rows.extend(
-            {
-                "namespace": finding_ns,
-                "project_uuid": project_uuid,
-                "finding_uuid": finding_uuid,
-                "finding_type_name": vuln["finding_type_name"],
-                "vuln_id": vuln["vuln_id"],
-                "vuln_aliases": vuln["vuln_aliases"],
-                "vuln_summary": vuln["vuln_summary"],
-                "severity": severity,
-                "package_name": dict_str(item, "direct_dependency_name"),
-                "current_version": dict_str(item, "from_version"),
-                "patch_version": dict_str(item, "to_version"),
-                "target_dependency_package_name": target_package,
-                "target_dependency_version": target_version,
-                "endor_patch_available": flags["endor_patch_available"],
-                "fix_available": flags["fix_available"],
-                "patch_status": _patch_status(flags),
-                "reachable_function": flags["reachable_function"],
-                "potentially_reachable_function": flags[
-                    "potentially_reachable_function"
-                ],
-                "upgrade_risk": dict_str(item, "upgrade_risk"),
-            }
-            for item in upgrade_list
-            if dict_str(item, "direct_dependency_name")
-        )
-    return detail_rows
 
 
 def _rollup_patch_fix_rows(
@@ -425,13 +172,16 @@ def build_patch_fix_report(
         )
         raise ValueError(msg)
 
+    finding_filter = build_finding_filter(finding_categories, severities, gate=gate)
     try:
-        shards = client.Query.Project.discover(
+        shards, findings = discover_and_list(
+            client,
             namespace,
-            traverse=True,
-            max_pages=max_project_pages,
-            exclude_sbom=True,
-        ).project_shards()
+            finding_filter,
+            max_project_pages=max_project_pages,
+            max_pages=max_pages,
+            max_workers=max_workers,
+        )
     except Exception as exc:
         return PatchFixReportResult(
             status="error",
@@ -447,22 +197,12 @@ def build_patch_fix_report(
             stats=PatchFixReportStats(namespace=namespace),
         )
 
-    finding_filter = _build_finding_filter(finding_categories, severities, gate=gate)
-    findings = list_findings_tenant(
-        client,
-        namespace,
-        finding_filter,
-        mask=FINDING_MASK,
-        max_pages=max_pages,
-        max_workers=max_workers,
-        max_project_pages=max_project_pages,
-        shards=shards,
+    findings = filter_by_reachability(findings, reachability)
+    detail_rows, _rollup_mode = extract_patch_rows(
+        findings, allow_target_dependency_fallback=False
     )
-    findings = _filter_by_reachability(findings, reachability)
-
-    detail_rows = _extract_patch_rows(findings)
     rollup_rows = _rollup_patch_fix_rows(namespace, detail_rows)
-    signal_breakdown = _compute_signal_breakdown(findings)
+    signal_breakdown = compute_signal_breakdown(findings)
     fixable_finding_count = len({row["finding_uuid"] for row in detail_rows})
     stats = PatchFixReportStats(
         namespace=namespace,

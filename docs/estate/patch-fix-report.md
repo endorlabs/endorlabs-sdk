@@ -27,4 +27,5 @@ result.table.rows  # rollup rows
 ## Notes
 
 - A finding only produces a rollup row once the platform has computed an upgrade path (`fixing_upgrades.upgrade_list` populated) — findings tagged fix-available or Endor-patch-available without a computed path are excluded from the table (still counted in `signal_breakdown`).
+- Finding lists exclude dismissed rows (`spec.dismiss != true`), matching the product findings UI exception filter.
 - `endor_patch_available` skews toward ecosystems where Endor curates patches (e.g. Maven); expect few or zero Endor-patch rows for npm/PyPI-heavy estates. Use default `--gate any` (or `--gate fix-available`) for broader coverage.

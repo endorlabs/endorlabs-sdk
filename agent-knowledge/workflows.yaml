@@ -143,6 +143,7 @@ workflows:
     library_entrypoints:
       - endorlabs.workflows.reports.bundles.executive_packet.build_report_packet
       - endorlabs.workflows.reports.export.html.render.render_report_packet
+      - endorlabs.workflows.reports.analyze.patches.collect_patches_report
       - endorlabs.workflows.reports.parity.compare_packet_cube
   - id: potentially-reachable-analysis
     cli: endor-reports

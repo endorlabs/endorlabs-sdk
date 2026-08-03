@@ -415,11 +415,74 @@ def _write_export(
     return path
 
 
-def write_packet_raw_exports(cube: dict[str, Any], data_dir: str | Path) -> list[Path]:
-    """Write spreadsheet-friendly CSV exports derived from *cube* under *data_dir*."""
-    out = Path(data_dir)
-    out.mkdir(parents=True, exist_ok=True)
-    written: list[Path] = [
+def patches_family_rows(cube: dict[str, Any]) -> list[dict[str, Any]]:
+    patches = (cube.get("reports") or {}).get("patches") or {}
+    rows: list[dict[str, Any]] = []
+    for i, fam in enumerate(patches.get("families") or [], 1):
+        rows.append(
+            {
+                "rank": i,
+                "family": fam.get("family"),
+                "available_findings": fam.get("findings"),
+                "critical": fam.get("critical"),
+                "high": fam.get("high"),
+                "projects": fam.get("projects"),
+                "versions": fam.get("versions"),
+                "risk": fam.get("risk"),
+            }
+        )
+    return rows
+
+
+def patches_version_rows(cube: dict[str, Any]) -> list[dict[str, Any]]:
+    patches = (cube.get("reports") or {}).get("patches") or {}
+    rows: list[dict[str, Any]] = []
+    for fam in patches.get("families") or []:
+        for vr in fam.get("version_rows") or []:
+            rows.append(
+                {
+                    "family": fam.get("family"),
+                    "version": vr.get("version"),
+                    "available": vr.get("available"),
+                    "to_request": vr.get("to_request"),
+                    "critical": vr.get("critical"),
+                    "high": vr.get("high"),
+                    "projects": vr.get("projects"),
+                    "risk": vr.get("risk"),
+                    "risk_available": vr.get("risk_available"),
+                    "reachable": vr.get("reachable"),
+                    "unreachable": vr.get("unreachable"),
+                }
+            )
+    return rows
+
+
+def patches_unit_rows(cube: dict[str, Any]) -> list[dict[str, Any]]:
+    patches = (cube.get("reports") or {}).get("patches") or {}
+    rows: list[dict[str, Any]] = []
+    for i, u in enumerate(patches.get("patch_units") or [], 1):
+        rows.append(
+            {
+                "rank": i,
+                "package_version": u.get("package_version"),
+                "family": u.get("family"),
+                "version": u.get("version"),
+                "available": u.get("available"),
+                "to_request": u.get("to_request"),
+                "findings": u.get("findings"),
+                "critical": u.get("critical"),
+                "high": u.get("high"),
+                "projects": u.get("projects"),
+                "risk": u.get("risk"),
+                "risk_available": u.get("risk_available"),
+            }
+        )
+    return rows
+
+
+def _packet_wide_exports(cube: dict[str, Any], out: Path) -> list[Path]:
+    """CSV exports for the onboarding, sprawl, and burndown cube slices."""
+    return [
         _write_export(
             out,
             "onboarding-weekly.csv",
@@ -555,23 +618,106 @@ def write_packet_raw_exports(cube: dict[str, Any], data_dir: str | Path) -> list
             ["package", "version_count"],
         ),
     ]
+
+
+def write_packet_raw_exports(
+    cube: dict[str, Any],
+    data_dir: str | Path,
+    *,
+    patches_only: bool = False,
+) -> list[Path]:
+    """Write spreadsheet-friendly CSV exports derived from *cube* under *data_dir*.
+
+    With *patches_only*, skip the packet-wide exports whose cube slices were
+    never collected — they would otherwise land as header-only CSVs.
+    """
+    out = Path(data_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    written: list[Path] = [] if patches_only else _packet_wide_exports(cube, out)
+    written += [
+        _write_export(
+            out,
+            "patches-top-families.csv",
+            patches_family_rows(cube),
+            [
+                "rank",
+                "family",
+                "available_findings",
+                "critical",
+                "high",
+                "projects",
+                "versions",
+                "risk",
+            ],
+        ),
+        _write_export(
+            out,
+            "patches-versions.csv",
+            patches_version_rows(cube),
+            [
+                "family",
+                "version",
+                "available",
+                "to_request",
+                "critical",
+                "high",
+                "projects",
+                "risk",
+                "risk_available",
+                "reachable",
+                "unreachable",
+            ],
+        ),
+        _write_export(
+            out,
+            "patches-units-ranked.csv",
+            patches_unit_rows(cube),
+            [
+                "rank",
+                "package_version",
+                "family",
+                "version",
+                "available",
+                "to_request",
+                "findings",
+                "critical",
+                "high",
+                "projects",
+                "risk",
+                "risk_available",
+            ],
+        ),
+    ]
+    title = (
+        "Endor Patches report — raw exports"
+        if patches_only
+        else "Executive report packet — raw exports"
+    )
     manifest_lines = [
-        "Executive report packet — raw exports",
-        "====================================",
+        title,
+        "=" * len(title),
         "",
         "packet.cube.json                 Full interactive cube (source of truth)",
-        "onboarding-weekly.csv            Weekly registration counts",
-        "onboarding-hierarchy.csv         Namespace hierarchy rollups",
-        "onboarding-cadence-weekly.csv    MAIN full / with-analytics / CI weekly",
-        "onboarding-cadence-by-tag.csv    Tag ranks by MAIN full + CI cadence",
-        "onboarding-cadence-by-project.csv Project ranks by MAIN full + CI",
-        "tag-catalog.csv                  Project.meta.tags catalog + series status",
-        "path-gap-differentials.csv       SCA path × severity × reach gap deltas",
-        "tag-gap-differentials.csv        SCA tag × path × severity × reach gap deltas",
-        "code-path-gap-differentials.csv  Code findings path × category × facet gaps",
-        "code-tag-gap-differentials.csv   Code findings tag × category × facet gaps",
-        "throughput-by-tag.csv            Main/CI scan throughput by tag",
-        "version-sprawl-top-packages.csv  Top packages by distinct version count",
+    ]
+    if not patches_only:
+        manifest_lines += [
+            "onboarding-weekly.csv            Weekly registration counts",
+            "onboarding-hierarchy.csv         Namespace hierarchy rollups",
+            "onboarding-cadence-weekly.csv    MAIN full / with-analytics / CI weekly",
+            "onboarding-cadence-by-tag.csv    Tag ranks by MAIN full + CI cadence",
+            "onboarding-cadence-by-project.csv Project ranks by MAIN full + CI",
+            "tag-catalog.csv                  Project.meta.tags catalog + series status",
+            "path-gap-differentials.csv       SCA path × severity × reach gap deltas",
+            "tag-gap-differentials.csv        SCA tag × path × severity × reach gap deltas",
+            "code-path-gap-differentials.csv  Code findings path × category × facet gaps",
+            "code-tag-gap-differentials.csv   Code findings tag × category × facet gaps",
+            "throughput-by-tag.csv            Main/CI scan throughput by tag",
+            "version-sprawl-top-packages.csv  Top packages by distinct version count",
+        ]
+    manifest_lines += [
+        "patches-top-families.csv         Endor Patches top families by Available risk",
+        "patches-versions.csv             Endor Patches family × version heat-map rows",
+        "patches-units-ranked.csv         Endor Patches package@version units",
         "",
     ]
     manifest = out / "EXPORTS.txt"

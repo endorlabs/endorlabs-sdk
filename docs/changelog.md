@@ -9,15 +9,22 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 ### Added
 
 - `endor-reports package-resolution` — tenant-wide main-context PackageVersion resolution CSV plus interactive HTML (unresolved/manifest, dependency resolution, reachability); playbook `agent-knowledge/workflow-reports/endor-package-resolution-report/`.
+- Executive packet Endor Patches page (`reports.patches` / `05-endor-patches.html`): reach-weighted Available risk, version heat map, impact calculator; CLI `--skip-patches` / `--patches-only` (default output under `runs/patches-reports/`).
 - Executive packet onboarding ScanResult cadence (`reports.onboarding.cadence`): weekly MAIN `TYPE_ALL_SCANS` + CI/PR series (~90d), tag/project leaderboards, analytics toggle; CSV exports `onboarding-cadence-*.csv`.
 - Guide [docs/guides/executive-report-packet.md](guides/executive-report-packet.md); README / AGENTS pointers; **endor-workflow-reports** use-case routing for QBR / onboarding / burndown packet.
 
 ### Changed
 
+- Patch-fix report and executive packet patches pulls exclude dismissed findings (`spec.dismiss != true`), matching the product findings UI exception filter. Counts drop relative to earlier runs on tenants that use finding exceptions.
+- `endor-reports packet --patches-only` writes only `05-endor-patches.html`, the patches CSVs, and a patches-scoped `README.txt`. Earlier runs also emitted pages 01–04 and header-only CSVs from a cube that never held those slices, so the output looked broken rather than intentionally scoped.
+- Executive packet cubes carry the SCA burndown slice once under `scaBurndown`; the duplicate `findingsBurndown` copy is no longer written (readers still accept it on older cubes). Cuts roughly a quarter of `packet.cube.json` on large tenants.
 - Executive packet onboarding page: replace weekly registration bar with MAIN/CI scan cadence; project-tag filter scopes registration, hierarchy, and cadence ranks.
 - FindingLog burndown severity matrices include Medium/Low; HTML severity control uses cumulative “and higher” thresholds (default High and higher).
 
 ### Fixed
+
+- Executive packet pages 01–04 use the same brand → nav → title chrome order as Endor Patches; page meta and footer no longer echo the schema string (it remains in `data/packet.cube.json`).
+- Executive packet onboarding, version sprawl, SCA/SAST burndown, and Endor Patches pages state when a slice is missing instead of rendering empty charts and tables with no explanation.
 
 ### Breaking
 

@@ -9,6 +9,7 @@ from endorlabs.workflows.findings.finding_log_trends import (
     empty_series_cell,
     sum_series_cells,
 )
+from endorlabs.workflows.reports.analyze.patches import empty_patches_report
 from endorlabs.workflows.reports.analyze.projects import (
     build_onboarding_report,
     normalize_project_row,
@@ -66,6 +67,7 @@ def test_render_packet_captions_and_glossary(tmp_path: Path) -> None:
         "02-version-sprawl.html",
         "03-sca-burndown.html",
         "04-sast-burndown.html",
+        "05-endor-patches.html",
         "packet.cube.json",
         "README.txt",
     }
@@ -78,15 +80,21 @@ def test_render_packet_captions_and_glossary(tmp_path: Path) -> None:
     assert (data / "code-tag-gap-differentials.csv").is_file()
     assert (data / "tag-catalog.csv").is_file()
     assert (data / "onboarding-weekly.csv").is_file()
+    assert (data / "patches-top-families.csv").is_file()
+    assert (data / "patches-versions.csv").is_file()
+    assert (data / "patches-units-ranked.csv").is_file()
     assert (data / "EXPORTS.txt").is_file()
     gap_csv = (data / "tag-gap-differentials.csv").read_text(encoding="utf-8")
     assert "gap_delta" in gap_csv
     assert "team-alpha" in gap_csv
+    fam_csv = (data / "patches-top-families.csv").read_text(encoding="utf-8")
+    assert "jackson-databind" in fam_csv
 
     onboarding = (tmp_path / "01-onboarding.html").read_text(encoding="utf-8")
     sprawl = (tmp_path / "02-version-sprawl.html").read_text(encoding="utf-8")
     burndown = (tmp_path / "03-sca-burndown.html").read_text(encoding="utf-8")
     sast = (tmp_path / "04-sast-burndown.html").read_text(encoding="utf-8")
+    patches = (tmp_path / "05-endor-patches.html").read_text(encoding="utf-8")
     readme = (tmp_path / "README.txt").read_text(encoding="utf-8")
 
     assert copy_mod.H1_ONBOARDING in onboarding
@@ -100,6 +108,15 @@ def test_render_packet_captions_and_glossary(tmp_path: Path) -> None:
     assert copy_mod.H1_SCA_BURNDOWN in burndown
     assert copy_mod.H1_SAST_BURNDOWN in sast
     assert 'id="category"' in sast
+    assert copy_mod.H1_ENDOR_PATCHES in patches
+    assert copy_mod.PURPOSE_ENDOR_PATCHES in patches
+    assert "Impact calculator" in patches
+    assert 'id="denomMode"' in patches
+    assert 'data-mode="fixable"' in patches
+    assert 'data-mode="java"' in patches
+    assert "Fixable findings" in patches
+    assert "Java Crit/High estate" in patches
+    assert "05-endor-patches.html" in onboarding
     assert "How to read these metrics" in onboarding
     assert copy_mod.STAT_WINDOW_NET in burndown
     assert copy_mod.PENDING_TAG_CAPTION in burndown
@@ -108,18 +125,86 @@ def test_render_packet_captions_and_glossary(tmp_path: Path) -> None:
     assert copy_mod.AVG_SCANS_PER_PROJECT_LABEL in burndown
     assert copy_mod.TAG_LEADERS_NARROWING in burndown
     assert copy_mod.TAG_LEADERS_WIDENING in burndown
-    assert "Gap differential" in burndown
+    assert "Gap change" in burndown or "Period Δ" in burndown
     assert "gapTrendLabel" in burndown
+    assert "Current gap" in burndown or "Period Δ" in burndown
     assert "team-alpha" in burndown
     assert "team-beta" in burndown
     assert "series pending" in burndown
     assert "Window net (CREATE−DELETE)" in readme
     assert "03-sca-burndown.html" in readme
     assert "04-sast-burndown.html" in readme
-    assert REPORT_PACKET_SCHEMA in onboarding
+    assert "05-endor-patches.html" in readme
+    # Chrome order matches Endor Patches: brand header → nav → h1; schema not in chrome.
+    for page in (onboarding, sprawl, burndown, sast, patches):
+        assert (
+            page.index('class="site-header"')
+            < page.index('class="nav"')
+            < page.index("<h1>")
+        )
+        meta = page.split('<p class="meta">', 1)[1].split("</p>", 1)[0]
+        assert "Schema " not in meta
+        assert REPORT_PACKET_SCHEMA not in page
 
-    for text in (onboarding, sprawl, burndown, sast):
+    for text in (onboarding, sprawl, burndown, sast, patches):
         assert "example-tenant" in text.lower()
+
+
+def test_render_patches_only_omits_uncollected_pages(tmp_path: Path) -> None:
+    cube = _load_cube()
+    written = render_report_packet(cube, tmp_path, patches_only=True)
+    names = {p.name for p in written}
+
+    assert "05-endor-patches.html" in names
+    for page in (
+        "01-onboarding.html",
+        "02-version-sprawl.html",
+        "03-sca-burndown.html",
+        "04-sast-burndown.html",
+    ):
+        assert page not in names
+        assert not (tmp_path / page).exists()
+
+    data = tmp_path / "data"
+    assert (data / "patches-top-families.csv").is_file()
+    # Packet-wide slices were never collected; header-only CSVs would mislead.
+    assert not (data / "onboarding-weekly.csv").exists()
+    assert not (data / "tag-gap-differentials.csv").exists()
+
+    exports = (data / "EXPORTS.txt").read_text(encoding="utf-8")
+    assert "patches-top-families.csv" in exports
+    assert "onboarding-weekly.csv" not in exports
+
+    readme = (tmp_path / "README.txt").read_text(encoding="utf-8")
+    assert "05-endor-patches.html" in readme
+    assert "01-onboarding.html" not in readme
+
+    # Chart.js is only referenced by pages 01-04.
+    assert not (tmp_path / "assets" / "chart.umd.min.js").exists()
+    assert (tmp_path / "assets" / "endor-wordmark.png").is_file()
+
+
+def test_render_empty_slices_explain_themselves(tmp_path: Path) -> None:
+    """Skipped slices must say so rather than render silently empty furniture."""
+    cube = _load_cube()
+    cube["reports"]["onboarding"] = {"projects": [], "cadence": {}}
+    cube["reports"]["versionSprawl"] = {"histKeys": [], "ecosystems": [], "estate": {}}
+    cube["reports"]["scaBurndown"] = {"seriesFilters": {"perPath": {}}}
+    cube["reports"].pop("findingsBurndown", None)
+    cube["reports"]["patches"] = empty_patches_report()
+    render_report_packet(cube, tmp_path)
+
+    onboarding = (tmp_path / "01-onboarding.html").read_text(encoding="utf-8")
+    sprawl = (tmp_path / "02-version-sprawl.html").read_text(encoding="utf-8")
+    burndown = (tmp_path / "03-sca-burndown.html").read_text(encoding="utf-8")
+    patches = (tmp_path / "05-endor-patches.html").read_text(encoding="utf-8")
+
+    assert 'id="emptyNotice"' in onboarding
+    assert "No project inventory in this packet" in onboarding
+    assert "No dependency inventory in this packet" in sprawl
+    assert "No SCA burndown series in this packet" in burndown
+    assert 'id="patchesEmpty"' in patches
+    assert "No Endor Patch data in this packet" in patches
 
 
 def test_path_options_and_normalize() -> None:

@@ -134,6 +134,7 @@ def test_render_onboarding_includes_cadence_controls() -> None:
                 ],
                 "cadence": {
                     "lookbackDays": 91,
+                    "ciLookbackDays": 30,
                     "weeklyMainFull": [{"w": "2026-01-05", "n": 3}],
                     "weeklyMainWithAnalytics": [{"w": "2026-01-05", "n": 4}],
                     "weeklyCi": [{"w": "2026-01-05", "n": 1}],
@@ -160,10 +161,16 @@ def test_render_onboarding_includes_cadence_controls() -> None:
         },
     }
     html = _render_onboarding(cube)
-    assert "Include analytics" in html
+    assert "Exclude analytics" in html
+    assert "excludeAnalytics" in html
     assert "weeklyMainFull" in html
     assert "Tags by scan cadence" in html
+    assert "cadenceScanTotals" in html
+    assert "ciLookbackDays" in html
     assert 'id="tag"' in html
+    assert "CI / PR scans" in html
+    assert "spanGaps" in html
+    assert "CI / PR trend" in html
 
 
 def test_collect_onboarding_cadence_mocked() -> None:
@@ -209,5 +216,6 @@ def test_collect_onboarding_cadence_mocked() -> None:
         )
     assert out["totals"]["mainFullScans"] == 2
     assert out["totals"]["ciScans"] == 1
+    assert out["ciLookbackDays"] == 30
     assert out["topTags"][0]["tag"] == "team-a"
     assert out["weeklyMainFull"][0]["n"] == 2

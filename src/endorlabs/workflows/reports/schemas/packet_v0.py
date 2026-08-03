@@ -6,6 +6,8 @@ from typing import Any, TypedDict
 
 REPORT_PACKET_SCHEMA = "endor.report_packet.v0"
 RUN_BUCKET = "executive-report-packet"
+# Campaign / patches-only outputs (``endor-reports packet --patches-only``).
+PATCHES_RUN_BUCKET = "patches-reports"
 
 HIST_KEYS: tuple[str, ...] = ("1", "2-3", "4-5", "6-10", "11-25", "26+")
 

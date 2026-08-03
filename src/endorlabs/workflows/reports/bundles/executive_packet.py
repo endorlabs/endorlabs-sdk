@@ -11,6 +11,10 @@ from endorlabs.workflows.reports.analyze.code_findings_trend import (
 from endorlabs.workflows.reports.analyze.findings_trend import (
     build_sca_burndown_report,
 )
+from endorlabs.workflows.reports.analyze.patches import (
+    collect_patches_report,
+    empty_patches_report,
+)
 from endorlabs.workflows.reports.analyze.projects import (
     build_onboarding_report,
     discover_projects,
@@ -92,15 +96,65 @@ def build_report_packet(
     include_findings_burndown: bool = True,
     include_sca_burndown: bool | None = None,
     include_code_findings_burndown: bool = True,
+    include_patches: bool = True,
+    patches_only: bool = False,
+    patches_workers: int | None = None,
 ) -> dict[str, Any]:
     """Build a portable ``endor.report_packet.v0`` cube for *namespace*.
 
     Library entrypoint: ``Client`` in → cube dict out (no file I/O).
 
     ``include_findings_burndown`` is a compat alias for ``include_sca_burndown``.
+
+    When *patches_only* is true, skip onboarding/sprawl/burndown pulls and build
+    only ``reports.patches`` (campaign batch path).
     """
     if include_sca_burndown is None:
         include_sca_burndown = include_findings_burndown
+
+    patch_workers = int(patches_workers if patches_workers is not None else max_workers)
+    if patches_only:
+        patches = collect_patches_report(
+            client, namespace, max_workers=max(1, min(patch_workers, 16))
+        )
+        empty_sca = _empty_sca_burndown(
+            lookback=lookback,
+            min_projects=min_projects,
+            max_workers=max_workers,
+            tag_catalog=[],
+        )
+        empty_code = _empty_code_findings(
+            lookback=lookback,
+            min_projects=min_projects,
+            max_workers=max_workers,
+            tag_catalog=[],
+        )
+        return {
+            "schema": REPORT_PACKET_SCHEMA,
+            "tenant": namespace,
+            "pulledAt": datetime.now(UTC).isoformat(),
+            "pathOptions": ["all", namespace],
+            "leafNamespaces": [namespace],
+            "tagCatalog": [],
+            "tagSeriesMeta": empty_sca.get("tagSeriesMeta"),
+            "reports": {
+                "onboarding": {
+                    "projects": [],
+                    "projectCount": 0,
+                    "cadence": {},
+                },
+                "versionSprawl": {
+                    "histKeys": [],
+                    "ecosystems": [],
+                    "estate": {},
+                    "perPath": {},
+                    "perTag": {},
+                },
+                "scaBurndown": empty_sca,
+                "codeFindingsBurndown": empty_code,
+                "patches": patches,
+            },
+        }
 
     discovered = discover_projects(client, namespace, traverse=traverse)
     projects = discovered["projects"]
@@ -189,6 +243,12 @@ def build_report_packet(
             max_workers=max_workers,
         )
 
+    patches = empty_patches_report()
+    if include_patches:
+        patches = collect_patches_report(
+            client, namespace, max_workers=max(1, min(patch_workers, 16))
+        )
+
     return {
         "schema": REPORT_PACKET_SCHEMA,
         "tenant": namespace,
@@ -200,10 +260,11 @@ def build_report_packet(
         "reports": {
             "onboarding": onboarding,
             "versionSprawl": version_sprawl,
+            # Readers fall back to the legacy "findingsBurndown" key for cubes
+            # built before the rename; new cubes carry the slice once.
             "scaBurndown": sca,
-            # Legacy key for older readers / parity baselines.
-            "findingsBurndown": sca,
             "codeFindingsBurndown": code,
+            "patches": patches,
         },
     }
 

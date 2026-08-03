@@ -336,6 +336,19 @@ _EMAIL_ALLOW_DOMAINS = frozenset(
     }
 )
 
+# Dependency coordinates (``mvn://io.netty:netty-codec-http@4.1.86.Final``) match
+# the email pattern whenever the version carries an alphabetic qualifier such as
+# ``.Final`` or ``.RELEASE``. Schemes are enumerated rather than wildcarded so
+# SSH user-at-host URLs (not package coordinates) still fail the email check.
+_PACKAGE_COORDINATE_RE = re.compile(
+    r"(?:"
+    r"(?:mvn|maven|gradle|npm|pypi|pip|gem|rubygems|nuget|golang|go|cargo|crates"
+    r"|composer|packagist|hex|pub|swift|cocoapods|conan|generic)://"
+    r"|pkg:[A-Za-z0-9.+\-]+/"
+    r")[^\s\"'<>]*@[^\s\"'<>]+",
+    re.IGNORECASE,
+)
+
 # Host suffixes owned by Endor Labs (URL allow).
 _ENDOR_URL_HOST_SUFFIXES = ("endorlabs.com", "endor.ai")
 
@@ -1049,8 +1062,14 @@ def find_external_pii_url_hits(
             continue
         if _is_vendored_report_shell_asset(path):
             continue
+        coordinates = [m.span() for m in _PACKAGE_COORDINATE_RE.finditer(text)]
         for match in _EMAIL_RE.finditer(text):
             addr = match.group(0)
+            if any(
+                start <= match.start() and match.end() <= end
+                for start, end in coordinates
+            ):
+                continue
             if not is_allowed_email(addr):
                 hits.append(f"{path}:{line_no}: email {addr}")
         for match in _URL_RE.finditer(text):
