@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import sys
 from datetime import UTC, datetime
@@ -19,6 +20,11 @@ from endorlabs.workflows.reports.export.html.render import (
     default_packet_output_dir,
     default_patches_report_dir,
     render_report_packet,
+)
+from endorlabs.workflows.reports.logging import (
+    configure_reports_cli_logging,
+    milestone,
+    resolve_log_level,
 )
 from endorlabs.workflows.reports.parity import compare_packet_cube
 from endorlabs.workflows.reports.schemas.packet_v0 import PATCHES_RUN_BUCKET, RUN_BUCKET
@@ -104,6 +110,16 @@ def _packet_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
         ),
     )
     packet.add_argument("--timeout", type=float, default=900.0)
+    packet.add_argument(
+        "--log-level",
+        default=None,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help=(
+            "Progress log level on stdout (default: ENDOR_LOG_LEVEL or INFO). "
+            "Stage milestones use the endorlabs.workflows.reports logger "
+            "(RedactingFilter)."
+        ),
+    )
     return packet
 
 
@@ -125,6 +141,12 @@ def _upsert_code_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentPar
     upsert.add_argument("--min-projects", type=int, default=1)
     upsert.add_argument("--workers", type=int, default=24)
     upsert.add_argument("--timeout", type=float, default=900.0)
+    upsert.add_argument(
+        "--log-level",
+        default=None,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help=("Progress log level on stdout (default: ENDOR_LOG_LEVEL or INFO)."),
+    )
     return upsert
 
 
@@ -314,6 +336,7 @@ def _default_parity_dir(namespace: str) -> Path:
 
 
 def _run_upsert_code_findings(args: argparse.Namespace) -> int:
+    configure_reports_cli_logging(level=getattr(args, "log_level", None))
     packet_dir = Path(args.packet_dir)
     cube_path = packet_dir / "data" / "packet.cube.json"
     if not cube_path.is_file():
@@ -324,6 +347,7 @@ def _run_upsert_code_findings(args: argparse.Namespace) -> int:
     if not tenant:
         print("Cube missing tenant", file=sys.stderr)
         return 2
+    milestone("packet", "cli.upsert_start")
     print(f"upsert code findings into {packet_dir} …", flush=True)
     client = endorlabs.Client(tenant=tenant, timeout=float(args.timeout))
     try:
@@ -336,6 +360,7 @@ def _run_upsert_code_findings(args: argparse.Namespace) -> int:
         )
     finally:
         client.close()
+    milestone("packet", "cli.render.start", mode="upsert_code")
     print("rendering…", flush=True)
     written = render_report_packet(cube, packet_dir)
     code = (cube.get("reports") or {}).get("codeFindingsBurndown") or {}
@@ -352,10 +377,12 @@ def _run_upsert_code_findings(args: argparse.Namespace) -> int:
             flush=True,
         )
     print(f"Wrote {len(written)} files under {packet_dir}", flush=True)
+    milestone("packet", "cli.upsert_done", files=len(written))
     return 0
 
 
 def _run_packet(args: argparse.Namespace) -> int:
+    configure_reports_cli_logging(level=getattr(args, "log_level", None))
     patches_only = bool(getattr(args, "patches_only", False))
     skip_patches = bool(getattr(args, "skip_patches", False))
     if patches_only and skip_patches:
@@ -370,6 +397,14 @@ def _run_packet(args: argparse.Namespace) -> int:
     else:
         out_dir = default_packet_output_dir(args.namespace)
 
+    milestone(
+        "packet",
+        "cli.start",
+        log_level=logging.getLevelName(
+            resolve_log_level(getattr(args, "log_level", None))
+        ),
+        patches_only=int(patches_only),
+    )
     client = endorlabs.Client(tenant=args.namespace, timeout=float(args.timeout))
     try:
         skip_sca = bool(
@@ -402,11 +437,13 @@ def _run_packet(args: argparse.Namespace) -> int:
             )
     finally:
         client.close()
+    milestone("packet", "cli.render.start")
     written = render_report_packet(cube, out_dir, patches_only=patches_only)
     print(f"Wrote report packet to {out_dir}")
     for path in written:
         rel = path.name if path.parent == out_dir else path.relative_to(out_dir)
         print(f"  {rel}")
+    milestone("packet", "cli.done", files=len(written))
     return 0
 
 

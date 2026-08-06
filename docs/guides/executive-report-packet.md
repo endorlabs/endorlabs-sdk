@@ -18,8 +18,10 @@ pass the **customer** namespace only on `-n` (see skill **endor-auth-setup** /
 employee auth notes).
 
 Optional flags: `--lookback`, `--min-projects`, `--workers`, `--output-dir`,
-`--skip-version-sprawl`, `--skip-findings-burndown`, `--skip-patches`,
-`--patches-only` (Patches page only → `runs/patches-reports/<tenant>-MMDDYY/`).
+`--log-level` (stdout stage milestones: `packet.discover.*`, burndowns, patches,
+render; also `ENDOR_LOG_LEVEL`), `--skip-version-sprawl`,
+`--skip-findings-burndown`, `--skip-patches`, `--patches-only` (Patches page only
+→ `runs/patches-reports/<tenant>-MMDDYY/`).
 
 `--patches-only` writes just `05-endor-patches.html` and the `patches-*.csv`
 exports — pages 01–04 are omitted rather than rendered from slices the run never
