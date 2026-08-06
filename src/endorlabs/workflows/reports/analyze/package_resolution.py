@@ -68,6 +68,7 @@ PV_MASK = (
 
 
 def _attr(obj: Any, *names: str, default: Any = None) -> Any:
+    """Walk nested dict/attr keys; return ``default`` on the first miss."""
     cur = obj
     for name in names:
         if cur is None:
@@ -80,6 +81,7 @@ def _attr(obj: Any, *names: str, default: Any = None) -> Any:
 
 
 def _enum_str(value: Any) -> str:
+    """Serialize an enum or scalar to a plain string (empty when unset)."""
     if value is None:
         return ""
     if hasattr(value, "value"):
@@ -97,10 +99,12 @@ def _error_present(status: Any) -> bool:
 
 
 def _resolution_errors(pv: Any) -> Any:
+    """Return ``spec.resolution_errors`` from a PackageVersion row."""
     return _attr(pv, "spec", "resolution_errors")
 
 
 def _status_field(errors: Any, kind: str, field: str) -> str:
+    """Read one field from a resolution stage; drop ``STATUS_ERROR_UNSPECIFIED``."""
     status = _attr(errors, kind)
     if not status:
         return ""
@@ -130,6 +134,10 @@ def _pick_best_match(errors: Any) -> Any:
 
 
 def _success_flags(errors: Any) -> dict[str, str]:
+    """Derive Full/Unresolved/Resolved/Call Graph Success CSV columns.
+
+    Later stages are ``N/A`` when an earlier stage already failed.
+    """
     unresolved = _error_present(_attr(errors, "unresolved"))
     resolved = _error_present(_attr(errors, "resolved"))
     call_graph = _error_present(_attr(errors, "call_graph"))
@@ -160,6 +168,7 @@ def _success_flags(errors: Any) -> dict[str, str]:
 
 
 def _endor_url(namespace: str, project_uuid: str) -> str:
+    """Build the Endor UI packages URL for a project, or empty if inputs are missing."""
     if not namespace or not project_uuid:
         return ""
     return (
@@ -169,12 +178,14 @@ def _endor_url(namespace: str, project_uuid: str) -> str:
 
 
 def _fmt_time(value: Any) -> str:
+    """Format a timestamp field as a string (empty when unset)."""
     if value is None:
         return ""
     return str(value)
 
 
 def _fmt_tags(tags: Any) -> str:
+    """Join project tags with ``;`` for a single CSV cell."""
     if not tags:
         return ""
     if isinstance(tags, (list, tuple)):
@@ -183,13 +194,20 @@ def _fmt_tags(tags: Any) -> str:
 
 
 class ProjectCache:
+    """Thread-safe Project name/tags lookup keyed by project UUID."""
+
     def __init__(self, client: endorlabs.Client) -> None:
+        """Bind an SDK client used for Project.get lookups."""
         super().__init__()
         self._client = client
         self._lock = threading.Lock()
         self._by_uuid: dict[str, tuple[str, str]] = {}
 
     def get(self, project_uuid: str, namespace: str) -> tuple[str, str]:
+        """Return ``(name, tags)`` for ``project_uuid``, caching successful lookups.
+
+        Failed gets cache empty strings so concurrent enrichments do not retry.
+        """
         if not project_uuid:
             return ("", "")
         with self._lock:
@@ -212,6 +230,7 @@ class ProjectCache:
 
 
 def _count_related(client: endorlabs.Client, pv: Any) -> dict[str, int]:
+    """Count Finding / DependencyMetadata rows related to one PackageVersion."""
     uuid = str(_attr(pv, "uuid") or "")
     ns = str(
         _attr(pv, "tenant_meta", "namespace") or getattr(pv, "namespace", "") or ""
@@ -257,6 +276,7 @@ def build_row(
     pv: Any,
     project_cache: ProjectCache,
 ) -> dict[str, Any]:
+    """Build one CSV row for a PackageVersion, including related counts."""
     ns = str(
         _attr(pv, "tenant_meta", "namespace") or getattr(pv, "namespace", None) or ""
     )
@@ -335,6 +355,7 @@ def collect_rows(
     max_workers: int,
     max_inflight: int,
 ) -> list[dict[str, Any]]:
+    """List main-context PackageVersions and enrich rows concurrently."""
     project_cache = ProjectCache(client)
     rows: list[dict[str, Any]] = []
     pending: dict[Future[dict[str, Any]], None] = {}
@@ -382,6 +403,7 @@ def collect_rows(
 
 
 def write_csv(rows: list[dict[str, Any]], output: Path) -> None:
+    """Write enriched rows to ``output`` using ``CSV_COLUMNS``."""
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=CSV_COLUMNS, extrasaction="ignore")
@@ -391,6 +413,7 @@ def write_csv(rows: list[dict[str, Any]], output: Path) -> None:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse CLI flags for the package-resolution report."""
     parser = argparse.ArgumentParser(
         description=(
             "Generate main-context PackageVersion resolution CSV for a tenant "
@@ -438,6 +461,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def build_summary(
     tenant: str, rows: list[dict[str, Any]], csv_path: Path
 ) -> dict[str, Any]:
+    """Aggregate success/failure counts for the optional JSON summary."""
     return {
         "tenant": tenant,
         "row_count": len(rows),
@@ -466,6 +490,7 @@ def build_summary(
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the package-resolution report CLI; return a process exit code."""
     args = parse_args(argv)
     output = args.output
     if output is None:
