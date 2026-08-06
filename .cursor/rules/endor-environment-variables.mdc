@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-environment-variables.md
-x-endor-source-sha256: 51fd7dfb7afdb5173caf507bd68f7a65ae14d6655c6df010ea8b68944d8dd18d
+x-endor-source-sha256: dba66175a5e6a4cb3bc4a56a0e50f4f3c278a0023f2a9d0386ab695881b65ab8
 ---
 
 # Environment variables (maintainer)

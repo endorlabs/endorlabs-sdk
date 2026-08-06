@@ -235,6 +235,51 @@ def build_parser() -> argparse.ArgumentParser:
     prf.add_argument("--skip-pdf", action="store_true")
     prf.add_argument("--html-only", action="store_true")
     prf.add_argument("--analysis-only", action="store_true")
+
+    pkg = sub.add_parser(
+        "package-resolution",
+        help=(
+            "Main-context PackageVersion resolution CSV + interactive HTML "
+            "(unresolved/manifest, dependency resolution, reachability)."
+        ),
+    )
+    _add_namespace(pkg)
+    pkg.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="CSV output path (default: workspace/runs/package-resolution/...).",
+    )
+    pkg.add_argument(
+        "--html-dir",
+        type=Path,
+        default=None,
+        help=(
+            "HTML output directory "
+            "(default: workspace/runs/package-resolution/<tenant>-html/)."
+        ),
+    )
+    pkg.add_argument(
+        "--csv",
+        type=Path,
+        default=None,
+        help="Existing CSV for --html-only (skip live API collection).",
+    )
+    pkg.add_argument("--max-workers", type=int, default=16)
+    pkg.add_argument("--max-inflight", type=int, default=64)
+    pkg.add_argument(
+        "--json-summary",
+        type=Path,
+        default=None,
+        help="Optional JSON summary path written next to the CSV run.",
+    )
+    pkg.add_argument("--skip-html", action="store_true")
+    pkg.add_argument(
+        "--html-only",
+        action="store_true",
+        help="Render HTML from --csv (or --output) without calling the API.",
+    )
+    pkg.add_argument("--timeout", type=float, default=120.0)
     return parser
 
 
@@ -486,9 +531,67 @@ def main(argv: list[str] | None = None) -> int:
         if args.analysis_only:
             prf_argv.append("--analysis-only")
         return run(prf_argv)
+    if args.command == "package-resolution":
+        return _run_package_resolution(args)
 
     parser.error(f"unknown command {args.command!r}")
     return 2
+
+
+def _run_package_resolution(args: argparse.Namespace) -> int:
+    from endorlabs.workflows.reports.analyze.package_resolution import (
+        RUN_BUCKET,
+    )
+    from endorlabs.workflows.reports.analyze.package_resolution import (
+        main as collect_main,
+    )
+    from endorlabs.workflows.reports.export.html.package_resolution import (
+        main as html_main,
+    )
+
+    csv_path = args.csv or args.output
+    if args.html_only:
+        if csv_path is None:
+            safe = sanitize_path_segment(args.namespace)
+            csv_path = default_runs_dir(RUN_BUCKET) / f"{safe}-package-resolution.csv"
+        if not Path(csv_path).is_file():
+            print(f"CSV not found for --html-only: {csv_path}", file=sys.stderr)
+            return 2
+        html_argv = ["--csv", str(csv_path), "--tenant", args.namespace]
+        if args.html_dir is not None:
+            html_argv.extend(["--output-dir", str(args.html_dir)])
+        return html_main(html_argv)
+
+    collect_argv = [
+        "--tenant",
+        args.namespace,
+        "--max-workers",
+        str(args.max_workers),
+        "--max-inflight",
+        str(args.max_inflight),
+        "--timeout",
+        str(args.timeout),
+    ]
+    if args.output is not None:
+        collect_argv.extend(["--output", str(args.output)])
+    if args.json_summary is not None:
+        collect_argv.extend(["--json-summary", str(args.json_summary)])
+    rc = collect_main(collect_argv)
+    if rc != 0:
+        return rc
+
+    if args.skip_html:
+        return 0
+
+    if args.output is not None:
+        csv_path = args.output
+    else:
+        safe = sanitize_path_segment(args.namespace)
+        csv_path = default_runs_dir(RUN_BUCKET) / f"{safe}-package-resolution.csv"
+    html_argv = ["--csv", str(csv_path), "--tenant", args.namespace]
+    if args.html_dir is not None:
+        html_argv.extend(["--output-dir", str(args.html_dir)])
+    return html_main(html_argv)
 
 
 if __name__ == "__main__":
