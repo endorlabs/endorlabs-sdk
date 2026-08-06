@@ -450,6 +450,8 @@ def patches_version_rows(cube: dict[str, Any]) -> list[dict[str, Any]]:
                     "projects": vr.get("projects"),
                     "risk": vr.get("risk"),
                     "risk_available": vr.get("risk_available"),
+                    "reachable_function": vr.get("reachable_function"),
+                    "potentially_reachable": vr.get("potentially_reachable"),
                     "reachable": vr.get("reachable"),
                     "unreachable": vr.get("unreachable"),
                 }
@@ -664,6 +666,8 @@ def write_packet_raw_exports(
                 "projects",
                 "risk",
                 "risk_available",
+                "reachable_function",
+                "potentially_reachable",
                 "reachable",
                 "unreachable",
             ],

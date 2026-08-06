@@ -515,6 +515,111 @@ def query_operation_group_counts(
 _query_operation_group_counts = query_operation_group_counts
 
 
+def _shards_for_parent_scope(
+    client: Client,
+    namespace: str,
+    parent_uuids: list[str] | None,
+    *,
+    max_project_pages: int | None,
+) -> list[Any]:
+    """Project shards for leaf/tenant FindingLog escalate (timeout fallback)."""
+    from endorlabs.tools.list_sharding import ProjectShard
+
+    if parent_uuids is not None:
+        return [
+            ProjectShard(project_uuid=str(uid), namespace=namespace)
+            for uid in parent_uuids
+            if uid
+        ]
+    return list(
+        client.Query.Project.discover(
+            namespace,
+            traverse=True,
+            max_pages=max_project_pages,
+        ).project_shards()
+    )
+
+
+def query_operation_group_counts_resilient(
+    client: Client,
+    *,
+    namespace: str,
+    base_filter: str,
+    operation: str,
+    level: str | None,
+    interval: str,
+    parent_uuids: list[str] | None = None,
+    max_workers: int = 12,
+    max_project_pages: int | None = None,
+) -> dict[str, int]:
+    """``group_by_time`` with timeout→per-project shard escalate (chart pattern).
+
+    Tries one aggregate for the namespace (optional ``parent_uuids`` is_in). On
+    timeout-like errors with multi-project scope, fans out via
+    :func:`parallel_map_shards`. Single-project scope does not escalate.
+    """
+    if parent_uuids is not None and len(parent_uuids) == 0:
+        return {}
+
+    single_uuid = (
+        parent_uuids[0] if parent_uuids is not None and len(parent_uuids) == 1 else None
+    )
+    try:
+        if single_uuid is not None:
+            return query_operation_group_counts(
+                client,
+                namespace=namespace,
+                base_filter=base_filter,
+                operation=operation,
+                level=level,
+                traverse=False,
+                interval=interval,
+                project_uuid=single_uuid,
+            )
+        scoped = append_parent_uuid_filter(base_filter, parent_uuids)
+        return query_operation_group_counts(
+            client,
+            namespace=namespace,
+            base_filter=scoped,
+            operation=operation,
+            level=level,
+            traverse=False,
+            interval=interval,
+        )
+    except Exception as exc:
+        if single_uuid is not None or not is_timeout_like(exc):
+            raise
+
+    shards = _shards_for_parent_scope(
+        client,
+        namespace,
+        parent_uuids,
+        max_project_pages=max_project_pages,
+    )
+    if not shards:
+        return {}
+
+    def worker(shard: Any) -> dict[str, int]:
+        return query_operation_group_counts(
+            client,
+            namespace=shard.namespace,
+            base_filter=base_filter,
+            operation=operation,
+            level=level,
+            traverse=False,
+            interval=interval,
+            project_uuid=shard.project_uuid,
+        )
+
+    results = parallel_map_shards(
+        shards,
+        worker,
+        max_workers=max(1, max_workers),
+        progress_label=f"FindingLog {operation} shards",
+    )
+    return merge_count_dicts(results)
+
+
 def query_severity_facet_series_cell(
     client: Client,
     *,
@@ -527,11 +632,16 @@ def query_severity_facet_series_cell(
     parent_uuids: list[str] | None = None,
     lookback: int = CHART_DEFAULT_LOOKBACK,
     interval: str = CHART_DEFAULT_INTERVAL,
+    max_workers: int = 12,
+    max_project_pages: int | None = None,
 ) -> dict[str, Any]:
     """Query one severity x facet FindingLog CREATE/DELETE series cell.
 
     *facet_clause* may be empty (category-only / ``all`` facet). *parent_uuids*
     scopes to ``meta.parent_uuid``; ``None`` means the whole namespace path.
+
+    Multi-project / leaf aggregates escalate to project shards on timeout
+    (same ladder as :func:`query_operation_counts`).
     """
     clause = category_base_filter
     extra = (facet_clause or "").strip()
@@ -542,24 +652,27 @@ def query_severity_facet_series_cell(
         window_end,
         base_filter=clause,
     )
-    base = append_parent_uuid_filter(base, parent_uuids)
-    create = query_operation_group_counts(
+    create = query_operation_group_counts_resilient(
         client,
         namespace=namespace,
         base_filter=base,
         operation="CREATE",
         level=level,
-        traverse=False,
         interval=interval,
+        parent_uuids=parent_uuids,
+        max_workers=max_workers,
+        max_project_pages=max_project_pages,
     )
-    delete = query_operation_group_counts(
+    delete = query_operation_group_counts_resilient(
         client,
         namespace=namespace,
         base_filter=base,
         operation="DELETE",
         level=level,
-        traverse=False,
         interval=interval,
+        parent_uuids=parent_uuids,
+        max_workers=max_workers,
+        max_project_pages=max_project_pages,
     )
     return series_cell_from_analysis(
         build_analysis(
@@ -624,6 +737,8 @@ def query_severity_facet_matrix(
     period_caption: str | None = None,
     interval: str = CHART_DEFAULT_INTERVAL,
     expand: str = "severity",
+    max_workers: int = 12,
+    max_project_pages: int | None = None,
 ) -> dict[str, dict[str, dict[str, Any]]]:
     """Query severity x facet cells and expand rollups.
 
@@ -648,6 +763,8 @@ def query_severity_facet_matrix(
             parent_uuids=parent_uuids,
             lookback=lookback,
             interval=interval,
+            max_workers=max_workers,
+            max_project_pages=max_project_pages,
         )
         categories = list(seed["categories"])
         period_caption = str(seed["periodCaption"])
@@ -667,6 +784,8 @@ def query_severity_facet_matrix(
                 parent_uuids=parent_uuids,
                 lookback=lookback,
                 interval=interval,
+                max_workers=max_workers,
+                max_project_pages=max_project_pages,
             )
         except Exception:
             matrix[sev][facet] = empty_series_cell(categories, period_caption)

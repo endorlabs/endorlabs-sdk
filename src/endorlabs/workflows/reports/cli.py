@@ -443,6 +443,20 @@ def _run_packet(args: argparse.Namespace) -> int:
     for path in written:
         rel = path.name if path.parent == out_dir else path.relative_to(out_dir)
         print(f"  {rel}")
+    gaps = [str(g) for g in (cube.get("dataGaps") or [])]
+    if gaps:
+        print(
+            "warning: packet data gaps: " + ", ".join(gaps),
+            file=sys.stderr,
+            flush=True,
+        )
+        for key in gaps:
+            meta = (cube.get("reportsMeta") or {}).get(key) or {}
+            err = meta.get("error_type")
+            if err:
+                print(f"  {key}: {err}", file=sys.stderr, flush=True)
+        milestone("packet", "cli.done", files=len(written), data_gaps=len(gaps))
+        return 1
     milestone("packet", "cli.done", files=len(written))
     return 0
 

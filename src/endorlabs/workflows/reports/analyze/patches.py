@@ -4,6 +4,13 @@ Builds the ``reports.patches`` packet slice: top families by Available
 reach-weighted risk, per-version heat-map rows, patch units, and a Java
 (Maven) Crit/High finding-count denominator for the impact calculator.
 
+Risk uses mild Critical/High bases (population is already severity-scoped)
+and **tiered** reach multipliers: confirmed ``REACHABLE_FUNCTION`` only gets
+a boost; ``POTENTIALLY_REACHABLE_FUNCTION`` is inconclusive and is not treated
+as reachable. Bar / ``projects`` counts are distinct Project UUIDs — a weak
+proxy for consumer blast radius; PackageVersion-level consumers are not in
+this Finding rollup.
+
 Finding lists are required for canonical heat maps; prefer leaf
 ``Finding.count`` only for the Java denominator. Documented as expensive at
 estate scale — pair with ``--patches-only`` for campaign batch runs.
@@ -23,20 +30,26 @@ from typing import TYPE_CHECKING, Any
 from endorlabs.filters import FINDING_CATEGORY_VULNERABILITY, MAIN_CONTEXT_CLAUSE
 from endorlabs.workflows.dependencies.coordinates import parse_dep_name
 from endorlabs.workflows.findings.patch_core import (
+    FINDING_MASK,
     NOT_DISMISSED_CLAUSE,
     build_finding_filter,
     compute_signal_breakdown,
     discover_and_list,
     extract_patch_rows,
 )
+from endorlabs.workflows.findings.prf_analysis import list_findings_tenant
 
 if TYPE_CHECKING:
     from endorlabs import Client
-
-CRIT_W = 4.0
-HIGH_W = 2.0
-REACH_MULT = 3.0
-UNREACH_MULT = 1.0
+    from endorlabs.tools.list_sharding import ProjectShard
+# Population is already Critical/High — keep severity spread mild.
+CRIT_W = 2.0
+HIGH_W = 1.0
+# Reach tiers: only confirmed function-reachable gets a boost. PRF is inconclusive
+# (call graph could not confirm execution) — do not treat it as "reachable".
+RF_MULT = 1.5
+PRF_MULT = 1.0
+UNREACH_MULT = 0.75
 TOP_N_FAMILIES = 5
 
 SEVERITIES = ("CRITICAL", "HIGH")
@@ -81,16 +94,36 @@ def _sev_base(severity: str) -> float:
     return 0.0
 
 
+def _reach_lane(row: dict[str, Any]) -> str:
+    """Return ``rf``, ``prf``, or ``none`` (mutually exclusive; RF wins)."""
+    if _truthy(row.get("reachable_function")):
+        return "rf"
+    if _truthy(row.get("potentially_reachable_function")):
+        return "prf"
+    return "none"
+
+
 def _reach_mult(row: dict[str, Any]) -> float:
-    if _truthy(row.get("reachable_function")) or _truthy(
-        row.get("potentially_reachable_function")
-    ):
-        return REACH_MULT
+    lane = _reach_lane(row)
+    if lane == "rf":
+        return RF_MULT
+    if lane == "prf":
+        return PRF_MULT
     return UNREACH_MULT
 
 
 def _finding_risk(row: dict[str, Any]) -> float:
     return _sev_base(str(row.get("severity") or "")) * _reach_mult(row)
+
+
+def _risk_weights_payload() -> dict[str, float]:
+    return {
+        "critical": CRIT_W,
+        "high": HIGH_W,
+        "reachable_function": RF_MULT,
+        "potentially_reachable": PRF_MULT,
+        "unreachable": UNREACH_MULT,
+    }
 
 
 def _build_families(
@@ -110,10 +143,12 @@ def _build_families(
                 "req_high": 0,
                 "avail_risk": 0.0,
                 "req_risk": 0.0,
-                "avail_reach": 0,
-                "avail_unreach": 0,
-                "req_reach": 0,
-                "req_unreach": 0,
+                "avail_rf": 0,
+                "avail_prf": 0,
+                "avail_none": 0,
+                "req_rf": 0,
+                "req_prf": 0,
+                "req_none": 0,
                 "projects": set(),
             }
         )
@@ -130,15 +165,17 @@ def _build_families(
         fid = str(row.get("finding_uuid") or "")
         sev = str(row.get("severity") or "").upper()
         weight = _finding_risk(row)
-        reachable = _reach_mult(row) >= REACH_MULT
+        lane = _reach_lane(row)
         if status == "available":
             if fid and fid not in b["available_uuids"]:
                 b["available_uuids"].add(fid)
                 b["avail_risk"] += weight
-                if reachable:
-                    b["avail_reach"] += 1
+                if lane == "rf":
+                    b["avail_rf"] += 1
+                elif lane == "prf":
+                    b["avail_prf"] += 1
                 else:
-                    b["avail_unreach"] += 1
+                    b["avail_none"] += 1
                 if sev == "CRITICAL":
                     b["avail_crit"] += 1
                 elif sev == "HIGH":
@@ -147,10 +184,12 @@ def _build_families(
             if fid and fid not in b["to_request_uuids"]:
                 b["to_request_uuids"].add(fid)
                 b["req_risk"] += weight
-                if reachable:
-                    b["req_reach"] += 1
+                if lane == "rf":
+                    b["req_rf"] += 1
+                elif lane == "prf":
+                    b["req_prf"] += 1
                 else:
-                    b["req_unreach"] += 1
+                    b["req_none"] += 1
                 if sev == "CRITICAL":
                     b["req_crit"] += 1
                 elif sev == "HIGH":
@@ -201,6 +240,9 @@ def _build_families(
             total_avail_risk += avail_risk
             if avail_n:
                 avail_projects |= b["projects"]
+            rf_n = int(b["avail_rf"]) + int(b["req_rf"])
+            prf_n = int(b["avail_prf"]) + int(b["req_prf"])
+            none_n = int(b["avail_none"]) + int(b["req_none"])
             ver_rows.append(
                 {
                     "version": ver,
@@ -213,8 +255,12 @@ def _build_families(
                     "avail_high": ah,
                     "req_critical": int(b["req_crit"]),
                     "req_high": int(b["req_high"]),
-                    "reachable": int(b["avail_reach"]) + int(b["req_reach"]),
-                    "unreachable": int(b["avail_unreach"]) + int(b["req_unreach"]),
+                    # RF-only; do not conflate with PRF (false "reachable" copy).
+                    "reachable_function": rf_n,
+                    "potentially_reachable": prf_n,
+                    "unreachable": none_n,
+                    # Compat alias: RF-only (was RF|PRF before this fix).
+                    "reachable": rf_n,
                     "projects": len(b["projects"]),
                     "risk": avail_risk + req_risk,
                     "risk_available": avail_risk,
@@ -266,8 +312,14 @@ def _patch_units(families: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     "projects": int(vr.get("projects") or 0),
                     "risk": float(vr.get("risk") or 0),
                     "risk_available": float(vr.get("risk_available") or 0),
-                    "reachable": int(vr.get("reachable") or 0),
+                    "reachable_function": int(vr.get("reachable_function") or 0),
+                    "potentially_reachable": int(vr.get("potentially_reachable") or 0),
                     "unreachable": int(vr.get("unreachable") or 0),
+                    "reachable": int(
+                        vr.get("reachable_function")
+                        if vr.get("reachable_function") is not None
+                        else vr.get("reachable") or 0
+                    ),
                 }
             )
     units.sort(
@@ -323,12 +375,7 @@ def empty_patches_report() -> dict[str, Any]:
         "denominator_label": IMPACT_DENOM_LABEL,
         "java_denominator_label": JAVA_DENOM_LABEL,
         "denominator_source": "",
-        "risk_weights": {
-            "critical": CRIT_W,
-            "high": HIGH_W,
-            "reachable_or_prf": REACH_MULT,
-            "unreachable": UNREACH_MULT,
-        },
+        "risk_weights": _risk_weights_payload(),
         "signal_breakdown": {},
         "families": [],
         "patch_units": [],
@@ -346,26 +393,43 @@ def collect_patches_report(
     finding_categories: Sequence[str] = (FINDING_CATEGORY_VULNERABILITY,),
     severities: Sequence[str] | None = None,
     gate: str = "any",
+    shards: Sequence[ProjectShard] | None = None,
 ) -> dict[str, Any]:
     """Pull patch-gated findings and build the patches cube slice.
 
     Defaults match the Endor Patches narrative: vulnerability findings at
     Critical/High with ``gate="any"``. Pass *finding_categories* / *severities*
     / *gate* to reuse the same collector for alternate presets.
+
+    When *shards* is provided (e.g. from packet ``discover_projects``), skip
+    rediscovery and list findings on those shards only.
     """
     sev = list(SEVERITIES if severities is None else severities)
     finding_filter = build_finding_filter(finding_categories, sev, gate=gate)
     try:
-        shards, findings = discover_and_list(
-            client,
-            namespace,
-            finding_filter,
-            max_workers=max_workers,
-        )
+        if shards is not None:
+            shard_list = list(shards)
+            if not shard_list:
+                return empty_patches_report()
+            findings = list_findings_tenant(
+                client,
+                namespace,
+                finding_filter,
+                mask=FINDING_MASK,
+                max_workers=max_workers,
+                shards=shard_list,
+            )
+        else:
+            shard_list, findings = discover_and_list(
+                client,
+                namespace,
+                finding_filter,
+                max_workers=max_workers,
+            )
     except Exception:
         return empty_patches_report()
 
-    if not shards:
+    if not shard_list:
         return empty_patches_report()
 
     signal_breakdown = compute_signal_breakdown(findings)
@@ -397,17 +461,12 @@ def collect_patches_report(
         "denominator_label": IMPACT_DENOM_LABEL,
         "java_denominator_label": JAVA_DENOM_LABEL,
         "denominator_source": "fixable_pool_in_view",
-        "risk_weights": {
-            "critical": CRIT_W,
-            "high": HIGH_W,
-            "reachable_or_prf": REACH_MULT,
-            "unreachable": UNREACH_MULT,
-        },
+        "risk_weights": _risk_weights_payload(),
         "signal_breakdown": signal_breakdown,
         "families": families,
         "patch_units": units,
         "patch_unit_count": len(units),
-        "project_count": len(shards),
+        "project_count": len(shard_list),
         "finding_count": len(findings),
         "detail_row_count": len(detail),
     }

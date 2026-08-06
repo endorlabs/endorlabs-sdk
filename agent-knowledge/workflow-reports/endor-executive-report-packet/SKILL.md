@@ -79,6 +79,9 @@ Optional flags:
   only `05-endor-patches.html` + `patches-*.csv`; pages 01–04 are not emitted.
 - `--patches-date-suffix 072926` — override the patches-only date folder suffix
 
+On a live slice failure (e.g. FindingLog timeout), HTML still writes; cube
+`dataGaps` / `reportsMeta` name the failed slice; CLI exits `1`.
+
 ## Scratch parity (gitignored baselines)
 
 Compare a fresh packet cube to prior session JSON under

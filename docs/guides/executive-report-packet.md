@@ -27,6 +27,11 @@ render; also `ENDOR_LOG_LEVEL`), `--skip-version-sprawl`,
 exports — pages 01–04 are omitted rather than rendered from slices the run never
 collected.
 
+Slice failures (for example FindingLog read timeouts on SCA burndown) no longer
+abort the whole packet: other pages still write under the output dir, the cube
+records `dataGaps` / `reportsMeta`, and the CLI exits `1` so operators notice.
+Leaf FindingLog aggregates escalate to per-project shards on timeout.
+
 ## Outputs
 
 Default directory:

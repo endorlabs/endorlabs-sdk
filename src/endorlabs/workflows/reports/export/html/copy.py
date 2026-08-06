@@ -16,7 +16,9 @@ H1_ENDOR_PATCHES = "Endor Patches"
 
 PURPOSE_ENDOR_PATCHES = (
     "Highest-impact dependency families with Endor Patch coverage, ranked by "
-    "severity- and reach-weighted Available risk. Click a family for the "
+    "severity- and reach-weighted Available risk (confirmed function-reachable "
+    "boosted; potentially reachable is not treated as reachable). Click a "
+    "family for the "
     "per-version heat map and use the impact calculator for top-K closure."
 )
 

@@ -77,10 +77,11 @@ def render_patches_html(cube: dict[str, Any]) -> str:
     pulled = cube.get("pulledAt") or ""
     payload = json.dumps(patches, separators=(",", ":"))
     weights = patches.get("risk_weights") or {}
-    critical_weight = weights.get("critical", 4)
-    high_weight = weights.get("high", 2)
-    reachable_weight = weights.get("reachable_or_prf", 3)
-    unreachable_weight = weights.get("unreachable", 1)
+    critical_weight = weights.get("critical", 2)
+    high_weight = weights.get("high", 1)
+    rf_weight = weights.get("reachable_function", weights.get("reachable_or_prf", 1.5))
+    prf_weight = weights.get("potentially_reachable", 1)
+    unreachable_weight = weights.get("unreachable", 0.75)
     top_n = patches.get("top_n_families") or 5
     h1 = copy_mod.H1_ENDOR_PATCHES
     purpose = copy_mod.PURPOSE_ENDOR_PATCHES
@@ -121,11 +122,12 @@ def render_patches_html(cube: dict[str, Any]) -> str:
     <div class="risk-callout"><strong>Risk</strong> = <code>(Critical×{
         critical_weight
     } | High×{high_weight}) × reach</code>,
-      where reach is <code>×{
-        reachable_weight
-    }</code> for reachable / potentially reachable and <code>×{
-        unreachable_weight
-    }</code> if unreachable.</div>
+      where reach is <code>×{rf_weight}</code> for confirmed
+      <code>REACHABLE_FUNCTION</code>, <code>×{prf_weight}</code> for
+      <code>POTENTIALLY_REACHABLE_FUNCTION</code> (inconclusive — not the same
+      as reachable), and <code>×{unreachable_weight}</code> otherwise.
+      Population is already Critical/High. Bar length is distinct
+      <em>projects</em>, not PackageVersion consumers.</div>
     <dl class="glossary-grid">
       <div><dt>Fixable findings</dt><dd>Default calculator denom (product UI): findings on the Endor Patch units in this view. Top‑K can reach 100%.</dd></div>
       <div><dt>Java Crit/High estate</dt><dd>Optional denom: all Maven Critical/High vulnerability findings in the estate.</dd></div>
@@ -144,7 +146,7 @@ def render_patches_html(cube: dict[str, Any]) -> str:
 <div class="card" id="heatCard" hidden>
   <div><div class="heat-family" id="heatFamily"></div><div class="heat-sub" id="heatSub"></div></div>
   <div class="sort-bar"><button id="sortRisk" class="active" data-mode="risk">Sort by risk <span class="sort-dir">↓</span></button><button id="sortProjects" data-mode="projects">Sort by project consumers <span class="sort-dir"></span></button><button id="sortSemver" data-mode="semver">Sort by SemVer <span class="sort-dir"></span></button></div>
-  <div class="legend"><span class="status-pill available">Available</span><span class="status-pill to-request">To Request</span><span>Color = risk</span><div class="legend-grad"></div><span>Length = projects</span></div>
+  <div class="legend"><span class="status-pill available">Available</span><span class="status-pill to-request">To Request</span><span>Color = risk</span><div class="legend-grad"></div><span>Length = projects (not PackageVersion consumers)</span></div>
   <div class="heatmap" id="heatmap"></div>
 </div>
 <script>
