@@ -5,11 +5,13 @@ reach-weighted risk, per-version heat-map rows, patch units, and a Java
 (Maven) Crit/High finding-count denominator for the impact calculator.
 
 Risk uses mild Critical/High bases (population is already severity-scoped)
-and **tiered** reach multipliers: confirmed ``REACHABLE_FUNCTION`` only gets
-a boost; ``POTENTIALLY_REACHABLE_FUNCTION`` is inconclusive and is not treated
-as reachable. Bar / ``projects`` counts are distinct Project UUIDs — a weak
-proxy for consumer blast radius; PackageVersion-level consumers are not in
-this Finding rollup.
+and a **tiered** reach ladder across function and dependency tags:
+
+``RF > RD > PRF > PRD > unreachable/none``. Confirmed function-reachable is
+the strongest boost; potentially-reachable is inconclusive (not "reachable");
+confirmed dependency-reachable is a milder boost than RF. Bar / ``projects``
+counts are distinct Project UUIDs — a weak proxy for consumer blast radius;
+PackageVersion-level consumers are not in this Finding rollup.
 
 Finding lists are required for canonical heat maps; prefer leaf
 ``Finding.count`` only for the Java denominator. Documented as expensive at
@@ -42,15 +44,26 @@ from endorlabs.workflows.findings.prf_analysis import list_findings_tenant
 if TYPE_CHECKING:
     from endorlabs import Client
     from endorlabs.tools.list_sharding import ProjectShard
+
 # Population is already Critical/High — keep severity spread mild.
 CRIT_W = 2.0
 HIGH_W = 1.0
-# Reach tiers: only confirmed function-reachable gets a boost. PRF is inconclusive
-# (call graph could not confirm execution) — do not treat it as "reachable".
+# Reach ladder (strongest evidence wins). Do not treat PRF/PRD as "reachable".
 RF_MULT = 1.5
+RD_MULT = 1.25
 PRF_MULT = 1.0
+PRD_MULT = 1.0
 UNREACH_MULT = 0.75
 TOP_N_FAMILIES = 5
+
+_REACH_COUNT_KEYS = (
+    "reachable_function",
+    "potentially_reachable_function",
+    "unreachable_function",
+    "reachable_dependency",
+    "potentially_reachable_dependency",
+    "unreachable_dependency",
+)
 
 SEVERITIES = ("CRITICAL", "HIGH")
 
@@ -95,11 +108,22 @@ def _sev_base(severity: str) -> float:
 
 
 def _reach_lane(row: dict[str, Any]) -> str:
-    """Return ``rf``, ``prf``, or ``none`` (mutually exclusive; RF wins)."""
+    """Return strongest reach lane for risk (mutually exclusive priority).
+
+    Order: ``rf`` > ``rd`` > ``prf`` > ``prd`` > ``uf`` > ``ud`` > ``none``.
+    """
     if _truthy(row.get("reachable_function")):
         return "rf"
+    if _truthy(row.get("reachable_dependency")):
+        return "rd"
     if _truthy(row.get("potentially_reachable_function")):
         return "prf"
+    if _truthy(row.get("potentially_reachable_dependency")):
+        return "prd"
+    if _truthy(row.get("unreachable_function")):
+        return "uf"
+    if _truthy(row.get("unreachable_dependency")):
+        return "ud"
     return "none"
 
 
@@ -107,8 +131,12 @@ def _reach_mult(row: dict[str, Any]) -> float:
     lane = _reach_lane(row)
     if lane == "rf":
         return RF_MULT
+    if lane == "rd":
+        return RD_MULT
     if lane == "prf":
         return PRF_MULT
+    if lane == "prd":
+        return PRD_MULT
     return UNREACH_MULT
 
 
@@ -121,9 +149,25 @@ def _risk_weights_payload() -> dict[str, float]:
         "critical": CRIT_W,
         "high": HIGH_W,
         "reachable_function": RF_MULT,
+        "reachable_dependency": RD_MULT,
+        "potentially_reachable_function": PRF_MULT,
+        "potentially_reachable_dependency": PRD_MULT,
+        # Compat aliases for older HTML cubes.
         "potentially_reachable": PRF_MULT,
         "unreachable": UNREACH_MULT,
+        "unreachable_function": UNREACH_MULT,
+        "unreachable_dependency": UNREACH_MULT,
     }
+
+
+def _empty_reach_counts() -> dict[str, int]:
+    return {key: 0 for key in _REACH_COUNT_KEYS}
+
+
+def _bump_reach_counts(counts: dict[str, int], row: dict[str, Any]) -> None:
+    for key in _REACH_COUNT_KEYS:
+        if _truthy(row.get(key)):
+            counts[key] += 1
 
 
 def _build_families(
@@ -143,12 +187,8 @@ def _build_families(
                 "req_high": 0,
                 "avail_risk": 0.0,
                 "req_risk": 0.0,
-                "avail_rf": 0,
-                "avail_prf": 0,
-                "avail_none": 0,
-                "req_rf": 0,
-                "req_prf": 0,
-                "req_none": 0,
+                "avail_reach": _empty_reach_counts(),
+                "req_reach": _empty_reach_counts(),
                 "projects": set(),
             }
         )
@@ -165,17 +205,11 @@ def _build_families(
         fid = str(row.get("finding_uuid") or "")
         sev = str(row.get("severity") or "").upper()
         weight = _finding_risk(row)
-        lane = _reach_lane(row)
         if status == "available":
             if fid and fid not in b["available_uuids"]:
                 b["available_uuids"].add(fid)
                 b["avail_risk"] += weight
-                if lane == "rf":
-                    b["avail_rf"] += 1
-                elif lane == "prf":
-                    b["avail_prf"] += 1
-                else:
-                    b["avail_none"] += 1
+                _bump_reach_counts(b["avail_reach"], row)
                 if sev == "CRITICAL":
                     b["avail_crit"] += 1
                 elif sev == "HIGH":
@@ -184,12 +218,7 @@ def _build_families(
             if fid and fid not in b["to_request_uuids"]:
                 b["to_request_uuids"].add(fid)
                 b["req_risk"] += weight
-                if lane == "rf":
-                    b["req_rf"] += 1
-                elif lane == "prf":
-                    b["req_prf"] += 1
-                else:
-                    b["req_none"] += 1
+                _bump_reach_counts(b["req_reach"], row)
                 if sev == "CRITICAL":
                     b["req_crit"] += 1
                 elif sev == "HIGH":
@@ -240,9 +269,11 @@ def _build_families(
             total_avail_risk += avail_risk
             if avail_n:
                 avail_projects |= b["projects"]
-            rf_n = int(b["avail_rf"]) + int(b["req_rf"])
-            prf_n = int(b["avail_prf"]) + int(b["req_prf"])
-            none_n = int(b["avail_none"]) + int(b["req_none"])
+            reach_totals = {
+                key: int(b["avail_reach"][key]) + int(b["req_reach"][key])
+                for key in _REACH_COUNT_KEYS
+            }
+            rf_n = reach_totals["reachable_function"]
             ver_rows.append(
                 {
                     "version": ver,
@@ -255,12 +286,16 @@ def _build_families(
                     "avail_high": ah,
                     "req_critical": int(b["req_crit"]),
                     "req_high": int(b["req_high"]),
-                    # RF-only; do not conflate with PRF (false "reachable" copy).
-                    "reachable_function": rf_n,
-                    "potentially_reachable": prf_n,
-                    "unreachable": none_n,
-                    # Compat alias: RF-only (was RF|PRF before this fix).
+                    **reach_totals,
+                    # Compat: RF-only alias; PRF count under potentially_reachable.
                     "reachable": rf_n,
+                    "potentially_reachable": reach_totals[
+                        "potentially_reachable_function"
+                    ],
+                    "unreachable": (
+                        reach_totals["unreachable_function"]
+                        + reach_totals["unreachable_dependency"]
+                    ),
                     "projects": len(b["projects"]),
                     "risk": avail_risk + req_risk,
                     "risk_available": avail_risk,
@@ -313,13 +348,26 @@ def _patch_units(families: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     "risk": float(vr.get("risk") or 0),
                     "risk_available": float(vr.get("risk_available") or 0),
                     "reachable_function": int(vr.get("reachable_function") or 0),
-                    "potentially_reachable": int(vr.get("potentially_reachable") or 0),
-                    "unreachable": int(vr.get("unreachable") or 0),
-                    "reachable": int(
-                        vr.get("reachable_function")
-                        if vr.get("reachable_function") is not None
-                        else vr.get("reachable") or 0
+                    "potentially_reachable_function": int(
+                        vr.get("potentially_reachable_function")
+                        or vr.get("potentially_reachable")
+                        or 0
                     ),
+                    "unreachable_function": int(vr.get("unreachable_function") or 0),
+                    "reachable_dependency": int(vr.get("reachable_dependency") or 0),
+                    "potentially_reachable_dependency": int(
+                        vr.get("potentially_reachable_dependency") or 0
+                    ),
+                    "unreachable_dependency": int(
+                        vr.get("unreachable_dependency") or 0
+                    ),
+                    "potentially_reachable": int(
+                        vr.get("potentially_reachable_function")
+                        or vr.get("potentially_reachable")
+                        or 0
+                    ),
+                    "unreachable": int(vr.get("unreachable") or 0),
+                    "reachable": int(vr.get("reachable_function") or 0),
                 }
             )
     units.sort(

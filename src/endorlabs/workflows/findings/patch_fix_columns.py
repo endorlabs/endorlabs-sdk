@@ -32,5 +32,9 @@ PATCH_FIX_FINDING_DETAIL_COLUMNS: tuple[str, ...] = (
     "patch_status",
     "reachable_function",
     "potentially_reachable_function",
+    "unreachable_function",
+    "reachable_dependency",
+    "potentially_reachable_dependency",
+    "unreachable_dependency",
     "upgrade_risk",
 )

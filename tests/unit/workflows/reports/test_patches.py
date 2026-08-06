@@ -29,7 +29,7 @@ def test_java_denom_filter_excludes_dismissed() -> None:
 
 
 def test_finding_risk_weights() -> None:
-    # Crit/High already scoped; RF gets mild boost, PRF does not.
+    # Crit/High already scoped; RF > RD > PRF; PRF is not "reachable".
     assert (
         _finding_risk(
             {
@@ -40,6 +40,17 @@ def test_finding_risk_weights() -> None:
         )
         == 3.0
     )  # 2.0 x 1.5
+    assert (
+        _finding_risk(
+            {
+                "severity": "CRITICAL",
+                "reachable_function": False,
+                "reachable_dependency": True,
+                "potentially_reachable_function": True,
+            }
+        )
+        == 2.5
+    )  # 2.0 x 1.25 — RD beats PRF
     assert (
         _finding_risk(
             {
@@ -84,14 +95,25 @@ def test_build_families_separates_rf_from_prf() -> None:
             "potentially_reachable_function": True,
             "project_uuid": "p1",
         },
+        {
+            "package_name": "mvn://org.example:lib-a",
+            "current_version": "1.0.0",
+            "finding_uuid": "rd1",
+            "severity": "HIGH",
+            "patch_status": "available",
+            "reachable_function": False,
+            "potentially_reachable_function": False,
+            "reachable_dependency": True,
+            "project_uuid": "p2",
+        },
     ]
     families = _build_families(rows, top_n=5)
     vr = families[0]["version_rows"][0]
     assert vr["reachable_function"] == 1
-    assert vr["potentially_reachable"] == 1
+    assert vr["potentially_reachable_function"] == 1
+    assert vr["reachable_dependency"] == 1
     assert vr["reachable"] == 1  # RF-only alias
-    assert vr["unreachable"] == 0
-    assert vr["risk_available"] == 3.0 + 2.0
+    assert vr["risk_available"] == 3.0 + 2.0 + 1.25
 
 
 def test_build_families_mixed_version_and_ranking() -> None:

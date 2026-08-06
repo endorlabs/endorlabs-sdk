@@ -136,6 +136,10 @@ def test_finding_signal_flags_reads_tags_and_patch_fields() -> None:
         "has_upgrade_path": True,
         "reachable_function": True,
         "potentially_reachable_function": False,
+        "unreachable_function": False,
+        "reachable_dependency": False,
+        "potentially_reachable_dependency": False,
+        "unreachable_dependency": False,
     }
 
 

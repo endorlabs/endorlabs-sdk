@@ -33,9 +33,22 @@ _ENDOR_PATCH_AVAILABLE = "spec.fixing_patch.endor_patch_available==true"
 _FIX_AVAILABLE_TAG = "spec.finding_tags contains FINDING_TAGS_FIX_AVAILABLE"
 _REACHABLE_FUNCTION_TAG = "FINDING_TAGS_REACHABLE_FUNCTION"
 _POTENTIALLY_REACHABLE_FUNCTION_TAG = "FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION"
+_UNREACHABLE_FUNCTION_TAG = "FINDING_TAGS_UNREACHABLE_FUNCTION"
+_REACHABLE_DEPENDENCY_TAG = "FINDING_TAGS_REACHABLE_DEPENDENCY"
+_POTENTIALLY_REACHABLE_DEPENDENCY_TAG = "FINDING_TAGS_POTENTIALLY_REACHABLE_DEPENDENCY"
+_UNREACHABLE_DEPENDENCY_TAG = "FINDING_TAGS_UNREACHABLE_DEPENDENCY"
 
 GATE_CHOICES: tuple[str, ...] = ("any", "endor-patch", "fix-available")
 REACHABILITY_CHOICES: tuple[str, ...] = ("any", "reachable", "unreachable")
+
+_REACH_FLAG_KEYS: tuple[str, ...] = (
+    "reachable_function",
+    "potentially_reachable_function",
+    "unreachable_function",
+    "reachable_dependency",
+    "potentially_reachable_dependency",
+    "unreachable_dependency",
+)
 
 _SEVERITY_ALIASES: dict[str, str] = {
     "CRITICAL": "FINDING_LEVEL_CRITICAL",
@@ -114,6 +127,12 @@ def finding_signal_flags(finding: dict[str, Any]) -> dict[str, bool]:
         "has_upgrade_path": bool(upgrades),
         "reachable_function": _REACHABLE_FUNCTION_TAG in tags,
         "potentially_reachable_function": _POTENTIALLY_REACHABLE_FUNCTION_TAG in tags,
+        "unreachable_function": _UNREACHABLE_FUNCTION_TAG in tags,
+        "reachable_dependency": _REACHABLE_DEPENDENCY_TAG in tags,
+        "potentially_reachable_dependency": (
+            _POTENTIALLY_REACHABLE_DEPENDENCY_TAG in tags
+        ),
+        "unreachable_dependency": _UNREACHABLE_DEPENDENCY_TAG in tags,
     }
 
 
@@ -201,8 +220,7 @@ def compute_signal_breakdown(findings: Sequence[dict[str, Any]]) -> dict[str, in
     neither = 0
     has_upgrade_path = 0
     patches_to_request = 0
-    reachable = 0
-    potentially_reachable = 0
+    counts = {key: 0 for key in _REACH_FLAG_KEYS}
     no_reachability_tag = 0
 
     for finding in findings:
@@ -221,14 +239,12 @@ def compute_signal_breakdown(findings: Sequence[dict[str, Any]]) -> dict[str, in
             flags["fix_available"] or flags["has_upgrade_path"]
         ):
             patches_to_request += 1
-        if flags["reachable_function"]:
-            reachable += 1
-        if flags["potentially_reachable_function"]:
-            potentially_reachable += 1
-        if (
-            not flags["reachable_function"]
-            and not flags["potentially_reachable_function"]
-        ):
+        any_reach = False
+        for key in _REACH_FLAG_KEYS:
+            if flags[key]:
+                counts[key] += 1
+                any_reach = True
+        if not any_reach:
             no_reachability_tag += 1
 
     return {
@@ -239,8 +255,16 @@ def compute_signal_breakdown(findings: Sequence[dict[str, Any]]) -> dict[str, in
         "neither_endor_patch_nor_fix_tag_count": neither,
         "has_upgrade_path_count": has_upgrade_path,
         "patches_to_request_count": patches_to_request,
-        "reachable_function_count": reachable,
-        "potentially_reachable_function_count": potentially_reachable,
+        "reachable_function_count": counts["reachable_function"],
+        "potentially_reachable_function_count": counts[
+            "potentially_reachable_function"
+        ],
+        "unreachable_function_count": counts["unreachable_function"],
+        "reachable_dependency_count": counts["reachable_dependency"],
+        "potentially_reachable_dependency_count": counts[
+            "potentially_reachable_dependency"
+        ],
+        "unreachable_dependency_count": counts["unreachable_dependency"],
         "no_reachability_tag_count": no_reachability_tag,
     }
 
@@ -278,6 +302,10 @@ def _detail_row_from_upgrade_item(
         "patch_status": patch_status(flags),
         "reachable_function": flags["reachable_function"],
         "potentially_reachable_function": flags["potentially_reachable_function"],
+        "unreachable_function": flags["unreachable_function"],
+        "reachable_dependency": flags["reachable_dependency"],
+        "potentially_reachable_dependency": flags["potentially_reachable_dependency"],
+        "unreachable_dependency": flags["unreachable_dependency"],
         "upgrade_risk": dict_str(item, "upgrade_risk"),
     }
 
@@ -313,6 +341,10 @@ def _detail_row_from_target_dependency(
         "patch_status": patch_status(flags),
         "reachable_function": flags["reachable_function"],
         "potentially_reachable_function": flags["potentially_reachable_function"],
+        "unreachable_function": flags["unreachable_function"],
+        "reachable_dependency": flags["reachable_dependency"],
+        "potentially_reachable_dependency": flags["potentially_reachable_dependency"],
+        "unreachable_dependency": flags["unreachable_dependency"],
         "upgrade_risk": "",
     }
 

@@ -451,8 +451,17 @@ def patches_version_rows(cube: dict[str, Any]) -> list[dict[str, Any]]:
                     "risk": vr.get("risk"),
                     "risk_available": vr.get("risk_available"),
                     "reachable_function": vr.get("reachable_function"),
-                    "potentially_reachable": vr.get("potentially_reachable"),
+                    "potentially_reachable_function": vr.get(
+                        "potentially_reachable_function"
+                    ),
+                    "unreachable_function": vr.get("unreachable_function"),
+                    "reachable_dependency": vr.get("reachable_dependency"),
+                    "potentially_reachable_dependency": vr.get(
+                        "potentially_reachable_dependency"
+                    ),
+                    "unreachable_dependency": vr.get("unreachable_dependency"),
                     "reachable": vr.get("reachable"),
+                    "potentially_reachable": vr.get("potentially_reachable"),
                     "unreachable": vr.get("unreachable"),
                 }
             )
@@ -667,8 +676,13 @@ def write_packet_raw_exports(
                 "risk",
                 "risk_available",
                 "reachable_function",
-                "potentially_reachable",
+                "potentially_reachable_function",
+                "unreachable_function",
+                "reachable_dependency",
+                "potentially_reachable_dependency",
+                "unreachable_dependency",
                 "reachable",
+                "potentially_reachable",
                 "unreachable",
             ],
         ),

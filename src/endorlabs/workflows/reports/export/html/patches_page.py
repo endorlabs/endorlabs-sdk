@@ -80,7 +80,11 @@ def render_patches_html(cube: dict[str, Any]) -> str:
     critical_weight = weights.get("critical", 2)
     high_weight = weights.get("high", 1)
     rf_weight = weights.get("reachable_function", weights.get("reachable_or_prf", 1.5))
-    prf_weight = weights.get("potentially_reachable", 1)
+    rd_weight = weights.get("reachable_dependency", 1.25)
+    prf_weight = weights.get(
+        "potentially_reachable_function", weights.get("potentially_reachable", 1)
+    )
+    prd_weight = weights.get("potentially_reachable_dependency", 1)
     unreachable_weight = weights.get("unreachable", 0.75)
     top_n = patches.get("top_n_families") or 5
     h1 = copy_mod.H1_ENDOR_PATCHES
@@ -122,10 +126,13 @@ def render_patches_html(cube: dict[str, Any]) -> str:
     <div class="risk-callout"><strong>Risk</strong> = <code>(Critical×{
         critical_weight
     } | High×{high_weight}) × reach</code>,
-      where reach is <code>×{rf_weight}</code> for confirmed
-      <code>REACHABLE_FUNCTION</code>, <code>×{prf_weight}</code> for
-      <code>POTENTIALLY_REACHABLE_FUNCTION</code> (inconclusive — not the same
-      as reachable), and <code>×{unreachable_weight}</code> otherwise.
+      strongest tag wins:
+      RF <code>×{rf_weight}</code>,
+      RD <code>×{rd_weight}</code>,
+      PRF <code>×{prf_weight}</code>,
+      PRD <code>×{prd_weight}</code>,
+      else <code>×{unreachable_weight}</code>
+      (UF / UD / none). PRF and PRD are inconclusive — not “reachable”.
       Population is already Critical/High. Bar length is distinct
       <em>projects</em>, not PackageVersion consumers.</div>
     <dl class="glossary-grid">
