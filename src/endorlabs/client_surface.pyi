@@ -676,6 +676,7 @@ class _InstallationFacade(ResourceRuntimeFacade[Installation]):
         gitlab_config: Any | None = None,
         bitbucket_config: Any | None = None,
         huggingface_config: Any | None = None,
+        marked_for_deletion: Any | None = None,
         include_archived_repos: Any | None = None,
         installation_error_message: Any | None = None,
         scm_app_uuid: Any | None = None,

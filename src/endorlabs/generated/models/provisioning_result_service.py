@@ -374,8 +374,10 @@ class V1AutomatedScanParameters(BaseModel):
 
     additional_environment_variables: list[str] | None = None
     """
-    additional_environment_variables is a list of additional environment
-    variables that must be used, specific to languages or tools.
+    additional_environment_variables sets extra environment variables for the
+    scan, specific to languages or tools. By design only ENDOR_-prefixed
+    variables are honored; any entry without the ENDOR_ prefix is silently
+    dropped, as are a few reserved ENDOR_ variables the scanner sets itself.
     """
     bazel_configuration: AutomatedScanParametersBazelConfiguration | None = None
     """
