@@ -30,6 +30,7 @@ uv run endor-reports auth-policies -n <tenant>
 uv run endor-reports ci-endorctl -n <tenant>
 uv run endor-reports findings-trend -n <tenant>
 uv run endor-reports prf-analysis -n <tenant>
+uv run endor-reports package-resolution -n <tenant>
 ```
 
 ## Findings burndown pull

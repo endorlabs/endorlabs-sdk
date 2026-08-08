@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-07-28T07:01:54.121918+00:00",
+  "generated_at": "2026-08-06T17:34:07.922270+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -299,7 +299,7 @@
       ]
     },
     {
-      "description": "Use when the user asks for tenant or namespace-level Endor Labs audit reports,\nCSV exports, Cursor canvases, executive HTML report packets, or workflow\nsummaries backed by bundled report scripts rather than day-0 SDK troubleshooting\nskills. Routes to auth, project inventory, CI version, finding trend,\nexecutive HTML packet, and PRF report playbooks. Not for single-project scan\nRCA, finding retrieval, SDK debugging, or policy validation.",
+      "description": "Use when the user asks for tenant or namespace-level Endor Labs audit reports,\nCSV exports, Cursor canvases, executive HTML report packets, PackageVersion\nresolution HTML, or workflow summaries backed by bundled report scripts rather\nthan day-0 SDK troubleshooting skills. Routes to auth, project inventory, CI\nversion, finding trend, executive HTML packet, package-resolution, and PRF\nreport playbooks. Not for single-project scan RCA, finding retrieval, SDK\ndebugging, or policy validation.",
       "id": "endor-workflow-reports",
       "name": "endor-workflow-reports",
       "path": "skills/endor-workflow-reports/SKILL.md",
@@ -492,6 +492,21 @@
         "endorlabs.workflows.findings.finding_log_trends.query_severity_reach_matrix",
         "endorlabs.workflows.findings.finding_log_trends.query_severity_reach_series_cell",
         "endorlabs.workflows.findings.finding_log_trends.sum_series_cells"
+      ],
+      "module": "endorlabs.workflows.reports.cli",
+      "skill": "endor-workflow-reports"
+    },
+    {
+      "agent_visible": false,
+      "cli": "endor-reports",
+      "composition": "library_api",
+      "default_output": ".endorlabs-context/workspace/runs/package-resolution/",
+      "id": "package-resolution",
+      "library_entrypoints": [
+        "endorlabs.workflows.reports.analyze.package_resolution.collect_rows",
+        "endorlabs.workflows.reports.analyze.package_resolution.write_csv",
+        "endorlabs.workflows.reports.export.html.package_resolution.load_csv",
+        "endorlabs.workflows.reports.export.html.package_resolution.render_html"
       ],
       "module": "endorlabs.workflows.reports.cli",
       "skill": "endor-workflow-reports"

@@ -149,6 +149,7 @@ Internal consistency checks in `run_analysis.py` assert breakdown row counts sum
 
 | Need | Skill |
 | ---- | ----- |
+| Tenant-wide PackageVersion resolution CSV + HTML | [endor-package-resolution-report](../endor-package-resolution-report/SKILL.md) |
 | FindingLog new vs resolved trend charts | [endor-chart-new-vs-resolved-findings](../endor-chart-new-vs-resolved-findings/SKILL.md) |
 | Per-project call graph export and path search | [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md) |
 | Single-finding reachability provenance | [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) |

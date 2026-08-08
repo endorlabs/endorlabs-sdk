@@ -179,6 +179,7 @@ INSTALLATION_SPEC_FIELDS = (
     "gitlab_config",
     "bitbucket_config",
     "huggingface_config",
+    "marked_for_deletion",
     "include_archived_repos",
     "installation_error_message",
     "scm_app_uuid",
@@ -248,6 +249,7 @@ MALWARE_SPEC_FIELDS = (
     "cwe_id",
     "deletion_exempt",
     "iocs",
+    "raw",
 )
 MALWARE_SPEC_REQUIRED = ("ecosystem", "package_name")
 MALWARE_META_FIELDS = ()

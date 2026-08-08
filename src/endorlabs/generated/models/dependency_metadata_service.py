@@ -698,6 +698,14 @@ class DependencyMetadataDependencyData(BaseModel):
     """
     Date that the dependency was last modified.
     """
+    locked: bool | None = None
+    """
+    Set to true if the dependency is fixed to a specific version by a
+    lock file at install time (outcome).
+
+    If a dependency is locked, but not pinned, it could drift if the
+    lock file is regenerated (for example, by 'npm update').
+    """
     missing: bool | None = None
     """
     True if the package version is missing for this dependency.
@@ -734,7 +742,11 @@ class DependencyMetadataDependencyData(BaseModel):
     """
     pinned: bool | None = None
     """
-    True if the dependency is pinned.
+    Set to true of the dependency is fixed to a specific version by a
+    manifest file (intent).
+
+    For example, in package.json, "lodash": "4.17.21" is pinned while
+    "lodash": "^4.0.0" is not (it's a range, "any 4.x").
     """
     project_paths: list[ProjectPath] | None = None
     """

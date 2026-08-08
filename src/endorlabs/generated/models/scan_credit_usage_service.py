@@ -10,73 +10,39 @@ from typing import Any
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
-class AutomatedPRParametersLanguageParameters(BaseModel):
-    assignees: list[str] | None = None
+class ScanCreditUsageScanCreditBreakdown(BaseModel):
     """
-    List of assignees for the pull request.
-    """
-    labels: list[str] | None = None
-    """
-    List of labels for the pull request.
-    """
-    reviewers: list[str] | None = None
-    """
-    List of reviewers for the pull request.
+    ScanCreditBreakdown holds the six (context x component) credit counters
+    that make up either a window or cumulative total. Components collapse to
+    SCA vs code (SAST + AI_SAST + SECRETS) per the New License Model.
     """
 
-
-class AutomatedScanParametersBazelConfiguration(BaseModel):
-    bazel_exclude_targets: list[str] | None = None
+    code_ci_run_credits: str | None = None
     """
-    targets that should be excluded.
+    Code scan credits (SAST + AI_SAST + SECRETS collapsed) from PR scans.
     """
-    bazel_include_targets: list[str] | None = None
+    code_main_overflow_credits: str | None = None
     """
-    targets that should be included.
+    Code scan credits from default-branch scans on projects beyond the
+    5x-seats repo cap. Always zero when onboarded_project_count <= 5 * seats.
     """
-    bazel_show_internal_targets: bool | None = None
+    code_ref_credits: str | None = None
     """
-    show internal targets as dependencies.
+    Code scan credits from non-default ref scans.
     """
-    bazel_targets_query: str | None = None
+    sca_ci_run_credits: str | None = None
     """
-    query that should be used for bazel scans.
+    SCA scan credits from PR scans (Context.type = CONTEXT_TYPE_CI_RUN).
     """
-    bazel_workspace_path: str | None = None
+    sca_main_overflow_credits: str | None = None
     """
-    bazel workspace path.
+    SCA scan credits from default-branch scans (Context.type = CONTEXT_TYPE_MAIN)
+    on projects beyond the 5x-seats repo cap. Always zero when
+    onboarded_project_count <= 5 * seats.
     """
-
-
-class RemediationParametersAutomatedPRParameters(BaseModel):
+    sca_ref_credits: str | None = None
     """
-    AutomatedPRParameters holds the settings for automated PRs.
-    """
-
-    language_parameters: dict[str, AutomatedPRParametersLanguageParameters] | None = (
-        None
-    )
-    """
-    Language-specific parameters for the pull request.
-    """
-    max_open_prs: int | None = None
-    """
-    Maximum number of open pull requests allowed.
-    """
-
-
-class SpecWorkflowStep(BaseModel):
-    disabled: bool | None = None
-    """
-    disable is a way to disable a WorkflowStep without having to delete it.
-    """
-    scan_profile_uuid: str
-    """
-    scan_profile_uuid is the UUID of the ScanProfile of the workflow step.
-    """
-    title: str
-    """
-    title is descriptive text of the workflow step.
+    SCA scan credits from non-default ref scans (Context.type = CONTEXT_TYPE_REF).
     """
 
 
@@ -203,107 +169,6 @@ class GoogleprotobufAny(BaseModel):
 
     Schemes other than `http`, `https` (or the empty scheme) might be
     used with implementation specific semantics.
-    """
-
-
-class V1AutomatedScanParameters(BaseModel):
-    """
-    AutomatedScanParameters represents the parameters that must be applied during
-    automated cloud scans to the projects associated with the corresponding
-    profile.
-    """
-
-    additional_environment_variables: list[str] | None = None
-    """
-    additional_environment_variables sets extra environment variables for the
-    scan, specific to languages or tools. By design only ENDOR_-prefixed
-    variables are honored; any entry without the ENDOR_ prefix is silently
-    dropped, as are a few reserved ENDOR_ variables the scanner sets itself.
-    """
-    bazel_configuration: AutomatedScanParametersBazelConfiguration | None = None
-    """
-    bazel_configuration is the configuration that should be used for Bazel
-    builds. If populated, scans are performed as a bazel repository.
-    """
-    call_graph_languages: list[str] | None = None
-    """
-    call_graph_languages is the list of languages that should be used to
-    calculate call graphs. If empty, default values are used.
-    """
-    disable_code_snippet_storage: bool | None = None
-    """
-    disable_code_snippet_storage is a boolean value that indicates if the source code snippet
-    related to a finding should be stored or displayed. Default will be off.
-    """
-    disable_code_storage: bool | None = None
-    """
-    disable_code_storage is a boolean value that indicates if the source code related to a finding
-    should be stored or displayed. Default will be off.
-    """
-    enable_ai_sast_scan: bool | None = None
-    """
-    enable_ai_sast_scan is a boolean value that indicates if AI SAST scan should be requested.
-    """
-    enable_automated_pr_scans: bool | None = None
-    """
-    enable_automated_pr_scans for this repository will allow the github
-    app to selectively scan PRs and merges for this repository.
-    If the project is not part of a github app, this setting will be ingored.
-    """
-    enable_full_git_log_secret_scan: bool | None = None
-    """
-    enable_full_git_log_secret_scan for this repository.
-    """
-    enable_pr_comments: bool | None = None
-    """
-    enable_pr_comments for this repository.
-    """
-    enable_pr_incremental_scan: bool | None = None
-    """
-    enable_pr_incremental_scan is a boolean value that indicates if the PR incremental scan should be requested.
-    """
-    enable_pr_security_review_scan: bool | None = None
-    """
-    enable_pr_security_review_scan is a boolean value that indicates if a Security Review scan should be requested.
-    """
-    enable_remediation_action: bool | None = None
-    """
-    enable_remediation_action for this repository.
-    """
-    enable_sast_scan: bool | None = None
-    """
-    enable_sast_scan for this repository.
-    """
-    enable_secret_scan: bool | None = None
-    """
-    enable_secret_scan for this repository.
-    """
-    excluded_paths: list[str] | None = None
-    """
-    excluded_paths is a list of paths that should be excluded from the scan.
-    """
-    full_pr_scan: bool | None = None
-    """
-    full_pr_scan indicates whether a full scan should be enabled during PRs.
-    """
-    full_push_scan: bool | None = None
-    """
-    full_push_scan indicates whether a full scan should be enabled during
-    pushes.
-    """
-    included_paths: list[str] | None = None
-    """
-    included_paths is a list of paths that should be included in the scan.
-    """
-    languages: list[str] | None = None
-    """
-    languages is a list of languages that should be scanned. If emtpy
-    default values are used.
-    """
-    segment_match_languages: list[str] | None = None
-    """
-    segment_match_languages is the list of languages to enable segment-match based analysis for.
-    Clears the default languages if languages is not set explicitly.
     """
 
 
@@ -450,46 +315,62 @@ class V1Meta(BaseModel):
     """
 
 
-class V1RemediationParameters(BaseModel):
+class V1ScanCreditUsageSpec(BaseModel):
+    credits_period_start: AwareDatetime
     """
-    RemediationParameters holds the settings for remediation actions.
+    Anchor timestamp of the current contract term. Snapshotted from
+    EndorLicense.spec.credits_period_start at aggregation time so historic
+    rows remain interpretable after renewal.
     """
-
-    automated_pr_parameters: RemediationParametersAutomatedPRParameters | None = None
+    cumulative_breakdown: ScanCreditUsageScanCreditBreakdown
     """
-    Parameters for automated pull requests.
+    Per-context, per-component breakdown cumulative since credits_period_start
+    through window_end.
     """
-
-
-class Step(BaseModel):
-    disabled: bool | None = None
+    cumulative_scan_credits: str
     """
-    disable is a way to disable a WorkflowStep without having to delete it.
+    Cumulative credits consumed since credits_period_start through
+    window_end. Sum of all six cumulative_breakdown counters. Used to
+    render remaining credits and overage in the UI without rescanning all
+    snapshots.
     """
-    scan_profile_uuid: str
+    onboarded_project_count: int | None = None
     """
-    scan_profile_uuid is the UUID of the ScanProfile of the workflow step.
+    Number of non-deleted projects onboarded under the tenant observed at
+    aggregation time. Used to decide whether the 5x-seats default-branch cap
+    was exceeded.
     """
-    title: str
+    overflow_project_count: int | None = None
     """
-    title is descriptive text of the workflow step.
+    Number of projects beyond the 5x-seats cap whose default-branch scans
+    contributed to *_main_overflow_credits counters. Zero when
+    onboarded_project_count <= 5 * seats.
     """
-
-
-class V1ScanWorkflowSpec(BaseModel):
-    automated_scan_parameters: V1AutomatedScanParameters | None = None
+    scan_credit_limit: str | None = None
     """
-    automated_scan_parameters contains parameters that can be applied across
-    all cloud workflow scans.
+    Scan credit limit in effect at aggregation time. Snapshotted from
+    EndorLicense.spec.scan_credit_limit. Overage = max(0, cumulative_scan_credits - credit_limit).
     """
-    remediation_parameters: V1RemediationParameters | None = None
+    window_breakdown: ScanCreditUsageScanCreditBreakdown
     """
-    remediation_parameters contains the parameters required for remediation
-    actions of the analytic scan.
+    Per-context, per-component breakdown for [window_start, window_end).
     """
-    steps: list[Step] | None = None
+    window_end: AwareDatetime
     """
-    The workflow steps.
+    End of the aggregation window this snapshot covers (exclusive). All
+    ScanResults with create_time in [window_start, window_end) contributed
+    to window_* fields.
+    """
+    window_scan_credits: str
+    """
+    Total credits consumed during [window_start, window_end). Sum of all
+    six window_breakdown counters.
+    """
+    window_start: AwareDatetime
+    """
+    Start of the aggregation window this snapshot covers (inclusive).
+    Typically equals the previous run's window_end, or term_start for the
+    first run of a term.
     """
 
 
@@ -504,22 +385,6 @@ class V1TenantMeta(BaseModel):
     groupings of resources. Namespaces must be a fully qualified name,
     for example, the child namespace of namespace "endor.prod" called "app"
     is called "endor.prod.app".
-    """
-
-
-class V1UpdateRequest(BaseModel):
-    """
-    Message used for all update requests.
-    """
-
-    force: bool | None = None
-    """
-    Force will force the update of the resource if any
-    checks fail.
-    """
-    update_mask: str | None = None
-    """
-    Fields to update. Defaults to all fields.
     """
 
 
@@ -554,68 +419,6 @@ class GroupResponseGroupData(BaseModel):
     """
 
 
-class ScanWorkflowServiceCreateScanWorkflowBody(BaseModel):
-    """
-    ScanWorkflow corresponds to a workflow of scan steps.
-    """
-
-    meta: V1Meta
-    """
-    Metadata required for all objects.
-    """
-    spec: V1ScanWorkflowSpec
-    """
-    Scan Workflow specifications.
-    """
-    tenant_meta: dict[str, Any] | None = Field(
-        None, title='The tenant to which the scan workflow belongs.'
-    )
-    """
-    The tenant to which the scan workflow belongs.
-    """
-    uuid: str | None = None
-    """
-    The unique identifier of the scan workflow.
-    """
-
-
-class Object(BaseModel):
-    """
-    ScanWorkflow corresponds to a workflow of scan steps.
-    """
-
-    meta: V1Meta | None = None
-    """
-    Metadata required for all objects.
-    """
-    spec: V1ScanWorkflowSpec | None = None
-    """
-    Scan Workflow specifications.
-    """
-    tenant_meta: dict[str, Any] | None = Field(
-        None, title='The tenant to which the scan workflow belongs.'
-    )
-    """
-    The tenant to which the scan workflow belongs.
-    """
-    uuid: str | None = None
-    """
-    The unique identifier of the scan workflow.
-    """
-
-
-class ScanWorkflowServiceUpdateScanWorkflowBody(BaseModel):
-    """
-    Request used to update a scan workflow.
-    """
-
-    object: Object | None = None
-    """
-    ScanWorkflow corresponds to a workflow of scan steps.
-    """
-    request: V1UpdateRequest | None = None
-
-
 class V1GroupResponse(BaseModel):
     """
     Response to a list group request.
@@ -629,73 +432,94 @@ class V1GroupResponse(BaseModel):
     """
 
 
-class Object1(BaseModel):
+class Object(BaseModel):
     """
-    ScanWorkflow corresponds to a workflow of scan steps.
+    ScanCreditUsage is a per-tenant snapshot of scan credit consumption produced
+    by the licensing aggregation job. One object is written per aggregation run
+    covering a fixed [period_start, period_end) window. The most recent object's
+    term_* fields hold cumulative usage for the current contract term anchored
+    at EndorLicense.spec.credits_period_start.
     """
 
     meta: V1Meta
     """
-    Metadata required for all objects.
+    Metadata for the scan credit usage record.
     """
-    spec: V1ScanWorkflowSpec
+    spec: V1ScanCreditUsageSpec
     """
-    Scan Workflow specifications.
+    Specification of the scan credit usage record.
     """
-    tenant_meta: V1TenantMeta | None = None
+    tenant_meta: V1TenantMeta
     """
-    The tenant to which the scan workflow belongs.
+    ScanCreditUsage is associated with a root tenant.
     """
     uuid: str | None = None
     """
-    The unique identifier of the scan workflow.
+    The UUID of the scan credit usage record.
     """
 
 
-class V1ListScanWorkflowsResponseList(BaseModel):
-    objects: list[Object1] | None = None
+class V1ListScanCreditUsagesResponseList(BaseModel):
+    """
+    List of scan credit usage records.
+    """
+
+    objects: list[Object] | None = None
+    """
+    List of scan credit usage records.
+    """
     response: V1ListResponse | None = None
-
-
-class V1ScanWorkflow(BaseModel):
     """
-    ScanWorkflow corresponds to a workflow of scan steps.
+    List response metadata.
+    """
+
+
+class V1ScanCreditUsage(BaseModel):
+    """
+    ScanCreditUsage is a per-tenant snapshot of scan credit consumption produced
+    by the licensing aggregation job. One object is written per aggregation run
+    covering a fixed [period_start, period_end) window. The most recent object's
+    term_* fields hold cumulative usage for the current contract term anchored
+    at EndorLicense.spec.credits_period_start.
     """
 
     meta: V1Meta
     """
-    Metadata required for all objects.
+    Metadata for the scan credit usage record.
     """
-    spec: V1ScanWorkflowSpec
+    spec: V1ScanCreditUsageSpec
     """
-    Scan Workflow specifications.
+    Specification of the scan credit usage record.
     """
-    tenant_meta: V1TenantMeta | None = None
+    tenant_meta: V1TenantMeta
     """
-    The tenant to which the scan workflow belongs.
+    ScanCreditUsage is associated with a root tenant.
     """
     uuid: str | None = None
     """
-    The unique identifier of the scan workflow.
+    The UUID of the scan credit usage record.
     """
 
 
-class V1ListScanWorkflowsResponse(BaseModel):
+class V1ListScanCreditUsagesResponse(BaseModel):
     """
-    Response returned for requests to list scan workflows.
+    Response returned for requests to list ScanCreditUsage records.
     """
 
     count_response: V1CountResponse | None = None
+    """
+    Count response.
+    """
     group_response: V1GroupResponse | None = None
-    list: V1ListScanWorkflowsResponseList | None = None
+    """
+    Group response.
+    """
+    list: V1ListScanCreditUsagesResponseList | None = None
+    """
+    List of scan credit usage records.
+    """
 
 
-class ScanWorkflowService(BaseModel):
-    ScanWorkflowServiceCreateScanWorkflowBody_1: (
-        ScanWorkflowServiceCreateScanWorkflowBody | None
-    ) = Field(None, alias='ScanWorkflowServiceCreateScanWorkflowBody')
-    ScanWorkflowServiceUpdateScanWorkflowBody_1: (
-        ScanWorkflowServiceUpdateScanWorkflowBody | None
-    ) = Field(None, alias='ScanWorkflowServiceUpdateScanWorkflowBody')
-    v1ListScanWorkflowsResponse: V1ListScanWorkflowsResponse | None = None
-    v1ScanWorkflow: V1ScanWorkflow | None = None
+class ScanCreditUsageService(BaseModel):
+    v1ListScanCreditUsagesResponse: V1ListScanCreditUsagesResponse | None = None
+    v1ScanCreditUsage: V1ScanCreditUsage | None = None

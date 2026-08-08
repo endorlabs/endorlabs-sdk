@@ -1039,6 +1039,49 @@ class SecurityAspectMetricSecurityImpactType(StrEnum):
     SECURITY_IMPACT_TYPE_NEUTRAL = 'SECURITY_IMPACT_TYPE_NEUTRAL'
 
 
+class SpecAMFRecord(BaseModel):
+    """
+    Raw record as received from the AMF (Aikido) malware feed.
+    """
+
+    detected_on: str | None = None
+    """
+    Epoch-seconds timestamp of when AMF detected the malware.
+    """
+    ecosystem: str | None = None
+    """
+    Ecosystem as reported by AMF.
+    """
+    id: str | None = None
+    """
+    AMF's internal identifier for the record.
+    """
+    last_updated: str | None = None
+    """
+    Epoch-seconds timestamp of the last update to the record by AMF.
+    """
+    package_name: str | None = None
+    """
+    Package name as reported by AMF.
+    """
+    reasons: list[str] | None = None
+    """
+    Reasons for flagging the package, as reported by AMF.
+    """
+    release_date: str | None = None
+    """
+    Epoch-seconds timestamp of the flagged package version's release.
+    """
+    status: str | None = None
+    """
+    Status of the record as reported by AMF.
+    """
+    version: str | None = None
+    """
+    Package version as reported by AMF.
+    """
+
+
 class SpecAffectedRange(BaseModel):
     """
     Affected ranges.
@@ -2905,6 +2948,23 @@ class V1LocationType(StrEnum):
     LOCATION_TYPE_LOGICAL_BUG = 'LOCATION_TYPE_LOGICAL_BUG'
 
 
+class V1MalwareAssessmentResultType(StrEnum):
+    """
+    MalwareAssessmentResultType represents the verdict of a malware assessment.
+    """
+
+    MALWARE_ASSESSMENT_RESULT_TYPE_UNSPECIFIED = (
+        'MALWARE_ASSESSMENT_RESULT_TYPE_UNSPECIFIED'
+    )
+    MALWARE_ASSESSMENT_RESULT_TYPE_MALICIOUS = (
+        'MALWARE_ASSESSMENT_RESULT_TYPE_MALICIOUS'
+    )
+    MALWARE_ASSESSMENT_RESULT_TYPE_BENIGN = 'MALWARE_ASSESSMENT_RESULT_TYPE_BENIGN'
+    MALWARE_ASSESSMENT_RESULT_TYPE_TELEMETRY = (
+        'MALWARE_ASSESSMENT_RESULT_TYPE_TELEMETRY'
+    )
+
+
 class V1MalwareIOCAttribute(BaseModel):
     """
     MalwareIOC represents a particular Indicator of Compromise.
@@ -4624,6 +4684,66 @@ class SpecAffectedPackage(BaseModel):
     purl: str | None = None
 
 
+class SpecInternalRecord(BaseModel):
+    """
+    Sanitized projection of the internal malware detection assessment. Deliberately
+    NOT the full MalwareDetectionAssessment: that message carries internal-only
+    fields (prompt_compressed, llm_call_stats, total_llm_cost, review state) that
+    must never reach GetMalware/ListMalware, which are public, unmasked-by-default
+    APIs. Only add fields here that are safe to return to any Malware caller.
+    """
+
+    ecosystem: V1Ecosystem | None = 'ECOSYSTEM_UNSPECIFIED'
+    """
+    Ecosystem of the assessed package.
+    """
+    human_reviewed: bool | None = None
+    """
+    Whether a human reviewed this assessment.
+    """
+    package_name: str | None = None
+    """
+    Name of the assessed package.
+    """
+    reasons: list[str] | None = None
+    """
+    Reasons for the assessment's verdict.
+    """
+    result: V1MalwareAssessmentResultType | None = (
+        'MALWARE_ASSESSMENT_RESULT_TYPE_UNSPECIFIED'
+    )
+    """
+    The assessment's verdict.
+    """
+    version: str | None = None
+    """
+    Version of the assessed package.
+    """
+
+
+class SpecRawMalware(BaseModel):
+    """
+    Raw source records for accountability, one field per contributing feed.
+    Only the field(s) matching the record's actual source(s) are populated.
+    Named MalwareRaw, not Raw, so its generated OpenAPI definition doesn't collide
+    with Vuln.Spec.Raw's (both are Spec.Raw, which would force the swagger generator
+    to fall back to fully-qualified names and rename Vuln's existing definition).
+    """
+
+    amf: SpecAMFRecord | None = None
+    """
+    Raw record from the AMF (Aikido) malware feed.
+    """
+    internal: SpecInternalRecord | None = None
+    """
+    Sanitized projection of the internal malware detection assessment.
+    """
+    osv: OsvVulnerability | None = None
+    """
+    Raw upstream OSV vulnerability record.
+    """
+
+
 class VulnSpecAffected(BaseModel):
     affected_callpath_uris: list[str] | None = None
     """
@@ -5892,6 +6012,14 @@ class BomDependency(BaseModel):
     js_dependency_scope: PackageVersionDependencyNpmDependencySpecScope | None = (
         'SCOPE_UNSPECIFIED'
     )
+    locked: bool | None = None
+    """
+    Set to true if the dependency is fixed to a specific version by a
+    lock file at install time (outcome).
+
+    If a dependency is locked, but not pinned, it could drift if the
+    lock file is regenerated (for example, by 'npm update').
+    """
     maven_dependency_scope: PackageVersionDependencyMavenDependencySpecScope | None = (
         'SCOPE_UNSPECIFIED'
     )
@@ -5906,7 +6034,11 @@ class BomDependency(BaseModel):
     """
     pinned: bool | None = None
     """
-    Whether the dependency version is fixed to a single version or not.
+    Set to true of the dependency is fixed to a specific version by a
+    manifest file (intent).
+
+    For example, in package.json, "lodash": "4.17.21" is pinned while
+    "lodash": "^4.0.0" is not (it's a range, "any 4.x").
     """
     platform_source: V1PlatformSource | None = 'PLATFORM_SOURCE_UNSPECIFIED'
     """
@@ -6189,6 +6321,14 @@ class Dependency(BaseModel):
     js_dependency_scope: PackageVersionDependencyNpmDependencySpecScope | None = (
         'SCOPE_UNSPECIFIED'
     )
+    locked: bool | None = None
+    """
+    Set to true if the dependency is fixed to a specific version by a
+    lock file at install time (outcome).
+
+    If a dependency is locked, but not pinned, it could drift if the
+    lock file is regenerated (for example, by 'npm update').
+    """
     maven_dependency_scope: PackageVersionDependencyMavenDependencySpecScope | None = (
         'SCOPE_UNSPECIFIED'
     )
@@ -6203,7 +6343,11 @@ class Dependency(BaseModel):
     """
     pinned: bool | None = None
     """
-    Whether the dependency version is fixed to a single version or not.
+    Set to true of the dependency is fixed to a specific version by a
+    manifest file (intent).
+
+    For example, in package.json, "lodash": "4.17.21" is pinned while
+    "lodash": "^4.0.0" is not (it's a range, "any 4.x").
     """
     platform_source: V1PlatformSource | None = 'PLATFORM_SOURCE_UNSPECIFIED'
     """
@@ -7324,6 +7468,10 @@ class V1MalwareSpec(BaseModel):
     PURL of the package without the version component.
     """
     ranges: SpecMalwareRanges | None = None
+    raw: SpecRawMalware | None = None
+    """
+    Raw upstream data per source, kept for accountability and traceability.
+    """
     reasons: list[str] | None = None
     """
     Reasons for flagging the package as malicious.

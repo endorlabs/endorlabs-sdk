@@ -2357,6 +2357,14 @@ class BomDependency(BaseModel):
     js_dependency_scope: PackageVersionDependencyNpmDependencySpecScope | None = (
         'SCOPE_UNSPECIFIED'
     )
+    locked: bool | None = None
+    """
+    Set to true if the dependency is fixed to a specific version by a
+    lock file at install time (outcome).
+
+    If a dependency is locked, but not pinned, it could drift if the
+    lock file is regenerated (for example, by 'npm update').
+    """
     maven_dependency_scope: PackageVersionDependencyMavenDependencySpecScope | None = (
         'SCOPE_UNSPECIFIED'
     )
@@ -2371,7 +2379,11 @@ class BomDependency(BaseModel):
     """
     pinned: bool | None = None
     """
-    Whether the dependency version is fixed to a single version or not.
+    Set to true of the dependency is fixed to a specific version by a
+    manifest file (intent).
+
+    For example, in package.json, "lodash": "4.17.21" is pinned while
+    "lodash": "^4.0.0" is not (it's a range, "any 4.x").
     """
     platform_source: V1PlatformSource | None = 'PLATFORM_SOURCE_UNSPECIFIED'
     """
@@ -2498,6 +2510,14 @@ class Dependency(BaseModel):
     js_dependency_scope: PackageVersionDependencyNpmDependencySpecScope | None = (
         'SCOPE_UNSPECIFIED'
     )
+    locked: bool | None = None
+    """
+    Set to true if the dependency is fixed to a specific version by a
+    lock file at install time (outcome).
+
+    If a dependency is locked, but not pinned, it could drift if the
+    lock file is regenerated (for example, by 'npm update').
+    """
     maven_dependency_scope: PackageVersionDependencyMavenDependencySpecScope | None = (
         'SCOPE_UNSPECIFIED'
     )
@@ -2512,7 +2532,11 @@ class Dependency(BaseModel):
     """
     pinned: bool | None = None
     """
-    Whether the dependency version is fixed to a single version or not.
+    Set to true of the dependency is fixed to a specific version by a
+    manifest file (intent).
+
+    For example, in package.json, "lodash": "4.17.21" is pinned while
+    "lodash": "^4.0.0" is not (it's a range, "any 4.x").
     """
     platform_source: V1PlatformSource | None = 'PLATFORM_SOURCE_UNSPECIFIED'
     """

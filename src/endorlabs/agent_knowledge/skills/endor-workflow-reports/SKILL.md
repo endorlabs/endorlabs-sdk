@@ -3,15 +3,17 @@ name: endor-workflow-reports
 description: 'Use when the user asks for tenant or namespace-level Endor Labs audit
   reports,
 
-  CSV exports, Cursor canvases, executive HTML report packets, or workflow
+  CSV exports, Cursor canvases, executive HTML report packets, PackageVersion
 
-  summaries backed by bundled report scripts rather than day-0 SDK troubleshooting
+  resolution HTML, or workflow summaries backed by bundled report scripts rather
 
-  skills. Routes to auth, project inventory, CI version, finding trend,
+  than day-0 SDK troubleshooting skills. Routes to auth, project inventory, CI
 
-  executive HTML packet, and PRF report playbooks. Not for single-project scan
+  version, finding trend, executive HTML packet, package-resolution, and PRF
 
-  RCA, finding retrieval, SDK debugging, or policy validation.'
+  report playbooks. Not for single-project scan RCA, finding retrieval, SDK
+
+  debugging, or policy validation.'
 ---
 
 # Workflow reports
@@ -57,6 +59,7 @@ Do not use this skill for:
 | New vs resolved findings trend chart | `endor-reports findings-trend -n <tenant>` | `.endorlabs-context/workspace/runs/finding-log-weekly-trends/` |
 | Executive interactive HTML packet (onboarding, sprawl, findings trend) | `endor-reports packet -n <tenant>` | `.endorlabs-context/workspace/runs/executive-report-packet/` |
 | Potentially reachable finding approximation + PV resolution errors | `endor-reports prf-analysis -n <tenant>` | `.endorlabs-context/workspace/runs/potentially-reachable-analysis/` |
+| PackageVersion resolution CSV + interactive HTML (manifest / dep resolution / reachability) | `endor-reports package-resolution -n <tenant>` | `.endorlabs-context/workspace/runs/package-resolution/` |
 
 Playbooks (filters, schemas, edge cases): `agent-knowledge/workflow-reports/<id>/SKILL.md`.
 

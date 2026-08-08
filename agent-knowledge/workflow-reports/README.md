@@ -19,6 +19,7 @@ invoked via **`endor-reports <subcommand>`** (see
 | `endor-chart-new-vs-resolved-findings` | `findings-trend` | `reports.analyze.findings_chart_analysis` |
 | `endor-executive-report-packet` | `packet` / `parity` | `reports.bundles.executive_packet` |
 | `endor-potentially-reachable-analysis` | `prf-analysis` | `reports.analyze.prf_report_analysis` |
+| `endor-package-resolution-report` | `package-resolution` | `reports.analyze.package_resolution` + `reports.export.html.package_resolution` |
 
 Library-backed report workflow rows live in `agent-knowledge/workflows.yaml`
 with `skill: endor-workflow-reports` and `agent_visible: false`; detailed

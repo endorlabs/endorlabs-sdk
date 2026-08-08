@@ -154,3 +154,15 @@ workflows:
     library_entrypoints:
       - endorlabs.workflows.reports.analyze.prf_report_analysis
       - endorlabs.workflows.findings.prf_analysis
+  - id: package-resolution
+    cli: endor-reports
+    module: endorlabs.workflows.reports.cli
+    skill: endor-workflow-reports
+    default_output: .endorlabs-context/workspace/runs/package-resolution/
+    agent_visible: false
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.reports.analyze.package_resolution.collect_rows
+      - endorlabs.workflows.reports.analyze.package_resolution.write_csv
+      - endorlabs.workflows.reports.export.html.package_resolution.load_csv
+      - endorlabs.workflows.reports.export.html.package_resolution.render_html

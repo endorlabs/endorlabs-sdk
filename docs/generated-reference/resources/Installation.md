@@ -50,6 +50,7 @@ Optional:
 - `installation_error_message`
 - `invalid`
 - `login`
+- `marked_for_deletion`
 - `platform_source`
 - `platform_type`
 - `project_uuids`
@@ -80,7 +81,6 @@ Present on responses; not accepted as flat create kwargs:
 - `external_name`
 - `ingestion_time`
 - `ingestion_token`
-- `marked_for_deletion`
 - `target_type`
 - `user`
 
