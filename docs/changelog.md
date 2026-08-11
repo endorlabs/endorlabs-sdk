@@ -15,6 +15,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Tenant-wide Finding lists (`list_findings_tenant`, including Endor Patches / patch-fix) always shard per project — even when every project shares one namespace — so `--workers` parallelizes flat tenants instead of a single `traverse=True` list.
 - Executive packet isolates report slices: a FindingLog/SCA timeout no longer aborts the whole CLI; remaining pages still render with `dataGaps` / `reportsMeta`, exit code `1` when any slice failed.
 - Packet FindingLog burndown cells escalate on timeout via project shards (`query_operation_group_counts_resilient`, same ladder as chart `query_operation_counts`); leaf matrices pull in parallel; patches reuses packet discover shards.
 - Endor Patches risk: stop treating PRF as reachable; tiered multipliers across function and dependency tags (`RF×1.5` > `RD×1.25` > `PRF×1.0` / `PRD×1.0` > else `×0.75`) on milder Crit/High bases (`×2`/`×1`). Cube emits RF/PRF/UF and RD/PRD/UD counts; `reachable` remains RF-only.

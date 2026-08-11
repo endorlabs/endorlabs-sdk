@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Any, cast
 from endorlabs.tools.list_sharding import (
     ProjectShard,
     parallel_map_shards,
-    single_shard_namespace,
 )
 from endorlabs.workflows.wire_access import (
     dict_str,
@@ -211,31 +210,6 @@ def list_findings_sharded(
     return [row for batch in batches for row in batch]
 
 
-def _list_findings_scope(
-    client: Client,
-    namespace: str,
-    filt: str,
-    *,
-    mask: str,
-    max_pages: int | None,
-    traverse: bool,
-) -> list[dict[str, Any]]:
-    list_kwargs: dict[str, Any] = {
-        "filter": filt,
-        "mask": mask,
-    }
-    if max_pages is not None:
-        list_kwargs["max_pages"] = max_pages
-    return [
-        finding_row_to_dict(row)
-        for row in client.Finding.list_iter(
-            namespace=namespace,
-            traverse=traverse,
-            **list_kwargs,
-        )
-    ]
-
-
 def list_findings_tenant(
     client: Client,
     tenant: str,
@@ -249,10 +223,10 @@ def list_findings_tenant(
 ) -> list[dict[str, Any]]:
     """List findings tenant-wide via per-project parallel queries.
 
-    Discovers project shards once (or reuses *shards*). When every project
-    shares one namespace path, uses a single ``traverse=True`` query instead
-    of N duplicate namespace lists. Otherwise lists per project with
-    ``spec.project_uuid`` scoping.
+    Discovers project shards once (or reuses *shards*), then lists per
+    project with ``spec.project_uuid`` scoping. Always shards — including
+    when every project shares one namespace — so ``max_workers`` can parallelize
+    flat tenants (a single ``traverse=True`` list is often slower).
     """
     project_shards = (
         list(shards)
@@ -266,17 +240,6 @@ def list_findings_tenant(
     )
     if not project_shards:
         return []
-
-    shared_namespace = single_shard_namespace(project_shards)
-    if shared_namespace is not None and len(project_shards) > 1:
-        return _list_findings_scope(
-            client,
-            shared_namespace,
-            filt,
-            mask=mask,
-            max_pages=max_pages,
-            traverse=True,
-        )
 
     return list_findings_sharded(
         client,

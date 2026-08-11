@@ -454,28 +454,25 @@ def collect_patches_report(
     """
     sev = list(SEVERITIES if severities is None else severities)
     finding_filter = build_finding_filter(finding_categories, sev, gate=gate)
-    try:
-        if shards is not None:
-            shard_list = list(shards)
-            if not shard_list:
-                return empty_patches_report()
-            findings = list_findings_tenant(
-                client,
-                namespace,
-                finding_filter,
-                mask=FINDING_MASK,
-                max_workers=max_workers,
-                shards=shard_list,
-            )
-        else:
-            shard_list, findings = discover_and_list(
-                client,
-                namespace,
-                finding_filter,
-                max_workers=max_workers,
-            )
-    except Exception:
-        return empty_patches_report()
+    if shards is not None:
+        shard_list = list(shards)
+        if not shard_list:
+            return empty_patches_report()
+        findings = list_findings_tenant(
+            client,
+            namespace,
+            finding_filter,
+            mask=FINDING_MASK,
+            max_workers=max_workers,
+            shards=shard_list,
+        )
+    else:
+        shard_list, findings = discover_and_list(
+            client,
+            namespace,
+            finding_filter,
+            max_workers=max_workers,
+        )
 
     if not shard_list:
         return empty_patches_report()
