@@ -15,12 +15,13 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Endor Patches family rollup: version ``findings`` counts Available + To Request; family ``projects`` unions all version consumers (not Available-only); family ``findings`` is the heat-map total with ``available_findings`` / ``to_request_findings`` breakdowns.
 - Tenant-wide Finding lists (`list_findings_tenant`, including Endor Patches / patch-fix) always shard per project — even when every project shares one namespace — so `--workers` parallelizes flat tenants instead of a single `traverse=True` list.
 - Executive packet isolates report slices: a FindingLog/SCA timeout no longer aborts the whole CLI; remaining pages still render with `dataGaps` / `reportsMeta`, exit code `1` when any slice failed.
 - Packet FindingLog burndown cells escalate on timeout via project shards (`query_operation_group_counts_resilient`, same ladder as chart `query_operation_counts`); leaf matrices pull in parallel; patches reuses packet discover shards.
 - Endor Patches risk: stop treating PRF as reachable; tiered multipliers across function and dependency tags (`RF×1.5` > `RD×1.25` > `PRF×1.0` / `PRD×1.0` > else `×0.75`) on milder Crit/High bases (`×2`/`×1`). Cube emits RF/PRF/UF and RD/PRD/UD counts; `reachable` remains RF-only.
 - `endor-reports packet` emits INFO stage milestones on stdout (`packet.discover.*`, burndowns, patches, render) via `endorlabs.workflows.reports.logging` (`get_resource_logger` + `RedactingFilter`); optional `--log-level` / `ENDOR_LOG_LEVEL`.
-- Refresh model-sync ship surface from upstream OpenAPI (endorctl watermark 1.7.1098; includes MalwareExposureQuery models).
+- Refresh model-sync ship surface from upstream OpenAPI (endorctl watermark 1.7.1113; includes MalwareExposureQuery models).
 - Patch-fix report and executive packet patches pulls exclude dismissed findings (`spec.dismiss != true`), matching the product findings UI exception filter. Counts drop relative to earlier runs on tenants that use finding exceptions.
 - `endor-reports packet --patches-only` writes only `05-endor-patches.html`, the patches CSVs, and a patches-scoped `README.txt`. Earlier runs also emitted pages 01–04 and header-only CSVs from a cube that never held those slices, so the output looked broken rather than intentionally scoped.
 - Executive packet cubes carry the SCA burndown slice once under `scaBurndown`; the duplicate `findingsBurndown` copy is no longer written (readers still accept it on older cubes). Cuts roughly a quarter of `packet.cube.json` on large tenants.
@@ -29,6 +30,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Fixed
 
+- FindingLog timeout escalate: treat httpx ``timed out`` as timeout, shard by ``meta.parent_uuid`` (not ``spec.project_uuid``), and skip a timed-out project shard instead of aborting the merge.
 - Executive packet pages 01–04 use the same brand → nav → title chrome order as Endor Patches; page meta and footer no longer echo the schema string (it remains in `data/packet.cube.json`).
 - Executive packet onboarding, version sprawl, SCA/SAST burndown, and Endor Patches pages state when a slice is missing instead of rendering empty charts and tables with no explanation.
 

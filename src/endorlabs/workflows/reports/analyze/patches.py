@@ -250,25 +250,24 @@ def _build_families(
         versions = fam_ver[fam]
         ver_rows: list[dict[str, Any]] = []
         total_avail_crit = total_avail_high = 0
+        total_req_crit = total_req_high = 0
         total_avail_risk = 0.0
-        avail_projects: set[str] = set()
+        all_projects: set[str] = set()
         for ver, b in versions.items():
             avail_n = len(b["available_uuids"])
             req_n = len(b["to_request_uuids"])
             if avail_n == 0 and req_n == 0:
                 continue
             ac, ah = int(b["avail_crit"]), int(b["avail_high"])
+            rc, rh = int(b["req_crit"]), int(b["req_high"])
             avail_risk = float(b["avail_risk"])
             req_risk = float(b["req_risk"])
-            if avail_n:
-                crit, high = ac, ah
-            else:
-                crit, high = int(b["req_crit"]), int(b["req_high"])
             total_avail_crit += ac
             total_avail_high += ah
+            total_req_crit += rc
+            total_req_high += rh
             total_avail_risk += avail_risk
-            if avail_n:
-                avail_projects |= b["projects"]
+            all_projects |= b["projects"]
             reach_totals = {
                 key: int(b["avail_reach"][key]) + int(b["req_reach"][key])
                 for key in _REACH_COUNT_KEYS
@@ -279,13 +278,13 @@ def _build_families(
                     "version": ver,
                     "available": avail_n,
                     "to_request": req_n,
-                    "findings": avail_n,
-                    "critical": crit,
-                    "high": high,
+                    "findings": avail_n + req_n,
+                    "critical": ac + rc,
+                    "high": ah + rh,
                     "avail_critical": ac,
                     "avail_high": ah,
-                    "req_critical": int(b["req_crit"]),
-                    "req_high": int(b["req_high"]),
+                    "req_critical": rc,
+                    "req_high": rh,
                     **reach_totals,
                     # Compat: RF-only alias; PRF count under potentially_reachable.
                     "reachable": rf_n,
@@ -301,13 +300,19 @@ def _build_families(
                     "risk_available": avail_risk,
                 }
             )
+        available_findings = total_avail_crit + total_avail_high
+        to_request_findings = total_req_crit + total_req_high
         families.append(
             {
                 "family": fam,
-                "findings": total_avail_crit + total_avail_high,
+                # Total findings in the heat map (Available + To Request).
+                "findings": available_findings + to_request_findings,
+                "available_findings": available_findings,
+                "to_request_findings": to_request_findings,
+                # Severity badges remain Available-scoped (ranking is Available risk).
                 "critical": total_avail_crit,
                 "high": total_avail_high,
-                "projects": len(avail_projects),
+                "projects": len(all_projects),
                 "versions": len(ver_rows),
                 "risk": total_avail_risk,
                 "version_rows": sorted(

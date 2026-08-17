@@ -2,8 +2,7 @@
 name: endor-workflow-reports
 description: |
   Use when the user asks for tenant or namespace-level Endor Labs audit reports,
-  Use when the user asks for tenant or namespace-level Endor Labs audit reports,
-  CSV exports, Cursor canvases, executive HTML report packets (QBR / customer
+  CSV exports, Cursor canvases, executive HTML report packets (QBR / customer)
   read-out / org onboarding growth / dependency sprawl / SCA·SAST·Secrets
   FindingLog burndown), PackageVersion resolution HTML, or workflow summaries
   backed by bundled report scripts rather than day-0 SDK troubleshooting skills.

@@ -158,6 +158,31 @@ def test_build_families_mixed_version_and_ranking() -> None:
     mixed = next(v for v in lib_b["version_rows"] if v["version"] == "2.0.0")
     assert mixed["available"] == 1
     assert mixed["to_request"] == 1
+    assert mixed["findings"] == 2
+    assert mixed["critical"] == 0
+    assert mixed["high"] == 2
+    assert mixed["projects"] == 1
+    assert lib_b["findings"] == 2
+    assert lib_b["available_findings"] == 1
+    assert lib_b["to_request_findings"] == 1
+    assert lib_b["projects"] == 1
+    # To Request-only project still counts toward family projects.
+    rows_proj = [
+        *rows,
+        {
+            "package_name": "mvn://org.example:lib-b",
+            "current_version": "2.0.0",
+            "finding_uuid": "b3",
+            "severity": "HIGH",
+            "patch_status": "to_request_inferred",
+            "reachable_function": False,
+            "potentially_reachable_function": False,
+            "project_uuid": "p3",
+        },
+    ]
+    lib_b2 = _build_families(rows_proj, top_n=5)[1]
+    assert lib_b2["projects"] == 2
+    assert lib_b2["findings"] == 3
     units = _patch_units(families)
     assert any(u["to_request"] == 1 and u["available"] == 1 for u in units)
 

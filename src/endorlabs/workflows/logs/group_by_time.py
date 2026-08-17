@@ -32,11 +32,12 @@ def is_timeout_like(exc: BaseException) -> bool:
 
     if isinstance(exc, ServerError) and exc.status_code == 504:
         return True
-    if isinstance(exc, NetworkError):
-        msg = str(exc).lower()
-        return "timeout" in msg or "deadline" in msg
     msg = str(exc).lower()
-    return "deadline" in msg or "504" in msg
+    # httpx uses "timed out"; some gateways say "timeout" / "deadline".
+    timed_out = "timeout" in msg or "timed out" in msg or "deadline" in msg
+    if isinstance(exc, NetworkError):
+        return timed_out
+    return timed_out or "504" in msg
 
 
 def group_by_time_counts(

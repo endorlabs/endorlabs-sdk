@@ -419,11 +419,17 @@ def patches_family_rows(cube: dict[str, Any]) -> list[dict[str, Any]]:
     patches = (cube.get("reports") or {}).get("patches") or {}
     rows: list[dict[str, Any]] = []
     for i, fam in enumerate(patches.get("families") or [], 1):
+        available = fam.get("available_findings")
+        if available is None:
+            # Older cubes stored Available-only totals under findings.
+            available = fam.get("findings")
         rows.append(
             {
                 "rank": i,
                 "family": fam.get("family"),
-                "available_findings": fam.get("findings"),
+                "findings": fam.get("findings"),
+                "available_findings": available,
+                "to_request_findings": fam.get("to_request_findings"),
                 "critical": fam.get("critical"),
                 "high": fam.get("high"),
                 "projects": fam.get("projects"),
@@ -439,12 +445,18 @@ def patches_version_rows(cube: dict[str, Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for fam in patches.get("families") or []:
         for vr in fam.get("version_rows") or []:
+            avail = int(vr.get("available") or 0)
+            to_req = int(vr.get("to_request") or 0)
+            findings = vr.get("findings")
+            if findings is None:
+                findings = avail + to_req
             rows.append(
                 {
                     "family": fam.get("family"),
                     "version": vr.get("version"),
                     "available": vr.get("available"),
                     "to_request": vr.get("to_request"),
+                    "findings": findings,
                     "critical": vr.get("critical"),
                     "high": vr.get("high"),
                     "projects": vr.get("projects"),
@@ -653,7 +665,9 @@ def write_packet_raw_exports(
             [
                 "rank",
                 "family",
+                "findings",
                 "available_findings",
+                "to_request_findings",
                 "critical",
                 "high",
                 "projects",
@@ -670,6 +684,7 @@ def write_packet_raw_exports(
                 "version",
                 "available",
                 "to_request",
+                "findings",
                 "critical",
                 "high",
                 "projects",

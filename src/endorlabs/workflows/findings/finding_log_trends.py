@@ -13,7 +13,7 @@ from endorlabs.operations.group_by_time_wire import (
     GROUP_BY_TIME_INTERVAL_ALIASES,
     normalize_group_by_time_interval,
 )
-from endorlabs.tools.list_sharding import parallel_map_shards, project_scoped_filter
+from endorlabs.tools.list_sharding import parallel_map_shards
 from endorlabs.workflows.logs.group_by_time import (
     group_by_time_counts,
     is_timeout_like,
@@ -500,7 +500,8 @@ def query_operation_group_counts(
             "FINDING_LEVEL_MEDIUM, FINDING_LEVEL_LOW]"
         )
     if project_uuid is not None:
-        filt = project_scoped_filter(filt, project_uuid)
+        # FindingLog is scoped by meta.parent_uuid (spec.project_uuid is 400).
+        filt = f'{filt} and meta.parent_uuid=="{project_uuid}"'
 
     return group_by_time_counts(
         client.FindingLog.list_groups,
@@ -600,16 +601,21 @@ def query_operation_group_counts_resilient(
         return {}
 
     def worker(shard: Any) -> dict[str, int]:
-        return query_operation_group_counts(
-            client,
-            namespace=shard.namespace,
-            base_filter=base_filter,
-            operation=operation,
-            level=level,
-            traverse=False,
-            interval=interval,
-            project_uuid=shard.project_uuid,
-        )
+        try:
+            return query_operation_group_counts(
+                client,
+                namespace=shard.namespace,
+                base_filter=base_filter,
+                operation=operation,
+                level=level,
+                traverse=False,
+                interval=interval,
+                project_uuid=shard.project_uuid,
+            )
+        except Exception as exc:
+            if is_timeout_like(exc):
+                return {}
+            raise
 
     results = parallel_map_shards(
         shards,
@@ -920,16 +926,21 @@ def _query_operation_counts_sharded(
 
     def _shard_query(level: str | None) -> dict[str, int]:
         def worker(shard: Any) -> dict[str, int]:
-            return _query_operation_group_counts(
-                client,
-                namespace=shard.namespace,
-                base_filter=base_filter,
-                operation=operation,
-                level=level,
-                traverse=False,
-                interval=interval,
-                project_uuid=shard.project_uuid,
-            )
+            try:
+                return _query_operation_group_counts(
+                    client,
+                    namespace=shard.namespace,
+                    base_filter=base_filter,
+                    operation=operation,
+                    level=level,
+                    traverse=False,
+                    interval=interval,
+                    project_uuid=shard.project_uuid,
+                )
+            except Exception as exc:
+                if is_timeout_like(exc):
+                    return {}
+                raise
 
         results = parallel_map_shards(
             shards,

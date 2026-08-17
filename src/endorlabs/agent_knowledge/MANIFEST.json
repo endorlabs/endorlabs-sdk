@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-08-06T17:34:07.922270+00:00",
+  "generated_at": "2026-08-17T16:25:18.284950+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -150,7 +150,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.6.0",
+  "sdk_version": "0.7.0",
   "skills": [
     {
       "description": "Use when probing, verifying, or refreshing Endor Labs SDK credentials before API\nworkflows\u2014env-key scan, Client whoami check, endorctl detection, and interactive\nbrowser token refresh into .env. Step zero for any tenant session. Not for SSO\npolicy mapping or AuthenticationLog RCA.\n",
@@ -299,7 +299,7 @@
       ]
     },
     {
-      "description": "Use when the user asks for tenant or namespace-level Endor Labs audit reports,\nCSV exports, Cursor canvases, executive HTML report packets (QBR / customer\nread-out / org onboarding growth / dependency sprawl / SCA\u00b7SAST\u00b7Secrets\nFindingLog burndown), PackageVersion resolution HTML, or workflow summaries backed\nby bundled report scripts rather than day-0 SDK troubleshooting skills. Routes to\nauth, project inventory, CI version, finding trend, executive HTML packet,\npackage-resolution, and PRF report playbooks. Not for single-project scan RCA,\nfinding retrieval, SDK debugging, or policy validation.",
+      "description": "Use when the user asks for tenant or namespace-level Endor Labs audit reports,\nCSV exports, Cursor canvases, executive HTML report packets (QBR / customer)\nread-out / org onboarding growth / dependency sprawl / SCA\u00b7SAST\u00b7Secrets\nFindingLog burndown), PackageVersion resolution HTML, or workflow summaries\nbacked by bundled report scripts rather than day-0 SDK troubleshooting skills.\nRoutes to auth, project inventory, CI version, finding trend, executive HTML\npacket, package-resolution, and PRF report playbooks. Not for single-project\nscan RCA, finding retrieval, SDK debugging, or policy validation.",
       "id": "endor-workflow-reports",
       "name": "endor-workflow-reports",
       "path": "skills/endor-workflow-reports/SKILL.md",
@@ -475,6 +475,7 @@
       "library_entrypoints": [
         "endorlabs.workflows.reports.bundles.executive_packet.build_report_packet",
         "endorlabs.workflows.reports.export.html.render.render_report_packet",
+        "endorlabs.workflows.reports.analyze.patches.collect_patches_report",
         "endorlabs.workflows.reports.parity.compare_packet_cube"
       ],
       "module": "endorlabs.workflows.reports.cli",

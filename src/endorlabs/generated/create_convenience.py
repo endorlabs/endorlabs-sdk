@@ -329,6 +329,7 @@ PACKAGE_VERSION_SPEC_FIELDS = (
     "code_owners",
     "call_graph_available",
     "precomputed_call_graph_state",
+    "upstream_reference",
 )
 PACKAGE_VERSION_SPEC_REQUIRED = ("project_uuid",)
 PACKAGE_VERSION_META_FIELDS = ()

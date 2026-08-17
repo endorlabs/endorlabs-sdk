@@ -1195,6 +1195,7 @@ class _PackageVersionFacade(PackageVersionFacade):
         code_owners: Any | None = None,
         call_graph_available: Any | None = None,
         precomputed_call_graph_state: Any | None = None,
+        upstream_reference: Any | None = None,
         **kwargs: Any,
     ) -> PackageVersion: ...
 

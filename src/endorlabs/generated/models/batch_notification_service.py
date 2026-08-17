@@ -96,13 +96,17 @@ class NotificationDismissNotificationDismissCategory(StrEnum):
 
 class NotificationTargetActionActionType(StrEnum):
     """
-    - ACTION_TYPE_WEBHOOK: ACTION_TYPE_WEBHOOK indicates a webhook call action.
-    - ACTION_TYPE_JIRA: ACTION_TYPE_JIRA indicates a JIRA action.
-    - ACTION_TYPE_EMAIL: ACTION_TYPE_EMAIL indicates an email action.
-    - ACTION_TYPE_VANTA: ACTION_TYPE_VANTA indicates configuration of a Vanta plugin.
-    - ACTION_TYPE_SLACK: ACTION_TYPE_SLACK indicates a Slack integration.
-    - ACTION_TYPE_GITHUB_PR: ACTION_TYPE_GITHUB_PR indicates a GitHub PR action.
-    - ACTION_TYPE_ADO_BOARDS: ACTION_TYPE_ADO_BOARDS indicates an ADO board action.
+     - ACTION_TYPE_WEBHOOK: ACTION_TYPE_WEBHOOK indicates a webhook call action.
+     - ACTION_TYPE_JIRA: ACTION_TYPE_JIRA indicates a JIRA action.
+     - ACTION_TYPE_EMAIL: ACTION_TYPE_EMAIL indicates an email action.
+     - ACTION_TYPE_VANTA: ACTION_TYPE_VANTA indicates configuration of a Vanta plugin.
+     - ACTION_TYPE_SLACK: ACTION_TYPE_SLACK indicates a Slack integration.
+     - ACTION_TYPE_GITHUB_PR: ACTION_TYPE_GITHUB_PR indicates a GitHub PR action.
+    Deprecated: Use ACTION_TYPE_REMEDIATION_PR, which supports all SCM platforms.
+     - ACTION_TYPE_ADO_BOARDS: ACTION_TYPE_ADO_BOARDS indicates an ADO board action.
+     - ACTION_TYPE_REMEDIATION_PR: ACTION_TYPE_REMEDIATION_PR indicates an automated remediation pull request action.
+    The pull request is opened on the SCM platform of the violating project,
+    for example a GitHub pull request or a GitLab merge request.
     """
 
     ACTION_TYPE_UNSPECIFIED = 'ACTION_TYPE_UNSPECIFIED'
@@ -113,6 +117,7 @@ class NotificationTargetActionActionType(StrEnum):
     ACTION_TYPE_SLACK = 'ACTION_TYPE_SLACK'
     ACTION_TYPE_GITHUB_PR = 'ACTION_TYPE_GITHUB_PR'
     ACTION_TYPE_ADO_BOARDS = 'ACTION_TYPE_ADO_BOARDS'
+    ACTION_TYPE_REMEDIATION_PR = 'ACTION_TYPE_REMEDIATION_PR'
 
 
 class PolicyPolicyType(StrEnum):

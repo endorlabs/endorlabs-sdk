@@ -81,5 +81,9 @@ def test_group_by_time_counts_wires_list_groups() -> None:
 def test_is_timeout_like_detects_gateway_and_network_errors() -> None:
     assert is_timeout_like(ServerError("gateway timeout", status_code=504)) is True
     assert is_timeout_like(NetworkError("read timeout exceeded")) is True
+    assert (
+        is_timeout_like(NetworkError("Network error after 6 attempt(s): timed out"))
+        is True
+    )
     assert is_timeout_like(RuntimeError("deadline exceeded")) is True
     assert is_timeout_like(ValueError("not found")) is False

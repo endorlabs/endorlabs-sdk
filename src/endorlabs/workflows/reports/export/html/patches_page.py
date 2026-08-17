@@ -148,7 +148,7 @@ def render_patches_html(cube: dict[str, Any]) -> str:
   <p class="caption">Top {
         top_n
     }, ranked by Available risk. Click a row for its version heat map.</p>
-  <table class="data" id="familyTable"><thead><tr><th>#</th><th>Dependency family</th><th class="num">Available findings</th><th class="num">To Request versions</th><th class="num">Projects</th><th class="num">Versions in use</th><th class="num">Risk</th></tr></thead><tbody></tbody></table>
+  <table class="data" id="familyTable"><thead><tr><th>#</th><th>Dependency family</th><th class="num">Findings</th><th class="num">To Request versions</th><th class="num">Projects</th><th class="num">Versions in use</th><th class="num">Risk</th></tr></thead><tbody></tbody></table>
 </div>
 <div class="card" id="heatCard" hidden>
   <div><div class="heat-family" id="heatFamily"></div><div class="heat-sub" id="heatSub"></div></div>
@@ -222,7 +222,8 @@ function updateImpact(ev) {{
 function renderFamilies() {{
   const tb=document.querySelector("#familyTable tbody");tb.innerHTML=families.map((f,i)=>{{
     const avail=(f.version_rows||[]).filter(pure).length,req=(f.version_rows||[]).filter(v=>!pure(v)&&((v.available||0)||(v.to_request||0))).length;
-    return `<tr class="family-row ${{i===activeIdx?"active":""}}" data-i="${{i}}"><td>${{i+1}}</td><td class="family-name"><code>${{f.family}}</code></td><td class="num">${{badges(f.critical,f.high)}} ${{Number(f.findings||0).toLocaleString()}} <span class="caption">(${{avail}} patches)</span></td><td class="num">${{req}}</td><td class="num">${{Number(f.projects||0).toLocaleString()}}</td><td class="num">${{f.versions||0}}</td><td class="num"><strong>${{Number(f.risk||0).toFixed(0)}}</strong></td></tr>`;
+    const availFindings=f.available_findings!=null?Number(f.available_findings):Number(f.critical||0)+Number(f.high||0);
+    return `<tr class="family-row ${{i===activeIdx?"active":""}}" data-i="${{i}}"><td>${{i+1}}</td><td class="family-name"><code>${{f.family}}</code></td><td class="num">${{badges(f.critical,f.high)}} ${{Number(f.findings||0).toLocaleString()}} <span class="caption">(${{availFindings.toLocaleString()}} Available · ${{avail}} patches)</span></td><td class="num">${{req}}</td><td class="num">${{Number(f.projects||0).toLocaleString()}}</td><td class="num">${{f.versions||0}}</td><td class="num"><strong>${{Number(f.risk||0).toFixed(0)}}</strong></td></tr>`;
   }}).join("");tb.querySelectorAll("tr").forEach(tr=>tr.onclick=()=>{{activeIdx=Number(tr.dataset.i);renderFamilies();renderHeat(true);}});
 }}
 function semver(v) {{ return String(v||"").split(/[.\\-+_]/).map(x=>{{const m=x.match(/^(\\d+)/);return m?[0,Number(m[1]),x.slice(m[0].length).toLowerCase()]:[1,0,x.toLowerCase()];}}); }}
@@ -233,7 +234,8 @@ function meta(r) {{ const pc=sortMode==="projects"?"meta-bit sort-focus":"meta-b
 function bar(r,w,color) {{ const el=document.createElement("div");el.className="bar-row";el.dataset.version=r.version;el.innerHTML=`<div class="bar-label">${{r.version}}</div><div class="status-stack">${{status(r)}}</div><div class="bar-track"><div class="bar-fill" style="width:${{w}}%;background:${{color}}"></div></div><div class="bar-meta">${{meta(r)}}</div>`;return el; }}
 function renderHeat(changed=false) {{
   const f=families[activeIdx];if(!f)return;const card=document.getElementById("heatCard"),host=document.getElementById("heatmap"),rows=sortedRows(f),maxP=Math.max(1,...rows.map(r=>r.projects||0)),maxR=Math.max(1,...rows.map(r=>r.risk||0));
-  card.hidden=false;document.getElementById("heatFamily").textContent=f.family;document.getElementById("heatSub").textContent=`${{(f.version_rows||[]).filter(pure).length}} Available · C${{f.critical||0}} / H${{f.high||0}} Available findings`;
+  const availFindings=f.available_findings!=null?Number(f.available_findings):Number(f.critical||0)+Number(f.high||0);
+  card.hidden=false;document.getElementById("heatFamily").textContent=f.family;document.getElementById("heatSub").textContent=`${{Number(f.findings||0).toLocaleString()}} findings · ${{availFindings.toLocaleString()}} Available (C${{f.critical||0}} / H${{f.high||0}}) · ${{Number(f.projects||0)}} projects`;
   if(changed&&!reduceMotion){{card.classList.add("is-enter");requestAnimationFrame(()=>card.classList.remove("is-enter"));}}
   const old=new Map([...host.querySelectorAll(".bar-row")].map(x=>[x.dataset.version,x])),first=new Map([...old].map(([k,x])=>[k,x.getBoundingClientRect()]));host.innerHTML="";
   rows.forEach(r=>{{const w=(100*(r.projects||0)/maxP).toFixed(1),color=riskColor(r.risk||0,maxR),el=old.get(String(r.version))||bar(r,w,color);el.querySelector(".bar-label").className="bar-label"+(sortMode==="semver"?"":" sort-focus");el.querySelector(".status-stack").innerHTML=status(r);el.querySelector(".bar-meta").innerHTML=meta(r);el.querySelector(".bar-fill").style.cssText=`width:${{w}}%;background:${{color}}`;host.appendChild(el);}});
