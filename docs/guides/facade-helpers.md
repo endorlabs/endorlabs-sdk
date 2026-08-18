@@ -146,8 +146,11 @@ for bucket in client.FindingLog.list_groups(
         group_by_time_mode="count",
     ),
 ):
-    print(bucket.parsed, bucket.count)
+    print(bucket.parsed, bucket.count)  # aggregation_count.count on the wire
 ```
+
+`GroupBucket.count` is filled from ``aggregation_count.count`` (Finding / DM
+``list_groups``). A top-level ``count`` key is not present on those buckets.
 
 ## Wire helpers
 

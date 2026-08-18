@@ -63,6 +63,8 @@ Output: `.endorlabs-context/workspace/runs/executive-report-packet/`
 Patches-only campaign: `endor-reports packet -n <tenant> --patches-only`
 → `.endorlabs-context/workspace/runs/patches-reports/`
 Playbook: `agent-knowledge/workflow-reports/endor-executive-report-packet/SKILL.md`.
+Packet Available is any reachability (not the product RF|PRF header). Families
+group on the vulnerable library (`target_dependency_*`), not `upgrade_list`.
 
 ## Report catalog
 

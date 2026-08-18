@@ -128,6 +128,22 @@ only). Accept small live drift (≤1–2%); fail on structural breaks or large c
 | `data/packet.cube.json` | Portable cube (`endor.report_packet.v0`) |
 | `README.txt` | Metric definitions for handoff |
 
+## Endor Patches vs the product dashboard
+
+The packet is **not** the live Patches UI. Quote the filter before comparing
+counts. Guide: [docs/guides/executive-report-packet.md](../../../docs/guides/executive-report-packet.md).
+
+| Surface | What it counts |
+| -------- | -------------- |
+| Packet pull | Critical + High, not dismissed, main context, **any reachability**, patch/fix gate |
+| Packet **Available** catalog | `spec.fixing_patch.endor_patch_available==true` |
+| Product Patches **Available** header | Same as catalog, but reach is RF **or** PRF only |
+| Family / version group key | Vulnerable library current version: `spec.target_dependency_package_name` + `spec.target_dependency_version` |
+| Not a group key | `spec.fixing_upgrades.upgrade_list` (upgrade-impact / what to bump) |
+
+CSV `reachable` is RF-only. Use `reachable_function` /
+`potentially_reachable_function`.
+
 ### Onboarding cadence (`reports.onboarding.cadence`)
 
 - `weeklyMainFull` / `weeklyMainWithAnalytics` — estate MAIN weekly ScanResult counts (~90d).

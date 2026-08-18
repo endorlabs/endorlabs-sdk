@@ -752,6 +752,9 @@ def write_packet_raw_exports(
         "patches-versions.csv             Endor Patches family × version heat-map rows",
         "patches-units-ranked.csv         Endor Patches package@version units",
         "",
+        "Note: patches-versions.csv 'reachable' is RF-only (not RF|PRF).",
+        "Use reachable_function / potentially_reachable_function.",
+        "",
     ]
     manifest = out / "EXPORTS.txt"
     safe_write_text(out, manifest, "\n".join(manifest_lines))

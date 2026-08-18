@@ -75,7 +75,7 @@ JAVA_DENOM_FILTER = (
     "spec.ecosystem == ECOSYSTEM_MAVEN"
 )
 
-IMPACT_DENOM_LABEL = "Fixable findings (Endor Patch units in view — product UI default)"
+IMPACT_DENOM_LABEL = "Fixable findings (Endor Patch units in view — any reachability)"
 JAVA_DENOM_LABEL = "Java (Maven) Critical/High vulnerability findings (estate)"
 
 
@@ -451,8 +451,10 @@ def collect_patches_report(
     """Pull patch-gated findings and build the patches cube slice.
 
     Defaults match the Endor Patches narrative: vulnerability findings at
-    Critical/High with ``gate="any"``. Pass *finding_categories* / *severities*
-    / *gate* to reuse the same collector for alternate presets.
+    Critical/High with ``gate="any"`` and any reachability. The product
+    Patches dashboard **Available** header is RF or PRF only — do not treat
+    this slice as that header. Pass *finding_categories* / *severities* /
+    *gate* to reuse the same collector for alternate presets.
 
     When *shards* is provided (e.g. from packet ``discover_projects``), skip
     rediscovery and list findings on those shards only.
@@ -483,9 +485,7 @@ def collect_patches_report(
         return empty_patches_report()
 
     signal_breakdown = compute_signal_breakdown(findings)
-    detail, rollup_mode = extract_patch_rows(
-        findings, allow_target_dependency_fallback=True
-    )
+    detail = extract_patch_rows(findings)
     families = _build_families(detail, top_n=top_n_families)
     units = _patch_units(families)
     available_uuids = {
@@ -500,11 +500,11 @@ def collect_patches_report(
         )
 
     endor_patch_n = int(signal_breakdown.get("endor_patch_available_count") or 0)
-    # Keep estate Endor Patch Available for reference; UI-default donut denom is
-    # computed in HTML from patch_units in the active view (Fixable findings).
+    # Donut denom is computed in HTML from patch_units in the active view
+    # (Fixable findings, any reachability — not the product RF|PRF header).
     return {
         "top_n_families": top_n_families,
-        "rollup_mode": rollup_mode,
+        "rollup_mode": "target_dependency",
         "estate_available_findings": len(available_uuids),
         "estate_impact_denominator": endor_patch_n,
         "estate_java_findings": java_count,

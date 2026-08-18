@@ -17,9 +17,11 @@ H1_ENDOR_PATCHES = "Endor Patches"
 PURPOSE_ENDOR_PATCHES = (
     "Highest-impact dependency families with Endor Patch coverage, ranked by "
     "severity- and reach-weighted Available risk (confirmed function-reachable "
-    "boosted; potentially reachable is not treated as reachable). Click a "
-    "family for the "
-    "per-version heat map and use the impact calculator for top-K closure."
+    "boosted; potentially reachable is not treated as reachable). Families "
+    "group on the vulnerable library current version. Packet Available includes "
+    "any reachability; the product Patches dashboard header is RF or PRF only. "
+    "Click a family for the per-version heat map and use the impact calculator "
+    "for top-K closure."
 )
 
 
@@ -303,15 +305,25 @@ Metric notes
 
 ------------
 
-- Scope: Critical + High Maven vulnerability findings in main context,
+- Scope: Critical + High vulnerability findings in main context, not
 
-  excluding dismissed findings (matches the product findings UI).
+  dismissed, any reachability. The product Patches dashboard Available
+
+  header is RF or PRF only.
+
+- Families group on the vulnerable library current version
+
+  (target_dependency_*), not upgrade_list / UIA bump packages.
 
 - Available: an Endor Patch exists today. To Request: a fix or upgrade path
 
   exists but patch coverage is incomplete (inferred, not a platform enum).
 
 - Risk weights severity by reachability; the formula is shown on the page.
+
+  CSV column "reachable" is RF-only; use reachable_function and
+
+  potentially_reachable_function for RF vs PRF.
 
 
 

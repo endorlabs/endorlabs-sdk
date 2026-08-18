@@ -77,6 +77,10 @@ as endorctl). **Filter bounds** for the window are separate — use
 **Field grouping without time:** `group_by_time=False` with
 `group_aggregation_paths` uses `list_parameters.group.aggregation_paths`.
 
+**Bucket counts:** `list_groups` group values are
+`{ "aggregation_count": { "count": N } }`. `GroupBucket.count` and
+`group_bucket_count()` read that field. Do not expect a top-level `count`.
+
 **Not on Query.create:** `group_by_time` and field `group` aggregation via
 `list_groups` are **facade list** features. `Query.create` supports root `group`
 for limited namespace-scoped joins only — see

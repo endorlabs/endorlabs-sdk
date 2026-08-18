@@ -190,7 +190,11 @@ def filter_by_reachability(
     findings: Sequence[dict[str, Any]],
     reachability: str,
 ) -> list[dict[str, Any]]:
-    """Client-side reachability filter (no safe server-side negation for this)."""
+    """Client-side reachability filter (no safe server-side negation for this).
+
+    ``reachable`` is RF **or** PRF (product Patches dashboard Available
+    header). That is not the cube CSV column ``reachable``, which is RF-only.
+    """
     if reachability == "any":
         return list(findings)
     kept: list[dict[str, Any]] = []
@@ -269,51 +273,10 @@ def compute_signal_breakdown(findings: Sequence[dict[str, Any]]) -> dict[str, in
     }
 
 
-def _detail_row_from_upgrade_item(
-    finding: dict[str, Any],
-    *,
-    flags: dict[str, bool],
-    vuln: dict[str, str],
-    item: dict[str, Any],
-) -> dict[str, Any] | None:
-    package_name = dict_str(item, "direct_dependency_name")
-    if not package_name:
-        return None
-    spec = nested_dict(finding, "spec")
-    tenant_meta = nested_dict(finding, "tenant_meta")
-    return {
-        "namespace": dict_str(tenant_meta, "namespace"),
-        "project_uuid": dict_str(spec, "project_uuid"),
-        "finding_uuid": dict_str(finding, "uuid"),
-        "finding_type_name": vuln["finding_type_name"],
-        "vuln_id": vuln["vuln_id"],
-        "vuln_aliases": vuln["vuln_aliases"],
-        "vuln_summary": vuln["vuln_summary"],
-        "severity": severity_label(dict_str(spec, "level")),
-        "package_name": package_name,
-        "current_version": dict_str(item, "from_version"),
-        "patch_version": dict_str(item, "to_version"),
-        "target_dependency_package_name": dict_str(
-            spec, "target_dependency_package_name"
-        ),
-        "target_dependency_version": dict_str(spec, "target_dependency_version"),
-        "endor_patch_available": flags["endor_patch_available"],
-        "fix_available": flags["fix_available"],
-        "patch_status": patch_status(flags),
-        "reachable_function": flags["reachable_function"],
-        "potentially_reachable_function": flags["potentially_reachable_function"],
-        "unreachable_function": flags["unreachable_function"],
-        "reachable_dependency": flags["reachable_dependency"],
-        "potentially_reachable_dependency": flags["potentially_reachable_dependency"],
-        "unreachable_dependency": flags["unreachable_dependency"],
-        "upgrade_risk": dict_str(item, "upgrade_risk"),
-    }
-
-
 def _detail_row_from_target_dependency(
     finding: dict[str, Any],
 ) -> dict[str, Any] | None:
-    """Fallback row when no ``upgrade_list`` entry exists (same schema)."""
+    """One row keyed on the vulnerable library current version (UI grain)."""
     spec = nested_dict(finding, "spec")
     pkg = dict_str(spec, "target_dependency_package_name")
     if not pkg:
@@ -349,48 +312,67 @@ def _detail_row_from_target_dependency(
     }
 
 
+def assert_patch_row_grain(
+    findings: Sequence[dict[str, Any]],
+    detail_rows: Sequence[dict[str, Any]],
+) -> None:
+    """Raise if detail rows are not the Patches dashboard grain.
+
+    Group key must be the vulnerable library current version
+    (``target_dependency_*``), not ``upgrade_list``. Every finding with
+    ``endor_patch_available`` must appear once as ``patch_status=available``.
+    """
+    for row in detail_rows:
+        pkg = str(row.get("package_name") or "")
+        target = str(row.get("target_dependency_package_name") or "")
+        if pkg != target:
+            raise ValueError(
+                "patch_row_grain: package_name != target_dependency_package_name"
+            )
+        cur = str(row.get("current_version") or "")
+        tver = str(row.get("target_dependency_version") or "")
+        if cur != tver:
+            raise ValueError(
+                "patch_row_grain: current_version != target_dependency_version"
+            )
+    catalog = {
+        dict_str(finding, "uuid")
+        for finding in findings
+        if finding_signal_flags(finding)["endor_patch_available"]
+        and dict_str(finding, "uuid")
+    }
+    available_uuids = [
+        str(row.get("finding_uuid") or "")
+        for row in detail_rows
+        if row.get("patch_status") == "available" and row.get("finding_uuid")
+    ]
+    got = set(available_uuids)
+    if len(available_uuids) != len(got):
+        raise ValueError("available_row_parity: duplicate finding_uuid")
+    if catalog != got:
+        raise ValueError(
+            "available_row_parity: "
+            f"catalog={len(catalog)} estate={len(got)} "
+            f"missing={len(catalog - got)} extra={len(got - catalog)}"
+        )
+
+
 def extract_patch_rows(
     findings: Sequence[dict[str, Any]],
-    *,
-    allow_target_dependency_fallback: bool = False,
-) -> tuple[list[dict[str, Any]], str]:
-    """Flatten findings into detail rows; optionally fall back to target dependency.
+) -> list[dict[str, Any]]:
+    """One row per finding on ``target_dependency_package_name`` + version.
 
-    Prefer ``fixing_upgrades.upgrade_list`` rows (``rollup_mode="upgrade_list"``).
-    When *allow_target_dependency_fallback* is true and no finding has a
-    computed upgrade path, emit one row per finding from
-    ``target_dependency_package_name`` /
-    ``target_dependency_version`` (``rollup_mode="target_dependency_fallback"``).
-
-    Fallback rows use the same schema as upgrade-list rows (including
-    ``upgrade_risk``, empty when unknown).
-
-    When *allow_target_dependency_fallback* is false, findings without an
-    upgrade path contribute no rows (``rollup_mode`` remains ``"upgrade_list"``).
+    This is the Endor Patches dashboard grain (vulnerable library current
+    version). ``fixing_upgrades.upgrade_list`` is not used as a group key
+    and does not drop rows.
     """
     detail_rows: list[dict[str, Any]] = []
     for finding in findings:
-        spec = nested_dict(finding, "spec")
-        upgrades = upgrade_list_items(spec)
-        if not upgrades:
-            continue
-        flags = finding_signal_flags(finding)
-        vuln = vuln_fields(finding)
-        for item in upgrades:
-            row = _detail_row_from_upgrade_item(
-                finding, flags=flags, vuln=vuln, item=item
-            )
-            if row is not None:
-                detail_rows.append(row)
-    if detail_rows or not allow_target_dependency_fallback:
-        return detail_rows, "upgrade_list"
-
-    fallback: list[dict[str, Any]] = []
-    for finding in findings:
         row = _detail_row_from_target_dependency(finding)
         if row is not None:
-            fallback.append(row)
-    return fallback, "target_dependency_fallback"
+            detail_rows.append(row)
+    assert_patch_row_grain(findings, detail_rows)
+    return detail_rows
 
 
 def discover_and_list(

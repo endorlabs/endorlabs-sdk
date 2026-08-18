@@ -97,7 +97,7 @@ def render_patches_html(cube: dict[str, Any]) -> str:
             tenant=tenant,
             pulled_at=pulled,
             nav_html=chrome.nav("pat"),
-            meta_extra="Scope: Critical + High",
+            meta_extra="Scope: Critical + High · not dismissed · main context · any reach",
         )
     }
 <div id="patchesEmpty"></div>
@@ -136,7 +136,7 @@ def render_patches_html(cube: dict[str, Any]) -> str:
       Population is already Critical/High. Bar length is distinct
       <em>projects</em>, not PackageVersion consumers.</div>
     <dl class="glossary-grid">
-      <div><dt>Fixable findings</dt><dd>Default calculator denom (product UI): findings on the Endor Patch units in this view. Top‑K can reach 100%.</dd></div>
+      <div><dt>Fixable findings</dt><dd>Default calculator denom: findings on the Endor Patch units in this view (any reachability). The product Patches dashboard header counts RF or PRF only. Top‑K can reach 100%.</dd></div>
       <div><dt>Java Crit/High estate</dt><dd>Optional denom: all Maven Critical/High vulnerability findings in the estate.</dd></div>
       <div><dt>Available</dt><dd>Endor Patch exists today and is campaign-ready.</dd></div>
       <div><dt>To Request</dt><dd>Coverage is incomplete; mixed Available + To Request versions count here.</dd></div>
@@ -201,7 +201,7 @@ function updateImpact(ev) {{
     crit+=include?(u.critical||0):(u.avail_critical??u.critical??0);
     high+=include?(u.high||0):(u.avail_high??u.high??0);
   }});
-  // UI-aligned default: Fixable findings = findings on the same Endor Patch unit universe as the slider.
+  // Fixable findings = units in this view (any reach). Dashboard header is RF or PRF.
   const fixablePool = rows.reduce((s,u)=>s+unitFindings(u, include), 0);
   const useJava = denomMode === "java" && javaEstateDenom != null && javaEstateDenom > 0;
   const denom = useJava ? javaEstateDenom : fixablePool;
@@ -230,7 +230,7 @@ function semver(v) {{ return String(v||"").split(/[.\\-+_]/).map(x=>{{const m=x.
 function cmpSemver(a,b) {{ const x=semver(a.version),y=semver(b.version);for(let i=0;i<Math.max(x.length,y.length);i++)for(let j=0;j<3;j++){{const p=(x[i]||[1,0,""])[j],q=(y[i]||[1,0,""])[j];if(p<q)return-1;if(p>q)return 1;}}return 0; }}
 function sortedRows(f) {{ const r=[...(f.version_rows||[])];if(sortMode==="semver")r.sort((a,b)=>sortDir*cmpSemver(a,b));else r.sort((a,b)=>sortDir*((sortMode==="projects"?(b.projects-a.projects):(b.risk-a.risk))||(b.risk-a.risk)));return r; }}
 function status(r) {{ if(pure(r))return '<span class="status-pill available">Available</span>'; if((r.to_request||0)>0||(r.available||0)>0)return '<span class="status-pill to-request">To Request</span>'; return '<span class="status-pill to-request">—</span>'; }}
-function meta(r) {{ const pc=sortMode==="projects"?"meta-bit sort-focus":"meta-bit",rc=sortMode==="risk"?"meta-bit sort-focus":"meta-bit";return `<span class="${{pc}}">${{r.projects||0}} projects</span> · <span class="${{rc}}">risk ${{Number(r.risk||0).toFixed(0)}}</span> · ${{r.reachable||0}} RF/PRF`; }}
+function meta(r) {{ const pc=sortMode==="projects"?"meta-bit sort-focus":"meta-bit",rc=sortMode==="risk"?"meta-bit sort-focus":"meta-bit";return `<span class="${{pc}}">${{r.projects||0}} projects</span> · <span class="${{rc}}">risk ${{Number(r.risk||0).toFixed(0)}}</span> · ${{r.reachable_function||0}} RF · ${{r.potentially_reachable_function||0}} PRF`; }}
 function bar(r,w,color) {{ const el=document.createElement("div");el.className="bar-row";el.dataset.version=r.version;el.innerHTML=`<div class="bar-label">${{r.version}}</div><div class="status-stack">${{status(r)}}</div><div class="bar-track"><div class="bar-fill" style="width:${{w}}%;background:${{color}}"></div></div><div class="bar-meta">${{meta(r)}}</div>`;return el; }}
 function renderHeat(changed=false) {{
   const f=families[activeIdx];if(!f)return;const card=document.getElementById("heatCard"),host=document.getElementById("heatmap"),rows=sortedRows(f),maxP=Math.max(1,...rows.map(r=>r.projects||0)),maxR=Math.max(1,...rows.map(r=>r.risk||0));
@@ -260,7 +260,7 @@ document.querySelectorAll("#denomMode button").forEach(btn=>{{
 }});
 if (!families.length && !patchUnits.length) {{
   document.getElementById("patchesEmpty").innerHTML =
-    `<div class="callout warn">No Endor Patch data in this packet — either the patches pull was skipped, or no Critical/High Maven findings in this namespace have an available patch or upgrade path.</div>`;
+    `<div class="callout warn">No Endor Patch data in this packet — either the patches pull was skipped or failed, or no Critical/High findings in this namespace have an Endor Patch or inferred To Request signal.</div>`;
 }}
 renderFamilies();updateImpact();renderHeat(true);
 </script>

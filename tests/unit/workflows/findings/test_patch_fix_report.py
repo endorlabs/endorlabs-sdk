@@ -5,8 +5,11 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+import pytest
+
 from endorlabs.tools.list_sharding import ProjectShard
 from endorlabs.workflows.findings.patch_core import (
+    assert_patch_row_grain,
     build_finding_filter,
     compute_signal_breakdown,
     extract_patch_rows,
@@ -204,7 +207,7 @@ def test_compute_signal_breakdown_confirms_set_relationship() -> None:
     assert breakdown["patches_to_request_count"] == 1  # f-2 only
 
 
-def test_extract_patch_rows_flattens_upgrade_list() -> None:
+def test_extract_patch_rows_uses_target_dependency() -> None:
     findings = [
         _finding(
             "f-1",
@@ -212,15 +215,14 @@ def test_extract_patch_rows_flattens_upgrade_list() -> None:
         )
     ]
 
-    rows, mode = extract_patch_rows(findings)
+    rows = extract_patch_rows(findings)
 
-    assert mode == "upgrade_list"
     assert len(rows) == 1
     row = rows[0]
     assert row["finding_uuid"] == "f-1"
-    assert row["package_name"] == "npm://hbs"
+    assert row["package_name"] == "npm://hbs@4.2.0"
     assert row["current_version"] == "4.2.0"
-    assert row["patch_version"] == "4.2.1"
+    assert row["patch_version"] == ""
     assert row["vuln_id"] == "GHSA-test-0001"
     assert row["vuln_aliases"] == "CVE-2024-0001"
     assert row["severity"] == "HIGH"
@@ -237,54 +239,85 @@ def test_extract_patch_rows_marks_available_status() -> None:
             upgrade_list=[_upgrade_item()],
         )
     ]
-    rows, _mode = extract_patch_rows(findings)
+    rows = extract_patch_rows(findings)
     assert rows[0]["patch_status"] == "available"
 
 
-def test_extract_patch_rows_skips_findings_without_upgrade_list() -> None:
+def test_extract_patch_rows_includes_findings_without_upgrade_list() -> None:
     findings = [
         _finding("f-1", upgrade_list=None),
         _finding("f-2", upgrade_list=[]),
     ]
 
-    rows, mode = extract_patch_rows(findings)
+    rows = extract_patch_rows(findings)
 
-    assert mode == "upgrade_list"
-    assert rows == []
+    assert {row["finding_uuid"] for row in rows} == {"f-1", "f-2"}
 
 
-def test_extract_patch_rows_handles_multiple_candidates_per_finding() -> None:
+def test_extract_patch_rows_rejects_available_without_target() -> None:
+    findings = [
+        _finding("f-1", endor_patch_available=True, target_package=""),
+    ]
+    with pytest.raises(ValueError, match="available_row_parity"):
+        extract_patch_rows(findings)
+
+
+def test_assert_patch_row_grain_rejects_upgrade_list_key() -> None:
+    findings = [
+        _finding("f-1", endor_patch_available=True),
+    ]
+    rows = extract_patch_rows(findings)
+    rows[0]["package_name"] = "npm://logstash-encoder"
+    with pytest.raises(ValueError, match="patch_row_grain"):
+        assert_patch_row_grain(findings, rows)
+
+
+def test_assert_patch_row_grain_rejects_dropped_available() -> None:
+    findings = [
+        _finding("f-1", endor_patch_available=True),
+        _finding("f-2", endor_patch_available=True),
+    ]
+    rows = extract_patch_rows(findings)
+    with pytest.raises(ValueError, match="available_row_parity"):
+        assert_patch_row_grain(findings, rows[:1])
+
+
+def test_assert_patch_row_grain_rejects_duplicate_available_uuid() -> None:
+    findings = [
+        _finding("f-1", endor_patch_available=True),
+    ]
+    rows = extract_patch_rows(findings)
+    with pytest.raises(ValueError, match="duplicate finding_uuid"):
+        assert_patch_row_grain(findings, [rows[0], dict(rows[0])])
+
+
+def test_extract_patch_rows_ignores_upgrade_list_for_family_key() -> None:
     findings = [
         _finding(
             "f-1",
+            endor_patch_available=True,
             upgrade_list=[
-                _upgrade_item(direct_dependency_name="npm://hbs", to_version="4.2.1"),
-                _upgrade_item(
-                    direct_dependency_name="npm://pdfkit", to_version="0.18.0"
-                ),
+                _upgrade_item(direct_dependency_name="npm://logstash-encoder"),
+                _upgrade_item(direct_dependency_name="npm://pdfkit"),
             ],
-        )
+        ),
+        _finding(
+            "f-2",
+            endor_patch_available=True,
+            upgrade_list=None,
+            target_package="mvn://com.fasterxml.jackson.core:jackson-databind",
+            target_version="2.9.9",
+        ),
     ]
-
-    rows, _mode = extract_patch_rows(findings)
-
+    rows = extract_patch_rows(findings)
     assert len(rows) == 2
-    assert {row["package_name"] for row in rows} == {"npm://hbs", "npm://pdfkit"}
-
-
-def test_extract_patch_rows_target_dependency_fallback() -> None:
-    findings = [
-        _finding("f-1", upgrade_list=None, endor_patch_available=True),
-    ]
-    rows, mode = extract_patch_rows(findings, allow_target_dependency_fallback=True)
-    assert mode == "target_dependency_fallback"
-    assert len(rows) == 1
-    assert rows[0]["package_name"] == "npm://hbs@4.2.0"
-    assert rows[0]["current_version"] == "4.2.0"
-    assert rows[0]["patch_version"] == ""
-    assert rows[0]["upgrade_risk"] == ""
-    assert "vuln_aliases" in rows[0]
-    assert rows[0]["patch_status"] == "available"
+    by_uuid = {row["finding_uuid"]: row for row in rows}
+    assert by_uuid["f-1"]["package_name"] == "npm://hbs@4.2.0"
+    assert by_uuid["f-1"]["current_version"] == "4.2.0"
+    assert by_uuid["f-2"]["package_name"] == (
+        "mvn://com.fasterxml.jackson.core:jackson-databind"
+    )
+    assert by_uuid["f-2"]["current_version"] == "2.9.9"
 
 
 def test_rollup_patch_fix_rows_sorts_by_name_then_version() -> None:
@@ -377,17 +410,17 @@ def test_build_patch_fix_report_end_to_end() -> None:
     assert result.ok
     assert result.stats.project_count == 1
     assert result.stats.finding_count == 2
-    assert result.stats.fixable_finding_count == 1
+    assert result.stats.fixable_finding_count == 2
     assert result.signal_breakdown["total_findings"] == 2
     assert result.table.rows == [
         {
             "namespace": "tenant",
-            "package_name": "npm://hbs",
+            "package_name": "npm://hbs@4.2.0",
             "current_version": "4.2.0",
-            "patch_version": "4.2.1",
-            "finding_count": 1,
-            "distinct_patch_version_count": 1,
-            "distinct_upgrade_path_count": 1,
+            "patch_version": "",
+            "finding_count": 2,
+            "distinct_patch_version_count": 0,
+            "distinct_upgrade_path_count": 2,
             "project_count": 1,
         }
     ]

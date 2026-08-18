@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-unit-tests.md
-x-endor-source-sha256: 74502a9f5b3e918e9aef5c13d4a8f74b50050ceaaa8b38b970d71782eab73ceb
+x-endor-source-sha256: 44f09fefebaa05434783a47ac0498cf6cb56e39101dc8e59667c04e24ba75b2c
 ---
 
 # Unit tests (maintainer)
@@ -100,6 +100,15 @@ fix the fixture; do not weaken the guard or `--no-verify`.
   `test_resource_list_get_roundtrip.py` covers it
 - Real customer tenants, emails, or production UUIDs in unit fixtures
   (guards will fail the commit)
+- Endor Patches / patch-fix goldens that skip rows without
+  `fixing_upgrades.upgrade_list`, or that key families on
+  `upgrade_list.direct_dependency_name` (product grain is
+  `target_dependency_package_name` + `target_dependency_version`)
+- Tests that treat a report cube as the product UI without quoting the
+  filter (reach tags, dismiss, main context)
+- `list_groups` fixtures that only use `{count: N}` and never
+  `{aggregation_count: {count: N}}` — that is the Finding/DM wire; the
+  former does not catch `GroupBucket.count == 0`
 
 ## Checklist (PR)
 

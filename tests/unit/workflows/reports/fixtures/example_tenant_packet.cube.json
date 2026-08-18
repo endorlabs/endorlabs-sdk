@@ -5880,11 +5880,11 @@
     },
     "patches": {
       "top_n_families": 5,
-      "rollup_mode": "target_dependency_fallback",
+      "rollup_mode": "target_dependency",
       "estate_available_findings": 8,
       "estate_impact_denominator": 7,
       "estate_java_findings": 120,
-      "denominator_label": "Fixable findings (Endor Patch units in view \u2014 product UI default)",
+      "denominator_label": "Fixable findings (Endor Patch units in view \u2014 any reachability)",
       "java_denominator_label": "Java (Maven) Critical/High vulnerability findings (estate)",
       "denominator_source": "fixable_pool_in_view",
       "risk_weights": {

@@ -2,7 +2,7 @@
 
 Mirrors the row shape and sort order of the estate version-cardinality report
 (``endorlabs.workflows.estate.analyze.cardinality.export``) but sources rows
-from ``Finding.spec.fixing_upgrades``/``spec.fixing_patch`` instead of
+from ``Finding.spec.target_dependency_*`` / ``spec.fixing_patch`` instead of
 ``DependencyMetadata`` usage counts.
 
 Design notes (verified against real tenants before writing this module — see
@@ -25,18 +25,13 @@ Design notes (verified against real tenants before writing this module — see
   fix-available-or-has-an-upgrade-path but **not** Endor-patch-available —
   reported as ``patches_to_request_count`` in the summary, explicitly labeled
   as inferred, not an official platform category.
-- ``spec.fixing_upgrades.upgrade_list`` (``direct_dependency_name``,
-  ``from_version``, ``to_version``, ``upgrade_risk``) lives directly on the
-  Finding and supplies the actual upgrade target — no second API call, no
-  join to ``VersionUpgrade`` needed. (An earlier version of this module tried
-  a ``VersionUpgrade``-based join; ``VersionUpgrade.spec.
-  finding_fixing_upgrades``/``other_finding_info.fixed_findings`` were empty
-  in practice on every tenant probed. This field is simpler and populated.)
-- Rollup rows only cover findings where ``fixing_upgrades.upgrade_list`` is
-  non-empty (a target version is required to report one) — some
-  fix-available/Endor-patch-available findings do not yet have a computed
-  upgrade path. The ``signal_breakdown`` summary counts *all* gated findings
-  regardless, so that population isn't silently dropped from the picture.
+- ``spec.fixing_upgrades.upgrade_list`` is recorded on the Finding as a
+  computed upgrade-impact path (direct-dep bump). This report does **not**
+  group on it — family keys are ``target_dependency_package_name`` +
+  ``target_dependency_version`` (Endor Patches dashboard grain).
+- ``has_upgrade_path_count`` in ``signal_breakdown`` still counts findings
+  with a populated upgrade list. Rollup rows include findings that have a
+  target coordinate even when that list is empty.
 - ``--reachability`` is applied client-side (not pushed into the server
   filter) — the ``FilterExpression`` DSL only supports negation on
   ``exists()`` clauses, not general boolean negation of ``contains``
@@ -160,8 +155,7 @@ def build_patch_fix_report(
     carries its own reachability columns regardless, for post-hoc pivoting.
     ``result.signal_breakdown`` reports counts confirming the empirical
     relationship between the patch/fix/reachability signals (see module
-    docstring) — it is computed over all gated findings, not just those with
-    a computed upgrade path.
+    docstring) — it is computed over all gated findings.
     """
     if gate not in GATE_CHOICES:
         msg = f"gate must be one of {GATE_CHOICES}, got {gate!r}"
@@ -198,9 +192,7 @@ def build_patch_fix_report(
         )
 
     findings = filter_by_reachability(findings, reachability)
-    detail_rows, _rollup_mode = extract_patch_rows(
-        findings, allow_target_dependency_fallback=False
-    )
+    detail_rows = extract_patch_rows(findings)
     rollup_rows = _rollup_patch_fix_rows(namespace, detail_rows)
     signal_breakdown = compute_signal_breakdown(findings)
     fixable_finding_count = len({row["finding_uuid"] for row in detail_rows})
@@ -215,7 +207,7 @@ def build_patch_fix_report(
         status="success",
         message=(
             f"{len(rollup_rows)} package/version group(s) from "
-            f"{fixable_finding_count} finding(s) with a computed upgrade path "
+            f"{fixable_finding_count} finding(s) with a target dependency "
             f"across {stats.project_count} project(s)."
         ),
         stats=stats,

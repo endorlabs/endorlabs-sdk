@@ -170,6 +170,19 @@ class V1AsyncJobType(StrEnum):
     TYPE_VEX = 'TYPE_VEX'
 
 
+class V1CycloneDxSpecVersion(StrEnum):
+    """
+    CycloneDx specification versions Endor emits. Values are added as Endor adds
+    support, so this list is the supported set.
+
+     - CYCLONE_DX_SPEC_VERSION_UNSPECIFIED: Unset. The export uses the current CycloneDx default.
+     - CYCLONE_DX_SPEC_VERSION_1_5: CycloneDx 1.5.
+    """
+
+    CYCLONE_DX_SPEC_VERSION_UNSPECIFIED = 'CYCLONE_DX_SPEC_VERSION_UNSPECIFIED'
+    CYCLONE_DX_SPEC_VERSION_1_5 = 'CYCLONE_DX_SPEC_VERSION_1_5'
+
+
 class V1ExportParameters(BaseModel):
     """
     Parameters to export a SBOM/VEX.
@@ -387,6 +400,19 @@ class V1SBOMKind(StrEnum):
     SBOM_KIND_SPDX = 'SBOM_KIND_SPDX'
 
 
+class V1SPDXSpecVersion(StrEnum):
+    """
+    SPDX specification versions Endor emits. Values are added as Endor adds
+    support, so this list is the supported set.
+
+     - SPDX_SPEC_VERSION_UNSPECIFIED: Unset. The export uses the current SPDX default.
+     - SPDX_SPEC_VERSION_2_3: SPDX 2.3.
+    """
+
+    SPDX_SPEC_VERSION_UNSPECIFIED = 'SPDX_SPEC_VERSION_UNSPECIFIED'
+    SPDX_SPEC_VERSION_2_3 = 'SPDX_SPEC_VERSION_2_3'
+
+
 class V1TenantMeta(BaseModel):
     """
     Tenant related data for the tenant containing the resource.
@@ -409,6 +435,14 @@ class V1VEXExportJobRequest(BaseModel):
     component_type: V1ExportedVEXComponentType
     """
     Library or application classification for the VEX root component.
+    """
+    cyclonedx_spec_version: V1CycloneDxSpecVersion | None = (
+        'CYCLONE_DX_SPEC_VERSION_UNSPECIFIED'
+    )
+    """
+    CycloneDx specification version the rendered document conforms to. VEX is
+    emitted as CycloneDx, so an SPDX version is not representable here. Leave
+    unset to take the CycloneDx default of 1.5.
     """
     export_parameters: V1ExportParameters | None = None
     """
@@ -491,6 +525,12 @@ class V1SBOMExportJobRequest(BaseModel):
     """
     Library or application classification for the SBOM root component.
     """
+    cyclonedx_spec_version: V1CycloneDxSpecVersion | None = (
+        'CYCLONE_DX_SPEC_VERSION_UNSPECIFIED'
+    )
+    """
+    Required when kind is SBOM_KIND_CYCLONEDX.
+    """
     export_parameters: V1ExportParameters | None = None
     """
     Parameters describing which package versions to include in the SBOM.
@@ -528,6 +568,10 @@ class V1SBOMExportJobRequest(BaseModel):
     UUID of a single PackageVersion to export. When set, the handler
     generates an SBOM containing just this package version. Mutually
     exclusive with export_parameters.
+    """
+    spdx_spec_version: V1SPDXSpecVersion | None = 'SPDX_SPEC_VERSION_UNSPECIFIED'
+    """
+    Required when kind is SBOM_KIND_SPDX.
     """
 
 

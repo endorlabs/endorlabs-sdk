@@ -47,6 +47,23 @@ Default directory:
 | `data/packet.cube.json` | Portable cube (`endor.report_packet.v0`) |
 | `data/*.csv` | Raw exports (see `data/EXPORTS.txt`) |
 
+## Endor Patches vs the product dashboard
+
+The packet is **not** the live Patches UI. Quote the filter before comparing
+counts.
+
+| Surface | What it counts |
+| -------- | -------------- |
+| Packet pull | Critical + High, not dismissed, main context, **any reachability**, patch/fix gate |
+| Packet **Available** catalog | `spec.fixing_patch.endor_patch_available==true` |
+| Product Patches **Available** header | Same as catalog, but reach is RF **or** PRF only |
+| Family / version group key | Vulnerable library current version: `spec.target_dependency_package_name` + `spec.target_dependency_version` (e.g. `jackson-databind` @ `2.9.9`) |
+| Not a group key | `spec.fixing_upgrades.upgrade_list` (upgrade-impact / what to bump) |
+
+CSV column `reachable` is **RF-only**. Use `reachable_function` and
+`potentially_reachable_function` for RF vs PRF. Same grain:
+[docs/estate/patch-fix-report.md](../estate/patch-fix-report.md).
+
 ## Agent routing
 
 Skill **endor-workflow-reports** → playbook

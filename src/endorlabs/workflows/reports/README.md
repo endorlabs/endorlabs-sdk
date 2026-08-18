@@ -53,6 +53,10 @@ batch that writes under
 (override date with `--patches-date-suffix 072926`). A `--patches-only` run
 emits only page 05 and the `patches-*.csv` exports.
 
+Packet Available is any reachability; the product Patches dashboard header is
+RF or PRF. Families group on the vulnerable library, not `upgrade_list`. See
+[executive-report-packet.md](../../../../docs/guides/executive-report-packet.md#endor-patches-vs-the-product-dashboard).
+
 When a slice is skipped in a full packet, its page renders an explicit callout
 rather than empty charts — `_render_*` empty states in `export/html/render.py`.
 
