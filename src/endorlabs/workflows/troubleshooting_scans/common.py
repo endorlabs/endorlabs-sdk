@@ -26,6 +26,7 @@ from endorlabs.workflows.troubleshooting_scans.collect import (
 from endorlabs.workflows.troubleshooting_scans.scan_summaries import (
     date_window_from_bounds,
     date_window_from_days,
+    extract_scan_mode,
     load_json,
     parse_app_scan_history_url,
     parse_endor_app_url,
@@ -43,6 +44,7 @@ __all__ = [
     "date_window_from_bounds",
     "date_window_from_days",
     "default_troubleshooting_output_dir",
+    "extract_scan_mode",
     "iso_now_compact",
     "load_json",
     "match_projects",

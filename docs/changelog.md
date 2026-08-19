@@ -15,6 +15,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Troubleshooting-scans summaries, diffs, and triage markdown include allowlisted `scan_mode` (CLI vs Cloud Scan, `--quick-scan`, `--use-local-repo-cache`, reconstructed flags). Skill **endor-troubleshooting-scans**: read those fields; do not infer GitHub App from checkout paths.
 - Endor Patches family rollup: version ``findings`` counts Available + To Request; family ``projects`` unions all version consumers (not Available-only); family ``findings`` is the heat-map total with ``available_findings`` / ``to_request_findings`` breakdowns.
 - Tenant-wide Finding lists (`list_findings_tenant`, including Endor Patches / patch-fix) always shard per project — even when every project shares one namespace — so `--workers` parallelizes flat tenants instead of a single `traverse=True` list.
 - Executive packet isolates report slices: a FindingLog/SCA timeout no longer aborts the whole CLI; remaining pages still render with `dataGaps` / `reportsMeta`, exit code `1` when any slice failed.

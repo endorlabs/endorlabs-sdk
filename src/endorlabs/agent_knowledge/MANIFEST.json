@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-08-17T16:25:18.284950+00:00",
+  "generated_at": "2026-08-19T15:53:55.676601+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -282,7 +282,7 @@
       ]
     },
     {
-      "description": "Use when doing scan pipeline RCA: resolve a project (including app scan-history\nURLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs\nfor errors, diff aggregate metrics, and probe PackageVersion resolution_errors.\nNot for individual Finding rows or policy validation\u2014hand off to sibling skills\nwhen deeper analysis is needed.\n",
+      "description": "Use when doing scan pipeline RCA: resolve a project (including app scan-history\nURLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs\nfor errors, diff aggregate metrics, and probe PackageVersion resolution_errors.\nSummaries include scan_mode (CLI vs Cloud Scan, --quick-scan, local cache flags).\nNot for individual Finding rows or policy validation\u2014hand off to sibling skills\nwhen deeper analysis is needed.\n",
       "id": "endor-troubleshooting-scans",
       "name": "endor-troubleshooting-scans",
       "path": "skills/endor-troubleshooting-scans/SKILL.md",
@@ -590,7 +590,8 @@
         "endorlabs.Client.ScanResult.list_by_project",
         "endorlabs.Client.Project.search_by_name",
         "endorlabs.Client.Finding.list_for_context",
-        "endorlabs.workflows.troubleshooting_scans.common.scanlog_entries_have_content"
+        "endorlabs.workflows.troubleshooting_scans.common.scanlog_entries_have_content",
+        "endorlabs.workflows.troubleshooting_scans.common.extract_scan_mode"
       ],
       "module": "endorlabs.workflows.troubleshooting_scans",
       "skill": "endor-troubleshooting-scans"

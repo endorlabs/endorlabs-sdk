@@ -4,6 +4,7 @@ description: |
   Use when doing scan pipeline RCA: resolve a project (including app scan-history
   URLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs
   for errors, diff aggregate metrics, and probe PackageVersion resolution_errors.
+  Summaries include scan_mode (CLI vs Cloud Scan, --quick-scan, local cache flags).
   Not for individual Finding rows or policy validation—hand off to sibling skills
   when deeper analysis is needed.
 endorlabs:
@@ -18,6 +19,7 @@ endorlabs:
       - endorlabs.Client.Project.search_by_name
       - endorlabs.Client.Finding.list_for_context
       - endorlabs.workflows.troubleshooting_scans.common.scanlog_entries_have_content
+      - endorlabs.workflows.troubleshooting_scans.common.extract_scan_mode
 ---
 
 # Troubleshooting Scans
@@ -35,10 +37,11 @@ Chain CLI steps on JSON artifacts; extend with library imports per [workflow-com
 - Pull scan logs for selected pair UUIDs (embedded fallback when ScanLog API rows are hollow).
 - Diff scan-level aggregate metrics into JSON + markdown artifacts.
 - **Library probe:** `PackageVersion.list_by_project(project)` → `spec.resolution_errors` when dependency metrics collapse.
+- **Per-scan execution mode:** `scan_mode` on fetch/pull summaries (`scan_execution`, `quick_scan`, `use_local_repo_cache`, reconstructed `endorctl_flags`).
 
 **Out of scope (use another skill):**
 
-- Whether the project is **CLI vs Cloud** (agentless SCM) → [endor-workflow-reports](../endor-workflow-reports/SKILL.md) — especially when `RunBySystem` differs between scans
+- Tenant-wide **CLI vs Cloud project inventory** (which projects are App vs CLI) → [endor-workflow-reports](../endor-workflow-reports/SKILL.md) (`endor-reports cli-vs-cloud`). Per-scan CLI vs Cloud Scan is `scan_mode` in this skill.
 - Listing or triaging individual **Finding** resources → [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md)
 - Policy / exception matching → [endor-validate-policy](../endor-validate-policy/SKILL.md)
 - Reachability signal conflicts on a finding → [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md)
@@ -69,7 +72,7 @@ Thread UUIDs and namespace from each artifact into the next step; do not re-list
 | Diff flagged `findings_*` counts; need which findings changed | This skill (pair UUIDs from diff) | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) via `Finding.list_for_context(scan)` |
 | `dependency_count_total` collapsed / resolution errors | This skill (embedded logs + PV probe) | [endor-sca-findings](../endor-sca-findings/SKILL.md) at branch/sha |
 | Tenant-wide PV resolution error patterns | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) | This skill for one scan pair |
-| Automated vs manual scan config differs (`RunBySystem`) | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) | This skill for metrics/logs |
+| Was this scan CLI or Cloud / `--quick-scan` / local cache? | **This skill** (`scan_mode` on fetch/pull/diff artifacts) | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) only for tenant-wide CLI vs Cloud inventory |
 | Exception policy matches a finding? | [endor-validate-policy](../endor-validate-policy/SKILL.md) | — |
 | Reachable dep vs unreachable function | [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) | — |
 | New vs resolved vuln trend (FindingLog) | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) | — |
@@ -137,9 +140,11 @@ for pv in client.PackageVersion.list_by_project(project, namespace=project_ns, m
 | -------------------- | --------- |
 | `status: STATUS_PARTIAL_SUCCESS` | `search_scan_errors` before ScanLog API pull |
 | `scan_success` ↓ and `dependency_count_total` ↓ | PV `resolution_errors` library probe |
+| `scan_mode.scan_execution` / `run_by_system` on fetch summary | Use these; **do not** infer GitHub App or GitHub Actions from checkout paths (`/__w/`, `GITHUB_WORKSPACE`) |
+| `scan_mode.quick_scan` or `use_local_repo_cache` is true | Approximate graphs / Maven `--offline` are expected; compare to a scan without those flags |
 | `fetch_scan_logs` `entry_count > 0` but no `error` in text | Re-check embedded `spec.logs`; API rows may be hollow |
 | `regression_detected: false` but user named two scans | Use explicit-pair path; user intent overrides heuristic |
-| `RunBySystem: true` vs `false` in scan config | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) for config narrative |
+| Pair differs on `scan_execution` / `quick_scan` | Treat as config mismatch first; tenant-wide inventory still [endor-workflow-reports](../endor-workflow-reports/SKILL.md) |
 
 Artifacts live under `.endorlabs-context/workspace/runs/troubleshooting-scans/`.
 See [workspace-layout](../../rules/endor-workspace-layout.md). Filename
@@ -170,7 +175,8 @@ Installed package modules (run with `uv run python -m endorlabs.workflows.troubl
   - Output object kind: `scan_result_pairs` (`pair_mode: user_supplied`).
 
 - `fetch_scan_results.py`
-  - Pulls raw scan results and normalized summary rows.
+  - Pulls raw scan results and normalized summary rows, including **`scan_mode`**
+    (CLI vs Cloud Scan, QuickScan, UseLocalCache, reconstructed `endorctl_flags`).
   - Use `--scan-window` (alias of `--limit`) to bound retrieved scan count.
   - Optional **`--status-filter`** (e.g. `STATUS_FAILURE`, `STATUS_PARTIAL_SUCCESS`) filters client-side after listing.
   - Output object kind: `scan_results`.
@@ -188,7 +194,7 @@ Installed package modules (run with `uv run python -m endorlabs.workflows.troubl
   - Output object kind: `scan_error_hits`.
 
 - `diff_scans.py`
-  - Compares normalized scan metrics (status, deps, findings totals, ref/sha). Does **not** diff Finding rows or `resolution_errors`.
+  - Compares normalized scan metrics (status, deps, findings totals, ref/sha, **scan_execution / quick_scan / use_local_repo_cache**). Does **not** diff Finding rows or `resolution_errors`.
   - Output object kind: `scan_diff`.
 
 - `fetch_scan_logs.py`
@@ -269,8 +275,13 @@ Do **not** filter on `context.scan_uuid` — see [resource-discovery contract](.
 
 ## Interpretation hints
 
+- Read **`scan_mode`** from `fetch_scan_results` / `pull_scan_results` / `diff_scans` artifacts **before** attributing GitHub App, `--quick-scan`, or a local Maven cache.
+- `scan_execution: CLI` is `RunBySystem: false`. `Cloud Scan` is `RunBySystem: true`. Missing field is `unknown` — not App.
+- Do **not** infer GitHub App (or GitHub Actions) from runner checkout paths.
+- `Enables: ["git", "analytics"]` is **not** `--dependencies`. Reconstruct flags from `endorctl_flags` only.
+- `quick_scan: true` → `--quick-scan` (approximate SCA). `use_local_repo_cache: true` → `--use-local-repo-cache`; Maven `dependency:tree --offline` needs plugins already in `.m2`.
 - `scan_success` drop + `dependency_count_total` collapse → dependency-resolution pipeline failure; check embedded logs and PV `resolution_errors`.
-- Compare `endorctl_version`, scan status, `RunBySystem`, and dependency metrics first.
+- Compare `endorctl_version`, scan status, `scan_mode`, and dependency metrics first.
 - Use `search_scan_errors.py` with ecosystem-specific patterns before pulling full ScanLog streams.
 - Empty `package defined in ''` in embedded logs → root build unit (e.g. root `build.sbt` / `pom.xml`).
 
@@ -279,7 +290,7 @@ Do **not** filter on `context.scan_uuid` — see [resource-discovery contract](.
 | Need | Skill |
 | ---- | ----- |
 | Finding rows for a scan plane | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) |
-| CLI vs Cloud scan config | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) |
+| Tenant-wide CLI vs Cloud project inventory | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) |
 | Branch/sha fixed vs present | [endor-sca-findings](../endor-sca-findings/SKILL.md) |
 | Tenant-wide PV resolution errors | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) |
 

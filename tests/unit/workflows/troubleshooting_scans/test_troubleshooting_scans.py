@@ -9,12 +9,15 @@ from endorlabs.workflows.troubleshooting_scans.build_scan_pair import (
 from endorlabs.workflows.troubleshooting_scans.common import (
     build_filename,
     date_window_from_bounds,
+    extract_scan_mode,
     parse_app_scan_history_url,
     parse_endor_app_url,
     scan_result_extended_summary,
+    scan_result_metrics,
     scanlog_entries_have_content,
     scanlog_line_has_content,
 )
+from endorlabs.workflows.troubleshooting_scans.diff_scans import compute_diff
 from endorlabs.workflows.troubleshooting_scans.select_anomalous_scans import (
     anomaly_score,
 )
@@ -124,7 +127,7 @@ def test_scan_result_extended_summary_minimal() -> None:
     raw = {
         "uuid": "sr1",
         "meta": {"parent_uuid": "p1", "create_time": "2025-01-01T00:00:00Z"},
-        "tenant_meta": {"namespace": "t.ns"},
+        "tenant_meta": {"namespace": "example-tenant"},
         "spec": {
             "status": "STATUS_SUCCESS",
             "type": "TYPE_ALL_SCANS",
@@ -149,6 +152,100 @@ def test_scan_result_extended_summary_minimal() -> None:
     assert s["duration_seconds"] == 3600.0
     assert s["stats"]["call_graph_errors"] == 1
     assert "ScanConfig" in s["environment"]["config_summary"]
+    assert s["scan_execution"] == "unknown"
+    assert s["scan_mode"]["enables"] == ["git"]
+    assert s["scan_mode"]["endorctl_flags"] == []
+
+
+def test_extract_scan_mode_cli_quick_scan_and_local_cache() -> None:
+    raw = {
+        "uuid": "sr-cli",
+        "spec": {
+            "environment": {
+                "config": {
+                    "Command": "scan",
+                    "RunBySystem": False,
+                    "BypassHostCheck": True,
+                    "Verbose": True,
+                    "ScanConfig": {
+                        "QuickScan": True,
+                        "UseLocalCache": True,
+                        "AsDefaultBranch": True,
+                        "DisablePrivatePackageAnalysis": True,
+                        "Enables": ["git", "analytics"],
+                        "Path": ".",
+                        "ExcludePath": ["target/**"],
+                    },
+                }
+            }
+        },
+    }
+    mode = extract_scan_mode(raw)
+    assert mode["scan_execution"] == "CLI"
+    assert mode["run_by_system"] is False
+    assert mode["quick_scan"] is True
+    assert mode["use_local_repo_cache"] is True
+    assert mode["command"] == "scan"
+    assert "--quick-scan" in mode["endorctl_flags"]
+    assert "--use-local-repo-cache" in mode["endorctl_flags"]
+    assert "--exclude-path=target/**" in mode["endorctl_flags"]
+    assert "--dependencies" not in mode["endorctl_flags"]
+    metrics = scan_result_metrics(raw)
+    assert metrics["scan_execution"] == "CLI"
+    assert metrics["quick_scan"] is True
+    assert metrics["scan_mode"]["enables"] == ["git", "analytics"]
+
+
+def test_extract_scan_mode_cloud_scan() -> None:
+    raw = {
+        "spec": {
+            "environment": {
+                "config": {
+                    "Command": "scan",
+                    "RunBySystem": True,
+                    "ScanConfig": {"QuickScan": False},
+                }
+            }
+        }
+    }
+    mode = extract_scan_mode(raw)
+    assert mode["scan_execution"] == "Cloud Scan"
+    assert mode["run_by_system"] is True
+    assert mode["quick_scan"] is False
+    assert "--quick-scan" not in mode["endorctl_flags"]
+
+
+def test_compute_diff_includes_quick_scan() -> None:
+    primary = {
+        "uuid": "a",
+        "spec": {
+            "status": "STATUS_PARTIAL_SUCCESS",
+            "environment": {
+                "config": {
+                    "RunBySystem": False,
+                    "ScanConfig": {"QuickScan": True, "UseLocalCache": True},
+                }
+            },
+        },
+    }
+    secondary = {
+        "uuid": "b",
+        "spec": {
+            "status": "STATUS_SUCCESS",
+            "environment": {
+                "config": {
+                    "RunBySystem": True,
+                    "ScanConfig": {"QuickScan": False, "UseLocalCache": False},
+                }
+            },
+        },
+    }
+    diff = compute_diff(primary, secondary)
+    assert diff["changes"]["scan_execution"]["primary"] == "CLI"
+    assert diff["changes"]["scan_execution"]["secondary"] == "Cloud Scan"
+    assert diff["changes"]["quick_scan"]["primary"] is True
+    assert diff["changes"]["quick_scan"]["secondary"] is False
+    assert diff["changes"]["use_local_repo_cache"]["primary"] is True
 
 
 def test_scanlog_line_has_content_embedded_json() -> None:

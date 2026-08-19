@@ -9,6 +9,10 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 
+from endorlabs.workflows.projects.inventory import (
+    extract_run_by_system,
+    scan_execution_label,
+)
 from endorlabs.workflows.wire_access import dict_str, nested_dict, nested_str
 
 
@@ -132,6 +136,90 @@ def _dt_iso_z(dt: datetime) -> str:
     return dt.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
+def _as_bool(value: Any) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    return None
+
+
+def _first_bool(*values: Any) -> bool | None:
+    for value in values:
+        parsed = _as_bool(value)
+        if parsed is not None:
+            return parsed
+    return None
+
+
+def _as_str_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    out: list[str] = []
+    for item in cast("list[Any]", value):
+        text = str(item).strip()
+        if text:
+            out.append(text)
+    return out
+
+
+def extract_scan_mode(scan_result: dict[str, Any]) -> dict[str, Any]:
+    """Allowlisted scan-execution fields from ``spec.environment.config``.
+
+    Values only — not a full config dump. Use this instead of inferring GitHub App
+    vs CLI from checkout paths. ``endorctl_flags`` is reconstructed from booleans
+    and ``exclude_path``; it is not a verbatim argv.
+    """
+    spec = nested_dict(scan_result, "spec")
+    env = nested_dict(spec, "environment")
+    config = nested_dict(env, "config")
+    scan_cfg = nested_dict(config, "ScanConfig")
+    run_by_system = extract_run_by_system(scan_result)
+    if run_by_system is None:
+        run_by_system = _as_bool(scan_cfg.get("RunBySystem"))
+    path = dict_str(scan_cfg, "Path") or None
+    exclude_path = _as_str_list(scan_cfg.get("ExcludePath"))
+    quick_scan = _as_bool(scan_cfg.get("QuickScan"))
+    use_local_repo_cache = _as_bool(scan_cfg.get("UseLocalCache"))
+    as_default_branch = _as_bool(scan_cfg.get("AsDefaultBranch"))
+    bypass_host_check = _first_bool(
+        config.get("BypassHostCheck"), scan_cfg.get("BypassHostCheck")
+    )
+    verbose = _first_bool(config.get("Verbose"), scan_cfg.get("Verbose"))
+    disable_private_package_analysis = _as_bool(
+        scan_cfg.get("DisablePrivatePackageAnalysis")
+    )
+    flags: list[str] = []
+    flag_values: tuple[tuple[bool | None, str], ...] = (
+        (quick_scan, "--quick-scan"),
+        (use_local_repo_cache, "--use-local-repo-cache"),
+        (as_default_branch, "--as-default-branch"),
+        (bypass_host_check, "--bypass-host-check"),
+        (disable_private_package_analysis, "--disable-private-package-analysis"),
+        (verbose, "--verbose"),
+    )
+    for enabled, flag in flag_values:
+        if enabled is True:
+            flags.append(flag)
+    if path and path != ".":
+        flags.append(f"--path={path}")
+    flags.extend(f"--exclude-path={item}" for item in exclude_path)
+    result: dict[str, Any] = {
+        "command": dict_str(config, "Command") or None,
+        "run_by_system": run_by_system,
+        "scan_execution": scan_execution_label(run_by_system),
+        "quick_scan": quick_scan,
+        "use_local_repo_cache": use_local_repo_cache,
+        "as_default_branch": as_default_branch,
+        "bypass_host_check": bypass_host_check,
+        "verbose": verbose,
+        "disable_private_package_analysis": disable_private_package_analysis,
+        "enables": _as_str_list(scan_cfg.get("Enables")),
+        "path": path,
+        "exclude_path": exclude_path,
+        "endorctl_flags": flags,
+    }
+    return result
+
+
 def summarize_environment_config(config: Any, *, max_keys: int = 80) -> dict[str, Any]:
     """Shape-only summary of spec.environment.config (no secret values)."""
     if not isinstance(config, dict):
@@ -244,6 +332,7 @@ def scan_result_metrics(scan_result: dict[str, Any]) -> dict[str, Any]:
     version = cast("dict[str, Any]", versions[0]) if versions else {}
     if versions and not isinstance(versions[0], dict):
         version = {}
+    mode = extract_scan_mode(scan_result)
     return {
         "uuid": scan_result.get("uuid"),
         "status": spec.get("status"),
@@ -263,6 +352,11 @@ def scan_result_metrics(scan_result: dict[str, Any]) -> dict[str, Any]:
         "endorctl_version": nested_str(spec, "environment", "endorctl_version"),
         "sha": version.get("sha"),
         "ref": version.get("ref"),
+        "scan_execution": mode["scan_execution"],
+        "run_by_system": mode["run_by_system"],
+        "quick_scan": mode["quick_scan"],
+        "use_local_repo_cache": mode["use_local_repo_cache"],
+        "scan_mode": mode,
     }
 
 

@@ -312,8 +312,9 @@ def _fix_guidance(errors: list[dict[str, Any]]) -> list[str]:
         )
 
     guidance.append(
-        "- Reproduce on the same commit/ref and compare scan-time environment fields "
-        "(endorctl version, OS/arch, config summary) against a healthy local build."
+        "- Compare scan_mode (scan_execution, --quick-scan, --use-local-repo-cache) "
+        "and endorctl version against a healthy scan; do not infer GitHub App from "
+        "checkout paths."
     )
     guidance.append(
         "- Re-run scan and verify expected deltas (`scan_failures` down, error lines "
@@ -329,6 +330,33 @@ def _project_name_from_search(search_artifact: dict[str, Any] | None) -> str:
     if not projects:
         return ""
     return nested_str(projects[0], "meta", "name")
+
+
+def _scan_mode_markdown_lines(latest: dict[str, Any]) -> list[str]:
+    mode_raw = latest.get("scan_mode")
+    mode_dict: dict[str, Any] = (
+        cast("dict[str, Any]", mode_raw) if isinstance(mode_raw, dict) else {}
+    )
+    flags_raw = mode_dict.get("endorctl_flags", latest.get("endorctl_flags"))
+    flags: list[str] = []
+    if isinstance(flags_raw, list):
+        flags = [str(item) for item in cast("list[Any]", flags_raw)]
+    flag_text = ", ".join(f"`{item}`" for item in flags) if flags else "n/a"
+    execution = mode_dict.get("scan_execution", latest.get("scan_execution"))
+    run_by_system = mode_dict.get("run_by_system", latest.get("run_by_system"))
+    quick_scan = mode_dict.get("quick_scan", latest.get("quick_scan"))
+    use_local = mode_dict.get(
+        "use_local_repo_cache", latest.get("use_local_repo_cache")
+    )
+    command = mode_dict.get("command")
+    return [
+        f"- scan_execution: `{execution}`",
+        f"- run_by_system: `{run_by_system}`",
+        f"- quick_scan: `{quick_scan}`",
+        f"- use_local_repo_cache: `{use_local}`",
+        f"- command: `{command}`",
+        f"- endorctl_flags: {flag_text}",
+    ]
 
 
 def _evidence_markdown_lines(evidence_payload: dict[str, Any], key: str) -> list[str]:
@@ -386,6 +414,7 @@ def _build_markdown(
         f"- scan_success: `{dict_str(latest, 'scan_success')}`",
         f"- scan_failures: `{dict_str(latest, 'scan_failures')}`",
         f"- endorctl_version: `{dict_str(latest, 'endorctl_version')}`",
+        *_scan_mode_markdown_lines(latest),
         "",
         "## What Is Wrong (citing logs)",
         "",
