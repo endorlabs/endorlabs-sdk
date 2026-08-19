@@ -71,6 +71,7 @@ Optional:
 - `snooze`
 - `source_code_version`
 - `target_dependency_name`
+- `target_dependency_native_scope`
 - `target_dependency_package_name`
 - `target_dependency_version`
 

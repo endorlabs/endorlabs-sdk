@@ -7261,6 +7261,11 @@ class V1FindingSpec(BaseModel):
     This is just the name (i.e. it does not include the ecosystem or the
     version).
     """
+    target_dependency_native_scope: str | None = None
+    """
+    Un-normalized native dependency scope from the package manager
+    (e.g. Maven "provided"). Empty if none.
+    """
     target_dependency_package_name: str | None = None
     """
     Fully qualified name of the dependency, e.g. eco://package@version, if

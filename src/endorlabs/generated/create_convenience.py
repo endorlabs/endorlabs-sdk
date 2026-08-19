@@ -92,6 +92,7 @@ FINDING_SPEC_FIELDS = (
     "target_dependency_package_name",
     "target_dependency_name",
     "target_dependency_version",
+    "target_dependency_native_scope",
     "explanation",
     "remediation_action",
     "source_code_version",

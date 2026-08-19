@@ -720,6 +720,11 @@ class DependencyMetadataDependencyData(BaseModel):
     """
     Namespace to which the dependency package version object belongs.
     """
+    native_scope: str | None = None
+    """
+    Un-normalized native dependency scope from the package manager (e.g.
+    Maven "provided"), before it is collapsed into scope. Empty if none.
+    """
     orphan: bool | None = None
     """
     Deprecated.
