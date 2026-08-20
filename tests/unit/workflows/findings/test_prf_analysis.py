@@ -147,9 +147,10 @@ def test_list_findings_sharded_passes_max_pages_none_explicitly() -> None:
     assert kwargs["max_pages"] is None
 
 
-def test_list_findings_tenant_uses_traverse_when_namespace_shared() -> None:
+def test_list_findings_tenant_shards_when_namespace_shared() -> None:
+    """Flat tenants still use per-project list_by_project (not traverse list)."""
     client = MagicMock()
-    client.Finding.list_iter.return_value = [
+    client.Finding.list_by_project.return_value = [
         {"meta": {"parent_uuid": "pv-1"}, "spec": {"ecosystem": "ECOSYSTEM_NPM"}}
     ]
     client.Query.Project.discover.return_value = SimpleNamespace(
@@ -166,12 +167,13 @@ def test_list_findings_tenant_uses_traverse_when_namespace_shared() -> None:
         mask="meta.parent_uuid",
     )
 
-    assert len(rows) == 1
-    client.Finding.list_iter.assert_called_once()
-    kwargs = client.Finding.list_iter.call_args.kwargs
-    assert kwargs["namespace"] == "tenant.child"
-    assert kwargs["traverse"] is True
-    assert "spec.project_uuid" not in kwargs["filter"]
+    assert len(rows) == 2
+    client.Finding.list_iter.assert_not_called()
+    assert client.Finding.list_by_project.call_count == 2
+    namespaces = {
+        call.args[0].namespace for call in client.Finding.list_by_project.call_args_list
+    }
+    assert namespaces == {"tenant.child"}
 
 
 def test_list_findings_tenant_defaults_to_sharded() -> None:

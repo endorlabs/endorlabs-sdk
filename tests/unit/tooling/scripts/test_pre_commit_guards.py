@@ -377,6 +377,22 @@ def test_check_external_pii_urls_blocks_email_and_url(capsys) -> None:
     assert bad_url in err
 
 
+def test_check_external_pii_urls_allows_package_coordinates(capsys) -> None:
+    """Versions like ``4.1.86.Final`` look like an email domain but are not PII."""
+    ssh_url = "ssh://git@" + "customer-host.com/repo.git"
+    lines = [
+        ("tests/unit/x.json", 1, '"mvn://io.netty:netty-codec-http@4.1.86.Final"'),
+        ("docs/x.md", 2, "pkg:maven/org.springframework/spring-core@5.3.20.RELEASE"),
+        ("docs/x.md", 3, "npm://express@4.22.1"),
+        ("docs/x.md", 4, ssh_url),
+    ]
+    assert check_external_pii_urls(lines=lines) == 1
+    err = capsys.readouterr().err
+    assert "netty" not in err
+    assert "spring-core" not in err
+    assert "customer-host.com" in err
+
+
 def test_check_external_pii_urls_blocks_namespace_flag(capsys) -> None:
     blocked = "customer" + "-prod"
     lines = [

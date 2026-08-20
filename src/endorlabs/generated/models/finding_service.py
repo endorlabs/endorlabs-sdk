@@ -5678,6 +5678,12 @@ class BomDependency(BaseModel):
     """
     End of life timestamp of the dependency if known.
     """
+    file_location_remote_paths: dict[str, str] | None = None
+    """
+    Maps each entry in file_locations (the local, scanned-workspace path)
+    to the matched path in the dependency's own upstream source, when
+    known. Only populated for IMPORTED_TYPE_SEGMENT_MATCH dependencies.
+    """
     file_locations: list[str] | None = None
     """
     An optional field for BOM dependencies that are either
@@ -5986,6 +5992,12 @@ class Dependency(BaseModel):
     eol_timestamp: AwareDatetime | None = None
     """
     End of life timestamp of the dependency if known.
+    """
+    file_location_remote_paths: dict[str, str] | None = None
+    """
+    Maps each entry in file_locations (the local, scanned-workspace path)
+    to the matched path in the dependency's own upstream source, when
+    known. Only populated for IMPORTED_TYPE_SEGMENT_MATCH dependencies.
     """
     file_locations: list[str] | None = None
     """
@@ -6763,6 +6775,11 @@ class V1FindingSpec(BaseModel):
     This is just the name (i.e. it does not include the ecosystem or the
     version).
     """
+    target_dependency_native_scope: str | None = None
+    """
+    Un-normalized native dependency scope from the package manager
+    (e.g. Maven "provided"). Empty if none.
+    """
     target_dependency_package_name: str | None = None
     """
     Fully qualified name of the dependency, e.g. eco://package@version, if
@@ -7081,6 +7098,12 @@ class V1PackageVersionSpec(BaseModel):
     The exact dependency declarations in the package manager descriptor file.
     In Golang, this represents the list of dependencies in the go.mod.
     In Java/Maven, this represents the list of dependencies in the pom.xml.
+    """
+    upstream_reference: str | None = None
+    """
+    The public package this private package was forked from, so its
+    vulnerabilities can be attributed to the fork. Empty means the resolver
+    has not run yet; "N/A" means it ran and found no upstream.
     """
 
 

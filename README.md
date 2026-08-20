@@ -39,6 +39,7 @@ Type-safe, resource-oriented Python client for the Endor Labs REST API. List, ge
 | **Use the SDK** (API scripts, CI)                   | [Installation](#installation) → [Quick start](#quick-start) — **no `init()` required**         |
 | **Bootstrap an AI agent** (API + skills)            | [Agent bootstrap](#agent-bootstrap-discover-vs-init) — `discover()` then `init()` for workflows |
 | **Try the SDK on a real tenant**                    | [docs/guides/examples.md](docs/guides/examples.md) · [Try it with skills](#try-it-with-skills) |
+| **Tenant executive HTML reports**                   | `endor-reports packet` — [guide](docs/guides/executive-report-packet.md) · [reports README](src/endorlabs/workflows/reports/README.md) |
 | **SDK contracts and deep reference**                | [docs/README.md](docs/README.md)                                                               |
 | **Contribute to this repo**                         | [CONTRIBUTORS.md](CONTRIBUTORS.md)                                                             |
 

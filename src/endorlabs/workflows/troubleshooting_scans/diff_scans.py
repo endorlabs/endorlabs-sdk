@@ -32,6 +32,10 @@ KEYS_TO_DIFF = [
     "endorctl_version",
     "sha",
     "ref",
+    "scan_execution",
+    "run_by_system",
+    "quick_scan",
+    "use_local_repo_cache",
 ]
 
 

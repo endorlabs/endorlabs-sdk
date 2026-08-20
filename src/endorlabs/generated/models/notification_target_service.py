@@ -69,13 +69,17 @@ class JIRAConfigJiraIssueType(StrEnum):
 
 class NotificationTargetActionActionType(StrEnum):
     """
-    - ACTION_TYPE_WEBHOOK: ACTION_TYPE_WEBHOOK indicates a webhook call action.
-    - ACTION_TYPE_JIRA: ACTION_TYPE_JIRA indicates a JIRA action.
-    - ACTION_TYPE_EMAIL: ACTION_TYPE_EMAIL indicates an email action.
-    - ACTION_TYPE_VANTA: ACTION_TYPE_VANTA indicates configuration of a Vanta plugin.
-    - ACTION_TYPE_SLACK: ACTION_TYPE_SLACK indicates a Slack integration.
-    - ACTION_TYPE_GITHUB_PR: ACTION_TYPE_GITHUB_PR indicates a GitHub PR action.
-    - ACTION_TYPE_ADO_BOARDS: ACTION_TYPE_ADO_BOARDS indicates an ADO board action.
+     - ACTION_TYPE_WEBHOOK: ACTION_TYPE_WEBHOOK indicates a webhook call action.
+     - ACTION_TYPE_JIRA: ACTION_TYPE_JIRA indicates a JIRA action.
+     - ACTION_TYPE_EMAIL: ACTION_TYPE_EMAIL indicates an email action.
+     - ACTION_TYPE_VANTA: ACTION_TYPE_VANTA indicates configuration of a Vanta plugin.
+     - ACTION_TYPE_SLACK: ACTION_TYPE_SLACK indicates a Slack integration.
+     - ACTION_TYPE_GITHUB_PR: ACTION_TYPE_GITHUB_PR indicates a GitHub PR action.
+    Deprecated: Use ACTION_TYPE_REMEDIATION_PR, which supports all SCM platforms.
+     - ACTION_TYPE_ADO_BOARDS: ACTION_TYPE_ADO_BOARDS indicates an ADO board action.
+     - ACTION_TYPE_REMEDIATION_PR: ACTION_TYPE_REMEDIATION_PR indicates an automated remediation pull request action.
+    The pull request is opened on the SCM platform of the violating project,
+    for example a GitHub pull request or a GitLab merge request.
     """
 
     ACTION_TYPE_UNSPECIFIED = 'ACTION_TYPE_UNSPECIFIED'
@@ -86,6 +90,7 @@ class NotificationTargetActionActionType(StrEnum):
     ACTION_TYPE_SLACK = 'ACTION_TYPE_SLACK'
     ACTION_TYPE_GITHUB_PR = 'ACTION_TYPE_GITHUB_PR'
     ACTION_TYPE_ADO_BOARDS = 'ACTION_TYPE_ADO_BOARDS'
+    ACTION_TYPE_REMEDIATION_PR = 'ACTION_TYPE_REMEDIATION_PR'
 
 
 class VantaConfigVantaAccessTokenAuth(BaseModel):
@@ -338,7 +343,15 @@ class V1EmailTemplate(BaseModel):
 
 
 class V1GitHubPRConfig(BaseModel):
+    """
+    GitHubPRConfig configures automated GitHub pull requests for remediations.
+    Deprecated: Use RemediationPRConfig, which supports all SCM platforms.
+    """
+
     enabled: bool
+    """
+    Turns the creation of automated pull requests on or off for this target.
+    """
 
 
 class V1GroupAggregationValueResponse(BaseModel):
@@ -538,6 +551,18 @@ class V1PRCommentsTemplate(BaseModel):
     findings_summary_template: str
     """
     The template for the PR comment for summary of findings.
+    """
+
+
+class V1RemediationPRConfig(BaseModel):
+    """
+    RemediationPRConfig configures automated remediation pull requests.
+    The SCM platform is determined by the platform source of the violating project.
+    """
+
+    enabled: bool
+    """
+    Turns the creation of automated pull requests on or off for this target.
     """
 
 
@@ -778,6 +803,7 @@ class NotificationTargetNotificationTargetAction(BaseModel):
     Indicates if the action endpoint is public.
     If the endpoint not public, then endorctl attempts to create the action as if the endpoint is running on-prem.
     """
+    remediation_pr_config: V1RemediationPRConfig | None = None
     slack_config: V1SlackConfig | None = None
     vanta_config: V1VantaConfig | None = None
     webhook_config: V1WebhookConfig | None = None

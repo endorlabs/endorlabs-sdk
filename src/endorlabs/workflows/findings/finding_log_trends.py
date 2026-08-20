@@ -13,7 +13,7 @@ from endorlabs.operations.group_by_time_wire import (
     GROUP_BY_TIME_INTERVAL_ALIASES,
     normalize_group_by_time_interval,
 )
-from endorlabs.tools.list_sharding import parallel_map_shards, project_scoped_filter
+from endorlabs.tools.list_sharding import parallel_map_shards
 from endorlabs.workflows.logs.group_by_time import (
     group_by_time_counts,
     is_timeout_like,
@@ -23,8 +23,9 @@ if TYPE_CHECKING:
     from endorlabs import Client
 
 FINDING_CRITERIA = (
-    "Critical/High severity · main context · reach filters "
-    "(default RF+PRF; also PRD / unreachable function & dependency)"
+    "All severities (Critical-Low) · main context · reach filters "
+    "(default RF+PRF; also PRD / unreachable function & dependency); "
+    "UI severity thresholds (Critical+ / High+ / Medium+ / All)"
 )
 
 CHART_DEFAULT_INTERVAL = "week"
@@ -294,7 +295,8 @@ UNREACHABLE_FUNCTION_CLAUSE = (
 UNREACHABLE_DEPENDENCY_CLAUSE = (
     "spec.finding_tags contains FINDING_TAGS_UNREACHABLE_DEPENDENCY"
 )
-# Base pull cells (Crit/High x each). ``all`` / ``unreachable`` rollups are derived.
+# Base pull cells (Crit/High/Med/Low x each). ``all`` / ``unreachable`` rollups
+# are derived in ``expand_severity_reach_matrix``.
 BASE_REACH_KEYS: tuple[str, ...] = (
     "reachable",
     "prf",
@@ -302,17 +304,23 @@ BASE_REACH_KEYS: tuple[str, ...] = (
     "unreachable_function",
     "unreachable_dependency",
 )
-SEVERITY_REACH_CELLS: tuple[tuple[str, str, str, str], ...] = (
-    ("critical", "reachable", "CRITICAL", REACHABLE_FUNCTION_CLAUSE),
-    ("critical", "prf", "CRITICAL", PRF_FUNCTION_CLAUSE),
-    ("critical", "prd", "CRITICAL", PRD_CLAUSE),
-    ("critical", "unreachable_function", "CRITICAL", UNREACHABLE_FUNCTION_CLAUSE),
-    ("critical", "unreachable_dependency", "CRITICAL", UNREACHABLE_DEPENDENCY_CLAUSE),
-    ("high", "reachable", "HIGH", REACHABLE_FUNCTION_CLAUSE),
-    ("high", "prf", "HIGH", PRF_FUNCTION_CLAUSE),
-    ("high", "prd", "HIGH", PRD_CLAUSE),
-    ("high", "unreachable_function", "HIGH", UNREACHABLE_FUNCTION_CLAUSE),
-    ("high", "unreachable_dependency", "HIGH", UNREACHABLE_DEPENDENCY_CLAUSE),
+EXACT_SEVERITY_LEVELS: tuple[tuple[str, str], ...] = (
+    ("critical", "CRITICAL"),
+    ("high", "HIGH"),
+    ("medium", "MEDIUM"),
+    ("low", "LOW"),
+)
+_REACH_CLAUSES: tuple[tuple[str, str], ...] = (
+    ("reachable", REACHABLE_FUNCTION_CLAUSE),
+    ("prf", PRF_FUNCTION_CLAUSE),
+    ("prd", PRD_CLAUSE),
+    ("unreachable_function", UNREACHABLE_FUNCTION_CLAUSE),
+    ("unreachable_dependency", UNREACHABLE_DEPENDENCY_CLAUSE),
+)
+SEVERITY_REACH_CELLS: tuple[tuple[str, str, str, str], ...] = tuple(
+    (sev, reach, level, clause)
+    for sev, level in EXACT_SEVERITY_LEVELS
+    for reach, clause in _REACH_CLAUSES
 )
 
 
@@ -416,10 +424,11 @@ def expand_severity_reach_matrix(
     categories: list[str],
     period_caption: str,
 ) -> dict[str, dict[str, dict[str, Any]]]:
-    """Fill severity/reach rollups from Crit/High x base reach cells.
+    """Fill severity/reach rollups from Crit/High/Med/Low x base reach cells.
 
-    ``all`` reach remains the executive RF+PRF union. ``unreachable`` sums
-    unreachable function + dependency. Missing base cells become zeros.
+    Per-severity ``all`` reach remains the RF+PRF union. ``unreachable`` sums
+    unreachable function + dependency. Top-level ``all`` sums all four exact
+    severity rows. Missing base cells become zeros.
     """
 
     def combine(parts: list[dict[str, Any]]) -> dict[str, Any]:
@@ -433,9 +442,6 @@ def expand_severity_reach_matrix(
         if isinstance(found, dict):
             return found
         return empty_series_cell(categories, period_caption)
-
-    crit_rf_prf = combine([cell("critical", "reachable"), cell("critical", "prf")])
-    high_rf_prf = combine([cell("high", "reachable"), cell("high", "prf")])
 
     def sev_row(sev: str) -> dict[str, dict[str, Any]]:
         reachable = cell(sev, "reachable")
@@ -453,24 +459,22 @@ def expand_severity_reach_matrix(
             "unreachable": combine([uf, ud]),
         }
 
-    critical = sev_row("critical")
-    high = sev_row("high")
+    exact = {sev: sev_row(sev) for sev, _level in EXACT_SEVERITY_LEVELS}
+    reach_keys = (
+        "all",
+        "reachable",
+        "prf",
+        "prd",
+        "unreachable_function",
+        "unreachable_dependency",
+        "unreachable",
+    )
     return {
         "all": {
-            "all": combine([crit_rf_prf, high_rf_prf]),
-            "reachable": combine([critical["reachable"], high["reachable"]]),
-            "prf": combine([critical["prf"], high["prf"]]),
-            "prd": combine([critical["prd"], high["prd"]]),
-            "unreachable_function": combine(
-                [critical["unreachable_function"], high["unreachable_function"]]
-            ),
-            "unreachable_dependency": combine(
-                [critical["unreachable_dependency"], high["unreachable_dependency"]]
-            ),
-            "unreachable": combine([critical["unreachable"], high["unreachable"]]),
+            reach: combine([exact[sev][reach] for sev, _ in EXACT_SEVERITY_LEVELS])
+            for reach in reach_keys
         },
-        "critical": critical,
-        "high": high,
+        **exact,
     }
 
 
@@ -490,9 +494,14 @@ def query_operation_group_counts(
     if level is not None:
         filt += f" and spec.level==FINDING_LEVEL_{level}"
     else:
-        filt += " and spec.level in [FINDING_LEVEL_CRITICAL, FINDING_LEVEL_HIGH]"
+        filt += (
+            " and spec.level in ["
+            "FINDING_LEVEL_CRITICAL, FINDING_LEVEL_HIGH, "
+            "FINDING_LEVEL_MEDIUM, FINDING_LEVEL_LOW]"
+        )
     if project_uuid is not None:
-        filt = project_scoped_filter(filt, project_uuid)
+        # FindingLog is scoped by meta.parent_uuid (spec.project_uuid is 400).
+        filt = f'{filt} and meta.parent_uuid=="{project_uuid}"'
 
     return group_by_time_counts(
         client.FindingLog.list_groups,
@@ -507,6 +516,116 @@ def query_operation_group_counts(
 _query_operation_group_counts = query_operation_group_counts
 
 
+def _shards_for_parent_scope(
+    client: Client,
+    namespace: str,
+    parent_uuids: list[str] | None,
+    *,
+    max_project_pages: int | None,
+) -> list[Any]:
+    """Project shards for leaf/tenant FindingLog escalate (timeout fallback)."""
+    from endorlabs.tools.list_sharding import ProjectShard
+
+    if parent_uuids is not None:
+        return [
+            ProjectShard(project_uuid=str(uid), namespace=namespace)
+            for uid in parent_uuids
+            if uid
+        ]
+    return list(
+        client.Query.Project.discover(
+            namespace,
+            traverse=True,
+            max_pages=max_project_pages,
+        ).project_shards()
+    )
+
+
+def query_operation_group_counts_resilient(
+    client: Client,
+    *,
+    namespace: str,
+    base_filter: str,
+    operation: str,
+    level: str | None,
+    interval: str,
+    parent_uuids: list[str] | None = None,
+    max_workers: int = 12,
+    max_project_pages: int | None = None,
+) -> dict[str, int]:
+    """``group_by_time`` with timeout→per-project shard escalate (chart pattern).
+
+    Tries one aggregate for the namespace (optional ``parent_uuids`` is_in). On
+    timeout-like errors with multi-project scope, fans out via
+    :func:`parallel_map_shards`. Single-project scope does not escalate.
+    """
+    if parent_uuids is not None and len(parent_uuids) == 0:
+        return {}
+
+    single_uuid = (
+        parent_uuids[0] if parent_uuids is not None and len(parent_uuids) == 1 else None
+    )
+    try:
+        if single_uuid is not None:
+            return query_operation_group_counts(
+                client,
+                namespace=namespace,
+                base_filter=base_filter,
+                operation=operation,
+                level=level,
+                traverse=False,
+                interval=interval,
+                project_uuid=single_uuid,
+            )
+        scoped = append_parent_uuid_filter(base_filter, parent_uuids)
+        return query_operation_group_counts(
+            client,
+            namespace=namespace,
+            base_filter=scoped,
+            operation=operation,
+            level=level,
+            traverse=False,
+            interval=interval,
+        )
+    except Exception as exc:
+        if single_uuid is not None or not is_timeout_like(exc):
+            raise
+
+    shards = _shards_for_parent_scope(
+        client,
+        namespace,
+        parent_uuids,
+        max_project_pages=max_project_pages,
+    )
+    if not shards:
+        return {}
+
+    def worker(shard: Any) -> dict[str, int]:
+        try:
+            return query_operation_group_counts(
+                client,
+                namespace=shard.namespace,
+                base_filter=base_filter,
+                operation=operation,
+                level=level,
+                traverse=False,
+                interval=interval,
+                project_uuid=shard.project_uuid,
+            )
+        except Exception as exc:
+            if is_timeout_like(exc):
+                return {}
+            raise
+
+    results = parallel_map_shards(
+        shards,
+        worker,
+        max_workers=max(1, max_workers),
+        progress_label=f"FindingLog {operation} shards",
+    )
+    return merge_count_dicts(results)
+
+
 def query_severity_facet_series_cell(
     client: Client,
     *,
@@ -519,11 +638,16 @@ def query_severity_facet_series_cell(
     parent_uuids: list[str] | None = None,
     lookback: int = CHART_DEFAULT_LOOKBACK,
     interval: str = CHART_DEFAULT_INTERVAL,
+    max_workers: int = 12,
+    max_project_pages: int | None = None,
 ) -> dict[str, Any]:
     """Query one severity x facet FindingLog CREATE/DELETE series cell.
 
     *facet_clause* may be empty (category-only / ``all`` facet). *parent_uuids*
     scopes to ``meta.parent_uuid``; ``None`` means the whole namespace path.
+
+    Multi-project / leaf aggregates escalate to project shards on timeout
+    (same ladder as :func:`query_operation_counts`).
     """
     clause = category_base_filter
     extra = (facet_clause or "").strip()
@@ -534,24 +658,27 @@ def query_severity_facet_series_cell(
         window_end,
         base_filter=clause,
     )
-    base = append_parent_uuid_filter(base, parent_uuids)
-    create = query_operation_group_counts(
+    create = query_operation_group_counts_resilient(
         client,
         namespace=namespace,
         base_filter=base,
         operation="CREATE",
         level=level,
-        traverse=False,
         interval=interval,
+        parent_uuids=parent_uuids,
+        max_workers=max_workers,
+        max_project_pages=max_project_pages,
     )
-    delete = query_operation_group_counts(
+    delete = query_operation_group_counts_resilient(
         client,
         namespace=namespace,
         base_filter=base,
         operation="DELETE",
         level=level,
-        traverse=False,
         interval=interval,
+        parent_uuids=parent_uuids,
+        max_workers=max_workers,
+        max_project_pages=max_project_pages,
     )
     return series_cell_from_analysis(
         build_analysis(
@@ -574,7 +701,7 @@ def expand_severity_facet_matrix(
     categories: list[str],
     period_caption: str,
 ) -> dict[str, dict[str, dict[str, Any]]]:
-    """Fill severity ``all`` rollups from Crit/High x facet base cells."""
+    """Fill severity ``all`` rollups from Crit/High/Med/Low x facet base cells."""
 
     def combine(parts: list[dict[str, Any]]) -> dict[str, Any]:
         return sum_series_cells(
@@ -588,12 +715,16 @@ def expand_severity_facet_matrix(
             return found
         return empty_series_cell(categories, period_caption)
 
-    critical = {facet: cell("critical", facet) for facet in facet_keys}
-    high = {facet: cell("high", facet) for facet in facet_keys}
+    exact = {
+        sev: {facet: cell(sev, facet) for facet in facet_keys}
+        for sev, _level in EXACT_SEVERITY_LEVELS
+    }
     return {
-        "all": {facet: combine([critical[facet], high[facet]]) for facet in facet_keys},
-        "critical": critical,
-        "high": high,
+        "all": {
+            facet: combine([exact[sev][facet] for sev, _ in EXACT_SEVERITY_LEVELS])
+            for facet in facet_keys
+        },
+        **exact,
     }
 
 
@@ -612,14 +743,16 @@ def query_severity_facet_matrix(
     period_caption: str | None = None,
     interval: str = CHART_DEFAULT_INTERVAL,
     expand: str = "severity",
+    max_workers: int = 12,
+    max_project_pages: int | None = None,
 ) -> dict[str, dict[str, dict[str, Any]]]:
-    """Query Crit/High x facet cells and expand rollups.
+    """Query severity x facet cells and expand rollups.
 
     *cells* rows are ``(severity, facet, level, facet_clause)``. Failed cells
     become zeros so callers can still roll up partial results.
 
     *expand*:
-    - ``"severity"`` — sum Crit+High per facet (SAST / Secrets / AI-SAST).
+    - ``"severity"`` — sum Crit+High+Med+Low per facet (SAST / Secrets / AI-SAST).
     - ``"reach"`` — SCA reach rollups (``all`` = RF+PRF; ``unreachable`` =
       function+dependency). *facet_keys* is unused for the expand step.
     """
@@ -636,12 +769,15 @@ def query_severity_facet_matrix(
             parent_uuids=parent_uuids,
             lookback=lookback,
             interval=interval,
+            max_workers=max_workers,
+            max_project_pages=max_project_pages,
         )
         categories = list(seed["categories"])
         period_caption = str(seed["periodCaption"])
 
-    matrix: dict[str, dict[str, dict[str, Any]]] = {"critical": {}, "high": {}}
+    matrix: dict[str, dict[str, dict[str, Any]]] = {}
     for sev, facet, level, clause in cells:
+        matrix.setdefault(sev, {})
         try:
             matrix[sev][facet] = query_severity_facet_series_cell(
                 client,
@@ -654,6 +790,8 @@ def query_severity_facet_matrix(
                 parent_uuids=parent_uuids,
                 lookback=lookback,
                 interval=interval,
+                max_workers=max_workers,
+                max_project_pages=max_project_pages,
             )
         except Exception:
             matrix[sev][facet] = empty_series_cell(categories, period_caption)
@@ -788,16 +926,21 @@ def _query_operation_counts_sharded(
 
     def _shard_query(level: str | None) -> dict[str, int]:
         def worker(shard: Any) -> dict[str, int]:
-            return _query_operation_group_counts(
-                client,
-                namespace=shard.namespace,
-                base_filter=base_filter,
-                operation=operation,
-                level=level,
-                traverse=False,
-                interval=interval,
-                project_uuid=shard.project_uuid,
-            )
+            try:
+                return _query_operation_group_counts(
+                    client,
+                    namespace=shard.namespace,
+                    base_filter=base_filter,
+                    operation=operation,
+                    level=level,
+                    traverse=False,
+                    interval=interval,
+                    project_uuid=shard.project_uuid,
+                )
+            except Exception as exc:
+                if is_timeout_like(exc):
+                    return {}
+                raise
 
         results = parallel_map_shards(
             shards,

@@ -5,13 +5,18 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+import pytest
+
 from endorlabs.tools.list_sharding import ProjectShard
+from endorlabs.workflows.findings.patch_core import (
+    assert_patch_row_grain,
+    build_finding_filter,
+    compute_signal_breakdown,
+    extract_patch_rows,
+    filter_by_reachability,
+    finding_signal_flags,
+)
 from endorlabs.workflows.findings.patch_fix_report import (
-    _build_finding_filter,
-    _compute_signal_breakdown,
-    _extract_patch_rows,
-    _filter_by_reachability,
-    _finding_signal_flags,
     _rollup_patch_fix_rows,
     build_patch_fix_report,
     parse_args,
@@ -81,30 +86,33 @@ def _upgrade_item(
 
 
 def test_build_finding_filter_default_gate_is_union() -> None:
-    filt = _build_finding_filter(("FINDING_CATEGORY_VULNERABILITY",), None, gate="any")
+    filt = build_finding_filter(("FINDING_CATEGORY_VULNERABILITY",), None, gate="any")
+    assert "spec.dismiss != true" in filt
     assert "spec.fixing_patch.endor_patch_available==true" in filt
     assert "spec.finding_tags contains FINDING_TAGS_FIX_AVAILABLE" in filt
     assert " or " in filt
 
 
 def test_build_finding_filter_endor_patch_gate_is_strict() -> None:
-    filt = _build_finding_filter(
+    filt = build_finding_filter(
         ("FINDING_CATEGORY_VULNERABILITY",), None, gate="endor-patch"
     )
+    assert "spec.dismiss != true" in filt
     assert "spec.fixing_patch.endor_patch_available==true" in filt
     assert "FINDING_TAGS_FIX_AVAILABLE" not in filt
 
 
 def test_build_finding_filter_fix_available_gate_is_broad_only() -> None:
-    filt = _build_finding_filter(
+    filt = build_finding_filter(
         ("FINDING_CATEGORY_VULNERABILITY",), None, gate="fix-available"
     )
+    assert "spec.dismiss != true" in filt
     assert "spec.finding_tags contains FINDING_TAGS_FIX_AVAILABLE" in filt
     assert "endor_patch_available" not in filt
 
 
 def test_build_finding_filter_includes_severity_and_category() -> None:
-    filt = _build_finding_filter(
+    filt = build_finding_filter(
         ("FINDING_CATEGORY_VULNERABILITY", "FINDING_CATEGORY_SCA"),
         ("critical", "high"),
         gate="any",
@@ -123,7 +131,7 @@ def test_finding_signal_flags_reads_tags_and_patch_fields() -> None:
         upgrade_list=[_upgrade_item()],
     )
 
-    flags = _finding_signal_flags(finding)
+    flags = finding_signal_flags(finding)
 
     assert flags == {
         "fix_available": True,
@@ -131,12 +139,16 @@ def test_finding_signal_flags_reads_tags_and_patch_fields() -> None:
         "has_upgrade_path": True,
         "reachable_function": True,
         "potentially_reachable_function": False,
+        "unreachable_function": False,
+        "reachable_dependency": False,
+        "potentially_reachable_dependency": False,
+        "unreachable_dependency": False,
     }
 
 
 def test_filter_by_reachability_any_is_noop() -> None:
     findings = [_finding("f-1"), _finding("f-2")]
-    assert _filter_by_reachability(findings, "any") == findings
+    assert filter_by_reachability(findings, "any") == findings
 
 
 def test_filter_by_reachability_reachable_keeps_tagged_only() -> None:
@@ -146,7 +158,7 @@ def test_filter_by_reachability_reachable_keeps_tagged_only() -> None:
         _finding("f-3", finding_tags=["FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION"]),
     ]
 
-    kept = _filter_by_reachability(findings, "reachable")
+    kept = filter_by_reachability(findings, "reachable")
 
     assert {f["uuid"] for f in kept} == {"f-1", "f-3"}
 
@@ -157,7 +169,7 @@ def test_filter_by_reachability_unreachable_keeps_untagged_only() -> None:
         _finding("f-2", finding_tags=[]),
     ]
 
-    kept = _filter_by_reachability(findings, "unreachable")
+    kept = filter_by_reachability(findings, "unreachable")
 
     assert {f["uuid"] for f in kept} == {"f-2"}
 
@@ -185,7 +197,7 @@ def test_compute_signal_breakdown_confirms_set_relationship() -> None:
         ),
     ]
 
-    breakdown = _compute_signal_breakdown(findings)
+    breakdown = compute_signal_breakdown(findings)
 
     assert breakdown["total_findings"] == 3
     assert breakdown["endor_patch_available_count"] == 2
@@ -195,7 +207,7 @@ def test_compute_signal_breakdown_confirms_set_relationship() -> None:
     assert breakdown["patches_to_request_count"] == 1  # f-2 only
 
 
-def test_extract_patch_rows_flattens_upgrade_list() -> None:
+def test_extract_patch_rows_uses_target_dependency() -> None:
     findings = [
         _finding(
             "f-1",
@@ -203,14 +215,14 @@ def test_extract_patch_rows_flattens_upgrade_list() -> None:
         )
     ]
 
-    rows = _extract_patch_rows(findings)
+    rows = extract_patch_rows(findings)
 
     assert len(rows) == 1
     row = rows[0]
     assert row["finding_uuid"] == "f-1"
-    assert row["package_name"] == "npm://hbs"
+    assert row["package_name"] == "npm://hbs@4.2.0"
     assert row["current_version"] == "4.2.0"
-    assert row["patch_version"] == "4.2.1"
+    assert row["patch_version"] == ""
     assert row["vuln_id"] == "GHSA-test-0001"
     assert row["vuln_aliases"] == "CVE-2024-0001"
     assert row["severity"] == "HIGH"
@@ -227,38 +239,85 @@ def test_extract_patch_rows_marks_available_status() -> None:
             upgrade_list=[_upgrade_item()],
         )
     ]
-    rows = _extract_patch_rows(findings)
+    rows = extract_patch_rows(findings)
     assert rows[0]["patch_status"] == "available"
 
 
-def test_extract_patch_rows_skips_findings_without_upgrade_list() -> None:
+def test_extract_patch_rows_includes_findings_without_upgrade_list() -> None:
     findings = [
         _finding("f-1", upgrade_list=None),
         _finding("f-2", upgrade_list=[]),
     ]
 
-    rows = _extract_patch_rows(findings)
+    rows = extract_patch_rows(findings)
 
-    assert rows == []
+    assert {row["finding_uuid"] for row in rows} == {"f-1", "f-2"}
 
 
-def test_extract_patch_rows_handles_multiple_candidates_per_finding() -> None:
+def test_extract_patch_rows_rejects_available_without_target() -> None:
+    findings = [
+        _finding("f-1", endor_patch_available=True, target_package=""),
+    ]
+    with pytest.raises(ValueError, match="available_row_parity"):
+        extract_patch_rows(findings)
+
+
+def test_assert_patch_row_grain_rejects_upgrade_list_key() -> None:
+    findings = [
+        _finding("f-1", endor_patch_available=True),
+    ]
+    rows = extract_patch_rows(findings)
+    rows[0]["package_name"] = "npm://logstash-encoder"
+    with pytest.raises(ValueError, match="patch_row_grain"):
+        assert_patch_row_grain(findings, rows)
+
+
+def test_assert_patch_row_grain_rejects_dropped_available() -> None:
+    findings = [
+        _finding("f-1", endor_patch_available=True),
+        _finding("f-2", endor_patch_available=True),
+    ]
+    rows = extract_patch_rows(findings)
+    with pytest.raises(ValueError, match="available_row_parity"):
+        assert_patch_row_grain(findings, rows[:1])
+
+
+def test_assert_patch_row_grain_rejects_duplicate_available_uuid() -> None:
+    findings = [
+        _finding("f-1", endor_patch_available=True),
+    ]
+    rows = extract_patch_rows(findings)
+    with pytest.raises(ValueError, match="duplicate finding_uuid"):
+        assert_patch_row_grain(findings, [rows[0], dict(rows[0])])
+
+
+def test_extract_patch_rows_ignores_upgrade_list_for_family_key() -> None:
     findings = [
         _finding(
             "f-1",
+            endor_patch_available=True,
             upgrade_list=[
-                _upgrade_item(direct_dependency_name="npm://hbs", to_version="4.2.1"),
-                _upgrade_item(
-                    direct_dependency_name="npm://pdfkit", to_version="0.18.0"
-                ),
+                _upgrade_item(direct_dependency_name="npm://logstash-encoder"),
+                _upgrade_item(direct_dependency_name="npm://pdfkit"),
             ],
-        )
+        ),
+        _finding(
+            "f-2",
+            endor_patch_available=True,
+            upgrade_list=None,
+            target_package="mvn://com.fasterxml.jackson.core:jackson-databind",
+            target_version="2.9.9",
+        ),
     ]
-
-    rows = _extract_patch_rows(findings)
-
+    rows = extract_patch_rows(findings)
     assert len(rows) == 2
-    assert {row["package_name"] for row in rows} == {"npm://hbs", "npm://pdfkit"}
+    by_uuid = {row["finding_uuid"]: row for row in rows}
+    assert by_uuid["f-1"]["package_name"] == "npm://hbs@4.2.0"
+    assert by_uuid["f-1"]["current_version"] == "4.2.0"
+    assert by_uuid["f-2"]["package_name"] == (
+        "mvn://com.fasterxml.jackson.core:jackson-databind"
+    )
+    assert by_uuid["f-2"]["current_version"] == "2.9.9"
 
 
 def test_rollup_patch_fix_rows_sorts_by_name_then_version() -> None:
@@ -351,17 +410,17 @@ def test_build_patch_fix_report_end_to_end() -> None:
     assert result.ok
     assert result.stats.project_count == 1
     assert result.stats.finding_count == 2
-    assert result.stats.fixable_finding_count == 1
+    assert result.stats.fixable_finding_count == 2
     assert result.signal_breakdown["total_findings"] == 2
     assert result.table.rows == [
         {
             "namespace": "tenant",
-            "package_name": "npm://hbs",
+            "package_name": "npm://hbs@4.2.0",
             "current_version": "4.2.0",
-            "patch_version": "4.2.1",
-            "finding_count": 1,
-            "distinct_patch_version_count": 1,
-            "distinct_upgrade_path_count": 1,
+            "patch_version": "",
+            "finding_count": 2,
+            "distinct_patch_version_count": 0,
+            "distinct_upgrade_path_count": 2,
             "project_count": 1,
         }
     ]

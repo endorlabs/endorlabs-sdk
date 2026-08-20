@@ -12,26 +12,44 @@ H1_FINDINGS_BURNDOWN = H1_SCA_BURNDOWN  # compat alias
 
 H1_SAST_BURNDOWN = "SAST burndown"
 
+H1_ENDOR_PATCHES = "Endor Patches"
+
+PURPOSE_ENDOR_PATCHES = (
+    "Highest-impact dependency families with Endor Patch coverage, ranked by "
+    "severity- and reach-weighted Available risk (confirmed function-reachable "
+    "boosted; potentially reachable is not treated as reachable). Families "
+    "group on the vulnerable library current version. Packet Available includes "
+    "any reachability; the product Patches dashboard header is RF or PRF only. "
+    "Click a family for the per-version heat map and use the impact calculator "
+    "for top-K closure."
+)
+
 
 PURPOSE_ONBOARDING = (
-    "How repositories were registered over time and across the namespace hierarchy."
+    "How repositories were registered over time, how MAIN (~90d) and PR (~30d) "
+    "scan cadence kept up, and which project tags / projects lead by full-scan "
+    "activity. Analytics-only ScanResults are excluded by default."
 )
 
 PURPOSE_VERSION_SPRAWL = "How many distinct package versions are in use, and where version sprawl concentrates."
 
 PURPOSE_SCA_BURNDOWN = (
-    "Weekly new versus resolved Critical/High vulnerability (SCA) events "
-    "(FindingLog CREATE/DELETE) by reachability — default RF+PRF, with PRD and "
-    "unreachable function/dependency filters — plus main-context scan activity."
+    "Weekly new versus resolved vulnerability (SCA) FindingLog CREATE/DELETE "
+    "events by reachability — default RF+PRF, with PRD and unreachable "
+    "function/dependency filters — plus main-context scan activity. Severity "
+    "defaults to High and higher; switch to Medium and higher or All severities "
+    "to include Medium/Low bands."
 )
 
 PURPOSE_FINDINGS_BURNDOWN = PURPOSE_SCA_BURNDOWN  # compat alias
 
 PURPOSE_SAST_BURNDOWN = (
-    "Weekly new versus resolved Critical/High SAST, AI-SAST, and Secrets events "
-    "(FindingLog CREATE/DELETE). SAST uses triage tags (true/false positive); "
-    "AI-SAST is FINDING_CATEGORY_SAST + FINDING_TAGS_AI; Secrets uses valid/invalid "
-    "secret tags. Same namespace and project-tag filters as SCA burndown."
+    "Weekly new versus resolved SAST, AI-SAST, and Secrets FindingLog "
+    "CREATE/DELETE events. SAST uses triage tags (true/false positive); "
+    "AI-SAST is FINDING_CATEGORY_SAST + FINDING_TAGS_AI; Secrets uses "
+    "valid/invalid secret tags. Severity defaults to High and higher "
+    "(Critical–Low available via Medium+ / All). Same namespace and "
+    "project-tag filters as SCA burndown."
 )
 
 
@@ -46,13 +64,13 @@ AVG_SCANS_PER_PROJECT_LABEL = "Avg MAIN scans / project"
 TAG_HELP = "Project tags from Project.meta.tags"
 
 GAP_DIFF_HELP = (
-    "Gap differential is window-net at end of lookback minus start "
-    "(CREATE−DELETE movement). Negative = narrowing; positive = widening."
+    "Current gap is today’s window-net (CREATE−DELETE). Period Δ is end − start "
+    "over the lookback: + widens (worse), − narrows (better). Color carries the sign."
 )
 
-TAG_LEADERS_NARROWING = "Tags narrowing fastest (best gap differential)"
+TAG_LEADERS_NARROWING = "Tags narrowing fastest (best period delta)"
 
-TAG_LEADERS_WIDENING = "Tags widening fastest (worst gap differential)"
+TAG_LEADERS_WIDENING = "Tags widening fastest (worst period delta)"
 
 
 GLOSSARY_HTML = """
@@ -73,17 +91,22 @@ GLOSSARY_HTML = """
 
       the same relation/visibility scope.</li>
 
+    <li><strong>Onboarding cadence</strong> uses ScanResult counts: MAIN
+      <code>TYPE_ALL_SCANS</code> (full repo scans, ~90d) and
+      <code>CONTEXT_TYPE_CI_RUN</code> (PR scans, ~30d retention). Opt-out <em>Exclude analytics</em> (on by default) drops
+      <code>TYPE_ANALYTICS</code> / <code>TYPE_ANALYTICS_CHECK</code> from the
+      MAIN weekly series. Tag filter
+      scopes registration, hierarchy, scan-count tiles, and cadence
+      leaderboards; the weekly chart remains organization-wide. CI/PR appears as
+      secondary bars plus a disconnected trend line over the recent ~30d only.</li>
+
     <li><strong>Window net (CREATE−DELETE)</strong> is cumulative FindingLog creates
 
       minus deletes inside the lookback window only. It can be negative when older
 
       findings are resolved in-window. It is not an open Finding inventory count.</li>
 
-    <li><strong>Gap differential</strong> is end window-net minus start window-net
-
-      for the lookback. Example: Widening (+240) / Narrowing (−420). Rankings below
-
-      the charts use this signed delta across project tags.</li>
+    <li><strong>Current gap</strong> is today’s window-net. <strong>Period Δ</strong> is end − start over the lookback (<code>+240</code> widens, <code>-420</code> narrows). Tag leaders rank by period Δ; color encodes direction.</li>
 
     <li><strong>Project tags</strong> come from <code>Project.meta.tags</code>
 
@@ -91,13 +114,19 @@ GLOSSARY_HTML = """
 
     <li><strong>SCA burndown</strong> filters vulnerability FindingLog events by
 
-      reachability (RF / PRF / PRD / unreachable).</li>
+      reachability (RF / PRF / PRD / unreachable). Severity uses cumulative
+
+      thresholds (Critical / High and higher / Medium and higher /
+
+      All severities).</li>
 
     <li><strong>SAST burndown</strong> covers OpenGrep SAST (triage TP/FP), AI-SAST
 
-      detection (<code>FINDING_TAGS_AI</code>), and Secrets (valid/invalid). CodeOwners
+      detection (<code>FINDING_TAGS_AI</code>), and Secrets (valid/invalid), with
 
-      filtering is not included in this packet (FindingLog has no code_owners field).</li>
+      the same severity thresholds. CodeOwners filtering is not included in this
+
+      packet (FindingLog has no code_owners field).</li>
 
     <li><strong>Main-context scans</strong> count ScanResult events with
 
@@ -138,6 +167,8 @@ Reports
 
 04-sast-burndown.html      SAST / AI-SAST / Secrets burndown (FindingLog)
 
+05-endor-patches.html      Endor Patches impact (Available / To Request)
+
 
 
 Raw exports (data/)
@@ -149,6 +180,12 @@ packet.cube.json                 Full interactive cube (source of truth)
 onboarding-weekly.csv            Weekly registration counts
 
 onboarding-hierarchy.csv         Namespace hierarchy rollups
+
+onboarding-cadence-weekly.csv    MAIN full / with-analytics / CI weekly scans
+
+onboarding-cadence-by-tag.csv    Tag ranks by MAIN full + CI cadence
+
+onboarding-cadence-by-project.csv Project ranks by MAIN full + CI cadence
 
 tag-catalog.csv                  Project.meta.tags catalog + series status
 
@@ -164,6 +201,12 @@ throughput-by-tag.csv            Main/CI scan throughput by tag
 
 version-sprawl-top-packages.csv  Top packages by distinct version count
 
+patches-top-families.csv         Endor Patches top families by Available risk
+
+patches-versions.csv             Endor Patches family × version heat-map rows
+
+patches-units-ranked.csv         Endor Patches package@version units
+
 EXPORTS.txt                      This file list
 
 
@@ -178,6 +221,12 @@ Project tags are discovered from Project.meta.tags for this tenant.
 
 SAST burndown adds category (SAST / AI-SAST / Secrets) and facet controls.
 
+Severity on SCA and SAST burndown uses cumulative thresholds:
+
+Critical / High and higher (default) / Medium and higher /
+
+All severities (Critical–Low).
+
 
 
 Metric notes
@@ -188,9 +237,9 @@ Metric notes
 
   inside the lookback window. May be negative. Not open Finding inventory.
 
-- Gap differential: end window-net minus start (e.g. Widening (+240) /
+- Current gap: today’s window-net. Period Δ: end − start (e.g. +240 /
 
-  Narrowing (−420)). Tag leaderboards rank this signed delta.
+  -420). Tag leaders rank by period Δ; color encodes direction.
 
 - Main-context scans: ScanResult events with CONTEXT_TYPE_MAIN (activity proxy).
 
@@ -205,5 +254,79 @@ Metric notes
 
 
 Generated by the Endor Labs SDK. This packet is not the live product UI.
+
+"""
+
+README_PATCHES_ONLY_TEXT = """Endor Labs — Endor Patches report
+
+==================================
+
+
+
+Open 05-endor-patches.html in a browser (no Endor App login required).
+
+
+
+This is a --patches-only run: the onboarding, version sprawl, and burndown
+
+pages are intentionally absent because their data was never collected. Run
+
+`endor-reports packet -n <namespace>` without --patches-only for the full
+
+five-page executive packet.
+
+
+
+Reports
+
+-------
+
+05-endor-patches.html      Endor Patches impact (Available / To Request)
+
+
+
+Raw exports (data/)
+
+-------------------
+
+packet.cube.json                 Patches cube (source of truth)
+
+patches-top-families.csv         Top dependency families by Available risk
+
+patches-versions.csv             Family × version heat-map rows
+
+patches-units-ranked.csv         package@version units ranked by risk
+
+EXPORTS.txt                      This file list
+
+
+
+Metric notes
+
+------------
+
+- Scope: Critical + High vulnerability findings in main context, not
+
+  dismissed, any reachability. The product Patches dashboard Available
+
+  header is RF or PRF only.
+
+- Families group on the vulnerable library current version
+
+  (target_dependency_*), not upgrade_list / UIA bump packages.
+
+- Available: an Endor Patch exists today. To Request: a fix or upgrade path
+
+  exists but patch coverage is incomplete (inferred, not a platform enum).
+
+- Risk weights severity by reachability; the formula is shown on the page.
+
+  CSV column "reachable" is RF-only; use reachable_function and
+
+  potentially_reachable_function for RF vs PRF.
+
+
+
+Generated by the Endor Labs SDK. This report is not the live product UI.
 
 """

@@ -578,6 +578,12 @@ class V1LinterCorrectnessAnalysis(BaseModel):
     """
     The confidence level of the linter correctness analysis.
     """
+    content_hash: str | None = None
+    """
+    sha256 over the source spans (finding location + taint dataflow) this analysis
+    was computed against; a mismatch on rescan invalidates the cached verdict and
+    forces re-analysis of the result.
+    """
     correctness: V1Correctness
     """
     The correctness assessment of the linter correctness analysis.
@@ -644,6 +650,12 @@ class LinterCorrectnessAnalyse(BaseModel):
     confidence_level: V1AIMetaConfidenceLevel
     """
     The confidence level of the linter correctness analysis.
+    """
+    content_hash: str | None = None
+    """
+    sha256 over the source spans (finding location + taint dataflow) this analysis
+    was computed against; a mismatch on rescan invalidates the cached verdict and
+    forces re-analysis of the result.
     """
     correctness: V1Correctness
     """

@@ -9,10 +9,35 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 ### Added
 
 - `endor-reports package-resolution` — tenant-wide main-context PackageVersion resolution CSV plus interactive HTML (unresolved/manifest, dependency resolution, reachability); playbook `agent-knowledge/workflow-reports/endor-package-resolution-report/`.
+- Executive packet Endor Patches page (`reports.patches` / `05-endor-patches.html`): reach-weighted Available risk, version heat map, impact calculator; CLI `--skip-patches` / `--patches-only` (default output under `runs/patches-reports/`).
+- Executive packet onboarding ScanResult cadence (`reports.onboarding.cadence`): weekly MAIN `TYPE_ALL_SCANS` + CI/PR series (~90d), tag/project leaderboards, analytics toggle; CSV exports `onboarding-cadence-*.csv`.
+- Guide [docs/guides/executive-report-packet.md](guides/executive-report-packet.md); README / AGENTS pointers; **endor-workflow-reports** use-case routing for QBR / onboarding / burndown packet.
 
 ### Changed
 
+- Troubleshooting-scans summaries, diffs, and triage markdown include allowlisted `scan_mode` (CLI vs Cloud Scan, `--quick-scan`, `--use-local-repo-cache`, reconstructed flags). Skill **endor-troubleshooting-scans**: read those fields; do not infer GitHub App from checkout paths.
+- Endor Patches family rollup: version ``findings`` counts Available + To Request; family ``projects`` unions all version consumers (not Available-only); family ``findings`` is the heat-map total with ``available_findings`` / ``to_request_findings`` breakdowns.
+- Tenant-wide Finding lists (`list_findings_tenant`, including Endor Patches / patch-fix) always shard per project — even when every project shares one namespace — so `--workers` parallelizes flat tenants instead of a single `traverse=True` list.
+- Executive packet isolates report slices: a FindingLog/SCA timeout no longer aborts the whole CLI; remaining pages still render with `dataGaps` / `reportsMeta`, exit code `1` when any slice failed.
+- Packet FindingLog burndown cells escalate on timeout via project shards (`query_operation_group_counts_resilient`, same ladder as chart `query_operation_counts`); leaf matrices pull in parallel; patches reuses packet discover shards.
+- Endor Patches risk: stop treating PRF as reachable; tiered multipliers across function and dependency tags (`RF×1.5` > `RD×1.25` > `PRF×1.0` / `PRD×1.0` > else `×0.75`) on milder Crit/High bases (`×2`/`×1`). Cube emits RF/PRF/UF and RD/PRD/UD counts; `reachable` remains RF-only.
+- `endor-reports packet` emits INFO stage milestones on stdout (`packet.discover.*`, burndowns, patches, render) via `endorlabs.workflows.reports.logging` (`get_resource_logger` + `RedactingFilter`); optional `--log-level` / `ENDOR_LOG_LEVEL`.
+- Refresh model-sync ship surface from upstream OpenAPI (endorctl watermark 1.7.1118; includes MalwareExposureQuery models, Finding `target_dependency_native_scope`, DependencyMetadata `native_scope`).
+- Patch-fix report and executive packet patches pulls exclude dismissed findings (`spec.dismiss != true`), matching the product findings UI exception filter. Counts drop relative to earlier runs on tenants that use finding exceptions.
+- `endor-reports packet --patches-only` writes only `05-endor-patches.html`, the patches CSVs, and a patches-scoped `README.txt`. Earlier runs also emitted pages 01–04 and header-only CSVs from a cube that never held those slices, so the output looked broken rather than intentionally scoped.
+- Executive packet cubes carry the SCA burndown slice once under `scaBurndown`; the duplicate `findingsBurndown` copy is no longer written (readers still accept it on older cubes). Cuts roughly a quarter of `packet.cube.json` on large tenants.
+- Executive packet onboarding page: replace weekly registration bar with MAIN/CI scan cadence; project-tag filter scopes registration, hierarchy, and cadence ranks.
+- FindingLog burndown severity matrices include Medium/Low; HTML severity control uses cumulative “and higher” thresholds (default High and higher).
+- `endor-estate patch-fix-report` groups on the vulnerable library current version (same grain as the Endor Patches packet). Upgrade-impact ``upgrade_list`` rows are no longer the CSV key; ``patch_version`` is blank unless filled from another field.
+
 ### Fixed
+
+- Endor Patches packet and `endor-estate patch-fix-report` group on ``target_dependency_package_name`` + version (product dashboard grain). ``upgrade_list`` is not a family key and no longer drops findings.
+- Endor Patches HTML no longer labels the packet denom as the product UI default; heat-map reach prints RF and PRF separately. Packet Available is any reachability; the product dashboard header is RF or PRF. CSV ``reachable`` remains RF-only.
+- `GroupBucket.count` / `count_from_wire` / `group_bucket_count` read ``aggregation_count.count`` (Finding and DependencyMetadata ``list_groups`` wire). Query ``reference_count`` uses the same parser. Using ``bucket.count`` no longer returns 0 on grouped buckets.
+- FindingLog timeout escalate: treat httpx ``timed out`` as timeout, shard by ``meta.parent_uuid`` (not ``spec.project_uuid``), and skip a timed-out project shard instead of aborting the merge.
+- Executive packet pages 01–04 use the same brand → nav → title chrome order as Endor Patches; page meta and footer no longer echo the schema string (it remains in `data/packet.cube.json`).
+- Executive packet onboarding, version sprawl, SCA/SAST burndown, and Endor Patches pages state when a slice is missing instead of rendering empty charts and tables with no explanation.
 
 ### Breaking
 
@@ -30,7 +55,6 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 - Executive packet SCA burndown renamed (`scaBurndown` / `03-sca-burndown.html`; legacy `findingsBurndown` still accepted).
 - Executive packet SAST / AI-SAST / Secrets FindingLog burndown (`codeFindingsBurndown` / `04-sast-burndown.html`) with shared category-spec path; `endor-reports upsert-code-findings` rebuilds only that block.
-
 - Workflow report scripts under `agent-knowledge/workflow-reports/*/scripts/` removed; report CLIs and libraries live in `endorlabs.workflows.reports`.
 - `finding_log_trends.query_operation_group_counts` is public (was `_query_operation_group_counts`); report-packet burndown uses the shared severity×reach API instead of a private import.
 - Findings burndown tag series use project-grain FindingLog pulls (parallel per tagged project) with local redistribute; path series remain leaf-namespace aggregates. Default `--min-projects` is `1` (display filter only); `--workers` controls pull parallelism (default 24).
@@ -64,7 +88,6 @@ Repository history starts from a single clean root; sdists ship package content 
 - Always-on CI Security Content Guards and expanded pre-commit portable-examples / content checks (emails, non-Endor URLs, estate `-n` literals). Shipped `src/endorlabs` requires placeholder-only `-n` / `--namespace` / `--tenant` values.
 
 ### Changed
-
 - Product user-docs scrape removed: prefer Docs MCP (`https://docs.endorlabs.com/mcp`; unsupported harnesses: `https://docs.endorlabs.com/llms.txt`). Removed `include_user_docs` / `--sync-user-docs` / `sync_user_docs()`, the `[docs]` extra, and `InitStatus` user-docs fields.
 - Marked `REMOVE_BY_0_7_0` on remaining 0.6.x compat: `InitStatus.openapi_path` alias, flat-OpenAPI reconcile, `session_workspace_dir`, and `workflow_artifacts_root`.
 - Hatch sdist target uses `only-packages = true` (aligned with the wheel: `src/endorlabs` only). Historical note: some 0.5.x sdists could include `tests/`; those dirty artifacts were removed from PyPI.
@@ -88,7 +111,6 @@ Auth hardening, Query collect pagination, credential/AuthorizationPolicy audit s
 - `reference_next_page_cursor()` / `wire_spec_with_reference_page_cursor()` — nested reference list pagination helpers for custom Query joins.
 
 ### Changed
-
 - Auth env parity: removed `ENDOR_AUTH_TENANT` / `ENDOR_INIT_AUTH_TENANT` reads from `Client`; no new auth env vars. Bearer refresh hints are learned in-memory from `GET /v1/auth` (not from namespace), but bearer sessions no longer reauthenticate mid-run. `Client` never writes `ENDOR_TOKEN` or mutates `os.environ`; bearer expiry/401 now fail closed with refresh guidance, while API-key auth retains transport-level reauthentication. Proactive expiry prints a one-time stderr warning (no secrets). `endor-auth check --json` adds `auth_mode_resolved`, `sso_tenant_resolved`, `browser_auth_method_resolved`. Disk persistence remains `endor-auth refresh` only.
 - Browser OAuth: live-verified interactive methods are `sso` (explicit tenant required; no silent `endor-admin`), `google`, `github`, `gitlab`, and `email` (requires `--email`). `azureadv2` and `browser-auth` remain experimental. Bare `Client()` without credentials does not open a browser. Only SSO hard-requires `-n` at refresh; social/email tenant access comes from AuthorizationPolicy grants on the resulting token.
 - Browser OAuth UX: localhost callback success page and `endor-auth refresh` stdout show whoami identity + token TTL (never the bearer). Shared helpers: `identity_from_auth_payload`, `format_ttl_label` / `expiration_from_auth_payload` in `bearer_token`. Refresh-hint mapping covers `authentication_source=endor` → `email` and IdP object ids → `sso`.

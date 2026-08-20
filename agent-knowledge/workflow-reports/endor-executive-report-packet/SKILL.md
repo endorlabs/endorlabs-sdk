@@ -2,9 +2,9 @@
 name: endor-executive-report-packet
 description: |
   Use when producing a tenant-level executive interactive HTML report packet
-  (onboarding, dependency version sprawl, vulnerability FindingLog trends) for
-  browser handoff. Not for single-project RCA, estate IR collect, or Cursor
-  canvas-only artifacts.
+  (onboarding + scan/PR cadence, dependency version sprawl, SCA and
+  SAST/AI-SAST/Secrets FindingLog burndown, Endor Patches) for browser handoff.
+  Not for single-project RCA, estate IR collect, or Cursor canvas-only artifacts.
 endorlabs:
   catalog:
     workflow_id: executive-report-packet
@@ -13,15 +13,17 @@ endorlabs:
     library_entrypoints:
       - endorlabs.workflows.reports.bundles.executive_packet.build_report_packet
       - endorlabs.workflows.reports.export.html.render.render_report_packet
+      - endorlabs.workflows.reports.analyze.patches.collect_patches_report
       - endorlabs.workflows.reports.parity.compare_packet_cube
 ---
 
 # Executive report packet
 
 Build a **self-contained HTML packet** for a tenant or namespace: organization
-onboarding, dependency version sprawl, and vulnerability findings trend
-(FindingLog CREATE/DELETE). Open the HTML files in any browser — no Cursor
-runtime required.
+onboarding (registration + ScanResult MAIN/CI cadence), dependency version
+sprawl, FindingLog CREATE/DELETE burndown (SCA + SAST/AI-SAST/Secrets), and
+Endor Patches impact. Open the HTML files in any browser — no Cursor runtime
+required.
 
 ## Scope
 
@@ -30,6 +32,8 @@ runtime required.
 - Tenant/namespace executive HTML under
   `.endorlabs-context/workspace/runs/executive-report-packet/`.
 - Project tag discovery from `Project.meta.tags` (full catalog; no allowlists).
+- Onboarding scan cadence: weekly MAIN `TYPE_ALL_SCANS` + `CONTEXT_TYPE_CI_RUN`
+  (analytics off by default); tag/project leaderboards by cadence.
 - FindingLog window-net trends; tag series via project-grain pulls + local
   redistribute (`--workers`); `--min-projects` only filters display.
 
@@ -68,7 +72,15 @@ Optional flags:
 - `--min-projects 1` — display filter: omit tags with fewer tagged projects
 - `--workers 24` — parallel FindingLog matrix pulls for tagged projects
 - `--output-dir <path>` — override default runs bucket
-- `--skip-version-sprawl` / `--skip-findings-burndown` — partial packets
+- `--skip-version-sprawl` / `--skip-findings-burndown` / `--skip-patches` —
+  partial packets
+- `--patches-only` — Endor Patches page only (Finding list); default output
+  `.endorlabs-context/workspace/runs/patches-reports/<tenant>-MMDDYY/`. Writes
+  only `05-endor-patches.html` + `patches-*.csv`; pages 01–04 are not emitted.
+- `--patches-date-suffix 072926` — override the patches-only date folder suffix
+
+On a live slice failure (e.g. FindingLog timeout), HTML still writes; cube
+`dataGaps` / `reportsMeta` name the failed slice; CLI exits `1`.
 
 ## Scratch parity (gitignored baselines)
 
@@ -109,17 +121,42 @@ only). Accept small live drift (≤1–2%); fail on structural breaks or large c
 
 | File | Content |
 |------|---------|
-| `01-onboarding.html` | Organization onboarding |
+| `01-onboarding.html` | Onboarding + scan/PR cadence + tag/project ranks |
 | `02-version-sprawl.html` | Dependency version sprawl |
-| `03-findings-burndown.html` | Vulnerability findings trend |
+| `03-sca-burndown.html` | SCA FindingLog burndown |
+| `04-sast-burndown.html` | SAST / AI-SAST / Secrets FindingLog burndown |
 | `data/packet.cube.json` | Portable cube (`endor.report_packet.v0`) |
 | `README.txt` | Metric definitions for handoff |
+
+## Endor Patches vs the product dashboard
+
+The packet is **not** the live Patches UI. Quote the filter before comparing
+counts. Guide: [docs/guides/executive-report-packet.md](../../../docs/guides/executive-report-packet.md).
+
+| Surface | What it counts |
+| -------- | -------------- |
+| Packet pull | Critical + High, not dismissed, main context, **any reachability**, patch/fix gate |
+| Packet **Available** catalog | `spec.fixing_patch.endor_patch_available==true` |
+| Product Patches **Available** header | Same as catalog, but reach is RF **or** PRF only |
+| Family / version group key | Vulnerable library current version: `spec.target_dependency_package_name` + `spec.target_dependency_version` |
+| Not a group key | `spec.fixing_upgrades.upgrade_list` (upgrade-impact / what to bump) |
+
+CSV `reachable` is RF-only. Use `reachable_function` /
+`potentially_reachable_function`.
+
+### Onboarding cadence (`reports.onboarding.cadence`)
+
+- `weeklyMainFull` / `weeklyMainWithAnalytics` — estate MAIN weekly ScanResult counts (~90d).
+- `weeklyCi` / CI project ranks use ~30d retention (`ciLookbackDays`); CI is not plotted on the 90d weekly chart.
+- `byProject` / `byTag` / `topProjects` / `topTags` — rank by MAIN full scans then CI.
+- UI: project-tag filter scopes registration, hierarchy, **scan-count tiles**, and ranks; **Exclude analytics** (on by default) opts out of `TYPE_ANALYTICS` / `TYPE_ANALYTICS_CHECK` on the MAIN weekly series; weekly chart stays org-wide.
 
 ## Metric captions (must preserve)
 
 - Primary burndown stat: **Window net (CREATE−DELETE)** (may be negative; not open inventory).
 - MAIN throughput: **Main-context scans (activity proxy)**.
 - Tags without FindingLog series: **Trend charts not loaded for this tag yet…**
+- Onboarding cadence default excludes `TYPE_ANALYTICS` / `TYPE_ANALYTICS_CHECK`.
 
 ## Library
 

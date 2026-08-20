@@ -131,10 +131,9 @@ def reference_count(project_obj: dict[str, Any], ref_key: str) -> int:
     block_dict = reference_block(project_obj, ref_key)
     if not block_dict:
         return 0
-    if "count_response" in block_dict:
-        return count_from_wire(block_dict)
-    if "count" in block_dict:
-        return int(block_dict["count"])
+    n = count_from_wire(block_dict)
+    if n:
+        return n
     lst = block_dict.get("list")
     if isinstance(lst, dict):
         lst_dict = cast("dict[str, Any]", lst)

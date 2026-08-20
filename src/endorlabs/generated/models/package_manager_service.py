@@ -112,6 +112,21 @@ class SpecPackageManagerStatusState(StrEnum):
     STATE_FAIL = 'STATE_FAIL'
 
 
+class Endorv1BasicAuth(BaseModel):
+    """
+    BasicAuth carries username + password for HTTP Basic registry auth.
+    """
+
+    password: str | None = None
+    """
+    The password for HTTP Basic registry auth.
+    """
+    username: str | None = None
+    """
+    The username for HTTP Basic registry auth.
+    """
+
+
 class GoogleprotobufAny(BaseModel):
     """
     `Any` contains an arbitrary serialized protocol buffer message along with a
@@ -301,32 +316,6 @@ class V1CountResponse(BaseModel):
     """
 
 
-class V1GemSpec(BaseModel):
-    """
-    GemSpec represents a configuration for the Ruby gems package manager.
-    """
-
-    password: str | None = None
-    """
-    An encrypted password that must be provided by the repository owner.
-    """
-    priority: int
-    """
-    The priority of the Ruby gems package manager.
-    Priorities are relative. If multiple package managers
-    have the same priority, the order between them can be random.
-    Lower number means higher priority.
-    """
-    url: str | None = None
-    """
-    The URL of the registry that the Ruby gems package manager must use.
-    """
-    user: str | None = None
-    """
-    The user name to use to access this repository.
-    """
-
-
 class V1GroupAggregationValueResponse(BaseModel):
     """
     GroupAggregationValueResponse returns the value of the aggregation if
@@ -385,61 +374,6 @@ class V1MTLSAuth(BaseModel):
     server_cert: str | None = None
     """
     The server certificate in PEM format.
-    """
-
-
-class V1MavenSpec(BaseModel):
-    """
-    MavenSpec represents a configuration for the Maven package manager.
-    """
-
-    id: str | None = None
-    """
-    A string that uniquely identifies this proxy/server. This is the
-    UUID of the object if not provided.
-    """
-    is_plugin_repository: bool | None = None
-    """
-    Indicates whether the repository is a plugin or binary repository.
-    """
-    mtls: V1MTLSAuth | None = None
-    """
-    MTLS authentication for the Maven package manager.
-    """
-    name: str | None = None
-    """
-    User identifiable name for the repository. This is the name
-    of the package manager if not provided.
-    """
-    password: str | None = Field(
-        None,
-        title='An encrypted password that must be provided by the repository owner.\nhttps://maven.apache.org/guides/mini/guide-encryption.html',
-    )
-    priority: int
-    """
-    The priority of the Maven package manager.
-    Priorities are relative. If multiple package managers
-    have the same priority, the order between them can be random.
-    Lower number means higher priority.
-    """
-    public_repository: bool | None = None
-    """
-    Indicates if cloud storage is accessible publicly.
-    """
-    region: str | None = Field(
-        None, title='Region to be used for cloud storage integration'
-    )
-    snapshots: bool | None = None
-    """
-    Indicates whether the repository can contain snapshot versions.
-    """
-    url: str | None = None
-    """
-    The URL of the registry that the Maven package manager must use.
-    """
-    user: str | None = None
-    """
-    The user name to use to access this repo.
     """
 
 
@@ -567,32 +501,6 @@ class V1NPMSpec(BaseModel):
     """
 
 
-class V1NugetSpec(BaseModel):
-    """
-    NugetSpec represents a configuration for the NuGet package manager.
-    """
-
-    password: str | None = None
-    """
-    An encrypted password that must be provided by the repository owner.
-    """
-    priority: int
-    """
-    The priority of the NuGet package manager.
-    Priorities are relative. If multiple package managers
-    have the same priority, the order between them can be random.
-    Lower number means higher priority.
-    """
-    url: str | None = None
-    """
-    The URL of the registry that the NuGet package manager must use.
-    """
-    user: str | None = None
-    """
-    The username to use to access this repository.
-    """
-
-
 class V1PackagistSpec(BaseModel):
     """
     Represents a configuration for the Packagist(PHP) package manager.
@@ -614,36 +522,6 @@ class V1PackagistSpec(BaseModel):
     """
 
 
-class V1PypiSpec(BaseModel):
-    """
-    PypiSpec represents a configuration for the Python package manager.
-    """
-
-    mtls: V1MTLSAuth | None = None
-    """
-    MTLS authentication for the Python package manager.
-    """
-    password: str | None = None
-    """
-    An encrypted password that must be provided by the repository owner.
-    """
-    priority: int
-    """
-    The priority of the Python package manager.
-    Priorities are relative. If multiple package managers
-    have the same priority, the order between them can be random.
-    Lower number means higher priority.
-    """
-    url: str | None = None
-    """
-    The URL of the registry that the Python package manager must use.
-    """
-    user: str | None = None
-    """
-    The user name to use to access this repository.
-    """
-
-
 class V1SwiftSpecBasicAuth(BaseModel):
     password: str | None = None
     username: str | None = None
@@ -660,6 +538,21 @@ class V1TenantMeta(BaseModel):
     groupings of resources. Namespaces must be a fully qualified name,
     for example, the child namespace of namespace "endor.prod" called "app"
     is called "endor.prod.app".
+    """
+
+
+class V1TokenAuth(BaseModel):
+    """
+    TokenAuth is a single opaque token credential. Its wire encoding is
+    ecosystem-specific (see per-spec doc comments): a literal Authorization:
+    Bearer header where the tooling supports it (Maven), otherwise the HTTP
+    Basic password. Named TokenAuth (not BearerAuth) precisely because it is
+    not a bearer header on every ecosystem.
+    """
+
+    token: str | None = None
+    """
+    The opaque token credential; see the message doc for per-ecosystem wire encoding.
     """
 
 
@@ -761,6 +654,45 @@ class V1ConanSpec(BaseModel):
     """
 
 
+class V1GemSpec(BaseModel):
+    """
+    GemSpec represents a configuration for the Ruby gems package manager.
+    """
+
+    basic_auth: Endorv1BasicAuth | None = None
+    """
+    Basic auth (username + password) for the registry.
+    """
+    password: str | None = None
+    """
+    An encrypted password that must be provided by the repository owner.
+    Superseded by `auth`; kept only for migration, removed in a later CR.
+    """
+    priority: int
+    """
+    The priority of the Ruby gems package manager.
+    Priorities are relative. If multiple package managers
+    have the same priority, the order between them can be random.
+    Lower number means higher priority.
+    """
+    token_auth: V1TokenAuth | None = None
+    """
+    Sent as the HTTP Basic password (token-as-password), not a literal
+    Authorization: Bearer. Works with JFrog / Azure Artifacts / GitLab /
+    Nexus token auth; will NOT satisfy a registry that requires
+    Authorization: Bearer and rejects Basic.
+    """
+    url: str | None = None
+    """
+    The URL of the registry that the Ruby gems package manager must use.
+    """
+    user: str | None = None
+    """
+    The user name to use to access this repository.
+    Superseded by `auth`; kept only for migration, removed in a later CR.
+    """
+
+
 class V1GradleSpec(BaseModel):
     """
     GradleSpec represents properties that need to be set for Gradle projects.
@@ -790,6 +722,153 @@ class V1GroupResponse(BaseModel):
     Map indexed by values of the fields specified in aggregation_paths,
     for example, {"[{"key":"meta.kind","value":"Project"}]": {
     "aggregation_count": { "count": 1649 } } }.
+    """
+
+
+class V1MavenSpec(BaseModel):
+    """
+    MavenSpec represents a configuration for the Maven package manager.
+    """
+
+    basic_auth: Endorv1BasicAuth | None = None
+    """
+    Basic auth (username + password) for the registry.
+    """
+    id: str | None = None
+    """
+    A string that uniquely identifies this proxy/server. This is the
+    UUID of the object if not provided.
+    """
+    is_plugin_repository: bool | None = None
+    """
+    Indicates whether the repository is a plugin or binary repository.
+    """
+    mtls: V1MTLSAuth | None = None
+    """
+    MTLS authentication for the Maven package manager.
+    """
+    name: str | None = None
+    """
+    User identifiable name for the repository. This is the name
+    of the package manager if not provided.
+    """
+    password: str | None = None
+    """
+    An encrypted password that must be provided by the repository owner.
+    Superseded by `auth`; kept only for migration, removed in a later CR.
+    """
+    priority: int
+    """
+    The priority of the Maven package manager.
+    Priorities are relative. If multiple package managers
+    have the same priority, the order between them can be random.
+    Lower number means higher priority.
+    """
+    public_repository: bool | None = None
+    """
+    Indicates if cloud storage is accessible publicly.
+    """
+    region: str | None = Field(
+        None, title='Region to be used for cloud storage integration'
+    )
+    snapshots: bool | None = None
+    """
+    Indicates whether the repository can contain snapshot versions.
+    """
+    token_auth: V1TokenAuth | None = None
+    """
+    Emitted as "Authorization: Bearer <token>" via settings.xml <httpHeaders>.
+    """
+    url: str | None = None
+    """
+    The URL of the registry that the Maven package manager must use.
+    """
+    user: str | None = None
+    """
+    The user name to use to access this repo.
+    Superseded by `auth`; kept only for migration, removed in a later CR.
+    """
+
+
+class V1NugetSpec(BaseModel):
+    """
+    NugetSpec represents a configuration for the NuGet package manager.
+    """
+
+    basic_auth: Endorv1BasicAuth | None = None
+    """
+    Basic auth (username + password) for the registry.
+    """
+    password: str | None = None
+    """
+    An encrypted password that must be provided by the repository owner.
+    Superseded by `auth`; kept only for migration, removed in a later CR.
+    """
+    priority: int
+    """
+    The priority of the NuGet package manager.
+    Priorities are relative. If multiple package managers
+    have the same priority, the order between them can be random.
+    Lower number means higher priority.
+    """
+    token_auth: V1TokenAuth | None = None
+    """
+    Sent as the HTTP Basic password (token-as-password), not a literal
+    Authorization: Bearer. Works with JFrog / Azure Artifacts / GitLab /
+    Nexus token auth; will NOT satisfy a registry that requires
+    Authorization: Bearer and rejects Basic.
+    """
+    url: str | None = None
+    """
+    The URL of the registry that the NuGet package manager must use.
+    """
+    user: str | None = None
+    """
+    The username to use to access this repository.
+    Superseded by `auth`; kept only for migration, removed in a later CR.
+    """
+
+
+class V1PypiSpec(BaseModel):
+    """
+    PypiSpec represents a configuration for the Python package manager.
+    """
+
+    basic_auth: Endorv1BasicAuth | None = None
+    """
+    Basic auth (username + password) for the registry.
+    """
+    mtls: V1MTLSAuth | None = None
+    """
+    MTLS authentication for the Python package manager.
+    """
+    password: str | None = None
+    """
+    An encrypted password that must be provided by the repository owner.
+    Superseded by `auth`; kept only for migration, removed in a later CR.
+    """
+    priority: int
+    """
+    The priority of the Python package manager.
+    Priorities are relative. If multiple package managers
+    have the same priority, the order between them can be random.
+    Lower number means higher priority.
+    """
+    token_auth: V1TokenAuth | None = None
+    """
+    Sent as the HTTP Basic password (token-as-password), not a literal
+    Authorization: Bearer. Works with JFrog / Azure Artifacts / GitLab /
+    Nexus token auth; will NOT satisfy a registry that requires
+    Authorization: Bearer and rejects Basic.
+    """
+    url: str | None = None
+    """
+    The URL of the registry that the Python package manager must use.
+    """
+    user: str | None = None
+    """
+    The user name to use to access this repository.
+    Superseded by `auth`; kept only for migration, removed in a later CR.
     """
 
 

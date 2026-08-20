@@ -94,6 +94,15 @@ fix the fixture; do not weaken the guard or `--no-verify`.
   `test_resource_list_get_roundtrip.py` covers it
 - Real customer tenants, emails, or production UUIDs in unit fixtures
   (guards will fail the commit)
+- Endor Patches / patch-fix goldens that skip rows without
+  `fixing_upgrades.upgrade_list`, or that key families on
+  `upgrade_list.direct_dependency_name` (product grain is
+  `target_dependency_package_name` + `target_dependency_version`)
+- Tests that treat a report cube as the product UI without quoting the
+  filter (reach tags, dismiss, main context)
+- `list_groups` fixtures that only use `{count: N}` and never
+  `{aggregation_count: {count: N}}` — that is the Finding/DM wire; the
+  former does not catch `GroupBucket.count == 0`
 
 ## Checklist (PR)
 

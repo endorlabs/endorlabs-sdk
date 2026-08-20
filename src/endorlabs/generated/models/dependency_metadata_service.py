@@ -689,6 +689,12 @@ class DependencyMetadataDependencyData(BaseModel):
     """
     End of life timestamp for the dependency package version.
     """
+    forked: bool | None = None
+    """
+    Set to true if the dependency is a downstream fork of a public dependency.
+    True exactly when upstream_reference names a package, so both fields are
+    written together.
+    """
     internal: bool | None = None
     """
     True if the dependency is in the same namespace or, if the
@@ -713,6 +719,11 @@ class DependencyMetadataDependencyData(BaseModel):
     namespace: str | None = None
     """
     Namespace to which the dependency package version object belongs.
+    """
+    native_scope: str | None = None
+    """
+    Un-normalized native dependency scope from the package manager (e.g.
+    Maven "provided"), before it is collapsed into scope. Empty if none.
     """
     orphan: bool | None = None
     """
@@ -786,6 +797,12 @@ class DependencyMetadataDependencyData(BaseModel):
     unresolved_version: str | None = None
     """
     Unresolved dependency package version string. For example, "v2.0.0".
+    """
+    upstream_reference: str | None = None
+    """
+    The public package this private dependency was forked from, so its
+    vulnerabilities can be attributed to the fork. Empty means the resolver
+    has not run yet; "N/A" means it ran and found no upstream.
     """
     utilization: float | None = None
     """

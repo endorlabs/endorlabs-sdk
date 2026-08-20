@@ -3,17 +3,19 @@ name: endor-workflow-reports
 description: 'Use when the user asks for tenant or namespace-level Endor Labs audit
   reports,
 
-  CSV exports, Cursor canvases, executive HTML report packets, PackageVersion
+  CSV exports, Cursor canvases, executive HTML report packets (QBR / customer)
 
-  resolution HTML, or workflow summaries backed by bundled report scripts rather
+  read-out / org onboarding growth / dependency sprawl / SCA·SAST·Secrets
 
-  than day-0 SDK troubleshooting skills. Routes to auth, project inventory, CI
+  FindingLog burndown), PackageVersion resolution HTML, or workflow summaries
 
-  version, finding trend, executive HTML packet, package-resolution, and PRF
+  backed by bundled report scripts rather than day-0 SDK troubleshooting skills.
 
-  report playbooks. Not for single-project scan RCA, finding retrieval, SDK
+  Routes to auth, project inventory, CI version, finding trend, executive HTML
 
-  debugging, or policy validation.'
+  packet, package-resolution, and PRF report playbooks. Not for single-project
+
+  scan RCA, finding retrieval, SDK debugging, or policy validation.'
 ---
 
 # Workflow reports
@@ -46,6 +48,24 @@ Do not use this skill for:
 - SDK/API errors or model drift → [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md)
 - PolicyValidation or exception policy matching → [endor-validate-policy](../endor-validate-policy/SKILL.md)
 
+## When to recommend `endor-reports packet`
+
+Prefer the executive HTML packet when the user asks for any of:
+
+- A **customer / QBR / executive read-out** they can open in a browser (self-contained HTML).
+- **Organization onboarding / project growth** over time, including scan and PR cadence.
+- **Dependency version sprawl** across the tenant or project tags.
+- **FindingLog burndown** for SCA (reachability) and/or SAST / AI-SAST / Secrets.
+- **Endor Patches** impact (Available / To Request) for a campaign read-out.
+
+Command: `uv run --env-file .env endor-reports packet -n <tenant>`
+Output: `.endorlabs-context/workspace/runs/executive-report-packet/`
+Patches-only campaign: `endor-reports packet -n <tenant> --patches-only`
+→ `.endorlabs-context/workspace/runs/patches-reports/`
+Playbook: `agent-knowledge/workflow-reports/endor-executive-report-packet/SKILL.md`.
+Packet Available is any reachability (not the product RF|PRF header). Families
+group on the vulnerable library (`target_dependency_*`), not `upgrade_list`.
+
 ## Report catalog
 
 | User asks for | CLI subcommand | Default output |
@@ -57,7 +77,8 @@ Do not use this skill for:
 | CI `endorctl` version inventory across latest CLI scans | `endor-reports ci-endorctl -n <tenant>` | `.endorlabs-context/workspace/runs/ci-endorctl-version-audit/` |
 | Duplicate project registrations across namespaces | `endor-reports duplicates -n <tenant>` | `.endorlabs-context/workspace/runs/duplicate-projects/` |
 | New vs resolved findings trend chart | `endor-reports findings-trend -n <tenant>` | `.endorlabs-context/workspace/runs/finding-log-weekly-trends/` |
-| Executive interactive HTML packet (onboarding, sprawl, findings trend) | `endor-reports packet -n <tenant>` | `.endorlabs-context/workspace/runs/executive-report-packet/` |
+| Executive interactive HTML packet (onboarding + scan/PR cadence, sprawl, SCA + SAST/Secrets FindingLog burndown, Endor Patches) | `endor-reports packet -n <tenant>` | `.endorlabs-context/workspace/runs/executive-report-packet/` |
+| Endor Patches campaign page only | `endor-reports packet -n <tenant> --patches-only` | `.endorlabs-context/workspace/runs/patches-reports/` |
 | Potentially reachable finding approximation + PV resolution errors | `endor-reports prf-analysis -n <tenant>` | `.endorlabs-context/workspace/runs/potentially-reachable-analysis/` |
 | PackageVersion resolution CSV + interactive HTML (manifest / dep resolution / reachability) | `endor-reports package-resolution -n <tenant>` | `.endorlabs-context/workspace/runs/package-resolution/` |
 

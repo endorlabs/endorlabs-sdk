@@ -103,12 +103,14 @@ def _usage_row_from_group(
     package_version = fields.get(PACKAGE_VERSION_PATH, "")
     if not package_name:
         return None
+    from endorlabs.operations.list_response import group_bucket_count
+
     return {
         "estate_root": estate_root,
         "project_uuid": project_uuid,
         "package_name": package_name,
         "package_version": package_version,
-        "usage_count": bucket.count,
+        "usage_count": group_bucket_count(bucket),
     }
 
 

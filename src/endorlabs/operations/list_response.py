@@ -12,7 +12,11 @@ from endorlabs.workflows.wire_access import as_dict, nested_dict
 
 @dataclass(frozen=True)
 class GroupBucket:
-    """One grouped aggregation bucket from ``group_response`` pagination."""
+    """One grouped aggregation bucket from ``group_response`` pagination.
+
+    ``count`` is ``aggregation_count.count`` on Finding / DM ``list_groups``
+    wire (not a top-level ``count`` key).
+    """
 
     key: str
     parsed: dict[str, str]
@@ -39,12 +43,19 @@ def parse_group_key(group_key: str) -> dict[str, str]:
 
 
 def count_from_wire(block: Any) -> int:
-    """Extract integer count from ``count_response``-shaped wire JSON."""
+    """Extract integer count from count or group-bucket wire JSON.
+
+    Group ``list_groups`` buckets use ``aggregation_count.count``. Plain
+    count RPCs use ``count`` or ``count_response.count``.
+    """
     block_dict = as_dict(block)
     raw = block_dict.get("count")
     if raw is None:
         count_response = nested_dict(block_dict, "count_response")
         raw = count_response.get("count")
+    if raw is None:
+        agg = nested_dict(block_dict, "aggregation_count")
+        raw = agg.get("count")
     if raw is None:
         return 0
     return int(raw)
@@ -111,11 +122,15 @@ def parse_bucket_key(raw: str) -> str:
 
 
 def group_bucket_count(bucket: GroupBucket) -> int:
-    """Extract integer count from a ``GroupBucket`` wire row."""
-    agg = nested_dict(bucket.data, "aggregation_count")
-    count_raw = agg.get("count")
-    if count_raw is not None:
-        return int(count_raw)
+    """Extract integer count from a ``GroupBucket`` wire row.
+
+    Delegates to :func:`count_from_wire` so ``aggregation_count`` and
+    ``count`` / ``count_response`` cannot drift from ``GroupBucket.count``.
+    """
+    if any(
+        key in bucket.data for key in ("count", "count_response", "aggregation_count")
+    ):
+        return count_from_wire(bucket.data)
     return bucket.count
 
 

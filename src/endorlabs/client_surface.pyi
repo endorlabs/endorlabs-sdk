@@ -498,6 +498,7 @@ class _FindingFacade(FindingFacade):
         target_dependency_package_name: Any | None = None,
         target_dependency_name: Any | None = None,
         target_dependency_version: Any | None = None,
+        target_dependency_native_scope: Any | None = None,
         explanation: Any | None = None,
         remediation_action: Any | None = None,
         source_code_version: Any | None = None,
@@ -1195,6 +1196,7 @@ class _PackageVersionFacade(PackageVersionFacade):
         code_owners: Any | None = None,
         call_graph_available: Any | None = None,
         precomputed_call_graph_state: Any | None = None,
+        upstream_reference: Any | None = None,
         **kwargs: Any,
     ) -> PackageVersion: ...
 

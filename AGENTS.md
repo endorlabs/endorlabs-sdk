@@ -44,6 +44,8 @@ Prefer these before assuming full-tenant sweeps or hand-built relationship filte
 - **Estate dashboard joins (Project-root recipes):** `client.Query.Project.count_*` / `collect_*` — validated per-project patterns; run `validate_sample` before scale; same guide.
 - **Evidence vs inference:** Separate API rows, workflow artifacts, and cited spec paths from heuristic or partial conclusions. Mark guesses as **Inferred:**; for SDK/API failure playbooks use skill **endor-troubleshoot-sdk** (maintainers: [docs/contributing/troubleshooting.md](docs/contributing/troubleshooting.md)).
 - **Portable examples / fixtures:** No customer tenants, emails, or production UUIDs in tracked content (unit fixtures, docstrings, skills, docs). Placeholders only; integration tenants via env. Rule `endor-portable-examples`.
+- **Endor Patches grain:** family/version keys are the vulnerable library current version (`spec.target_dependency_package_name` + `target_dependency_version`), not UIA `upgrade_list`. Do not call a report the product UI without quoting the filter (packet Available is any reach; the dashboard Available header is RF or PRF).
+- **`list_groups` counts:** group buckets use `aggregation_count.count`. `GroupBucket.count` is filled from that; do not re-parse `count` / `count_response` only.
 - **Client concurrency:** One `Client` per credential set; thread-safe session with blocking I/O — see [docs/contracts.md](docs/contracts.md#concurrency-and-transport-retries).
 
 ## Bootstrap
@@ -101,6 +103,8 @@ Maintainers editing authoring: `uv run python devtools/codegen/sync_agent_knowle
 **Discovery:** `.endorlabs-context/sdk/INDEX.md` → `MANIFEST.json` → `skills/`; or wheel via `agent_knowledge_index_path()`. Authoring index (maintainers): [agent-knowledge/README.md](agent-knowledge/README.md).
 
 Common entry skills: **endor-auth-setup**, **endor-retrieve-scan-results**, **endor-troubleshooting-scans**, **endor-troubleshoot-sdk**, **endor-troubleshoot-authlog**. Full list: `MANIFEST.json` → `skills[]`.
+
+Tenant / namespace **executive HTML reports** (QBR read-out, onboarding growth, sprawl, FindingLog burndown): skill **endor-workflow-reports** → `uv run endor-reports packet -n <tenant>` — see [docs/guides/executive-report-packet.md](docs/guides/executive-report-packet.md).
 
 Skills compose with handoffs — [agent-knowledge/schema/README.md — Skill composition](agent-knowledge/schema/README.md#skill-composition-and-handoffs).
 

@@ -15,7 +15,7 @@ from endorlabs.workflows.findings.finding_log_trends import (
 if TYPE_CHECKING:
     from endorlabs import Client
 
-SEV_KEYS = ("all", "critical", "high")
+SEV_KEYS = ("all", "critical", "high", "medium", "low")
 PULL_MODE_PROJECT_GRAIN = "project_grain_redistribute"
 DEFAULT_BURNDOWN_WORKERS = 24
 
@@ -149,9 +149,10 @@ def build_path_and_tag_series(
     Returns ``(series_filters, tag_series, tag_series_meta)``.
     """
     leaf_cells: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
-    for ns in leaf_namespaces:
+
+    def _leaf_one(ns: str) -> tuple[str, dict[str, dict[str, dict[str, Any]]]]:
         try:
-            leaf_cells[ns] = matrix_fn(
+            matrix = matrix_fn(
                 client,
                 namespace=ns,
                 window_start=window_start,
@@ -163,7 +164,16 @@ def build_path_and_tag_series(
                 **matrix_kwargs,
             )
         except Exception:
-            leaf_cells[ns] = empty_facet_matrix(categories, period_caption, facet_keys)
+            matrix = empty_facet_matrix(categories, period_caption, facet_keys)
+        return ns, matrix
+
+    if leaf_namespaces:
+        workers = max(1, min(max_workers, len(leaf_namespaces)))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [pool.submit(_leaf_one, ns) for ns in leaf_namespaces]
+            for fut in as_completed(futures):
+                ns, matrix = fut.result()
+                leaf_cells[ns] = matrix
 
     def roll_path(path: str) -> dict[str, dict[str, dict[str, Any]]]:
         if path == "all":
@@ -308,6 +318,7 @@ def build_category_burndown_block(
             level="CRITICAL",
             parent_uuids=None,
             lookback=lookback,
+            max_workers=max_workers,
         )
         categories = list(seed["categories"])
         period_caption = str(seed["periodCaption"])
@@ -321,6 +332,7 @@ def build_category_burndown_block(
             cells=cells,
             facet_keys=facet_keys,
             expand=expand,
+            max_workers=max_workers,
             **kwargs,
         )
 

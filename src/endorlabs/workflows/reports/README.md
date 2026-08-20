@@ -33,6 +33,36 @@ uv run endor-reports prf-analysis -n <tenant>
 uv run endor-reports package-resolution -n <tenant>
 ```
 
+## Executive packet
+
+`endor-reports packet` writes a browser-ready HTML set under
+`.endorlabs-context/workspace/runs/executive-report-packet/`:
+
+| Page | Content |
+|------|---------|
+| `01-onboarding.html` | Project registration + MAIN/CI scan cadence + tag/project ranks |
+| `02-version-sprawl.html` | Dependency version sprawl |
+| `03-sca-burndown.html` | SCA FindingLog burndown |
+| `04-sast-burndown.html` | SAST / AI-SAST / Secrets FindingLog burndown |
+| `05-endor-patches.html` | Endor Patches impact (Available / To Request) |
+
+Default full packet includes Patches (Finding list pull — can be slow on large
+estates). Use `--skip-patches` to omit, or `--patches-only` for a campaign
+batch that writes under
+`.endorlabs-context/workspace/runs/patches-reports/<tenant>-MMDDYY/`
+(override date with `--patches-date-suffix 072926`). A `--patches-only` run
+emits only page 05 and the `patches-*.csv` exports.
+
+Packet Available is any reachability; the product Patches dashboard header is
+RF or PRF. Families group on the vulnerable library, not `upgrade_list`. See
+[executive-report-packet.md](../../../../docs/guides/executive-report-packet.md#endor-patches-vs-the-product-dashboard).
+
+When a slice is skipped in a full packet, its page renders an explicit callout
+rather than empty charts — `_render_*` empty states in `export/html/render.py`.
+
+Guide: [docs/guides/executive-report-packet.md](../../../../docs/guides/executive-report-packet.md).
+Agent router: skill **endor-workflow-reports**.
+
 ## Findings burndown pull
 
 Tag series: one FindingLog severity×reach matrix per **tagged** project

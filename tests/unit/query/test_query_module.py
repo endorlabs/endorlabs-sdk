@@ -24,6 +24,7 @@ from endorlabs.query import (
     parse_query_root_count,
     pv_count_spec,
     query_create_pages,
+    reference_count,
     reference_next_page_cursor,
     reference_next_page_token,
     reference_total,
@@ -61,6 +62,17 @@ def test_parse_project_reference_counts_from_fixture() -> None:
     payload = _load_fixture("pv_count_response.json")
     counts = parse_project_reference_counts(payload, "PackageVersion")
     assert counts == {"proj-a": 42, "proj-b": 7}
+
+
+def test_reference_count_reads_aggregation_count() -> None:
+    project = {
+        "meta": {
+            "references": {
+                "Finding": {"aggregation_count": {"count": 9}},
+            }
+        }
+    }
+    assert reference_count(project, "Finding") == 9
 
 
 def test_parse_project_multi_reference_counts_from_fixture() -> None:

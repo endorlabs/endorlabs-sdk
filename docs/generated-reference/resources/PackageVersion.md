@@ -53,6 +53,7 @@ Optional:
 - `resolved_dependencies`
 - `source_code_reference`
 - `unresolved_dependencies`
+- `upstream_reference`
 
 Unknown flat kwargs raise `TypeError`. Use `payload=` or nested `spec=` / `meta=` for full control.
 
