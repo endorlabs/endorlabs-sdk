@@ -51,7 +51,8 @@ def _packet_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
         help=(
             "Output directory for HTML + cube "
             f"(default: .endorlabs-context/workspace/runs/{RUN_BUCKET}/"
-            "<namespace>-executive-packet/)."
+            "<namespace>-executive-packet-MMDDYY/; "
+            f"or {PATCHES_RUN_BUCKET}/<namespace>-MMDDYY/ with --patches-only)."
         ),
     )
     packet.add_argument("--lookback", type=int, default=13)
@@ -102,12 +103,18 @@ def _packet_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
         ),
     )
     packet.add_argument(
-        "--patches-date-suffix",
+        "--date-suffix",
         default=None,
         help=(
-            "Date suffix for --patches-only output dirs (default: today's "
-            "MMDDYY). Example: 072926."
+            "Date suffix for default output dirs (default: today's MMDDYY). "
+            "Applies to full packets (<tenant>-executive-packet-MMDDYY) and "
+            "--patches-only (<tenant>-MMDDYY). Example: 082126."
         ),
+    )
+    packet.add_argument(
+        "--patches-date-suffix",
+        default=None,
+        help=argparse.SUPPRESS,  # alias for --date-suffix
     )
     packet.add_argument("--timeout", type=float, default=900.0)
     packet.add_argument(
@@ -391,11 +398,14 @@ def _run_packet(args: argparse.Namespace) -> int:
 
     if args.output_dir:
         out_dir = Path(args.output_dir)
-    elif patches_only:
-        suffix = getattr(args, "patches_date_suffix", None)
-        out_dir = default_patches_report_dir(args.namespace, date_suffix=suffix)
     else:
-        out_dir = default_packet_output_dir(args.namespace)
+        suffix = getattr(args, "date_suffix", None) or getattr(
+            args, "patches_date_suffix", None
+        )
+        if patches_only:
+            out_dir = default_patches_report_dir(args.namespace, date_suffix=suffix)
+        else:
+            out_dir = default_packet_output_dir(args.namespace, date_suffix=suffix)
 
     milestone(
         "packet",

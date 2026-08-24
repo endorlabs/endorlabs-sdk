@@ -10,6 +10,7 @@ from endorlabs.operations.list_response import (
     iter_group_buckets_from_page,
     iter_group_buckets_from_pages,
     parse_group_key,
+    wire_has_count,
 )
 
 
@@ -23,7 +24,16 @@ def test_count_from_wire() -> None:
     assert count_from_wire({"count": 3}) == 3
     assert count_from_wire({"count_response": {"count": 5}}) == 5
     assert count_from_wire({"aggregation_count": {"count": 7}}) == 7
+    assert count_from_wire({"count": 0}) == 0
+    assert count_from_wire({"aggregation_count": {"count": 0}}) == 0
     assert count_from_wire({}) == 0
+
+
+def test_wire_has_count_distinguishes_zero_from_absent() -> None:
+    assert wire_has_count({"count": 0}) is True
+    assert wire_has_count({"aggregation_count": {"count": 0}}) is True
+    assert wire_has_count({"list": {"response": {"total": 9}}}) is False
+    assert wire_has_count({}) is False
 
 
 def test_extract_list_objects() -> None:

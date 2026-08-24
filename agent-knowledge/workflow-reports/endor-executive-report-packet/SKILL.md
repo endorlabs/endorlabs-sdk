@@ -30,7 +30,7 @@ required.
 **In scope**
 
 - Tenant/namespace executive HTML under
-  `.endorlabs-context/workspace/runs/executive-report-packet/`.
+  `.endorlabs-context/workspace/runs/executive-report-packet/<tenant>-executive-packet-MMDDYY/`.
 - Project tag discovery from `Project.meta.tags` (full catalog; no allowlists).
 - Onboarding scan cadence: weekly MAIN `TYPE_ALL_SCANS` + `CONTEXT_TYPE_CI_RUN`
   (analytics off by default); tag/project leaderboards by cadence.
@@ -72,13 +72,13 @@ Optional flags:
 - `--min-projects 1` — display filter: omit tags with fewer tagged projects
 - `--workers 24` — parallel FindingLog matrix pulls for tagged projects
 - `--output-dir <path>` — override default runs bucket
+- `--date-suffix 082126` — override today's MMDDYY on default dirs
+  (`<tenant>-executive-packet-MMDDYY/` or `--patches-only` `<tenant>-MMDDYY/`)
 - `--skip-version-sprawl` / `--skip-findings-burndown` / `--skip-patches` —
   partial packets
 - `--patches-only` — Endor Patches page only (Finding list); default output
   `.endorlabs-context/workspace/runs/patches-reports/<tenant>-MMDDYY/`. Writes
   only `05-endor-patches.html` + `patches-*.csv`; pages 01–04 are not emitted.
-- `--patches-date-suffix 072926` — override the patches-only date folder suffix
-
 On a live slice failure (e.g. FindingLog timeout), HTML still writes; cube
 `dataGaps` / `reportsMeta` name the failed slice; CLI exits `1`.
 

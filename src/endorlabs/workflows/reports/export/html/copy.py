@@ -35,21 +35,21 @@ PURPOSE_VERSION_SPRAWL = "How many distinct package versions are in use, and whe
 
 PURPOSE_SCA_BURNDOWN = (
     "Weekly new versus resolved vulnerability (SCA) FindingLog CREATE/DELETE "
-    "events by reachability — default RF+PRF, with PRD and unreachable "
-    "function/dependency filters — plus main-context scan activity. Severity "
-    "defaults to High and higher; switch to Medium and higher or All severities "
-    "to include Medium/Low bands."
+    "events by reachability selection — default RF+PRF, with RF / PRF / RD / "
+    "PRD / RD+PRD and unreachable options — plus main-context scan activity. "
+    "Severity defaults to High and higher; switch to Medium and higher or All "
+    "severities to include Medium/Low bands."
 )
 
 PURPOSE_FINDINGS_BURNDOWN = PURPOSE_SCA_BURNDOWN  # compat alias
 
 PURPOSE_SAST_BURNDOWN = (
-    "Weekly new versus resolved SAST, AI-SAST, and Secrets FindingLog "
-    "CREATE/DELETE events. SAST uses triage tags (true/false positive); "
-    "AI-SAST is FINDING_CATEGORY_SAST + FINDING_TAGS_AI; Secrets uses "
-    "valid/invalid secret tags. Severity defaults to High and higher "
-    "(Critical–Low available via Medium+ / All). Same namespace and "
-    "project-tag filters as SCA burndown."
+    "Weekly new versus resolved OpenGrep, AI-SAST, and Secrets FindingLog "
+    "CREATE/DELETE events. OpenGrep and AI-SAST share triage facets "
+    "(all / true_positive / false_positive); Secrets uses valid/invalid only "
+    "(no TP/FP). OpenGrep excludes FINDING_TAGS_AI; AI-SAST requires it. "
+    "Severity defaults to High and higher (Critical–Low available via "
+    "Medium+ / All). Same namespace and project-tag filters as SCA burndown."
 )
 
 
@@ -114,15 +114,17 @@ GLOSSARY_HTML = """
 
     <li><strong>SCA burndown</strong> filters vulnerability FindingLog events by
 
-      reachability (RF / PRF / PRD / unreachable). Severity uses cumulative
+      reachability selection (RF+PRF default; RF / PRF / RD / PRD /
+
+      RD+PRD / unreachable). Severity uses cumulative
 
       thresholds (Critical / High and higher / Medium and higher /
 
       All severities).</li>
 
-    <li><strong>SAST burndown</strong> covers OpenGrep SAST (triage TP/FP), AI-SAST
+    <li><strong>SAST burndown</strong> covers OpenGrep vs AI-SAST (shared TP/FP
 
-      detection (<code>FINDING_TAGS_AI</code>), and Secrets (valid/invalid), with
+      triage facets) and Secrets (valid/invalid only; no TP/FP), with
 
       the same severity thresholds. CodeOwners filtering is not included in this
 
@@ -165,7 +167,7 @@ Reports
 
 03-sca-burndown.html       SCA burndown (vulnerability FindingLog)
 
-04-sast-burndown.html      SAST / AI-SAST / Secrets burndown (FindingLog)
+04-sast-burndown.html      OpenGrep / AI-SAST / Secrets burndown (FindingLog)
 
 05-endor-patches.html      Endor Patches impact (Available / To Request)
 
@@ -219,7 +221,8 @@ Namespace and Project tag controls appear at the top of each interactive report.
 
 Project tags are discovered from Project.meta.tags for this tenant.
 
-SAST burndown adds category (SAST / AI-SAST / Secrets) and facet controls.
+SAST burndown adds category (OpenGrep / AI-SAST / Secrets) and facet controls
+(TP/FP on OpenGrep and AI-SAST; valid/invalid on Secrets).
 
 Severity on SCA and SAST burndown uses cumulative thresholds:
 

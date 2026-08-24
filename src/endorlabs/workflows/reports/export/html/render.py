@@ -1024,11 +1024,13 @@ fillSelect(document.getElementById("tag"), [
 fillSelect(document.getElementById("sev"), SEV_OPTIONS);
 document.getElementById("sev").value = "high_plus";
 fillSelect(document.getElementById("reach"), [
-  {{v:"all", l:"All reachability (RF + PRF)"}},
-  {{v:"reachable", l:"Reachable function only"}},
+  {{v:"all", l:"Function reach (RF or PRF)"}},
+  {{v:"reachable", l:"Reachable function (RF)"}},
   {{v:"prf", l:"Potentially reachable function (PRF)"}},
+  {{v:"reachable_dependency", l:"Reachable dependency (RD)"}},
   {{v:"prd", l:"Potentially reachable dependency (PRD)"}},
-  {{v:"unreachable", l:"Unreachable (function + dependency)"}},
+  {{v:"dependency_reach", l:"Dependency reach (RD or PRD)"}},
+  {{v:"unreachable", l:"Unreachable (function or dependency)"}},
   {{v:"unreachable_function", l:"Unreachable function only"}},
   {{v:"unreachable_dependency", l:"Unreachable dependency only"}},
 ]);
@@ -1094,12 +1096,14 @@ const LEADERS_NARROW = {json.dumps(leaders_narrow)};
 const LEADERS_WIDEN = {json.dumps(leaders_widen)};
 const FACET_OPTIONS = {{
   sast: [
-    {{v:"all", l:"All (category)"}},
-    {{v:"true_positive", l:"True positive"}},
-    {{v:"false_positive", l:"False positive"}},
+    {{v:"all", l:"All OpenGrep"}},
+    {{v:"true_positive", l:"True positive (AI:TP)"}},
+    {{v:"false_positive", l:"False positive (AI:FP)"}},
   ],
   ai_sast: [
     {{v:"all", l:"All AI-SAST"}},
+    {{v:"true_positive", l:"True positive (AI:TP)"}},
+    {{v:"false_positive", l:"False positive (AI:FP)"}},
   ],
   secrets: [
     {{v:"all", l:"All secrets"}},
@@ -1108,8 +1112,8 @@ const FACET_OPTIONS = {{
   ],
 }};
 const CATEGORY_LABELS = {{
-  sast: "SAST (OpenGrep)",
-  ai_sast: "AI-SAST (detection)",
+  sast: "OpenGrep",
+  ai_sast: "AI-SAST",
   secrets: "Secrets",
 }};
 function catBlock() {{
@@ -1212,8 +1216,8 @@ fillSelect(document.getElementById("tag"), [
   ...(CUBE.tagCatalog||[]).map(t => ({{v:t.tag, l: tagLabel(t.tag)}}))
 ]);
 fillSelect(document.getElementById("category"), [
-  {{v:"sast", l:"SAST (OpenGrep)"}},
-  {{v:"ai_sast", l:"AI-SAST (detection)"}},
+  {{v:"sast", l:"OpenGrep"}},
+  {{v:"ai_sast", l:"AI-SAST"}},
   {{v:"secrets", l:"Secrets"}},
 ]);
 fillSelect(document.getElementById("sev"), SEV_OPTIONS);
@@ -1274,12 +1278,19 @@ def render_report_packet(
     return written
 
 
-def default_packet_output_dir(namespace: str) -> Path:
-    """Default ``runs/executive-report-packet/<tenant>-executive-packet`` path."""
+def default_packet_output_dir(
+    namespace: str,
+    *,
+    date_suffix: str | None = None,
+) -> Path:
+    """Default ``runs/executive-report-packet/<tenant>-executive-packet-MMDDYY``."""
+    from datetime import UTC, datetime
+
     from endorlabs.context.paths import default_runs_dir
 
     slug = sanitize_path_segment(namespace)
-    return default_runs_dir(RUN_BUCKET) / f"{slug}-executive-packet"
+    suffix = (date_suffix or datetime.now(UTC).strftime("%m%d%y")).strip()
+    return default_runs_dir(RUN_BUCKET) / f"{slug}-executive-packet-{suffix}"
 
 
 def default_patches_report_dir(

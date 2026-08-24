@@ -9,6 +9,8 @@ from typing import Any, cast
 
 from endorlabs.workflows.wire_access import as_dict, nested_dict
 
+COUNT_WIRE_KEYS = ("count", "count_response", "aggregation_count")
+
 
 @dataclass(frozen=True)
 class GroupBucket:
@@ -42,11 +44,18 @@ def parse_group_key(group_key: str) -> dict[str, str]:
     return parsed
 
 
+def wire_has_count(block: Any) -> bool:
+    """Return whether *block* has a count arm (including an explicit zero)."""
+    block_dict = as_dict(block)
+    return any(key in block_dict for key in COUNT_WIRE_KEYS)
+
+
 def count_from_wire(block: Any) -> int:
     """Extract integer count from count or group-bucket wire JSON.
 
     Group ``list_groups`` buckets use ``aggregation_count.count``. Plain
-    count RPCs use ``count`` or ``count_response.count``.
+    count RPCs use ``count`` or ``count_response.count``. Missing arms
+    return ``0``; use :func:`wire_has_count` when zero vs absent matters.
     """
     block_dict = as_dict(block)
     raw = block_dict.get("count")
@@ -127,9 +136,7 @@ def group_bucket_count(bucket: GroupBucket) -> int:
     Delegates to :func:`count_from_wire` so ``aggregation_count`` and
     ``count`` / ``count_response`` cannot drift from ``GroupBucket.count``.
     """
-    if any(
-        key in bucket.data for key in ("count", "count_response", "aggregation_count")
-    ):
+    if wire_has_count(bucket.data):
         return count_from_wire(bucket.data)
     return bucket.count
 

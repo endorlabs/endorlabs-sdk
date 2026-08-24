@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 
 from endorlabs.filters import (
     AI_TAG_CLAUSE,
+    NOT_AI_TAG_CLAUSE,
     ai_sast_log_base_filter,
     sast_log_base_filter,
     secrets_log_base_filter,
@@ -22,15 +23,32 @@ from endorlabs.workflows.reports.analyze.code_findings_trend import (
     build_code_findings_burndown_report,
 )
 from endorlabs.workflows.reports.analyze.finding_burndown_specs import (
+    AI_SAST_FACET_KEYS,
     SECRETS_CELLS,
+    SECRETS_FACET_KEYS,
     sev_facet_cells,
 )
 
 
 def test_code_category_base_filters() -> None:
-    assert "FINDING_CATEGORY_SAST" in sast_log_base_filter()
-    assert AI_TAG_CLAUSE in ai_sast_log_base_filter()
+    opengrep = sast_log_base_filter()
+    assert "FINDING_CATEGORY_SAST" in opengrep
+    assert NOT_AI_TAG_CLAUSE in opengrep
+    ai = ai_sast_log_base_filter()
+    assert AI_TAG_CLAUSE in ai
+    assert NOT_AI_TAG_CLAUSE not in ai
     assert "FINDING_CATEGORY_SECRETS" in secrets_log_base_filter()
+    assert CODE_CATEGORIES == ("sast", "ai_sast", "secrets")
+    assert (
+        SAST_FACET_KEYS
+        == AI_SAST_FACET_KEYS
+        == (
+            "all",
+            "true_positive",
+            "false_positive",
+        )
+    )
+    assert SECRETS_FACET_KEYS == ("all", "valid", "invalid")
 
 
 def test_expand_severity_facet_matrix() -> None:
@@ -75,6 +93,7 @@ def test_expand_severity_reach_matrix_sums_four_levels() -> None:
         sev: {
             "reachable": cell(1),
             "prf": cell(2),
+            "reachable_dependency": cell(4),
             "prd": cell(0),
             "unreachable_function": cell(0),
             "unreachable_dependency": cell(0),
@@ -86,9 +105,11 @@ def test_expand_severity_reach_matrix_sums_four_levels() -> None:
     )
     # per-sev all = RF+PRF = 1+2
     assert expanded["critical"]["all"]["weeklyNew"] == [3]
+    assert expanded["critical"]["dependency_reach"]["weeklyNew"] == [4]
     # top-level all = 4 * 3
     assert expanded["all"]["all"]["weeklyNew"] == [12]
     assert expanded["all"]["reachable"]["weeklyNew"] == [4]
+    assert expanded["all"]["reachable_dependency"]["weeklyNew"] == [16]
 
 
 def test_sev_facet_cells_include_medium_low() -> None:
