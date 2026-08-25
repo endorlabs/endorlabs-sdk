@@ -66,6 +66,18 @@
   },
   {
     "agent_visible": true,
+    "cli": "endor-log-export",
+    "composition": "library_api",
+    "default_output": ".endorlabs-context/workspace/runs/log-export/",
+    "id": "log-export",
+    "library_entrypoints": [
+      "endorlabs.workflows.log_export.export_logs"
+    ],
+    "module": "endorlabs.workflows.log_export.cli",
+    "skill": null
+  },
+  {
+    "agent_visible": true,
     "cli": null,
     "composition": "library_api",
     "default_output": "stdout or --output-json",

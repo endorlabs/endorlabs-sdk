@@ -4,8 +4,8 @@ Auto-generated inventories for stable/public surfaces.
 
 ## Model-sync coverage snapshot
 
-- facade contract resources: `41`
-- canonical entities (union): `41`
+- facade contract resources: `43`
+- canonical entities (union): `43`
 
 Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 
@@ -143,6 +143,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 | PRCommentConfig | pr-comment-configs | tenant | — | list, get, create, update, delete |
 | PackageFirewallLog | package-firewall-logs | tenant | — | list, get |
 | PackageLicense | package-licenses | tenant | — | list, get, create, update, delete |
+| PackageManager | package-managers | tenant | — | list, get, create, update, delete |
 | PackageVersion | package-versions | tenant | — | list, get, create, update, delete |
 | Policy | policies | tenant | — | list, get, create, update, delete |
 | PolicyTemplate | policy-templates | tenant | — | list, get |
@@ -160,6 +161,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 | ScanWorkflow | scan-workflows | tenant | — | list, get, delete |
 | ScanWorkflowResult | scan-workflow-results | tenant | — | list, get, delete |
 | SemgrepRule | semgrep-rules | tenant | — | list, get, create, update, delete |
+| SystemConfig | system-config | tenant | — | list, get, create, update, delete |
 | VectorStore | vector-stores | tenant | — | list, get |
 | VectorStoreQuery | queries/vector-stores | tenant | — | create |
 | VersionUpgrade | version-upgrades | tenant | — | list, get, delete |

@@ -316,6 +316,25 @@ PACKAGE_LICENSE_SPEC_REQUIRED = ()
 PACKAGE_LICENSE_META_FIELDS = ()
 PACKAGE_LICENSE_PAYLOAD_TOP_LEVEL_FIELDS = ("context", "meta", "tenant_meta")
 
+PACKAGE_MANAGER_SPEC_FIELDS = (
+    "auth_provider",
+    "npm",
+    "mvn",
+    "cargo",
+    "pypi",
+    "gem",
+    "nuget",
+    "packagist",
+    "gradle",
+    "cocoapod",
+    "swift",
+    "conan",
+    "package_manager_status",
+)
+PACKAGE_MANAGER_SPEC_REQUIRED = ()
+PACKAGE_MANAGER_META_FIELDS = ()
+PACKAGE_MANAGER_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
+
 PACKAGE_VERSION_SPEC_FIELDS = (
     "project_uuid",
     "source_code_reference",
@@ -576,6 +595,23 @@ SEMGREP_RULE_SPEC_FIELDS = ("rule", "disabled", "yaml")
 SEMGREP_RULE_SPEC_REQUIRED = ()
 SEMGREP_RULE_META_FIELDS = ()
 SEMGREP_RULE_PAYLOAD_TOP_LEVEL_FIELDS = ("disabled", "meta", "propagate", "tenant_meta")
+
+SYSTEM_CONFIG_SPEC_FIELDS = (
+    "policy",
+    "logging",
+    "analytics",
+    "finding_prioritization",
+    "artifactory",
+    "sast",
+    "cloud_deployment",
+    "ai",
+    "urgent_notification",
+    "endor_ignore",
+    "package_firewall",
+)
+SYSTEM_CONFIG_SPEC_REQUIRED = ()
+SYSTEM_CONFIG_META_FIELDS = ()
+SYSTEM_CONFIG_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
 
 VECTOR_STORE_SPEC_FIELDS = ("vector_store_uuid", "query", "metadata_filter")
 VECTOR_STORE_SPEC_REQUIRED = ("vector_store_uuid", "query")

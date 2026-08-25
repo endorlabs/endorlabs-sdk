@@ -1,8 +1,8 @@
 {
-  "canonical_entity_count": 41,
-  "facade_contract_resource_count": 41,
+  "canonical_entity_count": 43,
+  "facade_contract_resource_count": 43,
   "registry_contract_path": "src/endorlabs/generated/registry_contract.py",
-  "resource_count": 41,
+  "resource_count": 43,
   "resources": [
     {
       "attr_name": "APIKey",
@@ -405,6 +405,26 @@
       }
     },
     {
+      "attr_name": "PackageManager",
+      "parent_kind": null,
+      "resource_name": "package-managers",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
       "attr_name": "PackageVersion",
       "parent_kind": null,
       "resource_name": "package-versions",
@@ -728,6 +748,26 @@
       "attr_name": "SemgrepRule",
       "parent_kind": null,
       "resource_name": "semgrep-rules",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "SystemConfig",
+      "parent_kind": null,
+      "resource_name": "system-config",
       "scope": "tenant",
       "supported_ops_sdk": {
         "create": true,

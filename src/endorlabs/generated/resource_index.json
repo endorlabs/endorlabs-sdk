@@ -241,6 +241,19 @@
       ]
     },
     {
+      "attr_name": "PackageManager",
+      "doc_path": "docs/generated-reference/resources/PackageManager.md",
+      "resource_name": "package-managers",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
       "attr_name": "PackageVersion",
       "doc_path": "docs/generated-reference/resources/PackageVersion.md",
       "resource_name": "package-versions",
@@ -422,6 +435,19 @@
       "attr_name": "SemgrepRule",
       "doc_path": "docs/generated-reference/resources/SemgrepRule.md",
       "resource_name": "semgrep-rules",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "SystemConfig",
+      "doc_path": "docs/generated-reference/resources/SystemConfig.md",
+      "resource_name": "system-config",
       "scope": "tenant",
       "supported_ops": [
         "create",

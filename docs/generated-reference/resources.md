@@ -1,7 +1,7 @@
 # Resources (SDK API Surface)
 
 Auto-generated from `src/endorlabs/registry.py` and OpenAPI spec.
-Model sync contract: `src/endorlabs/generated/registry_contract.py` (41 resources, 41 canonical entities).
+Model sync contract: `src/endorlabs/generated/registry_contract.py` (43 resources, 43 canonical entities).
 Each operation column is `sdk/spec` where spec is derived from OpenAPI
 collection and item paths.
 
@@ -17,8 +17,8 @@ Legend:
 
 ## Model-sync coverage snapshot
 
-- facade contract resources: `41`
-- canonical entities (union): `41`
+- facade contract resources: `43`
+- canonical entities (union): `43`
 
 | Resource | List (sdk/spec) | Get (sdk/spec) | Create (sdk/spec) | Update (sdk/spec) | Delete (sdk/spec) | Scope | Parent | Limitations |
 |----------|------------------|----------------|-------------------|-------------------|-------------------|-------|--------|-------------|
@@ -42,6 +42,7 @@ Legend:
 | PRCommentConfig | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | PackageFirewallLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | PackageLicense | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
+| PackageManager | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | PackageVersion | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Scan-discovered; API may return 501 for PATCH |
 | Policy | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Rego in payload |
 | PolicyTemplate | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Tenant-context read-only resource |
@@ -59,6 +60,7 @@ Legend:
 | ScanWorkflow | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | Platform-managed |
 | ScanWorkflowResult | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | Platform-managed |
 | SemgrepRule | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
+| SystemConfig | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | VectorStore | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | VectorStoreQuery | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
 | VersionUpgrade | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | Platform-managed |

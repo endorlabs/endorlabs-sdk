@@ -56,6 +56,24 @@ RESOURCE_CONTRACT_OVERLAY_BY_ATTR: dict[str, dict[str, Any]] = {
         ),
         "build_create_payload_fn_name": "build_create_payload",
     },
+    "PackageManager": {
+        "model_class_import_path": (
+            "endorlabs.resources.package_manager:PackageManager"
+        ),
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.package_manager:build_create_payload"
+        ),
+        "build_create_payload_fn_name": "build_create_payload",
+        "filter_kwarg_map": {"name": "meta.name"},
+    },
+    "SystemConfig": {
+        "model_class_import_path": "endorlabs.resources.system_config:SystemConfig",
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.system_config:build_create_payload"
+        ),
+        "build_create_payload_fn_name": "build_create_payload",
+        "filter_kwarg_map": {"name": "meta.name"},
+    },
     "Query": {
         "supported_ops": ["create"],
         "create_mode": "payload-only",
