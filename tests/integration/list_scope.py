@@ -18,10 +18,18 @@ def project_scoped_list_kwargs(client: Any, **kwargs: Any) -> dict[str, Any]:
 
     No-op when the caller already set ``traverse`` / ``parent``, or when the
     client tenant path already contains a child segment (``a.b``).
+
+    When injecting ``traverse``, also default ``concurrent=False`` so
+    ``max_pages`` bounds a single sequential traverse page — not one page per
+    child namespace (concurrent fan-out). Callers that want fan-out pass
+    ``concurrent=True`` explicitly.
     """
     if "traverse" in kwargs or kwargs.get("parent") is not None:
         return kwargs
     ns = getattr(client, "_default_namespace", "") or ""
     if "." not in ns:
-        return {**kwargs, "traverse": True}
+        out = {**kwargs, "traverse": True}
+        if "concurrent" not in kwargs:
+            out["concurrent"] = False
+        return out
     return kwargs

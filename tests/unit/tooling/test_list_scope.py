@@ -9,7 +9,10 @@ from tests.integration.list_scope import project_scoped_list_kwargs
 
 def test_adds_traverse_at_tenant_root() -> None:
     client = SimpleNamespace(_default_namespace="example-tenant")
-    assert project_scoped_list_kwargs(client) == {"traverse": True}
+    assert project_scoped_list_kwargs(client) == {
+        "traverse": True,
+        "concurrent": False,
+    }
 
 
 def test_noop_when_child_namespace() -> None:
@@ -20,3 +23,11 @@ def test_noop_when_child_namespace() -> None:
 def test_respects_explicit_traverse_false() -> None:
     client = SimpleNamespace(_default_namespace="example-tenant")
     assert project_scoped_list_kwargs(client, traverse=False) == {"traverse": False}
+
+
+def test_respects_explicit_concurrent_true() -> None:
+    client = SimpleNamespace(_default_namespace="example-tenant")
+    assert project_scoped_list_kwargs(client, concurrent=True) == {
+        "traverse": True,
+        "concurrent": True,
+    }

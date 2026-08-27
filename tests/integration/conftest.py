@@ -65,6 +65,9 @@ def _auto_traverse_project_scoped_lists_at_tenant_root(  # pyright: ignore[repor
     original_list = ListableFacade.list
 
     def list_auto_traverse(self, *args, **kwargs):
+        # Capture before bind/apply_defaults so we can tell explicit concurrent=
+        # from the signature default (True).
+        user_set_concurrent = "concurrent" in kwargs
         bound = inspect.signature(original_list).bind(self, *args, **kwargs)
         bound.apply_defaults()
         arguments = dict(bound.arguments)
@@ -86,6 +89,9 @@ def _auto_traverse_project_scoped_lists_at_tenant_root(  # pyright: ignore[repor
             )
             if "." not in ns:
                 arguments["traverse"] = True
+                # Keep max_pages as a flat page budget (not one page per child).
+                if not user_set_concurrent:
+                    arguments["concurrent"] = False
         return original_list(self, **arguments)
 
     monkeypatch.setattr(ListableFacade, "list", list_auto_traverse)
