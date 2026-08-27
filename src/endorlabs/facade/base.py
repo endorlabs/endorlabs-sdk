@@ -494,39 +494,9 @@ class ListableFacade[T: BaseModel]:
             kwargs=kwargs,
         )
 
-        # Handle concurrent mode: query namespaces in parallel
-        if concurrent and traverse:
-            rows = self._list_concurrent(
-                namespace=ns,
-                max_workers=max_workers,
-                list_params=list_params,
-                max_pages=max_pages,
-                parent=parent,
-                filter=filter,
-                mask=mask,
-                page_size=page_size,
-                page_token=page_token,
-                page_id=page_id,
-                sort_by=sort_by,
-                desc=desc,
-                count=count,
-                from_date=from_date,
-                to_date=to_date,
-                archive=archive,
-                pr_uuid=pr_uuid,
-                ci_run_uuid=ci_run_uuid,
-                **kwargs,
-            )
-            self._maybe_warn_empty_project_namespace_list(
-                list(rows),
-                traverse=True,
-                namespace_arg=namespace,
-            )
-            return rows
-
-        # Standard single-query mode
+        # Per-namespace params use traverse=False (fan-out owns hierarchy).
         lp = self._effective_list_parameters(
-            traverse=traverse,
+            traverse=False if (concurrent and traverse) else traverse,
             list_params=list_params,
             parent=parent,
             filter=filter,
@@ -544,6 +514,22 @@ class ListableFacade[T: BaseModel]:
             ci_run_uuid=ci_run_uuid,
             **kwargs,
         )
+
+        # Handle concurrent mode: query namespaces in parallel
+        if concurrent and traverse:
+            rows = self._list_concurrent(
+                namespace=ns,
+                max_workers=max_workers,
+                list_params=lp,
+                max_pages=max_pages,
+            )
+            self._maybe_warn_empty_project_namespace_list(
+                list(rows),
+                traverse=True,
+                namespace_arg=namespace,
+            )
+            return rows
+
         rows = self._ops.list(ns, lp, max_pages)
         self._maybe_warn_empty_project_namespace_list(
             list(rows),
@@ -558,10 +544,12 @@ class ListableFacade[T: BaseModel]:
         max_workers: int,
         list_params: ListParameters | None,
         max_pages: int | None,
-        parent: Any,
-        **kwargs: Any,
     ) -> list[T] | list[dict[str, Any]]:
         """Fetch namespaces with traverse, then query each in parallel; merge.
+
+        Per-namespace queries go through ``_ops.list`` (not ``list()``) so
+        agent-rule guards already applied on the user-facing call are not
+        re-evaluated with ``traverse=False``.
 
         Raises:
             ConcurrentNamespaceQueryError: One or more namespace queries failed.
@@ -596,18 +584,8 @@ class ListableFacade[T: BaseModel]:
         if namespace not in namespace_names:
             namespace_names.insert(0, namespace)
 
-        # Phase 2: Build query function for each namespace
         def query_namespace(ns: str) -> list[T] | list[dict[str, Any]]:
-            # Query without traverse - each namespace independently
-            return self.list(
-                traverse=False,
-                concurrent=False,
-                namespace=ns,
-                list_params=list_params,
-                max_pages=max_pages,
-                parent=parent,
-                **kwargs,
-            )
+            return self._ops.list(ns, list_params, max_pages)
 
         # Phase 3: Execute concurrently and merge
         merged = execute_across_namespaces(

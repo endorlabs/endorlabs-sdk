@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -62,6 +62,32 @@ def test_list_query_performance_page_size_without_filter() -> None:
         facade.list(page_size=1, traverse=False)
     assert exc_info.value.rule_id == "endor-list-query-performance"
     facade._ops.list.assert_not_called()
+
+
+def test_concurrent_traverse_allows_page_size_one() -> None:
+    """Fan-out must not re-raise page_size=1 guards with traverse=False."""
+    from endorlabs.operations import BaseResourceOperations
+
+    facade = _facade("Project", tenant="example-tenant")
+    facade._ops = Mock()
+    facade._ops.list = Mock(return_value=[])
+
+    def make_ops(client_arg, resource_name, model_class):
+        if resource_name == "namespaces":
+            m = Mock(spec=BaseResourceOperations)
+            m.list = Mock(return_value=[])
+            return m
+        return BaseResourceOperations(client_arg, resource_name, model_class)
+
+    with patch("endorlabs.facade.base.BaseResourceOperations", side_effect=make_ops):
+        rows = facade.list(
+            traverse=True,
+            concurrent=True,
+            page_size=1,
+            max_pages=1,
+            max_workers=2,
+        )
+    assert rows == []
 
 
 def test_list_query_performance_max_pages_unscoped_at_tenant_root() -> None:
