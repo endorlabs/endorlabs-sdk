@@ -25,6 +25,7 @@ import pytest
 
 from endorlabs.core.exceptions import NotFoundError, ServerError
 from tests.conftest import TEST_MAX_PAGES
+from tests.integration.list_scope import project_scoped_list_kwargs
 
 # ---------------------------------------------------------------------------
 # Registry: resource kinds with standard list → get behaviour.
@@ -62,7 +63,10 @@ def test_resource_list(kind: str, endor_client) -> None:
     """LIST returns a list for each registered resource kind."""
     facade = getattr(endor_client, kind)
     try:
-        result = facade.list(max_pages=TEST_MAX_PAGES)
+        result = facade.list(
+            **project_scoped_list_kwargs(endor_client),
+            max_pages=TEST_MAX_PAGES,
+        )
     except NotFoundError:
         pytest.skip("List returned 404 (namespace not accessible or resource absent)")
     except ServerError:
@@ -76,7 +80,10 @@ def test_resource_get(kind: str, endor_client) -> None:
     """GET first item from LIST and verify uuid roundtrip."""
     facade = getattr(endor_client, kind)
     try:
-        items = facade.list(max_pages=TEST_MAX_PAGES)
+        items = facade.list(
+            **project_scoped_list_kwargs(endor_client),
+            max_pages=TEST_MAX_PAGES,
+        )
     except NotFoundError:
         pytest.skip("List returned 404 (namespace not accessible or resource absent)")
     except ServerError:

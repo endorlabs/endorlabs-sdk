@@ -8,6 +8,7 @@ import pytest
 
 import endorlabs
 from tests.conftest import TEST_MAX_PAGES, TEST_PAGE_SIZE
+from tests.integration.list_scope import project_scoped_list_kwargs
 
 
 @pytest.mark.integration
@@ -37,6 +38,7 @@ class TestPackageVersion:
 
         # Fetch 1 item without traverse (fast)
         results = self.endor_client.PackageVersion.list(
+            **project_scoped_list_kwargs(self.endor_client),
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
             max_pages=TEST_MAX_PAGES,
         )
@@ -141,7 +143,10 @@ class TestPackageVersion:
             api_client=self.client,
         )
         try:
-            versions = client.PackageVersion.list(max_pages=TEST_MAX_PAGES)
+            versions = client.PackageVersion.list(
+                **project_scoped_list_kwargs(client),
+                max_pages=TEST_MAX_PAGES,
+            )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not versions:

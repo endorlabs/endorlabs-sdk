@@ -191,15 +191,38 @@ Or install manually from the TestPyPI project page for `endorlabs`.
 
 1. Ensure PyPI pending publisher is registered for **`release-tag-publish.yml`** / environment **`pypi`**
 2. **Release PR on `main`:** promote [`docs/changelog.md`](../changelog.md) **Unreleased** → **`## X.Y.Z`** and set **`[project].version = "X.Y.Z"`** in `pyproject.toml` (see [Changelog at release cut](#changelog-at-release-cut) below).
-3. **Actions → Release Tag Publish** → `workflow_dispatch`:
+3. **Same PR must be publish-ready:** upstream OpenAPI/model-sync verify green (`uv run python devtools/ship/check_release_ready.py --expect X.Y.Z`). Do not merge a cut that only bumps the version while ship artifacts are stale — release CI will fail the same check.
+4. **Actions → Release Tag Publish** → `workflow_dispatch` (ideally the same day as the cut merge):
    - `version`: `X.Y.Z`
    - `ref`: `main`
    - `publish`: `true`
-4. **Approve** the pending **`pypi`** environment deployment (required reviewers)
-5. Confirm the PyPI project page for `endorlabs` and GitHub Release assets
-6. **Optional:** push annotated tag `vX.Y.Z` at the release commit for consumers (`git tag -a vX.Y.Z -m "Release X.Y.Z" && git push origin vX.Y.Z`). Tag push alone does **not** publish under current environment rules
+5. **Approve** the pending **`pypi`** environment deployment (required reviewers)
+6. Confirm the PyPI project page for `endorlabs` and GitHub Release assets
+7. **Optional:** push annotated tag `vX.Y.Z` at the release commit for consumers (`git tag -a vX.Y.Z -m "Release X.Y.Z" && git push origin vX.Y.Z`). Tag push alone does **not** publish under current environment rules
 
 Do **not** use **Release PyPI Publish** (`release-pypi.yml`) with `publish: true` for production unless a matching PyPI pending publisher is registered for that workflow.
+
+## Cut ↔ publish ↔ sync convergence
+
+Three states must agree before production upload. They historically drifted when a cut
+merged and publish was deferred:
+
+| State | Source of truth | Failure mode if lagging |
+|-------|-----------------|-------------------------|
+| Cut | `[project].version` + `## X.Y.Z` in changelog; **Unreleased** empty of bullets | Publish gate / `check_release_ready` fails |
+| Sync | model-sync watermark matches live OpenAPI (`--verify-upstream-only`) | `release-build-gate` / PR lint fail after upstream moves |
+| Publish | PyPI + GitHub Release (tag optional) | Consumers still see previous version; TOML claims a version that is not installable |
+
+**Rule:** treat cut merge and first TestPyPI/`release-tag-publish` attempt as one
+operation. If upstream moves after the cut lands, refresh model-sync (or merge a
+sync PR) **before** dispatching publish — do not re-cut the version number unless
+PyPI already has that version.
+
+Local preflight (also runs inside `release-build-gate`):
+
+```bash
+uv run python devtools/ship/check_release_ready.py --expect X.Y.Z --require-unpublished
+```
 
 ## Changelog at release cut
 

@@ -10,10 +10,6 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
-- Runtime and `analytics` optional dependencies use compatible version ranges instead of exact pins, so consumers can co-install and patch `pydantic` / `httpx` / analytics stacks without an unsolvable conflict. CI exercises lowest and highest permitted resolutions.
-- Typed `EndorRuleError` subclasses (`rule_id` aligned with MANIFEST bootstrap rules) raise locally with actionable corrections for namespace scoping, list performance, output-shape routing, workflow composition, local context, workspace layout, and portable examples.
-- `client.<Kind>.describe()` — live, no-network facade introspection (list params, identity kwargs, routes); prefer over reading the stub. Documented in INDEX step 2 and `resource-discovery`.
-
 ### Fixed
 
 ### Breaking
@@ -26,9 +22,13 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - Executive packet Endor Patches page (`reports.patches` / `05-endor-patches.html`): reach-weighted Available risk, version heat map, impact calculator; CLI `--skip-patches` / `--patches-only` (default output under `runs/patches-reports/`).
 - Executive packet onboarding ScanResult cadence (`reports.onboarding.cadence`): weekly MAIN `TYPE_ALL_SCANS` + CI/PR series (~90d), tag/project leaderboards, analytics toggle; CSV exports `onboarding-cadence-*.csv`.
 - Guide [docs/guides/executive-report-packet.md](guides/executive-report-packet.md); README / AGENTS pointers; **endor-workflow-reports** use-case routing for QBR / onboarding / burndown packet.
+- Typed `EndorRuleError` subclasses (`rule_id` aligned with MANIFEST bootstrap rules) raise locally with actionable corrections for namespace scoping, list performance, output-shape routing, workflow composition, local context, workspace layout, and portable examples.
+- `client.<Kind>.describe()` — live, no-network facade introspection (list params, identity kwargs, routes); prefer over reading the stub. Documented in INDEX step 2 and `resource-discovery`.
 
 ### Changed
 
+- Runtime and `analytics` optional dependencies use compatible version ranges instead of exact pins, so consumers can co-install and patch `pydantic` / `httpx` / analytics stacks without an unsolvable conflict. CI exercises lowest-direct and highest permitted resolutions.
+- Refresh model-sync ship surface from upstream OpenAPI (endorctl watermark 1.7.1128).
 - Executive packet code burndown: **OpenGrep vs AI-SAST** categories (disjoint on
   `FINDING_TAGS_AI`) share **TP/FP triage facets**; Secrets keeps valid/invalid only.
   SCA reach filter expands to selection-based RF / PRF / RD / PRD / RD+PRD / unreachable.

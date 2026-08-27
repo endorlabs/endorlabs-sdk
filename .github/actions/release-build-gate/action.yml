@@ -30,6 +30,13 @@ runs:
         --expect "${{ inputs.version }}"
         --no-tag-warnings
 
+    - name: Release-ready preflight (changelog cut + upstream sync)
+      shell: bash
+      run: >-
+        uv run python devtools/ship/check_release_ready.py
+        --expect "${{ inputs.version }}"
+        --require-unpublished
+
     - name: Run quality gate
       shell: bash
       run: |

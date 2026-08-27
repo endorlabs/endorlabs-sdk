@@ -50,7 +50,11 @@ Helpers in [tests/integration/conftest.py](../../tests/integration/conftest.py):
 - `bounded_log_list_params()` — `ListParameters` for filters without `page_size`
 - `assert_bounded_log_rows()` — assert row count within cap
 
-List in the integration **`namespace` only** (no `traverse`).
+List in the integration **`namespace` only** (no `traverse`) when that namespace is a
+**child/leaf** path. If CI sets ``ENDOR_NAMESPACE`` to the tenant root, project-scoped
+kinds (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`) must pass
+``traverse=True`` (or use ``tests.integration.list_scope.project_scoped_list_kwargs``)
+or the facade raises ``NamespaceScopingError``.
 
 ## Checklist after changes
 
