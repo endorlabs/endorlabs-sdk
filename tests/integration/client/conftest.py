@@ -46,9 +46,20 @@ def require_first_project(client, *, max_pages: int = TEST_MAX_PAGES):
 
 
 def _list_rows(client, list_method: str) -> list[object]:
+    """Bounded list for probes; traverse from tenant-root clients.
+
+    Project-scoped kinds raise ``NamespaceScopingError`` at tenant root without
+    ``traverse`` / child ``namespace`` (endor-namespace-scoping).
+    """
+    from endorlabs.core.exceptions import EndorRuleError
+
     try:
-        return getattr(client, list_method).list(max_pages=TEST_MAX_PAGES)
-    except ServerError:
+        facade = getattr(client, list_method)
+        ns = getattr(client, "_default_namespace", "") or ""
+        # Tenant root (no ``.``) needs traverse for project-scoped discovery.
+        traverse = "." not in ns
+        return facade.list(max_pages=TEST_MAX_PAGES, traverse=traverse)
+    except (ServerError, EndorRuleError):
         return []
 
 
