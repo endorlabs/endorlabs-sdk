@@ -28,6 +28,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 ### Changed
 
 - Runtime and `analytics` optional dependencies use compatible version ranges instead of exact pins, so consumers can co-install and patch `pydantic` / `httpx` / analytics stacks without an unsolvable conflict. CI exercises lowest-direct and highest permitted resolutions.
+- Drop the Endor Package Firewall `[[tool.uv.index]]` default from `pyproject.toml` and regenerate `uv.lock` against public PyPI so CI/MDM runners sync without firewall credentials.
 - Refresh model-sync ship surface from upstream OpenAPI (endorctl watermark 1.7.1128).
 - Executive packet code burndown: **OpenGrep vs AI-SAST** categories (disjoint on
   `FINDING_TAGS_AI`) share **TP/FP triage facets**; Secrets keeps valid/invalid only.
