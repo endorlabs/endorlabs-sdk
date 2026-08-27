@@ -46,7 +46,7 @@ dependencies = [
 [project.optional-dependencies]
 # DataFrame/Parquet export (estate cardinality tabular) + estate graph metrics (igraph/leidenalg)
 analytics = [
-    "pandas>=2.2.2,<4",
+    "pandas>=2.2.3,<4",  # 2.2.3+: first cp313 wheels (lowest-direct on CI 3.13)
     "pyarrow>=18.0.0,<25",
     "igraph>=0.11.6,<2",
     "leidenalg>=0.10.2,<1",
@@ -84,7 +84,7 @@ dev = [
     "pre-commit==4.6.0",
     "rich==15.0.0",
     # Analytics deps for unit tests (mirrors [project.optional-dependencies.analytics])
-    "pandas>=2.2.2,<4",
+    "pandas>=2.2.3,<4",  # 2.2.3+: first cp313 wheels (lowest-direct on CI 3.13)
     "pyarrow>=18.0.0,<25",
     "igraph>=0.11.6,<2",
     "leidenalg>=0.10.2,<1",
