@@ -182,13 +182,41 @@ def extract_create_convenience_fields(
     if spec_schema is None:
         return {**empty, "convenience_skip_reason": "create_body_missing_spec"}
 
-    # Nested spec.request (metadata query style) — no flat spec promotion.
+    # Nested spec.request (metadata query style) — promote request fields as
+    # flat create convenience kwargs (builders nest them under spec.request).
     spec_props = spec_schema.get("properties")
     if isinstance(spec_props, dict) and "request" in spec_props:
         request_schema = _resolve_schema(definitions, spec_props.get("request"))
         if request_schema is not None:
+            request_writable = _writable_property_names(request_schema)
+            request_required, request_optional = _ordered_spec_field_names(
+                request_schema, writable_names=request_writable
+            )
+            request_fields = request_required + request_optional
+            payload_top_level: list[str] = []
+            meta_fields: list[str] = []
+            for key, prop in sorted(properties.items()):
+                if not isinstance(key, str) or not isinstance(prop, dict):
+                    continue
+                if key == "spec":
+                    continue
+                if prop.get("readOnly") is True:
+                    continue
+                payload_top_level.append(key)
+                if key == "meta":
+                    meta_schema = _resolve_schema(definitions, prop)
+                    if (
+                        meta_schema is not None
+                        and "name" in _writable_property_names(meta_schema)
+                    ):
+                        if "meta" not in body_required:
+                            meta_fields.append("name")
             return {
-                **empty,
+                "create_convenience_spec_fields": request_fields,
+                "create_convenience_spec_required": request_required,
+                "create_convenience_meta_fields": meta_fields,
+                "create_convenience_payload_top_level_fields": payload_top_level,
+                "create_convenience_read_only_spec_fields": [],
                 "convenience_skip_reason": "nested_spec_request",
             }
 
@@ -387,10 +415,22 @@ def build_payload_schemas(
     ]
 
     def _is_collection_path(path: str, resource_name: str) -> bool:
-        return path.endswith(f"/{resource_name}") and "/v1/namespaces/" in path
+        if "/v1/namespaces/" not in path:
+            return False
+        after_ns = path.split("/v1/namespaces/", maxsplit=1)[1]
+        if "/" not in after_ns:
+            return False
+        rest = after_ns.split("/", maxsplit=1)[1]
+        return rest == resource_name
 
     def _is_item_path(path: str, resource_name: str) -> bool:
-        return path.endswith(f"/{resource_name}/{{uuid}}") and "/v1/namespaces/" in path
+        if "/v1/namespaces/" not in path:
+            return False
+        after_ns = path.split("/v1/namespaces/", maxsplit=1)[1]
+        if "/" not in after_ns:
+            return False
+        rest = after_ns.split("/", maxsplit=1)[1]
+        return rest == f"{resource_name}/{{uuid}}"
 
     resources: list[dict[str, Any]] = []
     for entry in sorted(RESOURCE_REGISTRY, key=facade_attr_name):

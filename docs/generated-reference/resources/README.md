@@ -18,6 +18,8 @@ One page per SDK facade resource (`client.<AttrName>`).
 | `Invitation` | `invitations` | `tenant` | create, delete, get, list, update | [Invitation.md](Invitation.md) |
 | `LinterResult` | `linter-results` | `tenant` | create, delete, get, list | [LinterResult.md](LinterResult.md) |
 | `Malware` | `malware` | `oss` | get, list | [Malware.md](Malware.md) |
+| `MalwareExposure` | `malware-exposure` | `tenant` | get, list | [MalwareExposure.md](MalwareExposure.md) |
+| `MalwareExposureQuery` | `queries/malware-exposure` | `tenant` | create | [MalwareExposureQuery.md](MalwareExposureQuery.md) |
 | `Metric` | `metrics` | `tenant` | create, delete, get, list, update | [Metric.md](Metric.md) |
 | `Namespace` | `namespaces` | `tenant` | create, delete, get, list, update | [Namespace.md](Namespace.md) |
 | `NotificationTarget` | `notification-targets` | `tenant` | create, delete, get, list, update | [NotificationTarget.md](NotificationTarget.md) |

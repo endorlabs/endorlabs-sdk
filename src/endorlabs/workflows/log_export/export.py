@@ -4,24 +4,45 @@ from __future__ import annotations
 
 import csv
 import json
-from collections.abc import Iterator
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal
 
 from endorlabs.workflows.common import WorkflowResult
+from endorlabs.workflows.logs.sources import (
+    SOURCE_RESOURCE,
+    LogSource,
+    list_log_events,
+    row_to_dict,
+)
+from endorlabs.workflows.logs.time_window import (
+    format_mql_date,
+    iter_time_slices,
+    parse_iso_utc,
+    time_window_filter,
+)
 
 if TYPE_CHECKING:
     from endorlabs.client_surface import Client
 
-LogSource = Literal["package-firewall", "agent-hook-events"]
 ExportFormat = Literal["jsonl", "csv"]
 
-_SOURCE_RESOURCE: dict[LogSource, str] = {
-    "package-firewall": "package-firewall-logs",
-    "agent-hook-events": "agent-hook-events",
-}
+# Re-export for callers that imported time helpers from this module.
+__all__ = [
+    "ExportFormat",
+    "LogExportResult",
+    "LogMultiExportResult",
+    "LogSource",
+    "export_logs",
+    "export_logs_for_namespaces",
+    "format_mql_date",
+    "iter_time_slices",
+    "parse_iso_utc",
+    "row_to_dict",
+    "time_window_filter",
+]
 
 
 @dataclass
@@ -35,8 +56,19 @@ class LogExportResult(WorkflowResult):
     format: str = ""
 
 
-def _empty_extra() -> dict[str, Any]:
-    return {}
+def _empty_results() -> list[LogExportResult]:
+    return []
+
+
+@dataclass
+class LogMultiExportResult(WorkflowResult):
+    """Result of exporting logs for multiple namespaces."""
+
+    source: str = ""
+    format: str = ""
+    namespace_count: int = 0
+    row_count: int = 0
+    results: list[LogExportResult] = field(default_factory=_empty_results)
 
 
 @dataclass
@@ -45,62 +77,6 @@ class _ExportState:
 
     row_count: int = 0
     slice_count: int = 0
-    extras: dict[str, Any] = field(default_factory=_empty_extra)
-
-
-def parse_iso_utc(value: str) -> datetime:
-    """Parse an ISO-8601 timestamp into an aware UTC datetime."""
-    cleaned = value.strip()
-    if cleaned.endswith("Z"):
-        cleaned = cleaned[:-1] + "+00:00"
-    parsed = datetime.fromisoformat(cleaned)
-    if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=UTC)
-    return parsed.astimezone(UTC)
-
-
-def format_mql_date(value: datetime) -> str:
-    """Format a datetime for Endor MQL ``date(...)`` filters (UTC Z)."""
-    return value.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def iter_time_slices(
-    since: datetime,
-    until: datetime,
-    *,
-    slice_hours: float = 1.0,
-) -> Iterator[tuple[datetime, datetime]]:
-    """Yield half-open ``[start, end)`` windows covering ``[since, until)``."""
-    if until <= since:
-        return
-    step = timedelta(hours=slice_hours)
-    if step <= timedelta(0):
-        raise ValueError("slice_hours must be positive")
-    cursor = since
-    while cursor < until:
-        end = min(cursor + step, until)
-        yield cursor, end
-        cursor = end
-
-
-def time_window_filter(since: datetime, until: datetime) -> str:
-    """Build an MQL filter for ``meta.create_time`` in ``[since, until)``."""
-    return (
-        f"meta.create_time >= date({format_mql_date(since)}) and "
-        f"meta.create_time < date({format_mql_date(until)})"
-    )
-
-
-def row_to_dict(row: Any) -> dict[str, Any]:
-    """Serialize a facade model or dict row to a plain JSON-compatible dict."""
-    if isinstance(row, dict):
-        return cast("dict[str, Any]", row)
-    dump = getattr(row, "model_dump", None)
-    if callable(dump):
-        data = dump(mode="json", exclude_none=False)
-        if isinstance(data, dict):
-            return cast("dict[str, Any]", data)
-    raise TypeError(f"Unsupported log row type: {type(row)!r}")
 
 
 def _combine_filters(*parts: str | None) -> str | None:
@@ -110,53 +86,6 @@ def _combine_filters(*parts: str | None) -> str | None:
     if len(cleaned) == 1:
         return cleaned[0]
     return " and ".join(f"({p})" for p in cleaned)
-
-
-def _list_package_firewall(
-    client: Client,
-    *,
-    namespace: str,
-    filter_expr: str | None,
-) -> list[dict[str, Any]]:
-    kwargs: dict[str, Any] = {"namespace": namespace, "traverse": False}
-    if filter_expr:
-        kwargs["filter"] = filter_expr
-    rows = client.PackageFirewallLog.list(**kwargs)
-    return [row_to_dict(row) for row in rows]
-
-
-def _list_agent_hook_events(
-    client: Client,
-    *,
-    namespace: str,
-    filter_expr: str | None,
-) -> list[dict[str, Any]]:
-    api = client._client  # noqa: SLF001 — AgentHookEvent has no facade yet
-    if api is None:
-        raise RuntimeError("Client has no API transport (closed?)")
-    url = f"v1/namespaces/{namespace}/agent-hook-events"
-    params: dict[str, Any] = {}
-    if filter_expr:
-        params["list_parameters.filter"] = filter_expr
-    return list(api.get_all(url, params=params))
-
-
-def _list_source_rows(
-    client: Client,
-    source: LogSource,
-    *,
-    namespace: str,
-    filter_expr: str | None,
-) -> list[dict[str, Any]]:
-    if source == "package-firewall":
-        return _list_package_firewall(
-            client, namespace=namespace, filter_expr=filter_expr
-        )
-    if source == "agent-hook-events":
-        return _list_agent_hook_events(
-            client, namespace=namespace, filter_expr=filter_expr
-        )
-    raise ValueError(f"Unknown source: {source!r}")
 
 
 def _write_jsonl(path: Path, rows: list[dict[str, Any]], *, append: bool) -> None:
@@ -191,13 +120,17 @@ def export_logs(
     export_format: ExportFormat = "jsonl",
     slice_hours: float = 1.0,
     extra_filter: str | None = None,
+    traverse: bool = False,
 ) -> LogExportResult:
     """Export full log rows for ``source`` in ``[since, until)`` to a file.
 
     Rows are written as complete API objects (JSONL) or a CSV ``payload`` column
     holding the JSON object. No field curation is applied.
+
+    Pass ``traverse=True`` when listing from a tenant root whose logs live under
+    child namespaces. Prefer density probe + per-NS export for multi-NS pulls.
     """
-    if source not in _SOURCE_RESOURCE:
+    if source not in SOURCE_RESOURCE:
         return LogExportResult(
             status="error",
             message=f"Unsupported source: {source!r}",
@@ -227,8 +160,12 @@ def export_logs(
             state.slice_count += 1
             window = time_window_filter(start, end)
             filter_expr = _combine_filters(window, extra_filter)
-            rows = _list_source_rows(
-                client, source, namespace=namespace, filter_expr=filter_expr
+            rows = list_log_events(
+                client,
+                source,
+                namespace=namespace,
+                filter_expr=filter_expr,
+                traverse=traverse,
             )
             if not rows:
                 continue
@@ -274,14 +211,68 @@ def export_logs(
     )
 
 
-__all__ = [
-    "ExportFormat",
-    "LogExportResult",
-    "LogSource",
-    "export_logs",
-    "format_mql_date",
-    "iter_time_slices",
-    "parse_iso_utc",
-    "row_to_dict",
-    "time_window_filter",
-]
+def export_logs_for_namespaces(
+    client: Client,
+    *,
+    namespaces: Sequence[str],
+    source: LogSource,
+    since: datetime | str,
+    until: datetime | str,
+    output_dir: str | Path,
+    export_format: ExportFormat = "jsonl",
+    slice_hours: float = 1.0,
+    extra_filter: str | None = None,
+) -> LogMultiExportResult:
+    """Export logs for each namespace into ``output_dir`` (traverse=False)."""
+    out_dir = Path(output_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    since_dt = parse_iso_utc(since) if isinstance(since, str) else since
+    until_dt = parse_iso_utc(until) if isinstance(until, str) else until
+    start = since_dt.strftime("%Y%m%dT%H%M%SZ")
+    end = until_dt.strftime("%Y%m%dT%H%M%SZ")
+    src = source.replace("-", "_")
+
+    results: list[LogExportResult] = []
+    errors: list[str] = []
+    total_rows = 0
+    for ns in namespaces:
+        safe = ns.replace("/", "_").replace("\\", "_")
+        path = out_dir / f"{safe}-{src}-{start}_{end}.{export_format}"
+        result = export_logs(
+            client,
+            namespace=ns,
+            source=source,
+            since=since_dt,
+            until=until_dt,
+            output_path=path,
+            export_format=export_format,
+            slice_hours=slice_hours,
+            extra_filter=extra_filter,
+            traverse=False,
+        )
+        results.append(result)
+        total_rows += result.row_count
+        if not result.ok:
+            errors.extend(result.errors or [result.message])
+
+    failed = sum(1 for r in results if not r.ok)
+    if failed and failed == len(results):
+        status = "error"
+    elif failed:
+        status = "partial"
+    else:
+        status = "success"
+
+    return LogMultiExportResult(
+        status=status,
+        message=(
+            f"Exported {total_rows} {source} row(s) across "
+            f"{len(results)} namespace(s) under {out_dir}"
+        ),
+        errors=errors,
+        source=source,
+        format=export_format,
+        namespace_count=len(results),
+        row_count=total_rows,
+        results=results,
+    )

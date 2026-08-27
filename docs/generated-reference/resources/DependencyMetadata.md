@@ -26,20 +26,18 @@ Dependency relationship between packages.
 
 ### Payload top-level fields
 
+- `context`
 - `meta`
 - `tenant_meta`
 
 ### Create convenience kwargs (flat)
 
-**Meta (flat):**
-
-- `name`
-
 **Spec (flat, promoted into `spec`):**
 
 Optional:
 
-- `data`
+- `dependency_data`
+- `importer_data`
 
 Unknown flat kwargs raise `TypeError`. Use `payload=` or nested `spec=` / `meta=` for full control.
 

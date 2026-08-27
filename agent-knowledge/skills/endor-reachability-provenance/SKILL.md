@@ -27,7 +27,10 @@ Use this skill to triage findings where reachability signals conflict, especiall
 
 ## What "oss namespace" is used for
 
-**API path rule:** List and resolve OSS-plane resources under the literal namespace **`oss`**. Do not use `<tenant>.oss`, `<customer>.oss`, or a child namespace under the customer root; `scope="oss"` on the client separates this plane from customer namespace paths.
+**API path rule:** List and resolve OSS-plane **catalog** resources under the
+literal namespace **`oss`**. Do not use `<tenant>.oss`, `<customer>.oss`, or a
+child namespace under the customer root; `scope="oss"` on the client separates
+this plane from customer namespace paths.
 
 Use the `oss` namespace as the canonical vulnerability provenance source for:
 
@@ -36,6 +39,10 @@ Use the `oss` namespace as the canonical vulnerability provenance source for:
 - `affected_callpath_uris` and `affected_filepaths`
 - alias consistency checks across CVE/GHSA IDs
 - source attribution fields (for example `SOURCE_OSV`, `SOURCE_ENDOR`)
+
+For **tenant malware blast radius / exposure**, prefer **`MalwareExposure`** /
+**`MalwareExposureQuery`** under the customer namespace — not `Malware.list` on
+`oss`. Keep `oss` for catalog stitching as above.
 
 Do not infer function-level provenance from advisory prose alone when structured `affected_callpath_uris` are available in `oss`.
 

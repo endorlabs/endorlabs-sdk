@@ -137,6 +137,24 @@ looks wrong, **triangulate** SDK vs `endorctl` vs `contracts/` — skill
    CLI → library → `Client` → session script (see `rules/endor-workflow-composition.md`).
 8. **Portable examples:** Use placeholders in docs, skills, **unit fixtures**, and CLI/docstring
    examples; never commit customer estate identifiers (`rules/endor-portable-examples.md`).
+9. **QueryMalware / QueryVulnerability:** Create-only catalog facades (`scope=oss`). There is no
+   `.list()` — use `.create(...)`. Do not import `endorlabs.query` for these kinds; that module is
+   the graph-join `client.Query` plane. Hits often appear under `response.list.objects`.
+10. **Tenant malware exposure:** Prefer `MalwareExposure` / `MalwareExposureQuery` (customer
+    namespace) over `Malware.list` on `oss` for blast-radius asks. Use `QueryMalware` only for
+    coordinate identity on the catalog plane.
+
+## SDK ↔ product ontology (glossary)
+
+| Product / UI phrase | SDK / CLI | Notes |
+|---------------------|-----------|-------|
+| Package Firewall logs | `--source package-firewall-logs` → `PackageFirewallLog` | Wire path `package-firewall-logs` |
+| Policy Violations (Agent Governance) | `--source policy-violations` → `AgentHookEvent` | Wire path stays `agent-hook-events` (x-internal; no facade yet) |
+| Findings | `client.Finding` | Current findings |
+| Findings history / burndown | `FindingLog` | Time-series / create-delete trends — not `Finding` |
+| Login / SSO auth logs | `AuthenticationLog` | Not `AuditLog` (API audit trail) |
+| Malware catalog | `client.Malware` / `QueryMalware` (`scope=oss`) | Coordinate identity |
+| Malware exposure (tenant) | `MalwareExposure` / `MalwareExposureQuery` | Customer blast radius |
 
 ## Bootstrap (load for Endor SDK work)
 

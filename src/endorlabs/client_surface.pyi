@@ -46,6 +46,11 @@ from .resources.installation import CreateInstallationPayload, Installation
 from .resources.invitation import CreateInvitationPayload, Invitation
 from .resources.linter_result import CreateLinterResultPayload, LinterResult
 from .resources.malware import Malware
+from .resources.malware_exposure import MalwareExposure
+from .resources.malware_exposure_query import (
+    CreateMalwareExposureQueryPayload,
+    MalwareExposureQuery,
+)
 from .resources.metric import CreateMetricPayload, Metric
 from .resources.namespace import CreateNamespacePayload, Namespace
 from .resources.notification_target import (
@@ -373,7 +378,8 @@ class _DependencyMetadataFacade(ResourceRuntimeFacade[DependencyMetadata]):
         description: str | None = None,
         namespace_uuid: str | None = None,
         namespace: str | None = None,
-        data: dict[str, Any] | None = None,
+        dependency_data: Any | None = None,
+        importer_data: Any | None = None,
         **kwargs: Any,
     ) -> DependencyMetadata: ...
 
@@ -837,6 +843,90 @@ class _MalwareFacade(ListableFacade[Malware]):
         id_or_resource: str | Malware,
         namespace: str | None = ...,
     ) -> Malware: ...
+
+class _MalwareExposureFacade(ListableFacade[MalwareExposure]):
+    """Tenant-scoped malware blast-radius / exposure records."""
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[MalwareExposure] | list[dict[str, Any]]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | MalwareExposure,
+        namespace: str | None = ...,
+    ) -> MalwareExposure: ...
+
+class _MalwareExposureQueryFacade(ResourceRuntimeFacade[MalwareExposureQuery]):
+    """Query tenant malware exposure by malware UUID or filter.
+
+    Create mode: both.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[MalwareExposureQuery] | list[dict[str, Any]]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def create(
+        self,
+        payload: CreateMalwareExposureQueryPayload | None = None,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        namespace_uuid: str | None = None,
+        namespace: str | None = None,
+        malware_uuids: Any | None = None,
+        filter: Any | None = None,
+        traverse: Any | None = None,
+        project_uuid: Any | None = None,
+        **kwargs: Any,
+    ) -> MalwareExposureQuery: ...
 
 class _MetricFacade(ResourceRuntimeFacade[Metric]):
     """Analytics output attached to packages or repositories.
@@ -2262,12 +2352,13 @@ class Client:
     Resources:
     APIKey, AuditLog, AuthenticationLog, AuthorizationPolicy, CodeOwners,
     DependencyMetadata, EndorLicense, Finding, FindingLog, IdentityProvider,
-    Installation, Invitation, LinterResult, Malware, Metric, Namespace,
-    NotificationTarget, PRCommentConfig, PackageFirewallLog, PackageLicense,
-    PackageManager, PackageVersion, Policy, PolicyTemplate, Project, Query,
-    QueryMalware, QuerySimilarPackages, QueryVulnerability, Repository,
-    RepositoryVersion, SavedQuery, ScanLogRequest, ScanProfile, ScanResult,
-    ScanWorkflow, ScanWorkflowResult, SemgrepRule, SystemConfig, VectorStore,
+    Installation, Invitation, LinterResult, Malware, MalwareExposure,
+    MalwareExposureQuery, Metric, Namespace, NotificationTarget,
+    PRCommentConfig, PackageFirewallLog, PackageLicense, PackageManager,
+    PackageVersion, Policy, PolicyTemplate, Project, Query, QueryMalware,
+    QuerySimilarPackages, QueryVulnerability, Repository, RepositoryVersion,
+    SavedQuery, ScanLogRequest, ScanProfile, ScanResult, ScanWorkflow,
+    ScanWorkflowResult, SemgrepRule, SystemConfig, VectorStore,
     VectorStoreQuery, VersionUpgrade, Vulnerability
     Custom: CallGraphData, Query
     """
@@ -2286,6 +2377,8 @@ class Client:
     Invitation: _InvitationFacade
     LinterResult: _LinterResultFacade
     Malware: _MalwareFacade
+    MalwareExposure: _MalwareExposureFacade
+    MalwareExposureQuery: _MalwareExposureQueryFacade
     Metric: _MetricFacade
     Namespace: _NamespaceFacade
     NotificationTarget: _NotificationTargetFacade

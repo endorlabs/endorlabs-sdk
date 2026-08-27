@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-08-25T20:04:01.302715+00:00",
+  "generated_at": "2026-08-27T15:18:28.816202+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -504,7 +504,9 @@
       "default_output": ".endorlabs-context/workspace/runs/log-export/",
       "id": "log-export",
       "library_entrypoints": [
-        "endorlabs.workflows.log_export.export_logs"
+        "endorlabs.workflows.log_export.export_logs",
+        "endorlabs.workflows.log_export.export_logs_for_namespaces",
+        "endorlabs.workflows.logs.probe_log_density"
       ],
       "module": "endorlabs.workflows.log_export.cli",
       "skill": null

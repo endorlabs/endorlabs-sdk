@@ -12,8 +12,19 @@ summary: Resolve Project first; pass namespace=project.namespace on project-scop
 
 ## OSS catalog plane
 
-`Vulnerability`, `Malware`, `QueryVulnerability`, and `QueryMalware` use registry `scope="oss"`.
-List/get and catalog query creates hit `/v1/namespaces/oss/…` regardless of `Client(tenant=…)`.
+`Vulnerability`, `Malware`, `QueryVulnerability`, and `QueryMalware` use registry
+`scope="oss"`. List/get and catalog query creates hit `/v1/namespaces/oss/…`
+regardless of `Client(tenant=…)`. OpenAPI paths for these kinds are already
+parameterized as `{tenant_meta.namespace}`; the SDK **forces** the literal `oss`
+plane via `resource_scope_overrides.json`.
+
+**Customer investigations prefer the tenant plane:** use **`MalwareExposure`** /
+**`MalwareExposureQuery`**, Finding malware category
+(`FINDING_CATEGORY_MALWARE`), and **`PackageFirewallLog`** under the customer
+namespace. Treat `QueryMalware` / `Malware` as **catalog identity**
+(“is this coordinate malware?”) — secondary for blast-radius / exposure asks.
+Do not delete or ignore-tenant→oss callers; soft-deprecate means docs/skills
+preference, not removing the facades.
 
 ## Resource-scoped operations
 

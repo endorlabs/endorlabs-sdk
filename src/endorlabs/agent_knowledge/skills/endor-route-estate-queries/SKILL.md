@@ -51,7 +51,8 @@ shards = topo.project_shards()
 | Count/filter at one namespace (e.g. agent hook events) | `client.Query.at_namespace(QuerySpec.root("<Kind>").count(...), namespace=…)` or facade `count()` |
 | Tenant-wide finding total (no per-project breakdown) | Probe `Query.at_namespace` with `Finding` root; compare to `Finding.count` |
 | New vs resolved over time | `FindingLog.list_groups` — Query does not support `group_by_time` |
-| OSS CVE/coordinate lookup | `QueryVulnerability` / `QueryMalware` |
+| OSS CVE/coordinate lookup (catalog identity) | `QueryVulnerability` / `QueryMalware` (`scope=oss`) |
+| Tenant malware exposure / blast radius | `MalwareExposure` / `MalwareExposureQuery` (customer namespace) |
 
 ```python
 from endorlabs.query import QuerySpec

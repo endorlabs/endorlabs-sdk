@@ -47,6 +47,26 @@ RESOURCE_CONTRACT_OVERLAY_BY_ATTR: dict[str, dict[str, Any]] = {
         ),
         "build_create_payload_fn_name": "build_create_payload",
     },
+    "MalwareExposure": {
+        "model_class_import_path": (
+            "endorlabs.resources.malware_exposure:MalwareExposure"
+        ),
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.malware_exposure:build_create_payload"
+        ),
+        "build_create_payload_fn_name": "build_create_payload",
+        "supported_ops": ["get", "list"],
+    },
+    "MalwareExposureQuery": {
+        "supported_ops": ["create"],
+        "model_class_import_path": (
+            "endorlabs.resources.malware_exposure_query:MalwareExposureQuery"
+        ),
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.malware_exposure_query:build_create_payload"
+        ),
+        "build_create_payload_fn_name": "build_create_payload",
+    },
     "PackageFirewallLog": {
         "model_class_import_path": (
             "endorlabs.resources.package_firewall_log:PackageFirewallLog"

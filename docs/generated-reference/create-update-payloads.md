@@ -2,12 +2,12 @@
 
 Auto-generated from `RESOURCE_REGISTRY`, builder return types,
 and payload models.
-Model sync contract: `src/endorlabs/generated/registry_contract.py` (43 resources, 43 canonical entities).
+Model sync contract: `src/endorlabs/generated/registry_contract.py` (45 resources, 45 canonical entities).
 
 ## Model-sync coverage snapshot
 
-- facade contract resources: `43`
-- canonical entities (union): `43`
+- facade contract resources: `45`
+- canonical entities (union): `45`
 
 ## Create payload/builders
 
@@ -27,6 +27,8 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (43 resource
 | Invitation | yes | build_create_payload | CreateInvitationPayload | meta, spec | none |
 | LinterResult | yes | build_create_payload | CreateLinterResultPayload | meta, spec | none |
 | Malware | no | N/A | N/A | N/A | N/A |
+| MalwareExposure | no | build_create_payload | CreateMalwareExposurePayload | meta, spec | none |
+| MalwareExposureQuery | yes | build_create_payload | CreateMalwareExposureQueryPayload | meta, spec | none |
 | Metric | yes | build_create_payload | CreateMetricPayload | meta, spec | none |
 | Namespace | yes | build_create_payload | CreateNamespacePayload | meta | none |
 | NotificationTarget | yes | build_create_payload | CreateNotificationTargetPayload | meta, spec | propagate |
@@ -75,6 +77,8 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (43 resource
 | Invitation | yes | meta.description, meta.tags |
 | LinterResult | no | meta.description, meta.name, meta.tags, spec |
 | Malware | no | meta.description, meta.tags |
+| MalwareExposure | no | meta.description, meta.tags |
+| MalwareExposureQuery | no | meta.description, meta.tags |
 | Metric | yes | meta.description, meta.name, meta.tags, spec |
 | Namespace | yes | meta.description |
 | NotificationTarget | yes | meta.description, meta.tags |
@@ -123,6 +127,8 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (43 resource
 | Invitation | name->meta.name |
 | LinterResult | — |
 | Malware | name->meta.name |
+| MalwareExposure | — |
+| MalwareExposureQuery | — |
 | Metric | name->meta.name |
 | Namespace | name->meta.name |
 | NotificationTarget | name->meta.name |

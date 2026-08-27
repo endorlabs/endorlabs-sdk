@@ -301,6 +301,27 @@ EXPERIMENTAL_RESOURCE_SPECS: list[dict[str, Any]] = [
             "endorlabs.resources.system_config:build_create_payload"
         ),
     },
+    {
+        "attr_name": "MalwareExposure",
+        "resource_name": "malware-exposure",
+        "model_import_path": "endorlabs.resources.malware_exposure:MalwareExposure",
+        "supported_ops": frozenset({"list", "get"}),
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.malware_exposure:build_create_payload"
+        ),
+    },
+    {
+        "attr_name": "MalwareExposureQuery",
+        "resource_name": "queries/malware-exposure",
+        "model_import_path": (
+            "endorlabs.resources.malware_exposure_query:MalwareExposureQuery"
+        ),
+        "supported_ops": frozenset({"create"}),
+        "create_mode": "both",
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.malware_exposure_query:build_create_payload"
+        ),
+    },
 ]
 
 EXPERIMENTAL_REGISTRY_ATTR_NAMES: frozenset[str] = frozenset(

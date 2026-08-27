@@ -4,8 +4,8 @@ Auto-generated inventories for stable/public surfaces.
 
 ## Model-sync coverage snapshot
 
-- facade contract resources: `43`
-- canonical entities (union): `43`
+- facade contract resources: `45`
+- canonical entities (union): `45`
 
 Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 
@@ -69,6 +69,8 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `invitation`
 - `linter_result`
 - `malware`
+- `malware_exposure`
+- `malware_exposure_query`
 - `metric`
 - `namespace`
 - `notification_target`
@@ -137,6 +139,8 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 | Invitation | invitations | tenant | — | list, get, create, update, delete |
 | LinterResult | linter-results | tenant | — | list, get, create, delete |
 | Malware | malware | oss | — | list, get |
+| MalwareExposure | malware-exposure | tenant | — | list, get |
+| MalwareExposureQuery | queries/malware-exposure | tenant | — | create |
 | Metric | metrics | tenant | — | list, get, create, update, delete |
 | Namespace | namespaces | tenant | — | list, get, create, update, delete |
 | NotificationTarget | notification-targets | tenant | — | list, get, create, update, delete |

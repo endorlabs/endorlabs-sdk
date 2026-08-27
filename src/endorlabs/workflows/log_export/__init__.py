@@ -5,8 +5,10 @@ from __future__ import annotations
 from .export import (
     ExportFormat,
     LogExportResult,
+    LogMultiExportResult,
     LogSource,
     export_logs,
+    export_logs_for_namespaces,
     format_mql_date,
     iter_time_slices,
     parse_iso_utc,
@@ -17,8 +19,10 @@ from .export import (
 __all__ = [
     "ExportFormat",
     "LogExportResult",
+    "LogMultiExportResult",
     "LogSource",
     "export_logs",
+    "export_logs_for_namespaces",
     "format_mql_date",
     "iter_time_slices",
     "parse_iso_utc",

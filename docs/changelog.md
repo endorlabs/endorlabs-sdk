@@ -8,8 +8,9 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- `client.MalwareExposure` (list/get) and `client.MalwareExposureQuery` (create) — tenant-scoped malware blast-radius / exposure facades. Prefer these over OSS `Malware` / `QueryMalware` for customer exposure asks.
 - `client.PackageManager` and `client.SystemConfig` registry facades (list/get/create/update/delete).
-- `endor-log-export` — scheduleable full-row dump of `PackageFirewallLog` or `AgentHookEvent` for a time window (JSONL or CSV `payload` column; time-slice batched lists).
+- `endor-log-export` — scheduleable full-row dump of Package Firewall logs (`--source package-firewall-logs` → `PackageFirewallLog`) or Agent Governance Policy Violations (`--source policy-violations` → wire `AgentHookEvent`) for a time window (JSONL or CSV `payload` column; time-slice batched lists). Per-namespace density probe (`probe_log_density` / `--probe-only` / `--discover-namespaces` / `--min-events`) gates multi-NS pulls.
 - `endor-reports package-resolution` — tenant-wide main-context PackageVersion resolution CSV plus interactive HTML (unresolved/manifest, dependency resolution, reachability); playbook `agent-knowledge/workflow-reports/endor-package-resolution-report/`.
 - Executive packet Endor Patches page (`reports.patches` / `05-endor-patches.html`): reach-weighted Available risk, version heat map, impact calculator; CLI `--skip-patches` / `--patches-only` (default output under `runs/patches-reports/`).
 - Executive packet onboarding ScanResult cadence (`reports.onboarding.cadence`): weekly MAIN `TYPE_ALL_SCANS` + CI/PR series (~90d), tag/project leaderboards, analytics toggle; CSV exports `onboarding-cadence-*.csv`.
@@ -17,6 +18,8 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- `QueryMalwareSpec` exposes typed `package_names` (version-less package lookup) matching the wire / create-convenience fields.
+- Agent docs soft-prefer tenant `MalwareExposure` / Finding / PackageFirewallLog for malware investigations; OSS catalog facades remain callable (`scope=oss` overrides unchanged).
 - Troubleshooting-scans summaries, diffs, and triage markdown include allowlisted `scan_mode` (CLI vs Cloud Scan, `--quick-scan`, `--use-local-repo-cache`, reconstructed flags). Skill **endor-troubleshooting-scans**: read those fields; do not infer GitHub App from checkout paths.
 - Endor Patches family rollup: version ``findings`` counts Available + To Request; family ``projects`` unions all version consumers (not Available-only); family ``findings`` is the heat-map total with ``available_findings`` / ``to_request_findings`` breakdowns.
 - Tenant-wide Finding lists (`list_findings_tenant`, including Endor Patches / patch-fix) always shard per project — even when every project shares one namespace — so `--workers` parallelizes flat tenants instead of a single `traverse=True` list.

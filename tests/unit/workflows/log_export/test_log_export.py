@@ -85,7 +85,7 @@ def test_export_logs_jsonl_writes_full_rows(tmp_path: Path) -> None:
     result = export_logs(
         client,
         namespace="example-tenant",
-        source="package-firewall",
+        source="package-firewall-logs",
         since=since,
         until=until,
         output_path=out,
@@ -110,7 +110,7 @@ def test_export_logs_csv_payload_column(tmp_path: Path) -> None:
     result = export_logs(
         client,
         namespace="example-tenant",
-        source="package-firewall",
+        source="package-firewall-logs",
         since=since,
         until=until,
         output_path=out,
@@ -132,7 +132,7 @@ def test_export_logs_empty_window_creates_artifact(tmp_path: Path) -> None:
     result = export_logs(
         client,
         namespace="example-tenant",
-        source="package-firewall",
+        source="package-firewall-logs",
         since=since,
         until=until,
         output_path=out,
@@ -155,7 +155,7 @@ def test_export_logs_agent_hook_events_uses_raw_api(tmp_path: Path) -> None:
     result = export_logs(
         client,
         namespace="example-tenant",
-        source="agent-hook-events",
+        source="policy-violations",
         since=since,
         until=until,
         output_path=out,
@@ -168,3 +168,25 @@ def test_export_logs_agent_hook_events_uses_raw_api(tmp_path: Path) -> None:
     assert call_args.args[0] == "v1/namespaces/example-tenant/agent-hook-events"
     params: dict[str, Any] = call_args.kwargs["params"]
     assert "list_parameters.filter" in params
+
+
+def test_export_logs_for_namespaces(tmp_path: Path) -> None:
+    from endorlabs.workflows.log_export.export import export_logs_for_namespaces
+
+    client = MagicMock()
+    client.PackageFirewallLog.list.return_value = [{"uuid": "x"}]
+    since = datetime(2026, 8, 25, 0, 0, 0, tzinfo=UTC)
+    until = datetime(2026, 8, 25, 1, 0, 0, tzinfo=UTC)
+    multi = export_logs_for_namespaces(
+        client,
+        namespaces=["example-tenant.a", "example-tenant.b"],
+        source="package-firewall-logs",
+        since=since,
+        until=until,
+        output_dir=tmp_path,
+        export_format="jsonl",
+    )
+    assert multi.ok
+    assert multi.namespace_count == 2
+    assert multi.row_count == 2
+    assert len(list(tmp_path.glob("*.jsonl"))) == 2
