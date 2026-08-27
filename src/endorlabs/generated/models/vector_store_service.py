@@ -343,6 +343,14 @@ class V1VectorStoreSpec(BaseModel):
     """
     EmbeddingProvider is the embedding provider of the vector store.
     """
+    search_index_fields: str | None = None
+    """
+    search_index_fields lists metadata fields that queries filter on beyond the
+    uniqueness fields. A non-unique index is ensured on each field when the store
+    is created or next opened, so equality filters on it can avoid a full scan.
+    The declared set is authoritative: adding a field creates its index and
+    removing a field drops it, both on the next open.
+    """
     uniqueness_fields: str | None = None
     """
     uniqueness_fields specifies which metadata fields are used for document uniqueness.

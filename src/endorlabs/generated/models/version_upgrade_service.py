@@ -434,6 +434,48 @@ class LLMContextStructuredContent(BaseModel):
     """
 
 
+class LinterCorrectnessAnalysisCodeFix(BaseModel):
+    """
+    CodeFix represents a potential fix to a determined true positive linter result.
+    """
+
+    file_path: str
+    """
+    The file path of the code fix.
+    """
+    line_end: int
+    """
+    The end line number of the code fix.
+    """
+    line_start: int
+    """
+    The start line number of the code fix.
+    """
+    patch: str
+    """
+    The code fix to be applied.
+    """
+
+
+class LinterCorrectnessAnalysisDataFlowNode(BaseModel):
+    """
+    DataFlowNode represents a node in the data flow trace from source to sink.
+    """
+
+    code_line_num: int | None = None
+    """
+    Line number in the source file.
+    """
+    code_snippet: str | None = None
+    """
+    Variable or expression at this point in the flow.
+    """
+    type: str | None = None
+    """
+    Type of node in the data flow (source, step, or sink).
+    """
+
+
 class MalwareRangeMalwareRangeType(StrEnum):
     """
     Type of the version information.
@@ -2372,6 +2414,43 @@ class V1Context(BaseModel):
     """
 
 
+class V1Correctness(StrEnum):
+    """
+    Correctness represents a correctness assessment.
+
+     - CORRECTNESS_TRUE_POSITIVE: The AI analysis result is a true positive.
+     - CORRECTNESS_FALSE_POSITIVE: The AI analysis result is a false positive.
+     - CORRECTNESS_FALSE_NEGATIVE: The AI analysis result is a false negative.
+     - CORRECTNESS_UNKNOWN: The AI analysis result is unknown.
+    """
+
+    CORRECTNESS_UNSPECIFIED = 'CORRECTNESS_UNSPECIFIED'
+    CORRECTNESS_TRUE_POSITIVE = 'CORRECTNESS_TRUE_POSITIVE'
+    CORRECTNESS_FALSE_POSITIVE = 'CORRECTNESS_FALSE_POSITIVE'
+    CORRECTNESS_FALSE_NEGATIVE = 'CORRECTNESS_FALSE_NEGATIVE'
+    CORRECTNESS_UNKNOWN = 'CORRECTNESS_UNKNOWN'
+
+
+class V1CorrectnessAnalyzer(StrEnum):
+    """
+    CorrectnessAnalyzer represents the analyzer used to determine the correctness of a linter result.
+    """
+
+    CORRECTNESS_ANALYZER_UNSPECIFIED = 'CORRECTNESS_ANALYZER_UNSPECIFIED'
+    CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_2_5 = (
+        'CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_2_5'
+    )
+    CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_2_5_LITE = (
+        'CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_2_5_LITE'
+    )
+    CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_LATEST = (
+        'CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_LATEST'
+    )
+    CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_LITE_LATEST = (
+        'CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_LITE_LATEST'
+    )
+
+
 class V1CountResponse(BaseModel):
     """
     Response to a list count request.
@@ -2871,6 +2950,10 @@ class V1LLMContext(BaseModel):
 
 
 class V1Language(StrEnum):
+    """
+    - LANGUAGE_GOSU: Gosu, a JVM language used by Guidewire applications.
+    """
+
     LANGUAGE_UNSPECIFIED = 'LANGUAGE_UNSPECIFIED'
     LANGUAGE_GO = 'LANGUAGE_GO'
     LANGUAGE_JAVA = 'LANGUAGE_JAVA'
@@ -2889,6 +2972,7 @@ class V1Language(StrEnum):
     LANGUAGE_CPP = 'LANGUAGE_CPP'
     LANGUAGE_SWIFTURL = 'LANGUAGE_SWIFTURL'
     LANGUAGE_CONAN = 'LANGUAGE_CONAN'
+    LANGUAGE_GOSU = 'LANGUAGE_GOSU'
 
 
 class V1LicenseMappingInfo(StrEnum):
@@ -2914,6 +2998,121 @@ class V1LicenseMappingInfo(StrEnum):
     LICENSE_MAPPING_INFO_PRIVATE = 'LICENSE_MAPPING_INFO_PRIVATE'
     LICENSE_MAPPING_INFO_EXACT = 'LICENSE_MAPPING_INFO_EXACT'
     LICENSE_MAPPING_INFO_UNLICENSED = 'LICENSE_MAPPING_INFO_UNLICENSED'
+
+
+class CodeFix(BaseModel):
+    """
+    CodeFix represents a potential fix to a determined true positive linter result.
+    """
+
+    file_path: str
+    """
+    The file path of the code fix.
+    """
+    line_end: int
+    """
+    The end line number of the code fix.
+    """
+    line_start: int
+    """
+    The start line number of the code fix.
+    """
+    patch: str
+    """
+    The code fix to be applied.
+    """
+
+
+class DataFlowItem(BaseModel):
+    """
+    DataFlowNode represents a node in the data flow trace from source to sink.
+    """
+
+    code_line_num: int | None = None
+    """
+    Line number in the source file.
+    """
+    code_snippet: str | None = None
+    """
+    Variable or expression at this point in the flow.
+    """
+    type: str | None = None
+    """
+    Type of node in the data flow (source, step, or sink).
+    """
+
+
+class V1LinterCorrectnessAnalysis(BaseModel):
+    """
+    LinterCorrectnessAnalysis represents an analysis of a linter result.
+    """
+
+    analysis_summary: str | None = None
+    """
+    Analysis summary, providing an explanation of the linter result and classification.
+    """
+    analyzer: V1CorrectnessAnalyzer
+    """
+    The analyzer of the linter correctness analysis.
+    """
+    code_fixes: list[CodeFix] | None = None
+    """
+    Code fixes are potential fixes to the identified issue.
+    """
+    code_references: str | None = None
+    """
+    Textual description of line references/ fields/variables , etc for the linter result.
+    """
+    confidence_level: V1AIMetaConfidenceLevel
+    """
+    The confidence level of the linter correctness analysis.
+    """
+    content_hash: str | None = None
+    """
+    sha256 over the source spans (finding location + taint dataflow) this analysis
+    was computed against; a mismatch on rescan invalidates the cached verdict and
+    forces re-analysis of the result.
+    """
+    correctness: V1Correctness
+    """
+    The correctness assessment of the linter correctness analysis.
+    """
+    data_flow: list[DataFlowItem] | None = None
+    """
+    Textual Description of the source to sink data flow analysis for the linter result.
+    """
+    description: str | None = None
+    """
+    The textual description of the linter correctness analysis.
+    """
+    risk_assessment: str | None = None
+    """
+    Risk assessment for the linter result. Provides False/True positive classifaction and reasoning for the linter result..
+    """
+    sanitizers: list[str] | None = None
+    """
+    The sanitizers used to determine the correctness of the linter result.
+    """
+    security_control: str | None = None
+    """
+    Description of any sanitizers, validators, or mitigations found (or lack thereof) for the linter result.
+    """
+    security_impact: str | None = None
+    """
+    Description of the security impact/potential consequences for the linter result.
+    """
+    symbols: str | None = None
+    """
+    Key variables/symbols in the data flow path for the linter result.
+    """
+    technical_detail: str | None = None
+    """
+    Further technical details (eg results about the vulnerability type and exploitation potential) for the linter result.
+    """
+    version: str
+    """
+    The version of the linter correctness analysis.
+    """
 
 
 class V1ListResponse(BaseModel):
@@ -3754,6 +3953,79 @@ class ErrorAnalysi(BaseModel):
     matching_snippet: str | None = None
     """
     matching_snippet is the snippet of the error that matched the rule.
+    """
+
+
+class AiAnalyse(BaseModel):
+    """
+    LinterCorrectnessAnalysis represents an analysis of a linter result.
+    """
+
+    analysis_summary: str | None = None
+    """
+    Analysis summary, providing an explanation of the linter result and classification.
+    """
+    analyzer: V1CorrectnessAnalyzer
+    """
+    The analyzer of the linter correctness analysis.
+    """
+    code_fixes: list[CodeFix] | None = None
+    """
+    Code fixes are potential fixes to the identified issue.
+    """
+    code_references: str | None = None
+    """
+    Textual description of line references/ fields/variables , etc for the linter result.
+    """
+    confidence_level: V1AIMetaConfidenceLevel
+    """
+    The confidence level of the linter correctness analysis.
+    """
+    content_hash: str | None = None
+    """
+    sha256 over the source spans (finding location + taint dataflow) this analysis
+    was computed against; a mismatch on rescan invalidates the cached verdict and
+    forces re-analysis of the result.
+    """
+    correctness: V1Correctness
+    """
+    The correctness assessment of the linter correctness analysis.
+    """
+    data_flow: list[DataFlowItem] | None = None
+    """
+    Textual Description of the source to sink data flow analysis for the linter result.
+    """
+    description: str | None = None
+    """
+    The textual description of the linter correctness analysis.
+    """
+    risk_assessment: str | None = None
+    """
+    Risk assessment for the linter result. Provides False/True positive classifaction and reasoning for the linter result..
+    """
+    sanitizers: list[str] | None = None
+    """
+    The sanitizers used to determine the correctness of the linter result.
+    """
+    security_control: str | None = None
+    """
+    Description of any sanitizers, validators, or mitigations found (or lack thereof) for the linter result.
+    """
+    security_impact: str | None = None
+    """
+    Description of the security impact/potential consequences for the linter result.
+    """
+    symbols: str | None = None
+    """
+    Key variables/symbols in the data flow path for the linter result.
+    """
+    technical_detail: str | None = None
+    """
+    Further technical details (eg results about the vulnerability type and exploitation potential) for the linter result.
+    """
+    version: str
+    """
+    The version of the linter correctness analysis.
     """
 
 
@@ -5819,6 +6091,86 @@ class V1ResolutionStatus(BaseModel):
     """
 
 
+class V1SastData(BaseModel):
+    """
+    Fields common to every SAST-shaped finding: AI SAST and rule-based
+    (opengrep) findings alike. location reuses SourceLocation rather than a
+    separate snippet field.
+    """
+
+    ai_analyses: list[AiAnalyse] | None = None
+    """
+    False-positive analyses. Populating this reroutes the finding to the
+    FP-validation UI tab.
+    """
+    classification: V1FindingClassification | None = (
+        'FINDING_CLASSIFICATION_UNSPECIFIED'
+    )
+    """
+    Classification of the finding type, shared with
+    AIResult.SAST.classification.
+    """
+    confidence: str | None = None
+    """
+    Confidence that the finding is a true positive.
+    """
+    cwes: list[str] | None = None
+    """
+    CWE identifiers associated with the finding.
+    """
+    impact: str | None = None
+    """
+    Impact of the finding if exploited.
+    """
+    languages: list[str] | None = None
+    """
+    Programming languages the finding's location spans.
+    """
+    likelihood: str | None = None
+    """
+    Likelihood the finding is exploitable. Rule-based findings only.
+    """
+    location: V1SourceLocation | None = None
+    """
+    Primary finding location.
+    """
+    message: str | None = None
+    """
+    Detailed finding message, shown when the finding has no explanation or
+    remediation text of its own.
+    """
+    references: list[str] | None = None
+    """
+    Reference links for the finding.
+    """
+    rule_id: str | None = None
+    """
+    Rule identifier: CWE ID for an AI SAST finding, or the rule id for a
+    rule-based finding.
+    """
+    rule_name: str | None = None
+    """
+    Human-readable rule/CWE name, used for UI grouping and rule filtering.
+    """
+    rule_uuid: str | None = None
+    """
+    UUID of the SemgrepRule resource that produced the finding. Rule-based
+    findings only.
+    """
+    rule_version: str | None = None
+    """
+    Version of the rule that produced the finding. Rule-based findings only.
+    """
+    tags: list[str] | None = None
+    """
+    Compliance/classification tags (e.g. OWASP, SANS).
+    """
+    title: str | None = None
+    """
+    Short display title for the detected pattern, distinct from rule_name.
+    """
+
+
 class CategoryScore(BaseModel):
     """
     The score for one score category. The is the overall score
@@ -7083,6 +7435,12 @@ class V1FindingMetadata(BaseModel):
     root_package_version_metadata: V1PackageVersionMetadata | None = None
     """
     Package metadata for the root package.
+    """
+    sast_data: V1SastData | None = None
+    """
+    Fields common to every SAST-shaped finding, AI SAST and rule-based
+    (opengrep) findings alike. ai_sast_data remains the home for
+    AI-SAST-specific workflow output.
     """
     security_review_data: V1SecurityReviewFindingData | None = None
     """

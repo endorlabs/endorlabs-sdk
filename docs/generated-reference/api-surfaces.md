@@ -11,24 +11,33 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 
 ## Top-level exports (`endorlabs.__all__`)
 
+- `AGENT_RULE_EXCEPTION_TYPES`
 - `APIClient`
 - `AmbiguousError`
 - `Client`
 - `ConflictError`
 - `EndorAPIError`
+- `EndorRuleError`
 - `F`
 - `FilterExpression`
 - `ListParameters`
+- `ListQueryPerformanceError`
+- `LocalContextError`
 - `MethodNotSupportedError`
+- `NamespaceScopingError`
 - `NetworkError`
 - `NotFoundError`
+- `OutputShapeRoutingError`
 - `PermissionDeniedError`
+- `PortableExamplesError`
 - `RateLimitError`
 - `SdkDiscovery`
 - `ServerError`
 - `UnauthorizedError`
 - `ValidationError`
 - `WhoamiResult`
+- `WorkflowCompositionError`
+- `WorkspaceLayoutError`
 - `agent_knowledge_bootstrap_paths`
 - `agent_knowledge_dir`
 - `agent_knowledge_index_path`
