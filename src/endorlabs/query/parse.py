@@ -10,6 +10,7 @@ from endorlabs.operations.list_response import (
     buckets_to_counts,
     count_from_wire,
     iter_group_buckets_from_pages,
+    wire_has_count,
 )
 from endorlabs.operations.pagination import PageCursor
 
@@ -88,7 +89,7 @@ def parse_query_root_count(result: Any) -> int:
     qr = extract_query_response(result)
     if not qr:
         return 0
-    if "count_response" in qr or qr.get("count") is not None:
+    if wire_has_count(qr):
         return count_from_wire(qr)
     objects = extract_query_response_objects(qr)
     if objects:
@@ -131,9 +132,8 @@ def reference_count(project_obj: dict[str, Any], ref_key: str) -> int:
     block_dict = reference_block(project_obj, ref_key)
     if not block_dict:
         return 0
-    n = count_from_wire(block_dict)
-    if n:
-        return n
+    if wire_has_count(block_dict):
+        return count_from_wire(block_dict)
     lst = block_dict.get("list")
     if isinstance(lst, dict):
         lst_dict = cast("dict[str, Any]", lst)
@@ -253,12 +253,8 @@ def wire_spec_with_reference_page_cursor(
 def reference_total(project_obj: dict[str, Any], ref_key: str) -> int:
     """Best-effort total for a reference: count ref, then list total, else page size."""
     block_dict = reference_block(project_obj, ref_key)
-    has_count = (
-        block_dict.get("count_response") is not None
-        or block_dict.get("count") is not None
-    )
-    if has_count:
-        return reference_count(project_obj, ref_key)
+    if wire_has_count(block_dict):
+        return count_from_wire(block_dict)
     total = reference_list_total(project_obj, ref_key)
     if total is not None:
         return total

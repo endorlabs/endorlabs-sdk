@@ -2,7 +2,11 @@
 
 Each spec drives the same ``build_category_burndown_block`` path: base filter,
 severity×facet cells, path/tag redistribute. SCA uses ``expand="reach"`` so
-``all`` stays RF+PRF and ``unreachable`` is derived.
+``all`` stays RF+PRF, ``dependency_reach`` is RD+PRD, and ``unreachable`` is
+derived.
+
+Code findings: OpenGrep vs AI-SAST share TP/FP triage facets; Secrets uses
+valid/invalid only (no TP/FP).
 """
 
 from __future__ import annotations
@@ -37,32 +41,40 @@ CODE_CATEGORIES: tuple[str, ...] = (
     CATEGORY_SECRETS,
 )
 
+# Selection-based SCA reach options. ``all`` = RF+PRF (function actionable);
+# ``dependency_reach`` = RD+PRD. RF is stronger than RD in the product model.
 SCA_FACET_KEYS: tuple[str, ...] = (
     "all",
     "reachable",
     "prf",
+    "reachable_dependency",
     "prd",
+    "dependency_reach",
     "unreachable",
     "unreachable_function",
     "unreachable_dependency",
 )
-SAST_FACET_KEYS: tuple[str, ...] = ("all", "true_positive", "false_positive")
-AI_SAST_FACET_KEYS: tuple[str, ...] = ("all",)
+# Shared triage facets for OpenGrep and AI-SAST (not Secrets).
+TRIAGE_FACET_KEYS: tuple[str, ...] = ("all", "true_positive", "false_positive")
+SAST_FACET_KEYS: tuple[str, ...] = TRIAGE_FACET_KEYS
+AI_SAST_FACET_KEYS: tuple[str, ...] = TRIAGE_FACET_KEYS
 SECRETS_FACET_KEYS: tuple[str, ...] = ("all", "valid", "invalid")
 
 SAST_CRITERIA = (
-    "All severities (Critical–Low) · main context · FINDING_CATEGORY_SAST · "
+    "All severities (Critical–Low) · main context · OpenGrep SAST "
+    "(FINDING_CATEGORY_SAST without FINDING_TAGS_AI) · "
     "triage facets (all / true_positive / false_positive); "
     "UI severity thresholds (Critical+ / High+ / Medium+ / All)"
 )
 AI_SAST_CRITERIA = (
-    "All severities (Critical–Low) · main context · FINDING_CATEGORY_SAST + "
-    "FINDING_TAGS_AI (AI detection agent); "
+    "All severities (Critical–Low) · main context · AI-SAST detection "
+    "(FINDING_CATEGORY_SAST + FINDING_TAGS_AI) · "
+    "triage facets (all / true_positive / false_positive); "
     "UI severity thresholds (Critical+ / High+ / Medium+ / All)"
 )
 SECRETS_CRITERIA = (
     "All severities (Critical–Low) · main context · FINDING_CATEGORY_SECRETS · "
-    "validity facets (all / valid / invalid); "
+    "validity facets (all / valid / invalid); no TP/FP triage facets; "
     "UI severity thresholds (Critical+ / High+ / Medium+ / All)"
 )
 
@@ -78,14 +90,15 @@ def sev_facet_cells(
     return tuple(cells)
 
 
-SAST_CELLS = sev_facet_cells(
+TRIAGE_CELLS = sev_facet_cells(
     (
         ("all", ""),
         ("true_positive", TRUE_POSITIVE_TAG_CLAUSE),
         ("false_positive", FALSE_POSITIVE_TAG_CLAUSE),
     )
 )
-AI_SAST_CELLS = sev_facet_cells((("all", ""),))
+SAST_CELLS = TRIAGE_CELLS
+AI_SAST_CELLS = TRIAGE_CELLS
 SECRETS_CELLS = sev_facet_cells(
     (
         ("all", ""),

@@ -75,6 +75,34 @@ def test_reference_count_reads_aggregation_count() -> None:
     assert reference_count(project, "Finding") == 9
 
 
+def test_reference_count_keeps_explicit_zero() -> None:
+    project = {
+        "meta": {
+            "references": {
+                "Finding": {
+                    "aggregation_count": {"count": 0},
+                    "list": {"response": {"total": 99}},
+                }
+            }
+        }
+    }
+    assert reference_count(project, "Finding") == 0
+
+
+def test_reference_total_keeps_aggregation_count_zero() -> None:
+    project = {
+        "meta": {
+            "references": {
+                "Finding": {
+                    "aggregation_count": {"count": 0},
+                    "list": {"response": {"total": 99}},
+                }
+            }
+        }
+    }
+    assert reference_total(project, "Finding") == 0
+
+
 def test_parse_project_multi_reference_counts_from_fixture() -> None:
     payload = _load_fixture("finding_count_response.json")
     ref_keys = [

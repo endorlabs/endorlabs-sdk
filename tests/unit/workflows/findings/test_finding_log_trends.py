@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 from endorlabs.core.exceptions import ServerError
 from endorlabs.workflows.findings.finding_log_trends import (
     CHART_DEFAULT_LOOKBACK,
+    UNSPLIT_SEVERITY_LEVELS,
     build_analysis,
     build_finding_log_new_vs_resolved_analysis,
     chart_canvas_filename,
@@ -17,6 +18,7 @@ from endorlabs.workflows.findings.finding_log_trends import (
     gap_trend,
     normalize_chart_interval,
     query_operation_counts,
+    query_operation_group_counts,
     validate_chart_analysis,
 )
 
@@ -133,7 +135,7 @@ def test_query_operation_counts_severity_split_on_timeout() -> None:
     )
     assert counts == {}
     assert split is True
-    assert calls["n"] == 3
+    assert calls["n"] == 1 + len(UNSPLIT_SEVERITY_LEVELS)
 
 
 def test_query_operation_counts_aggregate_first_on_traverse() -> None:
@@ -190,7 +192,64 @@ def test_query_operation_counts_falls_back_to_shards_after_aggregate_timeout() -
     assert counts == {}
     assert split is True
     assert calls["aggregate"] == 2
-    assert calls["shard"] == 2
+    assert calls["shard"] == len(UNSPLIT_SEVERITY_LEVELS)
+
+
+def test_query_operation_group_counts_unsplit_matches_exact_levels() -> None:
+    client = MagicMock()
+    filters: list[str] = []
+
+    def list_groups(**kwargs: object) -> list[object]:
+        filters.append(str(kwargs.get("filter") or ""))
+        return []
+
+    client.FindingLog.list_groups = list_groups
+    query_operation_group_counts(
+        client,
+        namespace="example-tenant",
+        base_filter="context.type==CONTEXT_TYPE_MAIN",
+        operation="CREATE",
+        level=None,
+        traverse=False,
+        interval="week",
+    )
+    assert len(filters) == 1
+    for level in UNSPLIT_SEVERITY_LEVELS:
+        assert f"FINDING_LEVEL_{level}" in filters[0]
+    assert "spec.level in [" in filters[0]
+
+
+def test_query_operation_counts_timeout_split_uses_unsplit_levels() -> None:
+    client = MagicMock()
+    filters: list[str] = []
+
+    def list_groups(**kwargs: object) -> list[object]:
+        filt = str(kwargs.get("filter") or "")
+        filters.append(filt)
+        if "spec.level in [" in filt:
+            raise ServerError("timeout", status_code=504)
+        return []
+
+    client.FindingLog.list_groups = list_groups
+    _counts, split = query_operation_counts(
+        client,
+        namespace="example-tenant",
+        base_filter="meta.create_time>=date(2026-01-01T00:00:00Z)",
+        operation="CREATE",
+        traverse=False,
+        severity_split=False,
+    )
+    assert split is True
+    unsplit = [item for item in filters if "spec.level in [" in item]
+    exact = [item for item in filters if "spec.level==FINDING_LEVEL_" in item]
+    assert len(unsplit) == 1
+    found_levels = {
+        level
+        for level in UNSPLIT_SEVERITY_LEVELS
+        if any(f"FINDING_LEVEL_{level}" in item for item in exact)
+    }
+    assert found_levels == set(UNSPLIT_SEVERITY_LEVELS)
+    assert len(exact) == len(UNSPLIT_SEVERITY_LEVELS)
 
 
 def test_validate_chart_analysis_accepts_build_analysis_output() -> None:

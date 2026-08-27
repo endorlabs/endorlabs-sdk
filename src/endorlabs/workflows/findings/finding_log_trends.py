@@ -23,8 +23,8 @@ if TYPE_CHECKING:
     from endorlabs import Client
 
 FINDING_CRITERIA = (
-    "All severities (Critical-Low) · main context · reach filters "
-    "(default RF+PRF; also PRD / unreachable function & dependency); "
+    "All severities (Critical-Low) · main context · reach selections "
+    "(default RF+PRF; also RF / PRF / RD / PRD / RD+PRD / unreachable); "
     "UI severity thresholds (Critical+ / High+ / Medium+ / All)"
 )
 
@@ -288,6 +288,9 @@ REACHABLE_FUNCTION_CLAUSE = "spec.finding_tags contains FINDING_TAGS_REACHABLE_F
 PRF_FUNCTION_CLAUSE = (
     "spec.finding_tags contains FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION"
 )
+REACHABLE_DEPENDENCY_CLAUSE = (
+    "spec.finding_tags contains FINDING_TAGS_REACHABLE_DEPENDENCY"
+)
 PRD_CLAUSE = "spec.finding_tags contains FINDING_TAGS_POTENTIALLY_REACHABLE_DEPENDENCY"
 UNREACHABLE_FUNCTION_CLAUSE = (
     "spec.finding_tags contains FINDING_TAGS_UNREACHABLE_FUNCTION"
@@ -295,11 +298,14 @@ UNREACHABLE_FUNCTION_CLAUSE = (
 UNREACHABLE_DEPENDENCY_CLAUSE = (
     "spec.finding_tags contains FINDING_TAGS_UNREACHABLE_DEPENDENCY"
 )
-# Base pull cells (Crit/High/Med/Low x each). ``all`` / ``unreachable`` rollups
-# are derived in ``expand_severity_reach_matrix``.
+# Base pull cells (Crit/High/Med/Low x each). Rollups such as ``all`` (RF+PRF),
+# ``dependency_reach`` (RD+PRD), and ``unreachable`` are derived in
+# ``expand_severity_reach_matrix``. RF implies a reachable dependency in the
+# product model; RD is still selectable for dependency-only prioritization.
 BASE_REACH_KEYS: tuple[str, ...] = (
     "reachable",
     "prf",
+    "reachable_dependency",
     "prd",
     "unreachable_function",
     "unreachable_dependency",
@@ -310,9 +316,13 @@ EXACT_SEVERITY_LEVELS: tuple[tuple[str, str], ...] = (
     ("medium", "MEDIUM"),
     ("low", "LOW"),
 )
+UNSPLIT_SEVERITY_LEVELS: tuple[str, ...] = tuple(
+    level for _, level in EXACT_SEVERITY_LEVELS
+)
 _REACH_CLAUSES: tuple[tuple[str, str], ...] = (
     ("reachable", REACHABLE_FUNCTION_CLAUSE),
     ("prf", PRF_FUNCTION_CLAUSE),
+    ("reachable_dependency", REACHABLE_DEPENDENCY_CLAUSE),
     ("prd", PRD_CLAUSE),
     ("unreachable_function", UNREACHABLE_FUNCTION_CLAUSE),
     ("unreachable_dependency", UNREACHABLE_DEPENDENCY_CLAUSE),
@@ -426,7 +436,8 @@ def expand_severity_reach_matrix(
 ) -> dict[str, dict[str, dict[str, Any]]]:
     """Fill severity/reach rollups from Crit/High/Med/Low x base reach cells.
 
-    Per-severity ``all`` reach remains the RF+PRF union. ``unreachable`` sums
+    Per-severity ``all`` remain the RF+PRF union (function-level actionable
+    default). ``dependency_reach`` sums RD+PRD. ``unreachable`` sums
     unreachable function + dependency. Top-level ``all`` sums all four exact
     severity rows. Missing base cells become zeros.
     """
@@ -446,6 +457,7 @@ def expand_severity_reach_matrix(
     def sev_row(sev: str) -> dict[str, dict[str, Any]]:
         reachable = cell(sev, "reachable")
         prf = cell(sev, "prf")
+        rd = cell(sev, "reachable_dependency")
         prd = cell(sev, "prd")
         uf = cell(sev, "unreachable_function")
         ud = cell(sev, "unreachable_dependency")
@@ -453,7 +465,9 @@ def expand_severity_reach_matrix(
             "all": combine([reachable, prf]),
             "reachable": reachable,
             "prf": prf,
+            "reachable_dependency": rd,
             "prd": prd,
+            "dependency_reach": combine([rd, prd]),
             "unreachable_function": uf,
             "unreachable_dependency": ud,
             "unreachable": combine([uf, ud]),
@@ -464,7 +478,9 @@ def expand_severity_reach_matrix(
         "all",
         "reachable",
         "prf",
+        "reachable_dependency",
         "prd",
+        "dependency_reach",
         "unreachable_function",
         "unreachable_dependency",
         "unreachable",
@@ -494,11 +510,8 @@ def query_operation_group_counts(
     if level is not None:
         filt += f" and spec.level==FINDING_LEVEL_{level}"
     else:
-        filt += (
-            " and spec.level in ["
-            "FINDING_LEVEL_CRITICAL, FINDING_LEVEL_HIGH, "
-            "FINDING_LEVEL_MEDIUM, FINDING_LEVEL_LOW]"
-        )
+        inner = ", ".join(f"FINDING_LEVEL_{item}" for item in UNSPLIT_SEVERITY_LEVELS)
+        filt += f" and spec.level in [{inner}]"
     if project_uuid is not None:
         # FindingLog is scoped by meta.parent_uuid (spec.project_uuid is 400).
         filt = f'{filt} and meta.parent_uuid=="{project_uuid}"'
@@ -887,9 +900,9 @@ def _merge_severity_level_counts(
     traverse: bool,
     interval: str,
 ) -> dict[str, int]:
-    """Query CRITICAL and HIGH separately and merge bucket counts."""
+    """Query each unsplit severity separately and merge bucket counts."""
     merged: dict[str, int] = {}
-    for level in ("CRITICAL", "HIGH"):
+    for level in UNSPLIT_SEVERITY_LEVELS:
         counts = _query_operation_group_counts(
             client,
             namespace=namespace,
@@ -959,7 +972,7 @@ def _query_operation_counts_sharded(
             severity_split = True
 
     merged: dict[str, int] = {}
-    for level in ("CRITICAL", "HIGH"):
+    for level in UNSPLIT_SEVERITY_LEVELS:
         counts = _shard_query(level)
         for bucket, count in counts.items():
             merged[bucket] = merged.get(bucket, 0) + count

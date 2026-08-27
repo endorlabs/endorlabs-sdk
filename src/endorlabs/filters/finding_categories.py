@@ -27,6 +27,8 @@ FINDING_CATEGORIES: dict[str, str] = {
 TRUE_POSITIVE_TAG_CLAUSE = "spec.finding_tags contains FINDING_TAGS_TRUE_POSITIVE"
 FALSE_POSITIVE_TAG_CLAUSE = "spec.finding_tags contains FINDING_TAGS_FALSE_POSITIVE"
 AI_TAG_CLAUSE = "spec.finding_tags contains FINDING_TAGS_AI"
+NOT_AI_TAG_CLAUSE = "spec.finding_tags not contains [FINDING_TAGS_AI]"
+TRIAGED_TAG_CLAUSE = f"({TRUE_POSITIVE_TAG_CLAUSE} or {FALSE_POSITIVE_TAG_CLAUSE})"
 VALID_SECRET_TAG_CLAUSE = "spec.finding_tags contains FINDING_TAGS_VALID_SECRET"  # noqa: S105
 INVALID_SECRET_TAG_CLAUSE = "spec.finding_tags contains FINDING_TAGS_INVALID_SECRET"  # noqa: S105
 
@@ -69,20 +71,24 @@ def main_context_vulnerability_filter() -> str:
     return f"{MAIN_CONTEXT_CLAUSE} and {VULNERABILITY_CATEGORY}"
 
 
-def sast_log_base_filter() -> str:
-    """Main-context SAST (OpenGrep / rule-based) FindingLog base filter.
-
-    Includes all ``FINDING_CATEGORY_SAST`` events. AI detection findings also
-    carry this category plus ``FINDING_TAGS_AI``; use ``ai_sast_log_base_filter``
-    for the AI-only subset. FindingLog MQL exclusion of the AI tag is not used
-    in v1 (positive tag matches only).
-    """
+def sast_category_log_base_filter() -> str:
+    """Main-context FindingLog base for any ``FINDING_CATEGORY_SAST`` event."""
     return category_filter(FINDING_CATEGORY_SAST)
+
+
+def sast_log_base_filter() -> str:
+    """Main-context OpenGrep SAST FindingLog base (excludes AI detection).
+
+    Rule-based OpenGrep findings share ``FINDING_CATEGORY_SAST`` with AI
+    detection findings. Exclude ``FINDING_TAGS_AI`` so OpenGrep and AI-SAST
+    categories stay disjoint; TP/FP triage facets layer on top of either.
+    """
+    return f"{sast_category_log_base_filter()} and {NOT_AI_TAG_CLAUSE}"
 
 
 def ai_sast_log_base_filter() -> str:
     """Main-context AI-SAST detection FindingLog base (SAST category + AI tag)."""
-    return f"{sast_log_base_filter()} and {AI_TAG_CLAUSE}"
+    return f"{sast_category_log_base_filter()} and {AI_TAG_CLAUSE}"
 
 
 def secrets_log_base_filter() -> str:

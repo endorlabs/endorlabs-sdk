@@ -8,6 +8,16 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Breaking
+
+## 0.7.1
+
+### Added
+
 - `endor-reports package-resolution` — tenant-wide main-context PackageVersion resolution CSV plus interactive HTML (unresolved/manifest, dependency resolution, reachability); playbook `agent-knowledge/workflow-reports/endor-package-resolution-report/`.
 - Executive packet Endor Patches page (`reports.patches` / `05-endor-patches.html`): reach-weighted Available risk, version heat map, impact calculator; CLI `--skip-patches` / `--patches-only` (default output under `runs/patches-reports/`).
 - Executive packet onboarding ScanResult cadence (`reports.onboarding.cadence`): weekly MAIN `TYPE_ALL_SCANS` + CI/PR series (~90d), tag/project leaderboards, analytics toggle; CSV exports `onboarding-cadence-*.csv`.
@@ -15,6 +25,12 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Executive packet code burndown: **OpenGrep vs AI-SAST** categories (disjoint on
+  `FINDING_TAGS_AI`) share **TP/FP triage facets**; Secrets keeps valid/invalid only.
+  SCA reach filter expands to selection-based RF / PRF / RD / PRD / RD+PRD / unreachable.
+- Executive packet default output dirs append today's **MMDDYY**
+  (`<tenant>-executive-packet-MMDDYY/`); override with `--date-suffix`
+  (also applies to `--patches-only`). `--patches-date-suffix` remains a hidden alias.
 - Troubleshooting-scans summaries, diffs, and triage markdown include allowlisted `scan_mode` (CLI vs Cloud Scan, `--quick-scan`, `--use-local-repo-cache`, reconstructed flags). Skill **endor-troubleshooting-scans**: read those fields; do not infer GitHub App from checkout paths.
 - Endor Patches family rollup: version ``findings`` counts Available + To Request; family ``projects`` unions all version consumers (not Available-only); family ``findings`` is the heat-map total with ``available_findings`` / ``to_request_findings`` breakdowns.
 - Tenant-wide Finding lists (`list_findings_tenant`, including Endor Patches / patch-fix) always shard per project — even when every project shares one namespace — so `--workers` parallelizes flat tenants instead of a single `traverse=True` list.
@@ -32,6 +48,8 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Fixed
 
+- FindingLog unsplit CREATE/DELETE queries (`findings-trend` and timeout splits) use the same Critical–Low set as packet matrices; timeout fallbacks no longer drop Medium/Low.
+- Query ``reference_count`` / ``reference_total`` keep an explicit zero from ``aggregation_count`` / ``count`` instead of falling through to ``list.response.total``.
 - Endor Patches packet and `endor-estate patch-fix-report` group on ``target_dependency_package_name`` + version (product dashboard grain). ``upgrade_list`` is not a family key and no longer drops findings.
 - Endor Patches HTML no longer labels the packet denom as the product UI default; heat-map reach prints RF and PRF separately. Packet Available is any reachability; the product dashboard header is RF or PRF. CSV ``reachable`` remains RF-only.
 - `GroupBucket.count` / `count_from_wire` / `group_bucket_count` read ``aggregation_count.count`` (Finding and DependencyMetadata ``list_groups`` wire). Query ``reference_count`` uses the same parser. Using ``bucket.count`` no longer returns 0 on grouped buckets.
