@@ -67,7 +67,13 @@ def _auto_traverse_project_scoped_lists_at_tenant_root(  # pyright: ignore[repor
     def list_auto_traverse(self, *args, **kwargs):
         bound = inspect.signature(original_list).bind(self, *args, **kwargs)
         bound.apply_defaults()
-        arguments = bound.arguments
+        arguments = dict(bound.arguments)
+        arguments.pop("self", None)
+        # Flatten the signature's **kwargs catch-all (else it becomes list kwarg
+        # name "kwargs" and fails validation).
+        extra = arguments.pop("kwargs", None)
+        if isinstance(extra, dict):
+            arguments.update(extra)
         if (
             "project-namespace-list" in getattr(self, "_workflow_flags", ())
             and not arguments.get("traverse")
@@ -80,8 +86,7 @@ def _auto_traverse_project_scoped_lists_at_tenant_root(  # pyright: ignore[repor
             )
             if "." not in ns:
                 arguments["traverse"] = True
-        call_kwargs = {k: v for k, v in arguments.items() if k != "self"}
-        return original_list(self, **call_kwargs)
+        return original_list(self, **arguments)
 
     monkeypatch.setattr(ListableFacade, "list", list_auto_traverse)
 
