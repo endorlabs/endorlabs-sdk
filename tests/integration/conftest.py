@@ -47,6 +47,45 @@ def assert_bounded_log_rows(rows: list[object]) -> None:
     assert len(rows) <= TEST_LOG_LIST_MAX_ROWS
 
 
+@pytest.fixture(autouse=True)
+def _auto_traverse_project_scoped_lists_at_tenant_root(  # pyright: ignore[reportUnusedFunction]
+    monkeypatch,
+):
+    """CI may set ``ENDOR_NAMESPACE`` to the tenant root.
+
+    Project-scoped kinds raise ``NamespaceScopingError`` without ``traverse`` /
+    child ``namespace`` / ``parent``. For integration only, inject
+    ``traverse=True`` so every call site need not repeat that adaptation.
+    Production SDK behavior is unchanged.
+    """
+    import inspect
+
+    from endorlabs.facade.base import ListableFacade
+
+    original_list = ListableFacade.list
+
+    def list_auto_traverse(self, *args, **kwargs):
+        bound = inspect.signature(original_list).bind(self, *args, **kwargs)
+        bound.apply_defaults()
+        arguments = bound.arguments
+        if (
+            "project-namespace-list" in getattr(self, "_workflow_flags", ())
+            and not arguments.get("traverse")
+            and arguments.get("parent") is None
+        ):
+            ns = (
+                arguments.get("namespace")
+                or getattr(self, "_default_namespace", "")
+                or ""
+            )
+            if "." not in ns:
+                arguments["traverse"] = True
+        call_kwargs = {k: v for k, v in arguments.items() if k != "self"}
+        return original_list(self, **call_kwargs)
+
+    monkeypatch.setattr(ListableFacade, "list", list_auto_traverse)
+
+
 # ---------------------------------------------------------------------------
 # Credential helpers
 # ---------------------------------------------------------------------------

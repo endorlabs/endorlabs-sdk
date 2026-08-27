@@ -51,10 +51,12 @@ Helpers in [tests/integration/conftest.py](../../tests/integration/conftest.py):
 - `assert_bounded_log_rows()` — assert row count within cap
 
 List in the integration **`namespace` only** (no `traverse`) when that namespace is a
-**child/leaf** path. If CI sets ``ENDOR_NAMESPACE`` to the tenant root, project-scoped
-kinds (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`) must pass
-``traverse=True`` (or use ``tests.integration.list_scope.project_scoped_list_kwargs``)
-or the facade raises ``NamespaceScopingError``.
+**child/leaf** path. Prefer setting CI ``ENDOR_NAMESPACE`` to a leaf. If it is the
+tenant root, an autouse fixture in ``tests/integration/conftest.py`` injects
+``traverse=True`` for project-scoped kinds (`Finding`, `ScanResult`,
+`PackageVersion`, `DependencyMetadata`) so ``NamespaceScopingError`` does not
+abort the suite. Call sites may still use
+``tests.integration.list_scope.project_scoped_list_kwargs`` explicitly.
 
 ## Checklist after changes
 
