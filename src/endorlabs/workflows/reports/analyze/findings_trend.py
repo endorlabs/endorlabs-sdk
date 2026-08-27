@@ -66,17 +66,21 @@ def _row_create_time(row: Any) -> datetime | None:
 def probe_scan_history_bounds(
     client: Client,
     leaf_namespaces: list[str],
+    *,
+    max_workers: int = 8,
 ) -> dict[str, Any]:
     """Return newest/oldest ScanResult create times across *leaf_namespaces*.
 
     Used as an observed retention / activity bound for throughput captions.
     One newest + one oldest list per leaf (``max_pages=1``); no full scan pull.
     """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
     newest: datetime | None = None
     oldest: datetime | None = None
-    for ns in leaf_namespaces:
-        if not ns:
-            continue
+    leaves = [ns for ns in leaf_namespaces if ns]
+
+    def _leaf_bounds(ns: str) -> tuple[datetime | None, datetime | None]:
         try:
             newest_rows = client.ScanResult.list(
                 namespace=ns,
@@ -97,16 +101,21 @@ def probe_scan_history_bounds(
                 page_size=1,
             )
         except Exception:
-            newest_rows = []
-            oldest_rows = []
-        if newest_rows:
-            ct = _row_create_time(newest_rows[0])
-            if ct is not None and (newest is None or ct > newest):
-                newest = ct
-        if oldest_rows:
-            ct = _row_create_time(oldest_rows[0])
-            if ct is not None and (oldest is None or ct < oldest):
-                oldest = ct
+            return None, None
+        leaf_newest = _row_create_time(newest_rows[0]) if newest_rows else None
+        leaf_oldest = _row_create_time(oldest_rows[0]) if oldest_rows else None
+        return leaf_newest, leaf_oldest
+
+    if leaves:
+        workers = max(1, min(max_workers, len(leaves)))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futs = [pool.submit(_leaf_bounds, ns) for ns in leaves]
+            for fut in as_completed(futs):
+                leaf_newest, leaf_oldest = fut.result()
+                if leaf_newest is not None and (newest is None or leaf_newest > newest):
+                    newest = leaf_newest
+                if leaf_oldest is not None and (oldest is None or leaf_oldest < oldest):
+                    oldest = leaf_oldest
     span_days: float | None = None
     if newest is not None and oldest is not None:
         span_days = round((newest - oldest).total_seconds() / 86400.0, 1)
@@ -157,25 +166,39 @@ def collect_scan_throughput(
                 counts[parent] += int(group_bucket_count(b) or 0)
         return counts
 
-    for ns in leaf_namespaces:
-        main_f = (
-            f"meta.create_time>=date({_iso(main_start)}) and "
-            "context.type==CONTEXT_TYPE_MAIN"
-        )
-        ci_f = (
-            f"meta.create_time>=date({_iso(ci_start)}) and "
-            "context.type==CONTEXT_TYPE_CI_RUN"
-        )
-        try:
-            for uid, n in _group_parent_counts(ns, main_f).items():
-                main_map[uid] += n
-        except Exception:
-            pass
-        try:
-            for uid, n in _group_parent_counts(ns, ci_f).items():
-                ci_map[uid] += n
-        except Exception:
-            pass
+    leaves = [ns for ns in leaf_namespaces if ns]
+    main_f = (
+        f"meta.create_time>=date({_iso(main_start)}) and "
+        "context.type==CONTEXT_TYPE_MAIN"
+    )
+    ci_f = (
+        f"meta.create_time>=date({_iso(ci_start)}) and "
+        "context.type==CONTEXT_TYPE_CI_RUN"
+    )
+
+    def _leaf_maps(ns: str) -> tuple[dict[str, int], dict[str, int]]:
+        import contextlib
+
+        main_local: dict[str, int] = {}
+        ci_local: dict[str, int] = {}
+        with contextlib.suppress(Exception):
+            main_local = _group_parent_counts(ns, main_f)
+        with contextlib.suppress(Exception):
+            ci_local = _group_parent_counts(ns, ci_f)
+        return main_local, ci_local
+
+    if leaves:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        workers = max(1, min(8, len(leaves)))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futs = [pool.submit(_leaf_maps, ns) for ns in leaves]
+            for fut in as_completed(futs):
+                main_local, ci_local = fut.result()
+                for uid, n in main_local.items():
+                    main_map[uid] += n
+                for uid, n in ci_local.items():
+                    ci_map[uid] += n
 
     out: dict[str, dict[str, int]] = {}
     for p in projects:
@@ -195,9 +218,21 @@ def _throughput_scope(
     for p in projects:
         scans = scan_by_uuid.get(p["uuid"], {})
         main = int(scans.get("mainScans91d", 0))
+        public = {
+            k: v
+            for k, v in p.items()
+            if k
+            in {
+                "uuid",
+                "name",
+                "namespace",
+                "tags",
+                "create_time",
+            }
+        }
         enriched.append(
             {
-                **p,
+                **public,
                 "mainScans91d": main,
                 "ciRunScans21d": int(scans.get("ciRunScans21d", 0)),
                 "mainScansPerWeek": round(main / (MAIN_LOOKBACK_DAYS / 7), 2),
@@ -215,7 +250,12 @@ def _throughput_scope(
             2,
         ),
         "topProjects": sorted(
-            enriched, key=lambda r: int(r["mainScans91d"]), reverse=True
+            enriched,
+            key=lambda r: (
+                -int(r["mainScans91d"]),
+                -int(r["ciRunScans21d"]),
+                str(r.get("uuid") or ""),
+            ),
         )[:15],
     }
 
@@ -252,21 +292,29 @@ def build_sca_burndown_report(
     Uses the same category-spec + path/tag redistribute path as code findings,
     with ``expand="reach"`` so ``all`` remains RF+PRF.
     """
-    block = build_category_burndown_block(
-        client,
-        tenant=tenant,
-        projects=projects,
-        leaf_namespaces=leaf_namespaces,
-        path_options=path_options,
-        tag_catalog=tag_catalog,
-        category_key=CATEGORY_SCA,
-        lookback=lookback,
-        min_projects=min_projects,
-        max_workers=max_workers,
-    )
+    from concurrent.futures import ThreadPoolExecutor
 
-    scan_by_uuid = collect_scan_throughput(client, projects, leaf_namespaces)
-    scan_bounds = probe_scan_history_bounds(client, leaf_namespaces)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        burndown_fut = pool.submit(
+            build_category_burndown_block,
+            client,
+            tenant=tenant,
+            projects=projects,
+            leaf_namespaces=leaf_namespaces,
+            path_options=path_options,
+            tag_catalog=tag_catalog,
+            category_key=CATEGORY_SCA,
+            lookback=lookback,
+            min_projects=min_projects,
+            max_workers=max_workers,
+        )
+        throughput_fut = pool.submit(
+            collect_scan_throughput, client, projects, leaf_namespaces
+        )
+        bounds_fut = pool.submit(probe_scan_history_bounds, client, leaf_namespaces)
+        block = burndown_fut.result()
+        scan_by_uuid = throughput_fut.result()
+        scan_bounds = bounds_fut.result()
     tp_per_path = {
         path: _throughput_scope(
             [

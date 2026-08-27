@@ -18,6 +18,8 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Executive packet **Endor Patches is opt-in**: pass `--patches` (or `--patches-only`) to pull Finding lists; default full packet skips patches. `--skip-patches` is a deprecated no-op.
+- Executive packet post-discover slices (cadence, sprawl, SCA, code, optional patches) run concurrently; leaf ScanResult/DM loops and SCA FindingLog∥throughput overlap for wall time without changing filters. Java Maven denom reuses discover leaves (no second `Query.Project.discover`).
 - `QueryMalwareSpec` exposes typed `package_names` (version-less package lookup) matching the wire / create-convenience fields.
 - Agent docs soft-prefer tenant `MalwareExposure` / Finding / PackageFirewallLog for malware investigations; OSS catalog facades remain callable (`scope=oss` overrides unchanged).
 - Troubleshooting-scans summaries, diffs, and triage markdown include allowlisted `scan_mode` (CLI vs Cloud Scan, `--quick-scan`, `--use-local-repo-cache`, reconstructed flags). Skill **endor-troubleshooting-scans**: read those fields; do not infer GitHub App from checkout paths.

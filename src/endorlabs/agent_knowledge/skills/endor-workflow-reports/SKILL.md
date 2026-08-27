@@ -60,7 +60,8 @@ Prefer the executive HTML packet when the user asks for any of:
 
 Command: `uv run --env-file .env endor-reports packet -n <tenant>`
 Output: `.endorlabs-context/workspace/runs/executive-report-packet/`
-Patches-only campaign: `endor-reports packet -n <tenant> --patches-only`
+Include Patches: add `--patches`. Campaign-only:
+`endor-reports packet -n <tenant> --patches-only`
 → `.endorlabs-context/workspace/runs/patches-reports/`
 Playbook: `agent-knowledge/workflow-reports/endor-executive-report-packet/SKILL.md`.
 Packet Available is any reachability (not the product RF|PRF header). Families
@@ -77,7 +78,7 @@ group on the vulnerable library (`target_dependency_*`), not `upgrade_list`.
 | CI `endorctl` version inventory across latest CLI scans | `endor-reports ci-endorctl -n <tenant>` | `.endorlabs-context/workspace/runs/ci-endorctl-version-audit/` |
 | Duplicate project registrations across namespaces | `endor-reports duplicates -n <tenant>` | `.endorlabs-context/workspace/runs/duplicate-projects/` |
 | New vs resolved findings trend chart | `endor-reports findings-trend -n <tenant>` | `.endorlabs-context/workspace/runs/finding-log-weekly-trends/` |
-| Executive interactive HTML packet (onboarding + scan/PR cadence, sprawl, SCA + SAST/Secrets FindingLog burndown, Endor Patches) | `endor-reports packet -n <tenant>` | `.endorlabs-context/workspace/runs/executive-report-packet/` |
+| Executive interactive HTML packet (onboarding + scan/PR cadence, sprawl, SCA + SAST/Secrets FindingLog burndown; add `--patches` for Endor Patches) | `endor-reports packet -n <tenant>` | `.endorlabs-context/workspace/runs/executive-report-packet/` |
 | Endor Patches campaign page only | `endor-reports packet -n <tenant> --patches-only` | `.endorlabs-context/workspace/runs/patches-reports/` |
 | Potentially reachable finding approximation + PV resolution errors | `endor-reports prf-analysis -n <tenant>` | `.endorlabs-context/workspace/runs/potentially-reachable-analysis/` |
 | PackageVersion resolution CSV + interactive HTML (manifest / dep resolution / reachability) | `endor-reports package-resolution -n <tenant>` | `.endorlabs-context/workspace/runs/package-resolution/` |

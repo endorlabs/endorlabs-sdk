@@ -127,8 +127,11 @@ def collect_leaf_pairs(
     leaf_namespaces: list[str],
     *,
     page_size: int = 500,
+    max_workers: int = 8,
 ) -> dict[str, list[LeafPair]]:
     """Return ``{namespace: [(name, version, direct, public), ...]}`` distinct rows."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
     out: dict[str, list[LeafPair]] = {}
     lp = _grouped_count_list_parameters(page_size=page_size)
     paths = [
@@ -137,7 +140,9 @@ def collect_leaf_pairs(
         _DIRECT_PATH,
         _PUBLIC_PATH,
     ]
-    for ns in leaf_namespaces:
+    leaves = [ns for ns in leaf_namespaces if ns]
+
+    def _one(ns: str) -> tuple[str, list[LeafPair]]:
         buckets = list(
             client.DependencyMetadata.list_groups(
                 namespace=ns,
@@ -154,7 +159,16 @@ def collect_leaf_pairs(
                 continue
             seen.add(rec)
             pairs.append(rec)
-        out[ns] = pairs
+        return ns, pairs
+
+    if not leaves:
+        return out
+    workers = max(1, min(max_workers, len(leaves)))
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futs = [pool.submit(_one, ns) for ns in leaves]
+        for fut in as_completed(futs):
+            ns, pairs = fut.result()
+            out[ns] = pairs
     return out
 
 

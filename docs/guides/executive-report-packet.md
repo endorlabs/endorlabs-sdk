@@ -20,12 +20,12 @@ employee auth notes).
 Optional flags: `--lookback`, `--min-projects`, `--workers`, `--output-dir`,
 `--log-level` (stdout stage milestones: `packet.discover.*`, burndowns, patches,
 render; also `ENDOR_LOG_LEVEL`), `--skip-version-sprawl`,
-`--skip-findings-burndown`, `--skip-patches`, `--patches-only` (Patches page only
-→ `runs/patches-reports/<tenant>-MMDDYY/`).
+`--skip-findings-burndown`, `--patches` (opt-in Endor Patches Finding list),
+`--patches-only` (Patches page only → `runs/patches-reports/<tenant>-MMDDYY/`).
 
 `--patches-only` writes just `05-endor-patches.html` and the `patches-*.csv`
 exports — pages 01–04 are omitted rather than rendered from slices the run never
-collected.
+collected. Full packet omits Patches unless `--patches` is set.
 
 Slice failures (for example FindingLog read timeouts on SCA burndown) no longer
 abort the whole packet: other pages still write under the output dir, the cube

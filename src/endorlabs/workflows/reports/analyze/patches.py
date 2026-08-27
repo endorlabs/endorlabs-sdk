@@ -386,22 +386,29 @@ def count_java_maven_crit_high(
     namespace: str,
     *,
     max_workers: int = 12,
+    leaf_namespaces: Sequence[str] | None = None,
 ) -> tuple[int, int]:
     """Sum leaf ``Finding.count`` for Java Maven Crit/High vulns.
 
+    When *leaf_namespaces* is provided (e.g. non-SBOM leaves from packet
+    discover), skip ``Query.Project.discover`` rediscovery.
+
     Returns ``(count, leaf_namespace_count)``.
     """
-    leaves = sorted(
-        {
-            s.namespace
-            for s in client.Query.Project.discover(
-                namespace, traverse=True, exclude_sbom=True
-            ).project_shards()
-            if s.namespace
-        }
-    )
-    if not leaves:
-        leaves = [namespace]
+    if leaf_namespaces is not None:
+        leaves = [ns for ns in leaf_namespaces if ns] or [namespace]
+    else:
+        leaves = sorted(
+            {
+                s.namespace
+                for s in client.Query.Project.discover(
+                    namespace, traverse=True, exclude_sbom=True
+                ).project_shards()
+                if s.namespace
+            }
+        )
+        if not leaves:
+            leaves = [namespace]
 
     def one(ns: str) -> int:
         return int(
@@ -447,6 +454,7 @@ def collect_patches_report(
     severities: Sequence[str] | None = None,
     gate: str = "any",
     shards: Sequence[ProjectShard] | None = None,
+    leaf_namespaces: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     """Pull patch-gated findings and build the patches cube slice.
 
@@ -457,7 +465,9 @@ def collect_patches_report(
     *gate* to reuse the same collector for alternate presets.
 
     When *shards* is provided (e.g. from packet ``discover_projects``), skip
-    rediscovery and list findings on those shards only.
+    rediscovery and list findings on those shards only. Pass
+    *leaf_namespaces* (non-SBOM leaves) so the Java denom skips a second
+    ``Query.Project.discover``.
     """
     sev = list(SEVERITIES if severities is None else severities)
     finding_filter = build_finding_filter(finding_categories, sev, gate=gate)
@@ -495,8 +505,16 @@ def collect_patches_report(
     }
     java_count: int | None = None
     if include_java_denominator:
+        java_leaves = (
+            list(leaf_namespaces)
+            if leaf_namespaces is not None
+            else sorted({s.namespace for s in shard_list if s.namespace})
+        )
         java_count, _leaves = count_java_maven_crit_high(
-            client, namespace, max_workers=max_workers
+            client,
+            namespace,
+            max_workers=max_workers,
+            leaf_namespaces=java_leaves or None,
         )
 
     endor_patch_n = int(signal_breakdown.get("endor_patch_available_count") or 0)
