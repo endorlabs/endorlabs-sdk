@@ -27,6 +27,7 @@ from ..utils.namespace import resolve_namespace_for_resource
 if TYPE_CHECKING:
     from ..api_client import APIClient
     from ..registry import ResourceEntry
+    from .description import FacadeDescription
 
 
 class ListableFacade[T: BaseModel]:
@@ -68,6 +69,25 @@ class ListableFacade[T: BaseModel]:
             client, entry.resource_name, entry.model_class
         )
         self._workflow_flags = entry.workflow_flags
+
+    def describe(self) -> FacadeDescription:
+        """Return a live, no-network description of this facade.
+
+        Prefer ``print(client.Finding.describe())`` over reading the stub for
+        resource-specific ``list()`` identity kwargs and route accessors.
+        """
+        from ..generated.route_contract import ROUTE_CONTRACT
+        from .description import build_facade_description
+
+        scope = getattr(self._entry, "scope", None)
+        return build_facade_description(
+            attr_name=self._entry.attr_name,
+            resource_name=self._resource_name,
+            facade_type=type(self),
+            filter_kwarg_map=self._filter_kwarg_map,
+            scope=scope,
+            route_contract=ROUTE_CONTRACT,
+        )
 
     def _maybe_warn_empty_project_namespace_list(
         self,

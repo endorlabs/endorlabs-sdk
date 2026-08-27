@@ -14,11 +14,14 @@ print(endorlabs.discover())
 # Or: python -m endorlabs.examples.agent_bootstrap --dry-run
 
 d = endorlabs.discover()
-# Read every path in d.bootstrap_paths; read d.stub for list() kwargs and accessors.
+# Read every path in d.bootstrap_paths.
+# Prefer print(client.Finding.describe()) for live list() kwargs / routes
+# (cheaper than reading the stub); stub remains at d.stub for IDE typing.
 
 # 1. Auth — live API
 client = endorlabs.Client(tenant="your-tenant")  # or ENDOR_NAMESPACE
 print(client.whoami())  # None → check .env / single auth mode
+print(client.Finding.describe())  # resource-specific identity kwargs + routes
 
 # 2. Workflows — call graph, scan RCA, project bundles (not on dir(client))
 status = endorlabs.init(include_openapi=False)
@@ -30,7 +33,7 @@ status = endorlabs.init(include_openapi=False)
 Before `endorlabs.Client()` or live API calls:
 
 1. `print(endorlabs.discover())` or `python -m endorlabs.examples.agent_bootstrap --dry-run` — then **read every path** in `bootstrap_paths`.
-2. Read `discover().stub` (`client_surface.pyi`) for `list()` kwargs and relationship accessors.
+2. Prefer `print(client.<Kind>.describe())` for resource-specific `list()` identity kwargs and route accessors (no network). Read `discover().stub` only when you need IDE/static typing — not as the primary kwargs source.
 3. **Auth check:** `Client().whoami()` — do not use `Namespace.list()` as an auth proxy.
 4. **Workflows** (call graph, project bundle, scan RCA): `endorlabs.init()` → read `skills/<id>/SKILL.md` (start: **endor-fetch-and-search-call-graph**, **endor-retrieve-scan-results**)
 
@@ -41,6 +44,7 @@ Consumer entrypoint: **`AGENTS.md`** (points here). Copy **`templates/consumer-A
 
 | Trap | Correct pattern |
 |------|-----------------|
+| Stub as kwargs source | Prefer `print(client.Finding.describe())` — live identity kwargs + routes; stub is for typing |
 | `F()` positional | `list(filter=F("spec.level") == "…", traverse=True)` — never `list(F(...) == …, traverse=True)` |
 | `F.field` attribute | Use `F("spec.field")` — dotted paths are strings, not attributes on `F` |
 | `list_by_*` / `list_for_context` | `list[T]` | Same as `.list()` — project/scan-plane edges |
