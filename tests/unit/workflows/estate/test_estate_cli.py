@@ -90,6 +90,7 @@ def test_cmd_pull_delegates_to_collect_workspace(tmp_path: Path) -> None:
         )
         assert cmd_pull(args) == 0
     mock_collect.assert_called_once()
+    assert mock_collect.call_args.kwargs["output_shape"].value == "finding_rows"
     fake_client.close.assert_called_once()
 
 

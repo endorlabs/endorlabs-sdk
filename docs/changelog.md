@@ -11,6 +11,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 ### Changed
 
 - Runtime and `analytics` optional dependencies use compatible version ranges instead of exact pins, so consumers can co-install and patch `pydantic` / `httpx` / analytics stacks without an unsolvable conflict. CI exercises lowest and highest permitted resolutions.
+- Typed `EndorRuleError` subclasses (`rule_id` aligned with MANIFEST bootstrap rules) raise locally with actionable corrections for namespace scoping, list performance, output-shape routing, workflow composition, local context, workspace layout, and portable examples.
 
 ### Fixed
 

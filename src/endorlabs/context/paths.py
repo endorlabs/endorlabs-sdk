@@ -97,6 +97,23 @@ def resolve_openapi_spec_path(context_dir: str | Path) -> Path | None:
     return path if path.is_file() else None
 
 
+def require_openapi_spec(context_dir: str | Path) -> Path:
+    """Return the OpenAPI path or raise :class:`LocalContextError` if absent."""
+    from endorlabs.core.exceptions import LocalContextError
+
+    path = resolve_openapi_spec_path(context_dir)
+    if path is not None:
+        return path
+    expected = platform_openapi_path(context_dir)
+    raise LocalContextError(
+        f"Expected OpenAPI at {expected}. Run "
+        "endorlabs.init(include_openapi=True) or configure Docs MCP "
+        "(https://docs.endorlabs.com/introduction/docs-mcp-server); unsupported "
+        "harnesses can use https://docs.endorlabs.com/llms.txt "
+        "(endor-local-context)."
+    )
+
+
 def _context_root(context_dir: str | Path | None) -> Path:
     return Path(context_dir) if context_dir is not None else default_context_dir()
 
@@ -134,7 +151,24 @@ def default_runs_dir(
     ``run_bucket`` is a fixed, authored string (catalog ``workflow_id`` or skill id
     minus ``endor-``). It is not generated at runtime and must not be a timestamp.
     """
-    return workspace_dir(_context_root(context_dir)) / "runs" / run_bucket
+    from endorlabs.core.exceptions import WorkspaceLayoutError
+
+    bucket = run_bucket.strip()
+    # Timestamps: YYYYMMDD, YYYYMMDDTHHMMSS, YYYYMMDDTHHMMSSZ
+    if re.fullmatch(r"\d{8}(T\d{6}Z?)?", bucket):
+        raise WorkspaceLayoutError(
+            f"run_bucket={bucket!r} looks like a timestamp. Use a fixed catalog "
+            "workflow id or skill id (e.g. 'troubleshooting-scans'), and write "
+            "under .endorlabs-context/workspace/runs/<bucket>/ "
+            "(endor-workspace-layout)."
+        )
+    if not bucket or "/" in bucket or "\\" in bucket:
+        raise WorkspaceLayoutError(
+            f"run_bucket={run_bucket!r} must be a single path segment (catalog "
+            "workflow_id or skill id minus 'endor-'), not a nested path "
+            "(endor-workspace-layout)."
+        )
+    return workspace_dir(_context_root(context_dir)) / "runs" / bucket
 
 
 def workflow_inventory_root(context_dir: str | Path | None = None) -> Path:
@@ -182,6 +216,7 @@ __all__ = [
     "platform_dir",
     "platform_openapi_path",
     "project_workspace_dir",
+    "require_openapi_spec",
     "resolve_openapi_spec_path",
     "resolve_session_user_slug",
     "sanitize_path_segment",

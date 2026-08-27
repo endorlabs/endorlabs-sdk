@@ -22,6 +22,7 @@ from endorlabs.workflows.estate.export.charts.estate_dashboard import (
     export_estate_dashboard,
 )
 from endorlabs.workflows.estate.workspace.collect_manifest import (
+    ValidationError,
     validate_workspace_collect,
 )
 from endorlabs.workflows.estate.workspace.paths import (
@@ -83,7 +84,16 @@ def analyze_workspace(
     steps = only or ("cardinality", "risk", "graph", "viz")
     disk_steps = frozenset({"cardinality", "risk", "graph", "viz"})
     if not skip_validate and disk_steps.intersection(steps):
-        validate_workspace_collect(workspace_root)
+        try:
+            validate_workspace_collect(workspace_root)
+        except ValidationError as exc:
+            from endorlabs.core.exceptions import WorkflowCompositionError
+
+            raise WorkflowCompositionError(
+                f"analyze requires a completed pull: {exc}. "
+                "Run endor-estate pull (with output_shape=…) first "
+                "(endor-workflow-composition)."
+            ) from exc
 
     outcomes: dict[str, str] = {}
 

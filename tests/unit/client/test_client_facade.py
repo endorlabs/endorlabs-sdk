@@ -102,14 +102,14 @@ def test_client_explicit_tenant_overrides_endor_namespace_env(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Explicit tenant= wins over ENDOR_NAMESPACE."""
-    monkeypatch.setenv("ENDOR_NAMESPACE", "env.tenant.namespace")
+    monkeypatch.setenv("ENDOR_NAMESPACE", "example-tenant.env")
     mock = Mock(spec=APIClient)
-    client = endorlabs.Client(api_client=mock, tenant="explicit.tenant")
+    client = endorlabs.Client(api_client=mock, tenant="example-tenant.explicit")
     mock_list = Mock(return_value=[])
     client.Namespace._ops.list = mock_list
     client.Namespace.list(max_pages=TEST_MAX_PAGES)
     args, _ = mock_list.call_args
-    assert args[0] == "explicit.tenant"
+    assert args[0] == "example-tenant.explicit"
 
 
 def test_client_requires_namespace_or_tenant_for_list(
@@ -1089,14 +1089,17 @@ def test_resource_namespace_property_returns_tenant_meta_namespace() -> None:
     assert resource_none_ns.namespace is None
 
 
-def test_finding_empty_list_warns_at_default_namespace(
+def test_finding_empty_list_raises_at_default_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """Empty project-scoped list at tenant root emits a namespace scoping warning."""
+    """Project-scoped list at tenant root raises before the network call."""
+    from endorlabs.core.exceptions import NamespaceScopingError
+
     client = client_with_mock_transport
     client.Finding._ops.list = Mock(return_value=[])
-    with pytest.warns(UserWarning, match="list_by_project"):
+    with pytest.raises(NamespaceScopingError, match="list_by_project"):
         client.Finding.list(max_pages=TEST_MAX_PAGES)
+    client.Finding._ops.list.assert_not_called()
 
 
 def test_finding_empty_list_no_warn_with_child_namespace(
@@ -1113,17 +1116,20 @@ def test_finding_empty_list_no_warn_with_child_namespace(
     assert not [w for w in caught if issubclass(w.category, UserWarning)]
 
 
-def test_finding_empty_list_warns_with_project_uuid_filter_at_tenant_root(
+def test_finding_project_uuid_filter_still_requires_child_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """project_uuid filter does not widen namespace; empty list still warns at tenant root."""
+    """project_uuid filter does not widen namespace; tenant-root list still errors."""
+    from endorlabs.core.exceptions import NamespaceScopingError
+
     client = client_with_mock_transport
     client.Finding._ops.list = Mock(return_value=[])
-    with pytest.warns(UserWarning, match="list_by_project"):
+    with pytest.raises(NamespaceScopingError, match="namespace="):
         client.Finding.list(
             filter='spec.project_uuid=="proj-1"',
             max_pages=TEST_MAX_PAGES,
         )
+    client.Finding._ops.list.assert_not_called()
 
 
 def test_facade_count_delegates_to_ops(client_with_mock_transport: Client) -> None:

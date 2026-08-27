@@ -14,6 +14,7 @@ from endorlabs.context.paths import (
     workspace_date_suffix,
     workspace_dir_for,
 )
+from endorlabs.query.routing import OutputShape
 from endorlabs.tools.list_bounds import resolve_collect_max_workers
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.workspace import analyze_workspace
@@ -99,6 +100,7 @@ def cmd_pull(args: argparse.Namespace) -> int:
             overwrite=args.overwrite,
             preflight=args.preflight,
             validate_counts=args.validate_counts,
+            output_shape=OutputShape.FINDING_ROWS,
         )
     finally:
         client.close()

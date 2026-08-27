@@ -13,7 +13,11 @@ from typing import (
 
 from pydantic import BaseModel
 
-from ..core.exceptions import ValidationError
+from ..core.exceptions import (
+    ListQueryPerformanceError,
+    NamespaceScopingError,
+    ValidationError,
+)
 from ..core.filter import F, FilterExpression
 from ..core.types import ListParameters
 from ..operations import BaseResourceOperations
@@ -89,6 +93,76 @@ class ListableFacade[T: BaseModel]:
             UserWarning,
             stacklevel=3,
         )
+
+    def _raise_list_agent_rule_errors(
+        self,
+        *,
+        ns: str,
+        traverse: bool,
+        parent: Any,
+        filter: str | F | FilterExpression | None,
+        page_size: int | None,
+        max_pages: int | None,
+        sort_by: str | None,
+        count: bool | None,
+        list_params: ListParameters | None,
+        kwargs: dict[str, Any],
+    ) -> None:
+        """Raise typed rule errors for statically detectable list anti-patterns."""
+        effective_filter = filter
+        if effective_filter is None and list_params is not None:
+            effective_filter = list_params.filter
+        has_identity_kwargs = bool(kwargs) and any(
+            key in self._filter_kwarg_map for key in kwargs
+        )
+        has_filter = effective_filter is not None or has_identity_kwargs
+        tenant_root = "." not in ns
+
+        if (
+            "project-namespace-list" in self._workflow_flags
+            and not traverse
+            and parent is None
+            and tenant_root
+        ):
+            raise NamespaceScopingError(
+                f"{self._entry.attr_name}.list() at tenant root {ns!r} without a "
+                "child namespace=. Resolve Project first and pass "
+                f"namespace=<project>.namespace (e.g. '{ns}.child'), or use "
+                f"{self._entry.attr_name}.list_by_project(project) "
+                "(endor-namespace-scoping)."
+            )
+
+        # Pathological small pages without a filter (esp. log-style resources).
+        # Allow traverse=True (bounded tenant discovery) and sorted/count helpers.
+        if (
+            page_size is not None
+            and page_size <= 1
+            and not has_filter
+            and not sort_by
+            and not count
+            and not traverse
+        ):
+            raise ListQueryPerformanceError(
+                f"{self._entry.attr_name}.list(page_size={page_size}) without a "
+                "selective filter. Omit page_size to use API defaults, or add "
+                "filter=… before setting page_size (endor-list-query-performance)."
+            )
+
+        if (
+            max_pages is not None
+            and not has_filter
+            and not traverse
+            and parent is None
+            and tenant_root
+            and not sort_by
+            and "project-namespace-list" in self._workflow_flags
+        ):
+            raise ListQueryPerformanceError(
+                f"{self._entry.attr_name}.list(max_pages={max_pages}) on an "
+                "unscoped, unfiltered list at tenant root. Add filter=… and/or "
+                "namespace=<child> (or traverse=True for bounded discovery) before "
+                "raising page depth (endor-list-query-performance)."
+            )
 
     def _validate_list_remaining_kwargs(self, remaining_kwargs: dict[str, Any]) -> None:
         """Reject unknown flat kwargs before building ``ListParameters``."""
@@ -387,6 +461,19 @@ class ListableFacade[T: BaseModel]:
             )
         ns = self._ns(namespace)
 
+        self._raise_list_agent_rule_errors(
+            ns=ns,
+            traverse=traverse,
+            parent=parent,
+            filter=filter,
+            page_size=page_size,
+            max_pages=max_pages,
+            sort_by=sort_by,
+            count=count,
+            list_params=list_params,
+            kwargs=kwargs,
+        )
+
         # Handle concurrent mode: query namespaces in parallel
         if concurrent and traverse:
             rows = self._list_concurrent(
@@ -604,6 +691,18 @@ class ListableFacade[T: BaseModel]:
                 resolve_namespace_for_resource(parent, self._default_namespace)
             )
         ns = self._ns(namespace)
+        self._raise_list_agent_rule_errors(
+            ns=ns,
+            traverse=traverse,
+            parent=parent,
+            filter=filter,
+            page_size=page_size,
+            max_pages=max_pages,
+            sort_by=sort_by,
+            count=count,
+            list_params=list_params,
+            kwargs=kwargs,
+        )
         lp = self._effective_list_parameters(
             traverse=traverse,
             list_params=list_params,
