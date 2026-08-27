@@ -56,12 +56,21 @@ def test_namespace_scoping_error_before_network() -> None:
 
 
 def test_list_query_performance_page_size_without_filter() -> None:
-    facade = _facade("Finding", tenant="example-tenant.child")
+    facade = _facade("FindingLog", tenant="example-tenant.child")
     facade._ops = Mock()
     with pytest.raises(ListQueryPerformanceError, match="page_size=1") as exc_info:
         facade.list(page_size=1, traverse=False)
     assert exc_info.value.rule_id == "endor-list-query-performance"
     facade._ops.list.assert_not_called()
+
+
+def test_list_query_performance_page_size_allows_non_log_kinds() -> None:
+    """Non-log kinds may use page_size=1 for intentional sampling."""
+    facade = _facade("Finding", tenant="example-tenant.child")
+    facade._ops = Mock(return_value=[])
+    facade._ops.list = Mock(return_value=[])
+    assert facade.list(page_size=1, max_pages=1, traverse=False) == []
+    facade._ops.list.assert_called_once()
 
 
 def test_concurrent_traverse_allows_page_size_one() -> None:

@@ -29,6 +29,15 @@ if TYPE_CHECKING:
     from ..registry import ResourceEntry
     from .description import FacadeDescription
 
+# Kinds where page_size=1 without a filter is pathologically expensive (rule text).
+_LOG_STYLE_LIST_KINDS = frozenset(
+    {
+        "AuditLog",
+        "AuthenticationLog",
+        "FindingLog",
+    }
+)
+
 
 class ListableFacade[T: BaseModel]:
     """Base facade: list and list_iter. No get/create/update/delete.
@@ -152,10 +161,13 @@ class ListableFacade[T: BaseModel]:
                 "(endor-namespace-scoping)."
             )
 
-        # Pathological small pages without a filter (esp. log-style resources).
-        # Allow traverse=True (bounded tenant discovery) and sorted/count helpers.
+        # Pathological small pages without a filter — hard-error on log-style
+        # kinds (AuditLog / FindingLog / AuthenticationLog). Other resources may
+        # use page_size=1 for intentional sampling; agents still get guidance
+        # via docs/INDEX for the general "omit page_size" rule.
         if (
-            page_size is not None
+            self._entry.attr_name in _LOG_STYLE_LIST_KINDS
+            and page_size is not None
             and page_size <= 1
             and not has_filter
             and not sort_by
@@ -164,8 +176,9 @@ class ListableFacade[T: BaseModel]:
         ):
             raise ListQueryPerformanceError(
                 f"{self._entry.attr_name}.list(page_size={page_size}) without a "
-                "selective filter. Omit page_size to use API defaults, or add "
-                "filter=… before setting page_size (endor-list-query-performance)."
+                "selective filter. On log-style resources omit page_size (use "
+                "max_pages to bound depth) or add filter=… before setting "
+                "page_size (endor-list-query-performance)."
             )
 
         if (
