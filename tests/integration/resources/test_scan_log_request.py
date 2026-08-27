@@ -23,6 +23,7 @@ from tests.conftest import (
     TEST_SCAN_LOG_MAX_ENTRIES,
 )
 from tests.integration.conftest import assert_bounded_log_rows, bounded_log_list_params
+from tests.integration.list_scope import project_scoped_list_kwargs
 
 
 @pytest.mark.integration
@@ -51,6 +52,7 @@ class TestScanLogRequest:
         namespace (API requires create in same namespace as the scan result).
         """
         scan_results = self.endor_parent_client.ScanResult.list(
+            **project_scoped_list_kwargs(self.endor_parent_client),
             list_params=bounded_log_list_params(
                 sort_by="meta.create_time",
                 desc=True,
@@ -244,6 +246,7 @@ class TestScanLogRequest:
                     tenant=ns_canonical, api_client=self.client
                 )
                 results = ns_client.ScanResult.list(
+                    **project_scoped_list_kwargs(ns_client),
                     list_params=bounded_log_list_params(),
                     max_pages=TEST_LOG_LIST_MAX_PAGES,
                 )
