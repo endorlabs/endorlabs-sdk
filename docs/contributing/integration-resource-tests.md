@@ -58,6 +58,29 @@ tenant root, an autouse fixture in ``tests/integration/conftest.py`` injects
 abort the suite. Call sites may still use
 ``tests.integration.list_scope.project_scoped_list_kwargs`` explicitly.
 
+## Test layers (integration)
+
+Pick the **narrowest** live assertion that proves the change. Do not re-prove
+unit-test behavior (client-side filters, ``NotImplementedError``, Pydantic
+shape) unless the wire path differs.
+
+| Layer | What it proves | Where |
+| ----- | -------------- | ----- |
+| **Schema / deserialize** | LIST→GET roundtrip; model fields exist on live rows | `test_resource_list_get_roundtrip.py`, per-resource spec asserts |
+| **Wiring** | Facade calls the right namespace/edge; counts/lists scoped correctly | `test_route_api.py` (default CI), roundtrip harness |
+| **Parity** | Query graph joins agree with facade counts on the same project | `test_query_recipes.py` (`validate_sample`) |
+| **Workflow** | Library orchestration across multiple resources | `tests/integration/workflows/` |
+| **Estate pagination** (`long`) | Collect returns full row sets vs facade count | `test_query_recipes.py` (`collect_estate_findings`) |
+
+### `long` marker
+
+``@pytest.mark.long`` — expensive probes (traverse discovery, scan-plane fan-out,
+estate collect, call-graph path search). **Excluded in CI** (`pytest -m "not long"`).
+Run locally before estate-scale changes: ``uv run pytest tests/integration/ -m long``.
+
+Default CI should keep **one wiring + one parity smoke** per subsystem; push
+multi-kind scan-plane matrices and estate pagination to ``long``.
+
 ## Checklist after changes
 
 - [ ] LIST/GET covered via `test_resource_list_get_roundtrip.py` (or justified extras in `test_*.py`)

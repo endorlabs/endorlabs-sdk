@@ -1,4 +1,10 @@
-"""Integration tests for vector search workflow helpers."""
+"""Integration tests for vector search workflow helpers.
+
+Layers:
+- **Wiring** — ``list_tenant_vector_stores`` returns rows when the tenant has stores.
+- **Workflow probe** (``long``) — ``probe_store_indexed_for_project`` after traverse
+  project discovery (orchestration only; not VectorStoreQuery payload tests).
+"""
 
 from __future__ import annotations
 
@@ -22,7 +28,8 @@ class TestVectorSearchWorkflow:
         self.client = endorlabs.Client(tenant=namespace, api_client=api_client)
         self.namespace = namespace
 
-    def test_list_tenant_vector_stores(self) -> None:
+    def test_list_tenant_vector_stores_wiring(self) -> None:
+        """Wiring: workflow helper lists tenant VectorStore rows."""
         try:
             stores = list_tenant_vector_stores(self.client, namespace=self.namespace)
         except ServerError:
@@ -31,6 +38,7 @@ class TestVectorSearchWorkflow:
             pytest.skip("No vector stores in tenant")
         assert stores[0].uuid
 
+    @pytest.mark.long
     def test_probe_function_summary_for_endorlabs_sdk(self) -> None:
         repo_url = os.getenv("TEST_REPO_URL", CANONICAL_SDK_REPO_URL)
         try:
