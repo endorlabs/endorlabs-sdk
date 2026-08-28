@@ -3,13 +3,16 @@
 Maintainer helper to generate Package Firewall traffic for the known malware-marked
 test package ``endor-firewall-test@1.0.0`` (npm + PyPI). Not shipped in the wheel.
 
+Normal SDK development (`uv sync`, CI) uses **public PyPI only** — no Factory index
+or repository secrets required. This tool is optional and talks to
+``factory.endorlabs.com`` directly.
+
 ## Prerequisites
 
 - ``ENDOR_NAMESPACE`` (or ``-n``) — tenant/namespace path for factory URLs
-- Firewall basic auth:
-  - ``UV_INDEX_ENDOR_FIREWALL_USERNAME`` / ``UV_INDEX_ENDOR_FIREWALL_PASSWORD``, or
+- Factory basic auth in a **local** dotenv (never commit credentials):
   - ``ENDOR_FIREWALL_USERNAME`` / ``ENDOR_FIREWALL_PASSWORD``
-- Load via ``uv run --env-file .env`` (never commit credentials)
+- Load via ``uv run --env-file .env`` (personal maintainer env only)
 
 ## Blast
 
@@ -28,5 +31,5 @@ observational (status printed; not required for exit 0). JSON summary defaults t
 After blasting, dump full ``PackageFirewallLog`` rows:
 
 ```bash
-uv run --env-file .env endor-log-export -n "$ENDOR_NAMESPACE" --source package-firewall --since <ISO> --until <ISO>
+uv run --env-file .env endor-log-export -n "$ENDOR_NAMESPACE" --source package-firewall-logs --since <ISO> --until <ISO>
 ```

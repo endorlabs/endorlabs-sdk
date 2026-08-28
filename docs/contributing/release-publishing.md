@@ -11,7 +11,7 @@ Release identity follows the monorepo pattern: **`vX.Y.Z` git tags** and the wor
 | Layer | Source of truth |
 |-------|-----------------|
 | Release cut | Git tag `vX.Y.Z` + workflow `version: X.Y.Z` |
-| Endor / package firewall scans | Committed `[project].version` in `pyproject.toml` |
+| Endor supply-chain / platform scans | Committed `[project].version` in `pyproject.toml` |
 | Wheel / PyPI metadata | Same static version at build time (must match workflow input) |
 | Runtime `endorlabs.__version__` | `importlib.metadata.version("endorlabs")` from installed package metadata |
 
@@ -37,7 +37,7 @@ PyPI versions are immutable. Release CI asserts `[project].version` equals the w
 | `[build-system]` pinned backend (PEP 518/517) | `hatchling==1.30.1` |
 | `[project]` name, description, readme, requires-python, authors (PEP 621) | Present |
 | `[project].version` static PEP 440 string | Present (committed) |
-| Dependencies as PEP 508 strings | Present (pinned `==` for reproducibility) |
+| Dependencies as PEP 508 strings | Present (compatible ranges for runtime deps; CI exercises lowest-direct and highest resolutions) |
 | License SPDX + `license-files` (PEP 639, metadata 2.4) | `license = "MIT"`, `license-files = ["LICENSE"]` |
 | `[project.urls]` Homepage, Repository, Documentation, Changelog, Issues | Present |
 

@@ -20,6 +20,9 @@ uv run pre-commit install
 uv run pre-commit install --hook-type pre-push
 ```
 
+`uv sync` resolves dependencies from **public PyPI** — no Package Firewall index or
+repository secrets are required for contributor setup or CI.
+
 Alternatively: `uv venv` then `uv pip install -e .` and install dev dependencies from [pyproject.toml](pyproject.toml) (e.g. `uv sync --group dev` or equivalent for your uv version).
 
 If `uv sync` fails on version metadata, see [docs/contributing/release-publishing.md](docs/contributing/release-publishing.md) and run `uv run python devtools/ship/check_project_version.py`.

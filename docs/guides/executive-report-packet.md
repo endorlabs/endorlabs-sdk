@@ -2,8 +2,8 @@
 
 Build a self-contained interactive HTML packet for a tenant or namespace:
 organization onboarding (registration + scan/PR cadence), dependency version
-sprawl, FindingLog burndown (SCA + OpenGrep / AI-SAST / Secrets), and Endor Patches
-impact.
+sprawl, FindingLog burndown (SCA + OpenGrep / AI-SAST / Secrets), and optional
+Endor Patches impact (`--patches` or `--patches-only`).
 
 Open the HTML files in any browser — no Cursor runtime required.
 
@@ -45,7 +45,7 @@ Default directory:
 | `02-version-sprawl.html` | Dependency version sprawl |
 | `03-sca-burndown.html` | SCA FindingLog burndown |
 | `04-sast-burndown.html` | OpenGrep / AI-SAST / Secrets FindingLog burndown |
-| `05-endor-patches.html` | Endor Patches impact (Available / To Request) |
+| `05-endor-patches.html` | Endor Patches impact (only with `--patches` or `--patches-only`) |
 | `data/packet.cube.json` | Portable cube (`endor.report_packet.v0`) |
 | `data/*.csv` | Raw exports (see `data/EXPORTS.txt`) |
 

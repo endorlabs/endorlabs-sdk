@@ -44,7 +44,7 @@ uv run endor-reports package-resolution -n <tenant>
 | `02-version-sprawl.html` | Dependency version sprawl |
 | `03-sca-burndown.html` | SCA FindingLog burndown |
 | `04-sast-burndown.html` | OpenGrep / AI-SAST / Secrets FindingLog burndown |
-| `05-endor-patches.html` | Endor Patches impact (Available / To Request) |
+| `05-endor-patches.html` | Endor Patches impact (opt-in: `--patches` or `--patches-only`) |
 
 Default full packet **omits** Patches (Finding list pull — slow on large
 estates). Pass `--patches` to include, or `--patches-only` for a campaign

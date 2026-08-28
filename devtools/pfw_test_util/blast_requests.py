@@ -96,8 +96,8 @@ def resolve_credentials() -> tuple[str, str]:
     if not user or not password:
         raise SystemExit(
             "Firewall credentials required. Set "
-            "UV_INDEX_ENDOR_FIREWALL_USERNAME / UV_INDEX_ENDOR_FIREWALL_PASSWORD "
-            "(or ENDOR_FIREWALL_USERNAME / ENDOR_FIREWALL_PASSWORD)."
+            "Set ENDOR_FIREWALL_USERNAME and ENDOR_FIREWALL_PASSWORD in a local "
+            "dotenv (maintainer PFW test util only; not required for uv sync)."
         )
     return user, password
 

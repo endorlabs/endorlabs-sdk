@@ -3,7 +3,8 @@ name: endor-executive-report-packet
 description: |
   Use when producing a tenant-level executive interactive HTML report packet
   (onboarding + scan/PR cadence, dependency version sprawl, SCA and
-  SAST/AI-SAST/Secrets FindingLog burndown, Endor Patches) for browser handoff.
+  SAST/AI-SAST/Secrets FindingLog burndown; optional Endor Patches via
+  --patches) for browser handoff.
   Not for single-project RCA, estate IR collect, or Cursor canvas-only artifacts.
 endorlabs:
   catalog:
@@ -22,8 +23,7 @@ endorlabs:
 Build a **self-contained HTML packet** for a tenant or namespace: organization
 onboarding (registration + ScanResult MAIN/CI cadence), dependency version
 sprawl, FindingLog CREATE/DELETE burndown (SCA + SAST/AI-SAST/Secrets), and
-Endor Patches impact. Open the HTML files in any browser — no Cursor runtime
-required.
+optional Endor Patches (`--patches` / `--patches-only`).
 
 ## Scope
 
@@ -74,9 +74,8 @@ Optional flags:
 - `--output-dir <path>` — override default runs bucket
 - `--date-suffix 082126` — override today's MMDDYY on default dirs
   (`<tenant>-executive-packet-MMDDYY/` or `--patches-only` `<tenant>-MMDDYY/`)
-- `--skip-version-sprawl` / `--skip-findings-burndown` / `--skip-code-findings-burndown` /
-  `--skip-patches` —
-  partial packets
+- `--skip-version-sprawl` / `--skip-findings-burndown` / `--skip-code-findings-burndown` —
+  partial packets (omit slices from a full packet run)
 - `--patches` — opt-in Endor Patches page (Finding list); omitted by default
 - `--patches-only` — Endor Patches page only (Finding list); default output
   `.endorlabs-context/workspace/runs/patches-reports/<tenant>-MMDDYY/`. Writes
