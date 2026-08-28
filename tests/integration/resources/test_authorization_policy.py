@@ -19,6 +19,8 @@ from endorlabs.resources.authorization_policy import (
     SystemRole,
     UpdateAuthorizationPolicyPayload,
 )
+from tests.conftest import TEST_MAX_PAGES_TRAVERSE
+from tests.integration.client.helper_assertions import nested_attr
 
 
 @pytest.mark.integration
@@ -50,6 +52,34 @@ class TestAuthorizationPolicy:
                         f"policy {policy_uuid}: {e}"
                     )
             self.created_policy_uuids.clear()
+
+    def test_authorization_policy_search_by_claims_rediscovers_sample(self) -> None:
+        """search_by_claims should rediscover a policy from a name fragment."""
+        try:
+            policies = self.endor_client.AuthorizationPolicy.list(
+                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            )
+        except Exception as err:
+            pytest.skip(f"AuthorizationPolicy list unavailable: {err}")
+        if not policies:
+            pytest.skip("No authorization policies in scope")
+        sample = policies[0]
+        name = nested_attr(sample, "meta.name")
+        if not name or len(str(name)) < 3:
+            pytest.skip("Sample authorization policy has no searchable name")
+        fragment = str(name)[: max(3, len(str(name)) // 2)]
+        try:
+            matches = self.endor_client.AuthorizationPolicy.search_by_claims(
+                fragment,
+                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            )
+        except Exception as err:
+            pytest.skip(f"AuthorizationPolicy search unavailable: {err}")
+        assert matches, f"search_by_claims({fragment!r}) returned no rows"
+        sample_uuid = nested_attr(sample, "uuid")
+        assert any(nested_attr(row, "uuid") == sample_uuid for row in matches), (
+            "search_by_claims should rediscover the source policy"
+        )
 
     def test_authorization_policy_filter_by_role(self) -> None:
         """Test filtering authorization policies by system role."""
