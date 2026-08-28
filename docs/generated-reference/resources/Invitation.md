@@ -18,6 +18,19 @@ User invitation for platform access.
 | `update` | yes |
 | `delete` | yes |
 
+## User-space access
+
+Customer tenant semantics (distinct from raw OpenAPI and SDK exposure).
+Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
+
+| Operation | Customer user-space | SDK exposed |
+|-----------|---------------------|-------------|
+| `list` | yes | yes |
+| `get` | yes | yes |
+| `create` | admin-only | yes |
+| `update` | yes | yes |
+| `delete` | yes | yes |
+
 ## Create
 
 - **Mode:** `both`

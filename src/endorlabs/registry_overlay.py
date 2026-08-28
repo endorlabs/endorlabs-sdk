@@ -25,17 +25,38 @@ _ALLOWED_OVERRIDE_KEYS = {
 
 # Keep this intentionally small: only explicit SDK divergences belong here.
 RESOURCE_CONTRACT_OVERLAY_BY_ATTR: dict[str, dict[str, Any]] = {
+    "AuditLog": {
+        "supported_ops": ["get", "list"],
+    },
     "DependencyMetadata": {
         "supported_ops": ["create", "delete", "get", "list"],
         "workflow_flags": ["project-namespace-list"],
     },
     "Finding": {
+        "supported_ops": ["delete", "get", "list", "update"],
         "workflow_flags": ["project-namespace-list"],
     },
-    "ScanResult": {
-        "workflow_flags": ["project-namespace-list"],
+    "FindingLog": {
+        "supported_ops": ["get", "list"],
+    },
+    "LinterResult": {
+        "supported_ops": ["get", "list"],
+    },
+    "Metric": {
+        "supported_ops": ["get", "list"],
     },
     "PackageVersion": {
+        "supported_ops": ["delete", "get", "list", "update"],
+        "workflow_flags": ["project-namespace-list"],
+    },
+    "Repository": {
+        "supported_ops": ["get", "list", "update"],
+    },
+    "RepositoryVersion": {
+        "supported_ops": ["get", "list", "update"],
+    },
+    "ScanResult": {
+        "supported_ops": ["delete", "get", "list", "update"],
         "workflow_flags": ["project-namespace-list"],
     },
     "IdentityProvider": {
@@ -93,6 +114,7 @@ RESOURCE_CONTRACT_OVERLAY_BY_ATTR: dict[str, dict[str, Any]] = {
         ),
         "build_create_payload_fn_name": "build_create_payload",
         "filter_kwarg_map": {"name": "meta.name"},
+        "supported_ops": ["get", "list", "update"],
     },
     "Query": {
         "supported_ops": ["create"],

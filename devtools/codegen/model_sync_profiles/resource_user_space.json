@@ -1,0 +1,487 @@
+{
+  "_schema_version": 1,
+  "_notes": "Per-resource keys: limitations_short, customer_ops; optional sdk_ops, sdk_ops_trim_exempt. ServiceRequest (if facaded): sdk_ops_trim_exempt true.",
+  "APIKey": {
+    "limitations_short": "Admin-managed programmatic credentials",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "admin-only",
+      "update": "not-supported",
+      "delete": "admin-only"
+    }
+  },
+  "AuditLog": {
+    "limitations_short": "Append-only audit trail",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "platform-managed",
+      "update": "not-supported",
+      "delete": "not-supported"
+    }
+  },
+  "AuthenticationLog": {
+    "limitations_short": "Tenant-context read-only resource",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "not-supported",
+      "update": "not-supported",
+      "delete": "not-supported"
+    }
+  },
+  "AuthorizationPolicy": {
+    "limitations_short": "Permission grants for identities",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "admin-only",
+      "update": "admin-only",
+      "delete": "admin-only"
+    }
+  },
+  "CodeOwners": {
+    "limitations_short": "Project-scoped code ownership",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "yes",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "DependencyMetadata": {
+    "limitations_short": "Relationship resource; see dependency-metadata contract",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "yes",
+      "update": "not-supported",
+      "delete": "yes"
+    }
+  },
+  "EndorLicense": {
+    "limitations_short": "Tenant-context read-only resource",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "not-supported",
+      "update": "not-supported",
+      "delete": "not-supported"
+    }
+  },
+  "Finding": {
+    "limitations_short": "Scan-generated",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "scan-generated",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "FindingLog": {
+    "limitations_short": "Finding state history log",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "platform-managed",
+      "update": "not-supported",
+      "delete": "not-supported"
+    }
+  },
+  "IdentityProvider": {
+    "limitations_short": "SSO identity provider configuration",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "admin-only",
+      "update": "admin-only",
+      "delete": "admin-only"
+    },
+    "sdk_ops": [
+      "get",
+      "list"
+    ]
+  },
+  "Installation": {
+    "limitations_short": "Platform-managed",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "yes",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "Invitation": {
+    "limitations_short": "User invitations",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "admin-only",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "LinterResult": {
+    "limitations_short": "Scan-generated",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "scan-generated",
+      "update": "not-supported",
+      "delete": "not-supported"
+    }
+  },
+  "Malware": {
+    "limitations_short": "OSS-scoped malware catalog",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "not-supported",
+      "update": "not-supported",
+      "delete": "not-supported"
+    }
+  },
+  "MalwareExposure": {
+    "limitations_short": "Tenant malware exposure index",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "not-supported",
+      "update": "not-supported",
+      "delete": "not-supported"
+    },
+    "sdk_ops": [
+      "get",
+      "list"
+    ]
+  },
+  "MalwareExposureQuery": {
+    "limitations_short": "Query tenant malware exposure",
+    "customer_ops": {
+      "list": "no",
+      "get": "no",
+      "create": "create-only",
+      "update": "no",
+      "delete": "no"
+    },
+    "sdk_ops": [
+      "create"
+    ]
+  },
+  "Metric": {
+    "limitations_short": "Analytics-generated",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "scan-generated",
+      "update": "not-supported",
+      "delete": "not-supported"
+    }
+  },
+  "Namespace": {
+    "limitations_short": "Tenant hierarchy nodes",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "admin-only",
+      "update": "yes",
+      "delete": "admin-only"
+    }
+  },
+  "NotificationTarget": {
+    "limitations_short": "Notification delivery endpoints",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "yes",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "PRCommentConfig": {
+    "limitations_short": "PR comment integration settings",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "yes",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "PackageFirewallLog": {
+    "limitations_short": "Package firewall audit events",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "not-supported",
+      "update": "not-supported",
+      "delete": "not-supported"
+    }
+  },
+  "PackageLicense": {
+    "limitations_short": "Package license metadata",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "yes",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "PackageManager": {
+    "limitations_short": "Package manager integration settings",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "yes",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "PackageVersion": {
+    "limitations_short": "Scan-discovered; API may return 501 for PATCH",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "scan-generated",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "Policy": {
+    "limitations_short": "Rego in payload",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "yes",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "PolicyTemplate": {
+    "limitations_short": "Read-only policy templates",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "not-supported",
+      "update": "not-supported",
+      "delete": "not-supported"
+    }
+  },
+  "Project": {
+    "limitations_short": "Platform-managed registration; scan inventory is derived",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "yes",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "Query": {
+    "limitations_short": "Graph join query (create only)",
+    "customer_ops": {
+      "list": "no",
+      "get": "no",
+      "create": "create-only",
+      "update": "no",
+      "delete": "no"
+    },
+    "sdk_ops": [
+      "create"
+    ]
+  },
+  "QueryMalware": {
+    "limitations_short": "Request-based query endpoint (create only)",
+    "customer_ops": {
+      "list": "no",
+      "get": "no",
+      "create": "create-only",
+      "update": "no",
+      "delete": "no"
+    }
+  },
+  "QuerySimilarPackages": {
+    "limitations_short": "Similar-package query (create only)",
+    "customer_ops": {
+      "list": "no",
+      "get": "no",
+      "create": "create-only",
+      "update": "no",
+      "delete": "no"
+    },
+    "sdk_ops": [
+      "create"
+    ]
+  },
+  "QueryVulnerability": {
+    "limitations_short": "Request-based query endpoint (create only)",
+    "customer_ops": {
+      "list": "no",
+      "get": "no",
+      "create": "create-only",
+      "update": "no",
+      "delete": "no"
+    }
+  },
+  "Repository": {
+    "limitations_short": "Platform-managed",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "platform-managed",
+      "update": "yes",
+      "delete": "not-supported"
+    }
+  },
+  "RepositoryVersion": {
+    "limitations_short": "Platform-managed",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "platform-managed",
+      "update": "yes",
+      "delete": "not-supported"
+    }
+  },
+  "SavedQuery": {
+    "limitations_short": "Saved query definitions",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "admin-only",
+      "update": "admin-only",
+      "delete": "admin-only"
+    },
+    "sdk_ops": [
+      "get",
+      "list"
+    ]
+  },
+  "ScanLogRequest": {
+    "limitations_short": "Request-based only; no list/get/delete for log messages",
+    "customer_ops": {
+      "list": "no",
+      "get": "no",
+      "create": "create-only",
+      "update": "no",
+      "delete": "no"
+    }
+  },
+  "ScanProfile": {
+    "limitations_short": "Scan configuration profiles",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "admin-only",
+      "update": "admin-only",
+      "delete": "yes"
+    }
+  },
+  "ScanResult": {
+    "limitations_short": "Scan-generated",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "scan-generated",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "ScanWorkflow": {
+    "limitations_short": "Platform-managed",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "platform-managed",
+      "update": "not-supported",
+      "delete": "admin-only"
+    }
+  },
+  "ScanWorkflowResult": {
+    "limitations_short": "Platform-managed",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "platform-managed",
+      "update": "not-supported",
+      "delete": "admin-only"
+    }
+  },
+  "SemgrepRule": {
+    "limitations_short": "Custom SAST rules",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "yes",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "SystemConfig": {
+    "limitations_short": "Singleton per namespace; onboard-seeded; ADMIN update",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "platform-managed",
+      "update": "admin-only",
+      "delete": "not-supported"
+    },
+    "sdk_ops": [
+      "list",
+      "get",
+      "update"
+    ]
+  },
+  "VectorStore": {
+    "limitations_short": "Vector store inventory (read-only)",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "not-supported",
+      "update": "not-supported",
+      "delete": "not-supported"
+    },
+    "sdk_ops": [
+      "get",
+      "list"
+    ]
+  },
+  "VectorStoreQuery": {
+    "limitations_short": "Natural-language vector store query",
+    "customer_ops": {
+      "list": "no",
+      "get": "no",
+      "create": "create-only",
+      "update": "no",
+      "delete": "no"
+    },
+    "sdk_ops": [
+      "create"
+    ]
+  },
+  "VersionUpgrade": {
+    "limitations_short": "Platform-managed",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "platform-managed",
+      "update": "not-supported",
+      "delete": "admin-only"
+    }
+  },
+  "Vulnerability": {
+    "limitations_short": "OSS-scoped vulnerability dataset",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "not-supported",
+      "update": "not-supported",
+      "delete": "not-supported"
+    }
+  }
+}

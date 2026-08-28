@@ -14,51 +14,22 @@ Analytics output attached to packages or repositories.
 |-----------|-----------|
 | `list` | yes |
 | `get` | yes |
-| `create` | yes |
-| `update` | yes |
-| `delete` | yes |
+| `create` | no |
+| `update` | no |
+| `delete` | no |
 
-## Create
+## User-space access
 
-- **Mode:** `both`
-- **Model import:** `endorlabs.resources.metric:Metric`
-- **Payload model:** `CreateMetricPayload`
+Customer tenant semantics (distinct from raw OpenAPI and SDK exposure).
+Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
 
-### Payload top-level fields
-
-- `context`
-- `meta`
-- `tenant_meta`
-
-### Create convenience kwargs (flat)
-
-**Spec (flat, promoted into `spec`):**
-
-Required:
-
-- `analytic`
-- `metric_values`
-- `project_uuid`
-
-Optional:
-
-- `raw`
-
-Unknown flat kwargs raise `TypeError`. Use `payload=` or nested `spec=` / `meta=` for full control.
-
-### Examples
-
-**Python:**
-
-```python
-client.Metric.create(analytic="...", project_uuid="...", namespace='tenant.ns')
-```
-
-**endorctl:**
-
-```bash
-endorctl api create --resource=Metric --namespace=<tenant.ns> -f payload.json
-```
+| Operation | Customer user-space | SDK exposed |
+|-----------|---------------------|-------------|
+| `list` | yes | yes |
+| `get` | yes | yes |
+| `create` | scan-generated | no |
+| `update` | not-supported | no |
+| `delete` | not-supported | no |
 
 ## Facade helpers
 

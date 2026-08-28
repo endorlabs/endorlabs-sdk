@@ -15,76 +15,22 @@ Results from an endorctl scan.
 |-----------|-----------|
 | `list` | yes |
 | `get` | yes |
-| `create` | yes |
+| `create` | no |
 | `update` | yes |
 | `delete` | yes |
 
-## Create
+## User-space access
 
-- **Mode:** `both`
-- **Model import:** `endorlabs.resources.scan_result:ScanResult`
-- **Payload model:** `CreateScanResultPayload`
+Customer tenant semantics (distinct from raw OpenAPI and SDK exposure).
+Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
 
-### Payload top-level fields
-
-- `context`
-- `meta`
-- `tenant_meta`
-
-### Create convenience kwargs (flat)
-
-**Spec (flat, promoted into `spec`):**
-
-Required:
-
-- `status`
-- `type`
-
-Optional:
-
-- `all_findings`
-- `blocking_findings`
-- `components_executed`
-- `deleted_findings`
-- `deleted_package_versions`
-- `ecosystem_dep_counts`
-- `ecosystem_pkg_counts`
-- `end_time`
-- `environment`
-- `errors`
-- `exception_findings`
-- `exit_code`
-- `findings`
-- `has_panic`
-- `infos`
-- `languages_detected`
-- `logs`
-- `policies_triggered`
-- `provisioning_result`
-- `provisioning_result_uuid`
-- `refs`
-- `runtimes`
-- `start_time`
-- `stats`
-- `versions`
-- `warning_findings`
-- `warnings`
-
-Unknown flat kwargs raise `TypeError`. Use `payload=` or nested `spec=` / `meta=` for full control.
-
-### Examples
-
-**Python:**
-
-```python
-client.ScanResult.create(status="...", type="...", namespace='tenant.ns')
-```
-
-**endorctl:**
-
-```bash
-endorctl api create --resource=ScanResult --namespace=<tenant.ns> -f payload.json
-```
+| Operation | Customer user-space | SDK exposed |
+|-----------|---------------------|-------------|
+| `list` | yes | yes |
+| `get` | yes | yes |
+| `create` | scan-generated | no |
+| `update` | yes | yes |
+| `delete` | yes | yes |
 
 ## Related resources
 

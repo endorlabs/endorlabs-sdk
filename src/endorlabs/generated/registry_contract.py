@@ -113,7 +113,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_convenience_spec_required": [
         "operation"
       ],
-      "create_mode": "both",
+      "create_mode": "unsupported",
       "create_payload_entities": [
         "AuditLogServiceCreateAuditLogBody"
       ],
@@ -144,8 +144,6 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "resource_name": "audit-logs",
       "scope": "tenant",
       "supported_ops": [
-        "create",
-        "delete",
         "get",
         "list"
       ],
@@ -580,7 +578,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "target_uuid",
         "extra_key"
       ],
-      "create_mode": "both",
+      "create_mode": "unsupported",
       "create_payload_entities": [
         "FindingServiceCreateFindingBody"
       ],
@@ -617,7 +615,6 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "resource_name": "findings",
       "scope": "tenant",
       "supported_ops": [
-        "create",
         "delete",
         "get",
         "list",
@@ -678,7 +675,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "finding_tags",
         "finding_categories"
       ],
-      "create_mode": "both",
+      "create_mode": "unsupported",
       "create_payload_entities": [
         "FindingLogServiceCreateFindingLogBody"
       ],
@@ -709,8 +706,6 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "resource_name": "finding-logs",
       "scope": "tenant",
       "supported_ops": [
-        "create",
-        "delete",
         "get",
         "list"
       ],
@@ -986,7 +981,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "level",
         "extra_key"
       ],
-      "create_mode": "both",
+      "create_mode": "unsupported",
       "create_payload_entities": [
         "LinterResultServiceCreateLinterResultBody"
       ],
@@ -1019,8 +1014,6 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "resource_name": "linter-results",
       "scope": "tenant",
       "supported_ops": [
-        "create",
-        "delete",
         "get",
         "list"
       ],
@@ -1259,7 +1252,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "project_uuid",
         "metric_values"
       ],
-      "create_mode": "both",
+      "create_mode": "unsupported",
       "create_payload_entities": [
         "MetricServiceCreateMetricBody"
       ],
@@ -1267,7 +1260,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "filter_kwarg_map": {
         "name": "meta.name"
       },
-      "has_tag_methods": true,
+      "has_tag_methods": false,
       "identity_filter_fields": [
         "name"
       ],
@@ -1296,16 +1289,13 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "resource_name": "metrics",
       "scope": "tenant",
       "supported_ops": [
-        "create",
-        "delete",
         "get",
-        "list",
-        "update"
+        "list"
       ],
       "update_payload_entities": [
         "MetricServiceUpdateMetricBody"
       ],
-      "update_requires_mask": true,
+      "update_requires_mask": false,
       "workflow_flags": []
     },
     {
@@ -1780,7 +1770,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "create_convenience_spec_required": [
         "project_uuid"
       ],
-      "create_mode": "both",
+      "create_mode": "unsupported",
       "create_payload_entities": [
         "PackageVersionServiceCreatePackageVersionBody"
       ],
@@ -1820,7 +1810,6 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "resource_name": "package-versions",
       "scope": "tenant",
       "supported_ops": [
-        "create",
         "delete",
         "get",
         "list",
@@ -2352,7 +2341,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "http_clone_url",
         "default_branch"
       ],
-      "create_mode": "both",
+      "create_mode": "unsupported",
       "create_payload_entities": [
         "RepositoryServiceCreateRepositoryBody"
       ],
@@ -2393,8 +2382,6 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "resource_name": "repositories",
       "scope": "tenant",
       "supported_ops": [
-        "create",
-        "delete",
         "get",
         "list",
         "update"
@@ -2430,7 +2417,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "allow_ref_as_pr_scan_base"
       ],
       "create_convenience_spec_required": [],
-      "create_mode": "both",
+      "create_mode": "unsupported",
       "create_payload_entities": [
         "RepositoryVersionServiceCreateRepositoryVersionBody"
       ],
@@ -2467,8 +2454,6 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "resource_name": "repository-versions",
       "scope": "tenant",
       "supported_ops": [
-        "create",
-        "delete",
         "get",
         "list",
         "update"
@@ -2739,7 +2724,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "status",
         "type"
       ],
-      "create_mode": "both",
+      "create_mode": "unsupported",
       "create_payload_entities": [
         "ScanResultServiceCreateScanResultBody"
       ],
@@ -2776,7 +2761,6 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "resource_name": "scan-results",
       "scope": "tenant",
       "supported_ops": [
-        "create",
         "delete",
         "get",
         "list",
@@ -3034,7 +3018,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "package_firewall"
       ],
       "create_convenience_spec_required": [],
-      "create_mode": "both",
+      "create_mode": "unsupported",
       "create_payload_entities": [
         "SystemConfigServiceCreateSystemConfigBody"
       ],
@@ -3069,8 +3053,6 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       "resource_name": "system-config",
       "scope": "tenant",
       "supported_ops": [
-        "create",
-        "delete",
         "get",
         "list",
         "update"

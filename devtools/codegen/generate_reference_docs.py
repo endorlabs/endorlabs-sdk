@@ -25,6 +25,8 @@ DEVTOOLS_DIR = REPO_ROOT / "devtools"
 if str(DEVTOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(DEVTOOLS_DIR))
 
+from resource_user_space import load_resource_user_space  # noqa: E402
+
 import endorlabs  # noqa: E402
 from endorlabs import resources as resource_modules  # noqa: E402
 from endorlabs.facade import ResourceRuntimeFacade, _ListableFacade  # noqa: E402
@@ -49,31 +51,6 @@ SURFACES_DOC = GENERATED_REFERENCE_DIR / "api-surfaces.md"
 COVERAGE_JSON = GENERATED_REFERENCE_DIR / "coverage.json"
 
 SDK_OP_ORDER = ("list", "get", "create", "update", "delete")
-
-RESOURCE_LIMITATIONS: dict[str, str] = {
-    "Project": "Platform-managed",
-    "Repository": "Platform-managed",
-    "RepositoryVersion": "Platform-managed",
-    "PackageVersion": "Scan-discovered; API may return 501 for PATCH",
-    "Finding": "Scan-generated",
-    "ScanResult": "Scan-generated",
-    "Policy": "Rego in payload",
-    "Installation": "Platform-managed",
-    "Metric": "Analytics-generated",
-    "DependencyMetadata": "Relationship resource; see dependency-metadata contract",
-    "LinterResult": "Scan-generated",
-    "ScanLogRequest": "Request-based only; no list/get/delete for log messages",
-    "ScanWorkflow": "Platform-managed",
-    "ScanWorkflowResult": "Platform-managed",
-    "VersionUpgrade": "Platform-managed",
-    "AuthenticationLog": "Tenant-context read-only resource",
-    "EndorLicense": "Tenant-context read-only resource",
-    "PolicyTemplate": "Tenant-context read-only resource",
-    "Vulnerability": "OSS-scoped vulnerability dataset",
-    "Malware": "OSS-scoped malware dataset",
-    "QueryVulnerability": "Request-based query endpoint (create only)",
-    "QueryMalware": "Request-based query endpoint (create only)",
-}
 
 
 def _load_spec() -> dict[str, Any]:
@@ -267,10 +244,17 @@ def _generate_resources_md(spec: dict[str, Any]) -> str:
         "- `yes/no`: SDK exposes operation but collection/item OpenAPI",
         "  method was not found.",
         "- `no/no`: operation not exposed by SDK and not present in OpenAPI paths.",
+        "- **Limitations** = customer user-space semantics (from",
+        "  `resource_user_space.json`); **sdk/spec** shows SDK exposure vs OpenAPI.",
         "- Scope values: `tenant` (default namespace resolution), `oss`",
         "  (namespace fixed to `oss`).",
         "",
+        "Customer **tenant admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer",
+        "where user-space docs say `admin-only` or `yes`. Endor internal account",
+        "gates (`IsCallerEndorAccount`) are additional field/route restrictions.",
+        "",
     ]
+    user_space = load_resource_user_space()
     lines.extend(_model_sync_coverage_lines())
     lines.extend(
         [
@@ -281,7 +265,10 @@ def _generate_resources_md(spec: dict[str, Any]) -> str:
     )
     for entry in sorted(RESOURCE_REGISTRY, key=lambda e: e.attr_name):
         spec_support = _spec_support_by_op(spec, entry.resource_name)
-        limitations = RESOURCE_LIMITATIONS.get(entry.attr_name, "—")
+        profile = user_space.get(entry.attr_name, {})
+        limitations = profile.get("limitations_short", "—")
+        if limitations != "—" and not isinstance(limitations, str):
+            limitations = "—"
         list_pair = (
             f"{_bool_cell('list' in entry.supported_ops)}"
             f"/{_bool_cell(spec_support['list'])}"

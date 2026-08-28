@@ -11,13 +11,17 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_DIR = REPO_ROOT / "src"
+DEVTOOLS_DIR = REPO_ROOT / "devtools" / "codegen"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
+if str(DEVTOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(DEVTOOLS_DIR))
 
 from endorlabs.registry import RESOURCE_REGISTRY  # noqa: E402
 from endorlabs.registry_overlay import merge_generated_contract_with_overlay  # noqa: E402
 
 from doc_facade_helpers import render_resource_facade_helpers_section  # noqa: E402
+from resource_user_space import load_resource_user_space, render_user_space_section  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +101,8 @@ def _render_resource_page(
     contract: dict[str, Any],
     description: str,
     related_map: dict[str, list[str]],
+    user_space_entry: dict[str, Any] | None = None,
+    spec_ops: dict[str, bool] | None = None,
 ) -> str:
     resource_name = contract.get("resource_name", "")
     scope = contract.get("scope", "tenant")
@@ -126,6 +132,16 @@ def _render_resource_page(
     if parent_kind:
         lines.append(f"- **Parent list:** `list(parent=<{parent_kind}>)`")
     lines.extend(["", "## Operations", "", _operations_table(supported_ops), ""])
+
+    if user_space_entry:
+        lines.append(
+            render_user_space_section(
+                attr_name,
+                user_space_entry,
+                sdk_ops=supported_ops,
+                spec_ops=spec_ops,
+            )
+        )
 
     if "create" in supported_ops:
         lines.extend(["## Create", ""])
@@ -266,6 +282,7 @@ def generate_resource_reference_pages() -> list[Path]:
     contract_by_attr = _load_contract_resources()
     descriptions = _load_descriptions()
     related_map = _load_related()
+    user_space = load_resource_user_space()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     index_rows: list[dict[str, Any]] = []
@@ -292,6 +309,7 @@ def generate_resource_reference_pages() -> list[Path]:
             contract,
             description,
             related_map,
+            user_space_entry=user_space.get(entry.attr_name),
         )
         path = OUTPUT_DIR / f"{entry.attr_name}.md"
         if not path.exists() or path.read_text(encoding="utf-8") != page:

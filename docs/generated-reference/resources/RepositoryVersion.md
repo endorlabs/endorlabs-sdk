@@ -15,48 +15,22 @@ Versioned snapshot of a repository.
 |-----------|-----------|
 | `list` | yes |
 | `get` | yes |
-| `create` | yes |
+| `create` | no |
 | `update` | yes |
-| `delete` | yes |
+| `delete` | no |
 
-## Create
+## User-space access
 
-- **Mode:** `both`
-- **Model import:** `endorlabs.resources.repository_version:RepositoryVersion`
-- **Payload model:** `CreateRepositoryVersionPayload`
+Customer tenant semantics (distinct from raw OpenAPI and SDK exposure).
+Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
 
-### Payload top-level fields
-
-- `context`
-- `meta`
-- `scan_object`
-- `tenant_meta`
-
-### Create convenience kwargs (flat)
-
-**Spec (flat, promoted into `spec`):**
-
-Optional:
-
-- `allow_ref_as_pr_scan_base`
-- `last_commit_date`
-- `version`
-
-Unknown flat kwargs raise `TypeError`. Use `payload=` or nested `spec=` / `meta=` for full control.
-
-### Examples
-
-**Python:**
-
-```python
-client.RepositoryVersion.create(name='example', namespace='tenant.ns')
-```
-
-**endorctl:**
-
-```bash
-endorctl api create --resource=RepositoryVersion --namespace=<tenant.ns> -f payload.json
-```
+| Operation | Customer user-space | SDK exposed |
+|-----------|---------------------|-------------|
+| `list` | yes | yes |
+| `get` | yes | yes |
+| `create` | platform-managed | no |
+| `update` | yes | yes |
+| `delete` | not-supported | no |
 
 ## Facade helpers
 

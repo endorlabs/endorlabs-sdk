@@ -18,6 +18,19 @@ Platform license assigned to a tenant.
 | `update` | no |
 | `delete` | no |
 
+## User-space access
+
+Customer tenant semantics (distinct from raw OpenAPI and SDK exposure).
+Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
+
+| Operation | Customer user-space | SDK exposed |
+|-----------|---------------------|-------------|
+| `list` | read-only | yes |
+| `get` | read-only | yes |
+| `create` | not-supported | no |
+| `update` | not-supported | no |
+| `delete` | not-supported | no |
+
 ## Response / read-only spec fields
 
 Present on responses; not accepted as flat create kwargs:

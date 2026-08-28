@@ -14,29 +14,29 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (45 resource
 | Resource | SDK create support | Builder | Payload model | Required fields | Optional fields |
 |----------|--------------------|---------|---------------|-----------------|-----------------|
 | APIKey | yes | build_create_payload | CreateAPIKeyPayload | meta, spec | propagate |
-| AuditLog | yes | build_create_payload | CreateAuditLogPayload | meta, spec | propagate |
+| AuditLog | no | build_create_payload | CreateAuditLogPayload | meta, spec | propagate |
 | AuthenticationLog | no | N/A | N/A | N/A | N/A |
 | AuthorizationPolicy | yes | build_create_payload | CreateAuthorizationPolicyPayload | meta, spec | propagate |
 | CodeOwners | yes | build_create_payload | CreateCodeOwnersPayload | meta, spec | none |
 | DependencyMetadata | yes | build_create_payload | CreateDependencyMetadataPayload | meta, spec | none |
 | EndorLicense | no | N/A | N/A | N/A | N/A |
-| Finding | yes | build_create_payload | CreateFindingPayload | context, meta, spec | none |
-| FindingLog | yes | build_create_payload | CreateFindingLogPayload | context, meta, spec | none |
+| Finding | no | build_create_payload | CreateFindingPayload | context, meta, spec | none |
+| FindingLog | no | build_create_payload | CreateFindingLogPayload | context, meta, spec | none |
 | IdentityProvider | no | build_create_payload | CreateIdentityProviderPayload | meta, spec | none |
 | Installation | yes | build_create_payload | CreateInstallationPayload | meta, spec | none |
 | Invitation | yes | build_create_payload | CreateInvitationPayload | meta, spec | none |
-| LinterResult | yes | build_create_payload | CreateLinterResultPayload | meta, spec | none |
+| LinterResult | no | build_create_payload | CreateLinterResultPayload | meta, spec | none |
 | Malware | no | N/A | N/A | N/A | N/A |
 | MalwareExposure | no | build_create_payload | CreateMalwareExposurePayload | meta, spec | none |
 | MalwareExposureQuery | yes | build_create_payload | CreateMalwareExposureQueryPayload | meta, spec | none |
-| Metric | yes | build_create_payload | CreateMetricPayload | meta, spec | none |
+| Metric | no | build_create_payload | CreateMetricPayload | meta, spec | none |
 | Namespace | yes | build_create_payload | CreateNamespacePayload | meta | none |
 | NotificationTarget | yes | build_create_payload | CreateNotificationTargetPayload | meta, spec | propagate |
 | PRCommentConfig | yes | build_create_payload | CreatePRCommentConfigPayload | meta, spec | propagate |
 | PackageFirewallLog | no | build_create_payload | CreatePackageFirewallLogPayload | meta, spec | none |
 | PackageLicense | yes | build_create_payload | CreatePackageLicensePayload | meta, spec | none |
 | PackageManager | yes | build_create_payload | CreatePackageManagerPayload | meta, spec | propagate |
-| PackageVersion | yes | build_create_payload | CreatePackageVersionPayload | meta, spec | none |
+| PackageVersion | no | build_create_payload | CreatePackageVersionPayload | meta, spec | none |
 | Policy | yes | build_create_payload | CreatePolicyPayload | meta, spec | propagate |
 | PolicyTemplate | no | N/A | N/A | N/A | N/A |
 | Project | yes | build_create_payload | CreateProjectPayload | meta, namespace_uuid | none |
@@ -44,16 +44,16 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (45 resource
 | QueryMalware | yes | build_create_payload | CreateQueryMalwarePayload | meta, spec | none |
 | QuerySimilarPackages | yes | build_create_payload | CreateQuerySimilarPackagesPayload | meta, spec | none |
 | QueryVulnerability | yes | build_create_payload | CreateQueryVulnerabilityPayload | meta, spec | none |
-| Repository | yes | build_create_payload | CreateRepositoryPayload | meta, spec | none |
-| RepositoryVersion | yes | build_create_payload | CreateRepositoryVersionPayload | meta, spec | none |
+| Repository | no | build_create_payload | CreateRepositoryPayload | meta, spec | none |
+| RepositoryVersion | no | build_create_payload | CreateRepositoryVersionPayload | meta, spec | none |
 | SavedQuery | no | build_create_payload | CreateSavedQueryPayload | meta, spec | none |
 | ScanLogRequest | yes | N/A | N/A | N/A | N/A |
 | ScanProfile | yes | build_create_payload | CreateScanProfilePayload | meta, spec | propagate |
-| ScanResult | yes | build_create_payload | CreateScanResultPayload | context, meta, spec | none |
+| ScanResult | no | build_create_payload | CreateScanResultPayload | context, meta, spec | none |
 | ScanWorkflow | no | N/A | N/A | N/A | N/A |
 | ScanWorkflowResult | no | N/A | N/A | N/A | N/A |
 | SemgrepRule | yes | build_create_payload | CreateSemgrepRulePayload | meta, spec | disabled, propagate |
-| SystemConfig | yes | build_create_payload | CreateSystemConfigPayload | meta, spec | propagate |
+| SystemConfig | no | build_create_payload | CreateSystemConfigPayload | meta, spec | propagate |
 | VectorStore | no | N/A | N/A | N/A | N/A |
 | VectorStoreQuery | yes | build_create_payload | CreateVectorStoreQueryPayload | meta, spec | none |
 | VersionUpgrade | no | N/A | N/A | N/A | N/A |
@@ -79,7 +79,7 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (45 resource
 | Malware | no | meta.description, meta.tags |
 | MalwareExposure | no | meta.description, meta.tags |
 | MalwareExposureQuery | no | meta.description, meta.tags |
-| Metric | yes | meta.description, meta.name, meta.tags, spec |
+| Metric | no | meta.description, meta.name, meta.tags, spec |
 | Namespace | yes | meta.description |
 | NotificationTarget | yes | meta.description, meta.tags |
 | PRCommentConfig | yes | meta.description, meta.tags |

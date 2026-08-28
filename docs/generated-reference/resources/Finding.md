@@ -14,82 +14,22 @@ Security or compliance finding from a scan.
 |-----------|-----------|
 | `list` | yes |
 | `get` | yes |
-| `create` | yes |
+| `create` | no |
 | `update` | yes |
 | `delete` | yes |
 
-## Create
+## User-space access
 
-- **Mode:** `both`
-- **Model import:** `endorlabs.resources.finding:Finding`
-- **Payload model:** `CreateFindingPayload`
+Customer tenant semantics (distinct from raw OpenAPI and SDK exposure).
+Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
 
-### Payload top-level fields
-
-- `context`
-- `meta`
-- `tenant_meta`
-
-### Create convenience kwargs (flat)
-
-**Spec (flat, promoted into `spec`):**
-
-Required:
-
-- `extra_key`
-- `finding_tags`
-- `last_processed`
-- `level`
-- `project_uuid`
-- `summary`
-- `target_uuid`
-
-Optional:
-
-- `actions`
-- `approximation`
-- `call_graph_analysis_type`
-- `code_owners`
-- `dependency_file_paths`
-- `dismiss`
-- `ecosystem`
-- `exceptions`
-- `explanation`
-- `finding_categories`
-- `finding_metadata`
-- `fixing_patch`
-- `fixing_upgrades`
-- `ignore`
-- `latest_version`
-- `location_urls`
-- `method`
-- `proposed_version`
-- `reachable_paths`
-- `relationship`
-- `remediation`
-- `remediation_action`
-- `snooze`
-- `source_code_version`
-- `target_dependency_name`
-- `target_dependency_native_scope`
-- `target_dependency_package_name`
-- `target_dependency_version`
-
-Unknown flat kwargs raise `TypeError`. Use `payload=` or nested `spec=` / `meta=` for full control.
-
-### Examples
-
-**Python:**
-
-```python
-client.Finding.create(project_uuid="...", last_processed="...", namespace='tenant.ns')
-```
-
-**endorctl:**
-
-```bash
-endorctl api create --resource=Finding --namespace=<tenant.ns> -f payload.json
-```
+| Operation | Customer user-space | SDK exposed |
+|-----------|---------------------|-------------|
+| `list` | yes | yes |
+| `get` | yes | yes |
+| `create` | scan-generated | no |
+| `update` | yes | yes |
+| `delete` | yes | yes |
 
 ## Related resources
 

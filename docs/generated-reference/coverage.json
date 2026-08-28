@@ -30,8 +30,8 @@
       "resource_name": "audit-logs",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
-        "delete": true,
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
         "update": false
@@ -150,7 +150,7 @@
       "resource_name": "findings",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
+        "create": false,
         "delete": true,
         "get": true,
         "list": true,
@@ -170,8 +170,8 @@
       "resource_name": "finding-logs",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
-        "delete": true,
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
         "update": false
@@ -250,8 +250,8 @@
       "resource_name": "linter-results",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
-        "delete": true,
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
         "update": false
@@ -330,11 +330,11 @@
       "resource_name": "metrics",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
-        "delete": true,
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
-        "update": true
+        "update": false
       },
       "supported_ops_spec": {
         "create": true,
@@ -470,7 +470,7 @@
       "resource_name": "package-versions",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
+        "create": false,
         "delete": true,
         "get": true,
         "list": true,
@@ -630,8 +630,8 @@
       "resource_name": "repositories",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
-        "delete": true,
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
         "update": true
@@ -650,8 +650,8 @@
       "resource_name": "repository-versions",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
-        "delete": true,
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
         "update": true
@@ -730,7 +730,7 @@
       "resource_name": "scan-results",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
+        "create": false,
         "delete": true,
         "get": true,
         "list": true,
@@ -810,8 +810,8 @@
       "resource_name": "system-config",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
-        "delete": true,
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
         "update": true

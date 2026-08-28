@@ -293,6 +293,14 @@ def test_registry_supported_ops_not_implemented_contract(
                 facade.delete("unit-uuid", namespace=namespace)
 
 
+def test_system_config_exposes_list_get_update_only() -> None:
+    """SystemConfig is onboard-seeded; SDK must not expose create/delete."""
+    from endorlabs.registry import RESOURCE_REGISTRY
+
+    entry = next(r for r in RESOURCE_REGISTRY if r.attr_name == "SystemConfig")
+    assert entry.supported_ops == frozenset({"get", "list", "update"})
+
+
 class TestBuildFacade:
     """_build_facade factory produces the correct facade scope per registry entry."""
 

@@ -18,6 +18,19 @@ Result from a scan workflow execution.
 | `update` | no |
 | `delete` | yes |
 
+## User-space access
+
+Customer tenant semantics (distinct from raw OpenAPI and SDK exposure).
+Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
+
+| Operation | Customer user-space | SDK exposed |
+|-----------|---------------------|-------------|
+| `list` | read-only | yes |
+| `get` | read-only | yes |
+| `create` | platform-managed | no |
+| `update` | not-supported | no |
+| `delete` | admin-only | yes |
+
 ## Facade helpers
 
 ### Relationship accessors

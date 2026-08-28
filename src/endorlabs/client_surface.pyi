@@ -27,7 +27,7 @@ from .facade.specialized import (
 )
 from .operations.routes import RouteResult
 from .resources.api_key import APIKey, CreateAPIKeyPayload
-from .resources.audit_log import AuditLog, CreateAuditLogPayload
+from .resources.audit_log import AuditLog
 from .resources.authentication_log import AuthenticationLog
 from .resources.authorization_policy import (
     AuthorizationPolicy,
@@ -39,19 +39,19 @@ from .resources.dependency_metadata import (
     DependencyMetadata,
 )
 from .resources.endor_license import EndorLicense
-from .resources.finding import CreateFindingPayload, Finding
-from .resources.finding_log import CreateFindingLogPayload, FindingLog
+from .resources.finding import Finding
+from .resources.finding_log import FindingLog
 from .resources.identity_provider import IdentityProvider
 from .resources.installation import CreateInstallationPayload, Installation
 from .resources.invitation import CreateInvitationPayload, Invitation
-from .resources.linter_result import CreateLinterResultPayload, LinterResult
+from .resources.linter_result import LinterResult
 from .resources.malware import Malware
 from .resources.malware_exposure import MalwareExposure
 from .resources.malware_exposure_query import (
     CreateMalwareExposureQueryPayload,
     MalwareExposureQuery,
 )
-from .resources.metric import CreateMetricPayload, Metric
+from .resources.metric import Metric
 from .resources.namespace import CreateNamespacePayload, Namespace
 from .resources.notification_target import (
     CreateNotificationTargetPayload,
@@ -60,7 +60,7 @@ from .resources.notification_target import (
 from .resources.package_firewall_log import PackageFirewallLog
 from .resources.package_license import CreatePackageLicensePayload, PackageLicense
 from .resources.package_manager import CreatePackageManagerPayload, PackageManager
-from .resources.package_version import CreatePackageVersionPayload, PackageVersion
+from .resources.package_version import PackageVersion
 from .resources.policy import CreatePolicyPayload, Policy
 from .resources.policy_template import PolicyTemplate
 from .resources.pr_comment_config import CreatePRCommentConfigPayload, PRCommentConfig
@@ -71,19 +71,16 @@ from .resources.query_vulnerability import (
     CreateQueryVulnerabilityPayload,
     QueryVulnerability,
 )
-from .resources.repository import CreateRepositoryPayload, Repository
-from .resources.repository_version import (
-    CreateRepositoryVersionPayload,
-    RepositoryVersion,
-)
+from .resources.repository import Repository
+from .resources.repository_version import RepositoryVersion
 from .resources.saved_query import SavedQuery
 from .resources.scan_log_request import ScanLogRequest
 from .resources.scan_profile import CreateScanProfilePayload, ScanProfile
-from .resources.scan_result import CreateScanResultPayload, ScanResult
+from .resources.scan_result import ScanResult
 from .resources.scan_workflow import ScanWorkflow
 from .resources.scan_workflow_result import ScanWorkflowResult
 from .resources.semgrep_rule import CreateSemgrepRulePayload, SemgrepRule
-from .resources.system_config import CreateSystemConfigPayload, SystemConfig
+from .resources.system_config import SystemConfig
 from .resources.vector_store import VectorStore
 from .resources.vector_store_query import (
     CreateVectorStoreQueryPayload,
@@ -138,11 +135,8 @@ class _APIKeyFacade(ResourceRuntimeFacade[APIKey]):
         **kwargs: Any,
     ) -> APIKey: ...
 
-class _AuditLogFacade(ResourceRuntimeFacade[AuditLog]):
-    """Audit trail of API operations.
-
-    Create mode: both.
-    """
+class _AuditLogFacade(ListableFacade[AuditLog]):
+    """Audit trail of API operations."""
 
     def list(
         self,
@@ -171,21 +165,10 @@ class _AuditLogFacade(ResourceRuntimeFacade[AuditLog]):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
-    def create(
+    def get(
         self,
-        payload: CreateAuditLogPayload | None = None,
-        *,
-        name: str | None = None,
-        description: str | None = None,
-        namespace_uuid: str | None = None,
-        namespace: str | None = None,
-        operation: Any,
-        message_uuid: Any | None = None,
-        message_kind: Any | None = None,
-        error: Any | None = None,
-        claims: dict[str, Any] | None = None,
-        remote_address: Any | None = None,
-        **kwargs: Any,
+        id_or_resource: str | AuditLog,
+        namespace: str | None = ...,
     ) -> AuditLog: ...
 
 class _AuthenticationLogFacade(ListableFacade[AuthenticationLog]):
@@ -423,7 +406,6 @@ class _FindingFacade(FindingFacade):
     """Security or compliance finding from a scan.
 
     Identity kwargs: name (-> meta.name).
-    Create mode: both.
     Update mode: update_mask required.
     Workflow flags: project-namespace-list.
     """
@@ -484,57 +466,8 @@ class _FindingFacade(FindingFacade):
         """Resolve DependencyMetadata for a finding (accessors with fallback)."""
         ...
 
-    def create(
-        self,
-        payload: CreateFindingPayload | None = None,
-        *,
-        name: str | None = None,
-        description: str | None = None,
-        namespace_uuid: str | None = None,
-        namespace: str | None = None,
-        project_uuid: Any,
-        last_processed: Any,
-        level: Any,
-        summary: Any,
-        finding_tags: Any,
-        target_uuid: Any,
-        extra_key: Any,
-        dismiss: Any | None = None,
-        remediation: Any | None = None,
-        finding_metadata: Any | None = None,
-        method: Any | None = None,
-        target_dependency_package_name: Any | None = None,
-        target_dependency_name: Any | None = None,
-        target_dependency_version: Any | None = None,
-        target_dependency_native_scope: Any | None = None,
-        explanation: Any | None = None,
-        remediation_action: Any | None = None,
-        source_code_version: Any | None = None,
-        reachable_paths: Any | None = None,
-        ecosystem: Any | None = None,
-        finding_categories: Any | None = None,
-        relationship: Any | None = None,
-        latest_version: Any | None = None,
-        dependency_file_paths: Any | None = None,
-        approximation: Any | None = None,
-        proposed_version: Any | None = None,
-        exceptions: Any | None = None,
-        actions: Any | None = None,
-        fixing_upgrades: Any | None = None,
-        fixing_patch: Any | None = None,
-        code_owners: Any | None = None,
-        location_urls: Any | None = None,
-        call_graph_analysis_type: Any | None = None,
-        snooze: Any | None = None,
-        ignore: Any | None = None,
-        **kwargs: Any,
-    ) -> Finding: ...
-
-class _FindingLogFacade(ResourceRuntimeFacade[FindingLog]):
-    """Historical snapshot of a finding state.
-
-    Create mode: both.
-    """
+class _FindingLogFacade(ListableFacade[FindingLog]):
+    """Historical snapshot of a finding state."""
 
     def list(
         self,
@@ -563,37 +496,14 @@ class _FindingLogFacade(ResourceRuntimeFacade[FindingLog]):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
-    def create(
+    def get(
         self,
-        payload: CreateFindingLogPayload | None = None,
-        *,
-        name: str | None = None,
-        description: str | None = None,
-        namespace_uuid: str | None = None,
-        namespace: str | None = None,
-        finding_uuid: Any,
-        finding_parent_kind: Any,
-        finding_parent_uuid: Any,
-        operation: Any,
-        introduced_at: Any,
-        method: Any,
-        level: Any,
-        finding_tags: Any,
-        finding_categories: Any,
-        resolved_at: Any | None = None,
-        days_unresolved: Any | None = None,
-        ecosystem: Any | None = None,
-        target_uuid: Any | None = None,
-        target_dependency_package_name: Any | None = None,
-        approximation: Any | None = None,
-        finding_parent_name: Any | None = None,
-        snooze: Any | None = None,
-        location: Any | None = None,
-        **kwargs: Any,
+        id_or_resource: str | FindingLog,
+        namespace: str | None = ...,
     ) -> FindingLog: ...
 
 class _IdentityProviderFacade(ListableFacade[IdentityProvider]):
-    """Consumer facade model for IdentityProvider (generated wire shape)."""
+    """SSO identity provider configuration for the tenant."""
 
     def list(
         self,
@@ -741,11 +651,8 @@ class _InvitationFacade(ResourceRuntimeFacade[Invitation]):
         **kwargs: Any,
     ) -> Invitation: ...
 
-class _LinterResultFacade(ResourceRuntimeFacade[LinterResult]):
-    """Linter analysis result for a package or repository version.
-
-    Create mode: both.
-    """
+class _LinterResultFacade(ListableFacade[LinterResult]):
+    """Linter analysis result for a package or repository version."""
 
     def list(
         self,
@@ -774,34 +681,10 @@ class _LinterResultFacade(ResourceRuntimeFacade[LinterResult]):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
-    def create(
+    def get(
         self,
-        payload: CreateLinterResultPayload | None = None,
-        *,
-        name: str | None = None,
-        description: str | None = None,
-        namespace_uuid: str | None = None,
-        namespace: str | None = None,
-        project_uuid: Any,
-        origin: Any,
-        level: Any,
-        extra_key: Any,
-        version: Any | None = None,
-        sarif_result: Any | None = None,
-        ai_result: Any | None = None,
-        ecosystem: Any | None = None,
-        semgrep: Any | None = None,
-        secret: Any | None = None,
-        aisast: Any | None = None,
-        fingerprints: Any | None = None,
-        fingerprint_count: Any | None = None,
-        distribution_format: Any | None = None,
-        ref: Any | None = None,
-        storage_location: Any | None = None,
-        suppressed: Any | None = None,
-        linter_correctness_analyses: Any | None = None,
-        endor_fingerprint: Any | None = None,
-        **kwargs: Any,
+        id_or_resource: str | LinterResult,
+        namespace: str | None = ...,
     ) -> LinterResult: ...
 
 class _MalwareFacade(ListableFacade[Malware]):
@@ -928,12 +811,10 @@ class _MalwareExposureQueryFacade(ResourceRuntimeFacade[MalwareExposureQuery]):
         **kwargs: Any,
     ) -> MalwareExposureQuery: ...
 
-class _MetricFacade(ResourceRuntimeFacade[Metric]):
+class _MetricFacade(ListableFacade[Metric]):
     """Analytics output attached to packages or repositories.
 
     Identity kwargs: name (-> meta.name).
-    Create mode: both.
-    Update mode: update_mask required.
     """
 
     def list(
@@ -963,19 +844,10 @@ class _MetricFacade(ResourceRuntimeFacade[Metric]):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
-    def create(
+    def get(
         self,
-        payload: CreateMetricPayload | None = None,
-        *,
-        name: str | None = None,
-        description: str | None = None,
-        namespace_uuid: str | None = None,
-        namespace: str | None = None,
-        analytic: Any,
-        project_uuid: Any,
-        metric_values: dict[str, Any],
-        raw: dict[str, Any] | None = None,
-        **kwargs: Any,
+        id_or_resource: str | Metric,
+        namespace: str | None = ...,
     ) -> Metric: ...
 
 class _NamespaceFacade(ResourceRuntimeFacade[Namespace]):
@@ -1074,7 +946,7 @@ class _NotificationTargetFacade(ResourceRuntimeFacade[NotificationTarget]):
     ) -> NotificationTarget: ...
 
 class _PRCommentConfigFacade(ResourceRuntimeFacade[PRCommentConfig]):
-    """Consumer facade model for PRCommentConfig (generated wire shape).
+    """Pull-request comment integration settings.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -1211,7 +1083,7 @@ class _PackageLicenseFacade(ResourceRuntimeFacade[PackageLicense]):
     ) -> PackageLicense: ...
 
 class _PackageManagerFacade(ResourceRuntimeFacade[PackageManager]):
-    """Consumer facade model for PackageManager (generated wire shape).
+    """Package manager integration and resolution settings.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -1273,7 +1145,6 @@ class _PackageVersionFacade(PackageVersionFacade):
     """Package version with dependency information.
 
     Identity kwargs: name (-> meta.name).
-    Create mode: both.
     Update mode: update_mask required.
     Workflow flags: project-namespace-list.
     """
@@ -1325,31 +1196,6 @@ class _PackageVersionFacade(PackageVersionFacade):
     ) -> list[Any]:
         """List package versions in the same scan plane as *source*."""
         ...
-
-    def create(
-        self,
-        payload: CreatePackageVersionPayload | None = None,
-        *,
-        name: str | None = None,
-        description: str | None = None,
-        namespace_uuid: str | None = None,
-        namespace: str | None = None,
-        project_uuid: Any,
-        source_code_reference: Any | None = None,
-        release_timestamp: Any | None = None,
-        unresolved_dependencies: Any | None = None,
-        resolved_dependencies: Any | None = None,
-        resolution_errors: Any | None = None,
-        language: Any | None = None,
-        relative_path: Any | None = None,
-        container_metadata: Any | None = None,
-        bazel_metadata: Any | None = None,
-        code_owners: Any | None = None,
-        call_graph_available: Any | None = None,
-        precomputed_call_graph_state: Any | None = None,
-        upstream_reference: Any | None = None,
-        **kwargs: Any,
-    ) -> PackageVersion: ...
 
 class _PolicyFacade(ResourceRuntimeFacade[Policy]):
     """Rule controlling scan behavior, findings, and workflows.
@@ -1589,7 +1435,7 @@ class _QueryMalwareFacade(ResourceRuntimeFacade[QueryMalware]):
     ) -> QueryMalware: ...
 
 class _QuerySimilarPackagesFacade(ResourceRuntimeFacade[QuerySimilarPackages]):
-    """Consumer facade model for QuerySimilarPackages (generated wire shape).
+    """Similar-package query (create-only).
 
     Create mode: payload-only.
     """
@@ -1679,7 +1525,6 @@ class _RepositoryFacade(ResourceRuntimeFacade[Repository]):
       git_url (-> spec.vcs_url)
       name (-> meta.name)
       vcs_url (-> spec.vcs_url)
-    Create mode: both.
     Update mode: update_mask required.
     """
 
@@ -1710,38 +1555,11 @@ class _RepositoryFacade(ResourceRuntimeFacade[Repository]):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
-    def create(
-        self,
-        payload: CreateRepositoryPayload | None = None,
-        *,
-        name: str | None = None,
-        description: str | None = None,
-        namespace_uuid: str | None = None,
-        namespace: str | None = None,
-        platform_source: Any,
-        http_clone_url: Any,
-        default_branch: Any,
-        external_id: Any | None = None,
-        owner: Any | None = None,
-        create_time: Any | None = None,
-        update_time: Any | None = None,
-        contributors: Any | None = None,
-        commit_hashes: Any | None = None,
-        languages: Any | None = None,
-        tags: Any | None = None,
-        branch_protections: Any | None = None,
-        vulnerability_alerts_enabled: Any | None = None,
-        org: Any | None = None,
-        repository_license: Any | None = None,
-        **kwargs: Any,
-    ) -> Repository: ...
-
 class _RepositoryVersionFacade(ResourceRuntimeFacade[RepositoryVersion]):
     """Versioned snapshot of a repository.
 
     Identity kwargs: name (-> meta.name).
     Supports list(parent=<project>).
-    Create mode: both.
     Update mode: update_mask required.
     """
 
@@ -1772,22 +1590,8 @@ class _RepositoryVersionFacade(ResourceRuntimeFacade[RepositoryVersion]):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
-    def create(
-        self,
-        payload: CreateRepositoryVersionPayload | None = None,
-        *,
-        name: str | None = None,
-        description: str | None = None,
-        namespace_uuid: str | None = None,
-        namespace: str | None = None,
-        version: Any | None = None,
-        last_commit_date: Any | None = None,
-        allow_ref_as_pr_scan_base: Any | None = None,
-        **kwargs: Any,
-    ) -> RepositoryVersion: ...
-
 class _SavedQueryFacade(ListableFacade[SavedQuery]):
-    """Consumer facade model for SavedQuery (generated wire shape)."""
+    """Saved query definition for reuse in the product UI."""
 
     def list(
         self,
@@ -1914,7 +1718,6 @@ class _ScanResultFacade(ScanResultFacade):
 
     Identity kwargs: name (-> meta.name).
     Supports list(parent=<project>).
-    Create mode: both.
     Update mode: update_mask required.
     Workflow flags: project-namespace-list.
     """
@@ -1971,46 +1774,6 @@ class _ScanResultFacade(ScanResultFacade):
     ) -> list[Any]:
         """List scan results for a project (accessor ``project.scan_results``)."""
         ...
-
-    def create(
-        self,
-        payload: CreateScanResultPayload | None = None,
-        *,
-        name: str | None = None,
-        description: str | None = None,
-        namespace_uuid: str | None = None,
-        namespace: str | None = None,
-        status: Any,
-        type: Any,
-        errors: Any | None = None,
-        warnings: Any | None = None,
-        infos: Any | None = None,
-        start_time: Any | None = None,
-        end_time: Any | None = None,
-        stats: Any | None = None,
-        refs: Any | None = None,
-        environment: Any | None = None,
-        has_panic: Any | None = None,
-        exit_code: Any | None = None,
-        logs: Any | None = None,
-        policies_triggered: Any | None = None,
-        warning_findings: Any | None = None,
-        blocking_findings: Any | None = None,
-        runtimes: Any | None = None,
-        all_findings: Any | None = None,
-        deleted_findings: Any | None = None,
-        languages_detected: Any | None = None,
-        exception_findings: Any | None = None,
-        findings: Any | None = None,
-        provisioning_result_uuid: Any | None = None,
-        versions: Any | None = None,
-        ecosystem_pkg_counts: Any | None = None,
-        ecosystem_dep_counts: Any | None = None,
-        components_executed: Any | None = None,
-        deleted_package_versions: Any | None = None,
-        provisioning_result: Any | None = None,
-        **kwargs: Any,
-    ) -> ScanResult: ...
 
 class _ScanWorkflowFacade(ResourceRuntimeFacade[ScanWorkflow]):
     """Workflow orchestrating scan steps."""
@@ -2122,10 +1885,9 @@ class _SemgrepRuleFacade(ResourceRuntimeFacade[SemgrepRule]):
     ) -> SemgrepRule: ...
 
 class _SystemConfigFacade(ResourceRuntimeFacade[SystemConfig]):
-    """Consumer facade model for SystemConfig (generated wire shape).
+    """Tenant-wide system settings singleton (list/update; onboard-seeded).
 
     Identity kwargs: name (-> meta.name).
-    Create mode: both.
     Update mode: update_mask required.
     """
 
@@ -2155,28 +1917,6 @@ class _SystemConfigFacade(ResourceRuntimeFacade[SystemConfig]):
     ) -> list[SystemConfig] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
-
-    def create(
-        self,
-        payload: CreateSystemConfigPayload | None = None,
-        *,
-        name: str | None = None,
-        description: str | None = None,
-        namespace_uuid: str | None = None,
-        namespace: str | None = None,
-        policy: Any | None = None,
-        logging: Any | None = None,
-        analytics: Any | None = None,
-        finding_prioritization: Any | None = None,
-        artifactory: Any | None = None,
-        sast: Any | None = None,
-        cloud_deployment: Any | None = None,
-        ai: Any | None = None,
-        urgent_notification: Any | None = None,
-        endor_ignore: Any | None = None,
-        package_firewall: Any | None = None,
-        **kwargs: Any,
-    ) -> SystemConfig: ...
 
 class _VectorStoreFacade(VectorStoreFacade):
     """Tenant vector store inventory (embeddings index metadata).

@@ -1,6 +1,6 @@
 # SavedQuery
 
-Consumer facade model for SavedQuery (generated wire shape).
+Saved query definition for reuse in the product UI.
 
 ## Client access
 
@@ -17,6 +17,19 @@ Consumer facade model for SavedQuery (generated wire shape).
 | `create` | no |
 | `update` | no |
 | `delete` | no |
+
+## User-space access
+
+Customer tenant semantics (distinct from raw OpenAPI and SDK exposure).
+Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
+
+| Operation | Customer user-space | SDK exposed |
+|-----------|---------------------|-------------|
+| `list` | read-only | yes |
+| `get` | read-only | yes |
+| `create` | admin-only | no |
+| `update` | admin-only | no |
+| `delete` | admin-only | no |
 
 ## Response / read-only spec fields
 
