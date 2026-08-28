@@ -148,7 +148,7 @@ def redistribute_by_tag(
         tag = str(entry.get("tag") or "")
         if not tag:
             continue
-        uuids = [str(u) for u in (entry.get("projectUuids") or []) if u]
+        uuids = sorted({str(u) for u in (entry.get("projectUuids") or []) if u})
         main = 0
         ci = 0
         for uid in uuids:
@@ -194,7 +194,12 @@ def rank_projects(
             }
         )
     ranked.sort(
-        key=lambda r: (-int(r["mainFullScans"]), -int(r["ciScans"]), str(r["name"]))
+        key=lambda r: (
+            -int(r["mainFullScans"]),
+            -int(r["ciScans"]),
+            str(r["name"]),
+            str(r["uuid"]),
+        )
     )
     return ranked[: max(0, limit)]
 
@@ -230,19 +235,31 @@ def collect_onboarding_cadence(
 
     main_map: dict[str, int] = defaultdict(int)
     ci_map: dict[str, int] = defaultdict(int)
-    for ns in leaf_namespaces:
-        if not ns:
-            continue
-        try:
-            for uid, n in _group_parent_counts(client, ns, full_f).items():
-                main_map[uid] += n
-        except Exception:
-            pass
-        try:
-            for uid, n in _group_parent_counts(client, ns, ci_f).items():
-                ci_map[uid] += n
-        except Exception:
-            pass
+    leaves = [ns for ns in leaf_namespaces if ns]
+    workers = max(1, min(8, len(leaves))) if leaves else 1
+
+    def _leaf_counts(ns: str) -> tuple[dict[str, int], dict[str, int]]:
+        import contextlib
+
+        main_local: dict[str, int] = {}
+        ci_local: dict[str, int] = {}
+        with contextlib.suppress(Exception):
+            main_local = _group_parent_counts(client, ns, full_f)
+        with contextlib.suppress(Exception):
+            ci_local = _group_parent_counts(client, ns, ci_f)
+        return main_local, ci_local
+
+    if leaves:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futs = {pool.submit(_leaf_counts, ns): ns for ns in leaves}
+            for fut in as_completed(futs):
+                main_local, ci_local = fut.result()
+                for uid, n in main_local.items():
+                    main_map[uid] += n
+                for uid, n in ci_local.items():
+                    ci_map[uid] += n
 
     by_project: dict[str, dict[str, int]] = {}
     for p in projects:

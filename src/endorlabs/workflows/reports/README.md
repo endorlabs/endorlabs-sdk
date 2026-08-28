@@ -46,8 +46,8 @@ uv run endor-reports package-resolution -n <tenant>
 | `04-sast-burndown.html` | OpenGrep / AI-SAST / Secrets FindingLog burndown |
 | `05-endor-patches.html` | Endor Patches impact (Available / To Request) |
 
-Default full packet includes Patches (Finding list pull — can be slow on large
-estates). Use `--skip-patches` to omit, or `--patches-only` for a campaign
+Default full packet **omits** Patches (Finding list pull — slow on large
+estates). Pass `--patches` to include, or `--patches-only` for a campaign
 batch that writes under
 `.endorlabs-context/workspace/runs/patches-reports/<tenant>-MMDDYY/`
 (override date with `--date-suffix 082126`). A `--patches-only` run

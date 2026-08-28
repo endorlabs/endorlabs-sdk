@@ -106,12 +106,16 @@ class DependencyMetadataReachabilityType(StrEnum):
      - REACHABILITY_TYPE_UNREACHABLE: Call graph analysis determined that the dependency is likely not
     reachable.
      - REACHABILITY_TYPE_UNKNOWN: Not enough information to perform reachability analysis.
+     - REACHABILITY_TYPE_REACHABLE_BY_INCLUSION: The vulnerability is assumed reachable due to how the dependency is typically used; no call paths exist for this finding.
     """
 
     REACHABILITY_TYPE_UNSPECIFIED = 'REACHABILITY_TYPE_UNSPECIFIED'
     REACHABILITY_TYPE_REACHABLE = 'REACHABILITY_TYPE_REACHABLE'
     REACHABILITY_TYPE_UNREACHABLE = 'REACHABILITY_TYPE_UNREACHABLE'
     REACHABILITY_TYPE_UNKNOWN = 'REACHABILITY_TYPE_UNKNOWN'
+    REACHABILITY_TYPE_REACHABLE_BY_INCLUSION = (
+        'REACHABILITY_TYPE_REACHABLE_BY_INCLUSION'
+    )
 
 
 class GoogleprotobufAny(BaseModel):

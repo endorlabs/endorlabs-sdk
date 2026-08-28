@@ -1007,6 +1007,9 @@ def is_portable_namespace_value(value: str) -> bool:
     token = value.strip()
     if not token or token == "all":
         return True
+    # Prose / descriptions (e.g. resource_descriptions.json "Namespace" entry).
+    if any(ch.isspace() for ch in token):
+        return True
     if is_allowed_namespace_token(token):
         return True
     lower = token.lower()

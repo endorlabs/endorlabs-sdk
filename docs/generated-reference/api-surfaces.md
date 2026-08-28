@@ -4,8 +4,8 @@ Auto-generated inventories for stable/public surfaces.
 
 ## Model-sync coverage snapshot
 
-- facade contract resources: `41`
-- canonical entities (union): `41`
+- facade contract resources: `45`
+- canonical entities (union): `45`
 
 Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 
@@ -78,6 +78,8 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `invitation`
 - `linter_result`
 - `malware`
+- `malware_exposure`
+- `malware_exposure_query`
 - `metric`
 - `namespace`
 - `notification_target`
@@ -146,12 +148,15 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 | Invitation | invitations | tenant | — | list, get, create, update, delete |
 | LinterResult | linter-results | tenant | — | list, get, create, delete |
 | Malware | malware | oss | — | list, get |
+| MalwareExposure | malware-exposure | tenant | — | list, get |
+| MalwareExposureQuery | queries/malware-exposure | tenant | — | create |
 | Metric | metrics | tenant | — | list, get, create, update, delete |
 | Namespace | namespaces | tenant | — | list, get, create, update, delete |
 | NotificationTarget | notification-targets | tenant | — | list, get, create, update, delete |
 | PRCommentConfig | pr-comment-configs | tenant | — | list, get, create, update, delete |
 | PackageFirewallLog | package-firewall-logs | tenant | — | list, get |
 | PackageLicense | package-licenses | tenant | — | list, get, create, update, delete |
+| PackageManager | package-managers | tenant | — | list, get, create, update, delete |
 | PackageVersion | package-versions | tenant | — | list, get, create, update, delete |
 | Policy | policies | tenant | — | list, get, create, update, delete |
 | PolicyTemplate | policy-templates | tenant | — | list, get |
@@ -169,6 +174,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 | ScanWorkflow | scan-workflows | tenant | — | list, get, delete |
 | ScanWorkflowResult | scan-workflow-results | tenant | — | list, get, delete |
 | SemgrepRule | semgrep-rules | tenant | — | list, get, create, update, delete |
+| SystemConfig | system-config | tenant | — | list, get, create, update, delete |
 | VectorStore | vector-stores | tenant | — | list, get |
 | VectorStoreQuery | queries/vector-stores | tenant | — | create |
 | VersionUpgrade | version-upgrades | tenant | — | list, get, delete |

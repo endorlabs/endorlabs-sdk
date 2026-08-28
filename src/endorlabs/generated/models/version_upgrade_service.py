@@ -149,6 +149,21 @@ class ConfigOperator(StrEnum):
     OPERATOR_OR = 'OPERATOR_OR'
 
 
+class ContainerContextDiffRecordScope(StrEnum):
+    """
+    Which finding types a stored suppression covers. Members mirror
+    FindingRecordScope by number.
+
+     - RECORD_SCOPE_UNSPECIFIED: Unset; treated as RECORD_SCOPE_ALL.
+     - RECORD_SCOPE_ALL: Every finding common with the baseline.
+     - RECORD_SCOPE_VULNERABILITY: Vulnerability findings only.
+    """
+
+    RECORD_SCOPE_UNSPECIFIED = 'RECORD_SCOPE_UNSPECIFIED'
+    RECORD_SCOPE_ALL = 'RECORD_SCOPE_ALL'
+    RECORD_SCOPE_VULNERABILITY = 'RECORD_SCOPE_VULNERABILITY'
+
+
 class ContainerProfileDetailsApplicationType(StrEnum):
     """
     ApplicationType represents the type of the application.
@@ -1465,6 +1480,12 @@ class VulnerabilityComponent(BaseModel):
     """
     Indicates the artifact group id that the CVE affects.
     """
+    reachable_by_inclusion: bool | None = None
+    """
+    The vulnerability is assumed reachable due to how the artifact is
+    typically used; endor_uri is empty and call-path analysis does not apply.
+    The json_name pins the curated feed's key for protojson parsing.
+    """
     versions_range: list[str] | None = None
     """
     Vulnerable version range in Maven notation. For example, "[1.1.0,2.1.3)".
@@ -1515,6 +1536,12 @@ class ComponentItem(BaseModel):
     group_id: str
     """
     Indicates the artifact group id that the CVE affects.
+    """
+    reachable_by_inclusion: bool | None = None
+    """
+    The vulnerability is assumed reachable due to how the artifact is
+    typically used; endor_uri is empty and call-path analysis does not apply.
+    The json_name pins the curated feed's key for protojson parsing.
     """
     versions_range: list[str] | None = None
     """
@@ -2209,6 +2236,45 @@ class V1ContainerArchitecture(StrEnum):
     CONTAINER_ARCHITECTURE_WASM = 'CONTAINER_ARCHITECTURE_WASM'
 
 
+class V1ContainerContextDiff(BaseModel):
+    """
+    State of the context-diff suppression feature for one container scan.
+    """
+
+    baseline_package_version_uuid: str | None = None
+    """
+    Baseline PackageVersion used by the last reconcile. Informational only:
+    the reconcile always re-resolves the baseline rather than trusting this,
+    since a MAIN rescan replaces the baseline PV with a new UUID.
+    """
+    last_reconcile_time: AwareDatetime | None = None
+    """
+    When the reconcile pass (CLI-triggered or the periodic auto-reconcile)
+    last ran for this scan.
+    """
+    record_scope: ContainerContextDiffRecordScope | None = 'RECORD_SCOPE_UNSPECIFIED'
+    """
+    Which finding types the reconcile pass suppresses, set once by the run
+    that first applied suppression and reused by every later reconcile
+    (CLI-triggered or auto) so scope cannot silently change without an
+    explicit release first. Unset on scans suppressed before this field
+    existed; treated as RECORD_SCOPE_ALL in that case.
+
+    This mirrors FindingRecordScope, which the queries use, rather than
+    sharing it: that enum lives in
+    container_base_image_update_impact_query.proto, and importing that file
+    here would cycle back through finding.proto and package_version.proto.
+    Rehoming it to a shared file instead would move the generated Java class
+    of an enum the queries already publish.
+    """
+    suppress_baseline_findings: bool | None = None
+    """
+    True once --snooze-baseline-findings has been applied to this scan; makes
+    the periodic finding refresh re-run the reconcile pass against the
+    current baseline for as long as this stays true.
+    """
+
+
 class V1ContainerDependencyLayer(BaseModel):
     """
     ContainerDependency is a dependency of a container image.
@@ -2484,6 +2550,22 @@ class V1DigestType(StrEnum):
     DIGEST_TYPE_MD5 = 'DIGEST_TYPE_MD5'
 
 
+class V1DismissSource(StrEnum):
+    """
+    Which tool created a snooze or ignore, for tooling that maintains its own
+    dismissals over time and must never clear one it did not create.
+
+     - DISMISS_SOURCE_UNSPECIFIED: Created by a person, or by tooling that does not maintain what it writes.
+     - DISMISS_SOURCE_CONTAINER_DIFF: Created by `endorctl container diff --snooze-baseline-findings`, or by the
+    equivalent step of `endorctl container scan --diff`. Those commands clear
+    the dismissals carrying this source once the finding is no longer common
+    with the baseline, so no other writer may set it.
+    """
+
+    DISMISS_SOURCE_UNSPECIFIED = 'DISMISS_SOURCE_UNSPECIFIED'
+    DISMISS_SOURCE_CONTAINER_DIFF = 'DISMISS_SOURCE_CONTAINER_DIFF'
+
+
 class V1Ecosystem(StrEnum):
     """
      - ECOSYSTEM_GO: GoLang.
@@ -2553,6 +2635,9 @@ class V1ExceptionReason(StrEnum):
      - EXCEPTION_REASON_IN_TRIAGE: Issue is actively being triaged.
      - EXCEPTION_REASON_OTHER: Other reason. Use policy description or dismiss comments to elaborate.
      - EXCEPTION_REASON_RESOLVED: Issue has been resolved. For example, a secret is no longer valid.
+     - EXCEPTION_REASON_PRESENT_IN_BASELINE: The finding is also present in the baseline scan this one was diffed
+    against, so it is not newly introduced. Set only by container diff
+    tooling, never by a human.
     """
 
     EXCEPTION_REASON_UNSPECIFIED = 'EXCEPTION_REASON_UNSPECIFIED'
@@ -2561,6 +2646,7 @@ class V1ExceptionReason(StrEnum):
     EXCEPTION_REASON_IN_TRIAGE = 'EXCEPTION_REASON_IN_TRIAGE'
     EXCEPTION_REASON_OTHER = 'EXCEPTION_REASON_OTHER'
     EXCEPTION_REASON_RESOLVED = 'EXCEPTION_REASON_RESOLVED'
+    EXCEPTION_REASON_PRESENT_IN_BASELINE = 'EXCEPTION_REASON_PRESENT_IN_BASELINE'
 
 
 class V1Exceptions(BaseModel):
@@ -5055,6 +5141,11 @@ class VulnSpecAffected(BaseModel):
     )
     package: SpecAffectedPackage | None = None
     ranges: list[Range1] | None = None
+    reachable_by_inclusion: bool | None = None
+    """
+    The vulnerability is assumed reachable whenever this package is
+    included; there are no affected function URIs for call-path analysis.
+    """
     source: AffectedSource | None = 'SOURCE_UNSPECIFIED'
     versions: list[str] | None = None
 
@@ -5463,6 +5554,16 @@ class V1ContainerMetadata(BaseModel):
     """
     List of container command arguments.
     """
+    context_diff: V1ContainerContextDiff | None = None
+    """
+    State of the context-diff suppression feature for this REF-context scan.
+    Written by `endorctl container diff` / `endorctl container scan --diff`,
+    never by the scan pipeline itself. Preserved across a rescan of this
+    PackageVersion because CreatePackageVersion reads the stored value and
+    carries it into the incoming object before the upsert
+    (carryForwardContextDiffMarker) — without that read the next full-object
+    scan upsert would silently drop this field.
+    """
     digest: str | None = None
     """
     The SHA256 digest of the container image.
@@ -5832,6 +5933,12 @@ class V1DismissParams(BaseModel):
     reason: V1ExceptionReason | None = 'EXCEPTION_REASON_UNSPECIFIED'
     """
     Reason for snoozing or ignoring the finding.
+    """
+    source: V1DismissSource | None = 'DISMISS_SOURCE_UNSPECIFIED'
+    """
+    Which tool created this dismissal. The reason alone cannot carry that:
+    reason is free for any client to set, so a tool that later clears its own
+    dismissals would clear a person's too if it keyed on the reason.
     """
     update_time: AwareDatetime | None = None
     """
@@ -6311,6 +6418,11 @@ class AffectedItem1(BaseModel):
     )
     package: SpecAffectedPackage | None = None
     ranges: list[Range4] | None = None
+    reachable_by_inclusion: bool | None = None
+    """
+    The vulnerability is assumed reachable whenever this package is
+    included; there are no affected function URIs for call-path analysis.
+    """
     source: AffectedSource | None = 'SOURCE_UNSPECIFIED'
     versions: list[str] | None = None
 

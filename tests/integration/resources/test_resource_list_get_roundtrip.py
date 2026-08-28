@@ -41,6 +41,7 @@ _RESOURCE_KINDS: list[str] = [
     "Metric",
     "Namespace",
     "NotificationTarget",
+    "PackageManager",
     "PackageVersion",
     "Policy",
     "PRCommentConfig",
@@ -52,6 +53,7 @@ _RESOURCE_KINDS: list[str] = [
     "ScanWorkflow",
     "ScanWorkflowResult",
     "SemgrepRule",
+    "SystemConfig",
     "VectorStore",
     "VersionUpgrade",
 ]

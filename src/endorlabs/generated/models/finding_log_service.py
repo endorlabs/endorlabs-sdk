@@ -217,6 +217,22 @@ class V1CountResponse(BaseModel):
     """
 
 
+class V1DismissSource(StrEnum):
+    """
+    Which tool created a snooze or ignore, for tooling that maintains its own
+    dismissals over time and must never clear one it did not create.
+
+     - DISMISS_SOURCE_UNSPECIFIED: Created by a person, or by tooling that does not maintain what it writes.
+     - DISMISS_SOURCE_CONTAINER_DIFF: Created by `endorctl container diff --snooze-baseline-findings`, or by the
+    equivalent step of `endorctl container scan --diff`. Those commands clear
+    the dismissals carrying this source once the finding is no longer common
+    with the baseline, so no other writer may set it.
+    """
+
+    DISMISS_SOURCE_UNSPECIFIED = 'DISMISS_SOURCE_UNSPECIFIED'
+    DISMISS_SOURCE_CONTAINER_DIFF = 'DISMISS_SOURCE_CONTAINER_DIFF'
+
+
 class V1Ecosystem(StrEnum):
     """
      - ECOSYSTEM_GO: GoLang.
@@ -286,6 +302,9 @@ class V1ExceptionReason(StrEnum):
      - EXCEPTION_REASON_IN_TRIAGE: Issue is actively being triaged.
      - EXCEPTION_REASON_OTHER: Other reason. Use policy description or dismiss comments to elaborate.
      - EXCEPTION_REASON_RESOLVED: Issue has been resolved. For example, a secret is no longer valid.
+     - EXCEPTION_REASON_PRESENT_IN_BASELINE: The finding is also present in the baseline scan this one was diffed
+    against, so it is not newly introduced. Set only by container diff
+    tooling, never by a human.
     """
 
     EXCEPTION_REASON_UNSPECIFIED = 'EXCEPTION_REASON_UNSPECIFIED'
@@ -294,6 +313,7 @@ class V1ExceptionReason(StrEnum):
     EXCEPTION_REASON_IN_TRIAGE = 'EXCEPTION_REASON_IN_TRIAGE'
     EXCEPTION_REASON_OTHER = 'EXCEPTION_REASON_OTHER'
     EXCEPTION_REASON_RESOLVED = 'EXCEPTION_REASON_RESOLVED'
+    EXCEPTION_REASON_PRESENT_IN_BASELINE = 'EXCEPTION_REASON_PRESENT_IN_BASELINE'
 
 
 class V1FindingCategory(StrEnum):
@@ -684,6 +704,12 @@ class V1DismissParams(BaseModel):
     reason: V1ExceptionReason | None = 'EXCEPTION_REASON_UNSPECIFIED'
     """
     Reason for snoozing or ignoring the finding.
+    """
+    source: V1DismissSource | None = 'DISMISS_SOURCE_UNSPECIFIED'
+    """
+    Which tool created this dismissal. The reason alone cannot carry that:
+    reason is free for any client to set, so a tool that later clears its own
+    dismissals would clear a person's too if it keyed on the reason.
     """
     update_time: AwareDatetime | None = None
     """

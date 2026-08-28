@@ -17,6 +17,7 @@ def test_build_report_packet_continues_after_sca_failure() -> None:
                 "namespace": "example-tenant",
                 "tags": [],
                 "create_time": "2026-01-01T00:00:00Z",
+                "is_sbom": False,
             }
         ],
         "tagCatalog": [],
@@ -94,3 +95,4 @@ def test_build_report_packet_continues_after_sca_failure() -> None:
     assert "shards" in kwargs
     assert kwargs["shards"]
     assert kwargs["shards"][0].project_uuid == "proj-1"
+    assert "leaf_namespaces" in kwargs

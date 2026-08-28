@@ -167,3 +167,14 @@ workflows:
       - endorlabs.workflows.reports.analyze.package_resolution.write_csv
       - endorlabs.workflows.reports.export.html.package_resolution.load_csv
       - endorlabs.workflows.reports.export.html.package_resolution.render_html
+  - id: log-export
+    cli: endor-log-export
+    module: endorlabs.workflows.log_export.cli
+    skill: null
+    default_output: .endorlabs-context/workspace/runs/log-export/
+    agent_visible: true
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.log_export.export_logs
+      - endorlabs.workflows.log_export.export_logs_for_namespaces
+      - endorlabs.workflows.logs.probe_log_density

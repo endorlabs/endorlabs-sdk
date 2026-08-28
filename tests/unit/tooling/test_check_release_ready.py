@@ -17,12 +17,13 @@ def _load():
     return mod
 
 
-def test_changelog_cut_state() -> None:
+def test_development_state_keeps_unreleased_bullets() -> None:
     mod = _load()
-    assert mod._changelog_has_section("0.7.1", root=_ROOT)
-    assert mod._unreleased_has_bullets(root=_ROOT) is False
+    assert mod._changelog_has_section("0.7.0", root=_ROOT)
+    assert mod._unreleased_has_bullets(root=_ROOT) is True
+    assert mod._changelog_has_section("0.8.0", root=_ROOT) is False
 
 
-def test_run_check_skip_upstream_ok() -> None:
+def test_run_check_fails_while_unreleased_has_bullets() -> None:
     mod = _load()
-    assert mod.run_check(expect="0.7.1", skip_upstream=True, root=_ROOT) == 0
+    assert mod.run_check(expect="0.7.0", skip_upstream=True, root=_ROOT) == 1

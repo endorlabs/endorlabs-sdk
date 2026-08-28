@@ -1,0 +1,14 @@
+{
+  "uuid": "000000000000000000000001",
+  "meta": {
+    "name": "wire-system_config"
+  },
+  "tenant_meta": {
+    "namespace": "tenant.example"
+  },
+  "spec": {
+    "policy": {
+      "auto_enable": true
+    }
+  }
+}

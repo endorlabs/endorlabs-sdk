@@ -9,8 +9,8 @@ Converges three states that historically diverged after a release cut PR:
 
 Usage::
 
-    uv run python devtools/ship/check_release_ready.py --expect 0.7.1
-    uv run python devtools/ship/check_release_ready.py --expect 0.7.1 --require-unpublished
+    uv run python devtools/ship/check_release_ready.py --expect 0.8.0
+    uv run python devtools/ship/check_release_ready.py --expect 0.8.0 --require-unpublished
 
 Exit ``0`` only when version + changelog + upstream verify pass.
 Missing tag / PyPI is a stderr warning unless ``--require-unpublished``

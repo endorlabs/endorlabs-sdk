@@ -2,12 +2,12 @@
 
 Auto-generated from `RESOURCE_REGISTRY`, builder return types,
 and payload models.
-Model sync contract: `src/endorlabs/generated/registry_contract.py` (41 resources, 41 canonical entities).
+Model sync contract: `src/endorlabs/generated/registry_contract.py` (45 resources, 45 canonical entities).
 
 ## Model-sync coverage snapshot
 
-- facade contract resources: `41`
-- canonical entities (union): `41`
+- facade contract resources: `45`
+- canonical entities (union): `45`
 
 ## Create payload/builders
 
@@ -27,12 +27,15 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (41 resource
 | Invitation | yes | build_create_payload | CreateInvitationPayload | meta, spec | none |
 | LinterResult | yes | build_create_payload | CreateLinterResultPayload | meta, spec | none |
 | Malware | no | N/A | N/A | N/A | N/A |
+| MalwareExposure | no | build_create_payload | CreateMalwareExposurePayload | meta, spec | none |
+| MalwareExposureQuery | yes | build_create_payload | CreateMalwareExposureQueryPayload | meta, spec | none |
 | Metric | yes | build_create_payload | CreateMetricPayload | meta, spec | none |
 | Namespace | yes | build_create_payload | CreateNamespacePayload | meta | none |
 | NotificationTarget | yes | build_create_payload | CreateNotificationTargetPayload | meta, spec | propagate |
 | PRCommentConfig | yes | build_create_payload | CreatePRCommentConfigPayload | meta, spec | propagate |
 | PackageFirewallLog | no | build_create_payload | CreatePackageFirewallLogPayload | meta, spec | none |
 | PackageLicense | yes | build_create_payload | CreatePackageLicensePayload | meta, spec | none |
+| PackageManager | yes | build_create_payload | CreatePackageManagerPayload | meta, spec | propagate |
 | PackageVersion | yes | build_create_payload | CreatePackageVersionPayload | meta, spec | none |
 | Policy | yes | build_create_payload | CreatePolicyPayload | meta, spec | propagate |
 | PolicyTemplate | no | N/A | N/A | N/A | N/A |
@@ -50,6 +53,7 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (41 resource
 | ScanWorkflow | no | N/A | N/A | N/A | N/A |
 | ScanWorkflowResult | no | N/A | N/A | N/A | N/A |
 | SemgrepRule | yes | build_create_payload | CreateSemgrepRulePayload | meta, spec | disabled, propagate |
+| SystemConfig | yes | build_create_payload | CreateSystemConfigPayload | meta, spec | propagate |
 | VectorStore | no | N/A | N/A | N/A | N/A |
 | VectorStoreQuery | yes | build_create_payload | CreateVectorStoreQueryPayload | meta, spec | none |
 | VersionUpgrade | no | N/A | N/A | N/A | N/A |
@@ -73,12 +77,15 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (41 resource
 | Invitation | yes | meta.description, meta.tags |
 | LinterResult | no | meta.description, meta.name, meta.tags, spec |
 | Malware | no | meta.description, meta.tags |
+| MalwareExposure | no | meta.description, meta.tags |
+| MalwareExposureQuery | no | meta.description, meta.tags |
 | Metric | yes | meta.description, meta.name, meta.tags, spec |
 | Namespace | yes | meta.description |
 | NotificationTarget | yes | meta.description, meta.tags |
 | PRCommentConfig | yes | meta.description, meta.tags |
 | PackageFirewallLog | no | — |
 | PackageLicense | yes | meta.description, meta.name, meta.tags, spec |
+| PackageManager | yes | meta.description, meta.tags |
 | PackageVersion | yes | meta.description, meta.name, meta.tags, spec |
 | Policy | yes | meta.description, meta.name, meta.tags, propagate, spec.disable, spec.project_exceptions, spec.project_selector, spec.rule, spec.template_values |
 | PolicyTemplate | no | meta.description, meta.tags |
@@ -96,6 +103,7 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (41 resource
 | ScanWorkflow | no | meta.description, meta.tags |
 | ScanWorkflowResult | no | meta.description, meta.tags |
 | SemgrepRule | yes | meta.description, meta.name, meta.tags, spec |
+| SystemConfig | yes | meta.description, meta.tags |
 | VectorStore | no | meta.description, meta.tags |
 | VectorStoreQuery | no | meta.description, meta.tags |
 | VersionUpgrade | no | meta.description, meta.tags |
@@ -119,12 +127,15 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (41 resource
 | Invitation | name->meta.name |
 | LinterResult | — |
 | Malware | name->meta.name |
+| MalwareExposure | — |
+| MalwareExposureQuery | — |
 | Metric | name->meta.name |
 | Namespace | name->meta.name |
 | NotificationTarget | name->meta.name |
 | PRCommentConfig | name->meta.name |
 | PackageFirewallLog | — |
 | PackageLicense | — |
+| PackageManager | name->meta.name |
 | PackageVersion | name->meta.name |
 | Policy | name->meta.name, policy_type->spec.policy_type |
 | PolicyTemplate | — |
@@ -142,6 +153,7 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (41 resource
 | ScanWorkflow | — |
 | ScanWorkflowResult | — |
 | SemgrepRule | name->meta.name |
+| SystemConfig | name->meta.name |
 | VectorStore | name->meta.name |
 | VectorStoreQuery | — |
 | VersionUpgrade | — |

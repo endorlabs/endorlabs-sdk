@@ -18,12 +18,15 @@ One page per SDK facade resource (`client.<AttrName>`).
 | `Invitation` | `invitations` | `tenant` | create, delete, get, list, update | [Invitation.md](Invitation.md) |
 | `LinterResult` | `linter-results` | `tenant` | create, delete, get, list | [LinterResult.md](LinterResult.md) |
 | `Malware` | `malware` | `oss` | get, list | [Malware.md](Malware.md) |
+| `MalwareExposure` | `malware-exposure` | `tenant` | get, list | [MalwareExposure.md](MalwareExposure.md) |
+| `MalwareExposureQuery` | `queries/malware-exposure` | `tenant` | create | [MalwareExposureQuery.md](MalwareExposureQuery.md) |
 | `Metric` | `metrics` | `tenant` | create, delete, get, list, update | [Metric.md](Metric.md) |
 | `Namespace` | `namespaces` | `tenant` | create, delete, get, list, update | [Namespace.md](Namespace.md) |
 | `NotificationTarget` | `notification-targets` | `tenant` | create, delete, get, list, update | [NotificationTarget.md](NotificationTarget.md) |
 | `PRCommentConfig` | `pr-comment-configs` | `tenant` | create, delete, get, list, update | [PRCommentConfig.md](PRCommentConfig.md) |
 | `PackageFirewallLog` | `package-firewall-logs` | `tenant` | get, list | [PackageFirewallLog.md](PackageFirewallLog.md) |
 | `PackageLicense` | `package-licenses` | `tenant` | create, delete, get, list, update | [PackageLicense.md](PackageLicense.md) |
+| `PackageManager` | `package-managers` | `tenant` | create, delete, get, list, update | [PackageManager.md](PackageManager.md) |
 | `PackageVersion` | `package-versions` | `tenant` | create, delete, get, list, update | [PackageVersion.md](PackageVersion.md) |
 | `Policy` | `policies` | `tenant` | create, delete, get, list, update | [Policy.md](Policy.md) |
 | `PolicyTemplate` | `policy-templates` | `tenant` | get, list | [PolicyTemplate.md](PolicyTemplate.md) |
@@ -41,6 +44,7 @@ One page per SDK facade resource (`client.<AttrName>`).
 | `ScanWorkflow` | `scan-workflows` | `tenant` | delete, get, list | [ScanWorkflow.md](ScanWorkflow.md) |
 | `ScanWorkflowResult` | `scan-workflow-results` | `tenant` | delete, get, list | [ScanWorkflowResult.md](ScanWorkflowResult.md) |
 | `SemgrepRule` | `semgrep-rules` | `tenant` | create, delete, get, list, update | [SemgrepRule.md](SemgrepRule.md) |
+| `SystemConfig` | `system-config` | `tenant` | create, delete, get, list, update | [SystemConfig.md](SystemConfig.md) |
 | `VectorStore` | `vector-stores` | `tenant` | get, list | [VectorStore.md](VectorStore.md) |
 | `VectorStoreQuery` | `queries/vector-stores` | `tenant` | create | [VectorStoreQuery.md](VectorStoreQuery.md) |
 | `VersionUpgrade` | `version-upgrades` | `tenant` | delete, get, list | [VersionUpgrade.md](VersionUpgrade.md) |

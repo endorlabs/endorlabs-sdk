@@ -29,6 +29,8 @@ class SpecArchType(StrEnum):
 class SpecBinaryType(StrEnum):
     """
     The type of the binary.
+
+     - BINARY_TYPE_YARA: Yara binary used by the malware analysis engine to parse and validate Yara rules.
     """
 
     BINARY_TYPE_UNSPECIFIED = 'BINARY_TYPE_UNSPECIFIED'
@@ -42,6 +44,7 @@ class SpecBinaryType(StrEnum):
     BINARY_TYPE_OPENGREP = 'BINARY_TYPE_OPENGREP'
     BINARY_TYPE_BAZEL_ASPECTS_PACKAGE = 'BINARY_TYPE_BAZEL_ASPECTS_PACKAGE'
     BINARY_TYPE_MINT_TOOLKIT = 'BINARY_TYPE_MINT_TOOLKIT'
+    BINARY_TYPE_YARA = 'BINARY_TYPE_YARA'
 
 
 class GoogleprotobufAny(BaseModel):

@@ -11,6 +11,7 @@ Tracked maintainer automation lives under three buckets. Optional local scratch 
 | [`precommit/`](precommit/) | Staged-path helpers and commit guards (`git_staged`, `pre_commit_guards`, `audit_consumer_surfaces`) |
 | [`codegen/`](codegen/) | Model-sync, stub/reference generators, agent-knowledge sync, `model_sync_profiles/`, `sync/` |
 | [`ship/`](ship/) | Release/CI gates (`verify_ship_artifacts`, `check_project_version`, wheel smoke tests) |
+| [`pfw_test_util/`](pfw_test_util/) | Package Firewall blast helper for ``endor-firewall-test@1.0.0`` (env-scoped; not shipped) |
 
 GitHub Actions–only helpers (not regen): [`.github/scripts/`](../.github/scripts/README.md).
 

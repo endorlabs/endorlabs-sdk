@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-08-19T15:53:55.676601+00:00",
+  "generated_at": "2026-08-27T15:18:28.816202+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -496,6 +496,20 @@
       ],
       "module": "endorlabs.workflows.reports.cli",
       "skill": "endor-workflow-reports"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-log-export",
+      "composition": "library_api",
+      "default_output": ".endorlabs-context/workspace/runs/log-export/",
+      "id": "log-export",
+      "library_entrypoints": [
+        "endorlabs.workflows.log_export.export_logs",
+        "endorlabs.workflows.log_export.export_logs_for_namespaces",
+        "endorlabs.workflows.logs.probe_log_density"
+      ],
+      "module": "endorlabs.workflows.log_export.cli",
+      "skill": null
     },
     {
       "agent_visible": false,

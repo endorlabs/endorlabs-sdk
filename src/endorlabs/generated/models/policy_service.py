@@ -285,6 +285,9 @@ class V1ExceptionReason(StrEnum):
      - EXCEPTION_REASON_IN_TRIAGE: Issue is actively being triaged.
      - EXCEPTION_REASON_OTHER: Other reason. Use policy description or dismiss comments to elaborate.
      - EXCEPTION_REASON_RESOLVED: Issue has been resolved. For example, a secret is no longer valid.
+     - EXCEPTION_REASON_PRESENT_IN_BASELINE: The finding is also present in the baseline scan this one was diffed
+    against, so it is not newly introduced. Set only by container diff
+    tooling, never by a human.
     """
 
     EXCEPTION_REASON_UNSPECIFIED = 'EXCEPTION_REASON_UNSPECIFIED'
@@ -293,6 +296,7 @@ class V1ExceptionReason(StrEnum):
     EXCEPTION_REASON_IN_TRIAGE = 'EXCEPTION_REASON_IN_TRIAGE'
     EXCEPTION_REASON_OTHER = 'EXCEPTION_REASON_OTHER'
     EXCEPTION_REASON_RESOLVED = 'EXCEPTION_REASON_RESOLVED'
+    EXCEPTION_REASON_PRESENT_IN_BASELINE = 'EXCEPTION_REASON_PRESENT_IN_BASELINE'
 
 
 class V1FindingCategory(StrEnum):

@@ -389,6 +389,26 @@ def test_query_vulnerability_create_builds_payload_and_uses_oss_namespace(
     assert args[1] is built_payload
 
 
+def test_query_malware_create_builds_payload_and_uses_oss_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """Create-only QueryMalware uses builder and OSS namespace (catalog plane)."""
+    client = client_with_mock_transport
+    built_payload = Mock()
+    client.QueryMalware._build_create_payload_fn = Mock(return_value=built_payload)
+    client.QueryMalware._ops.create = Mock(return_value=Mock(uuid="qm-1"))
+    client.QueryMalware.create(
+        name="query-malware",
+        package_version_name="npm://keyv@6.0.0",
+        package_names={"names": ["npm://keyv"]},
+    )
+    client.QueryMalware._build_create_payload_fn.assert_called_once()
+    client.QueryMalware._ops.create.assert_called_once()
+    args, _ = client.QueryMalware._ops.create.call_args
+    assert args[0] == "oss"
+    assert args[1] is built_payload
+
+
 def test_vector_store_query_create_builds_payload_and_uses_tenant_namespace(
     client_with_mock_transport: Client,
 ) -> None:
@@ -407,6 +427,42 @@ def test_vector_store_query_create_builds_payload_and_uses_tenant_namespace(
     args, _ = client.VectorStoreQuery._ops.create.call_args
     assert args[0] == TEST_NAMESPACE_DEFAULT
     assert args[1] is built_payload
+
+
+def test_malware_exposure_query_create_builds_payload_and_uses_tenant_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """MalwareExposureQuery create uses builder and client tenant (not oss)."""
+    client = client_with_mock_transport
+    built_payload = Mock()
+    client.MalwareExposureQuery._build_create_payload_fn = Mock(
+        return_value=built_payload
+    )
+    client.MalwareExposureQuery._ops.create = Mock(return_value=Mock(uuid="meq-1"))
+    client.MalwareExposureQuery.create(
+        name="exposure-check",
+        malware_uuids=["malware-uuid-1"],
+        filter='meta.create_time >= now("-168h")',
+    )
+    client.MalwareExposureQuery._build_create_payload_fn.assert_called_once()
+    client.MalwareExposureQuery._ops.create.assert_called_once()
+    args, _ = client.MalwareExposureQuery._ops.create.call_args
+    assert args[0] == TEST_NAMESPACE_DEFAULT
+    assert args[0] != "oss"
+    assert args[1] is built_payload
+
+
+def test_malware_exposure_list_uses_tenant_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """MalwareExposure list hits the client tenant path, not oss."""
+    client = client_with_mock_transport
+    client.MalwareExposure._ops.list = Mock(return_value=[])
+    client.MalwareExposure.list(max_pages=1)
+    client.MalwareExposure._ops.list.assert_called_once()
+    args, _ = client.MalwareExposure._ops.list.call_args
+    assert args[0] == TEST_NAMESPACE_DEFAULT
+    assert args[0] != "oss"
 
 
 def test_client_exposes_all_custom_facades(

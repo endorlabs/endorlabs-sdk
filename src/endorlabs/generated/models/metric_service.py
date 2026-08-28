@@ -215,12 +215,16 @@ class DependencyMetadataReachabilityType(StrEnum):
      - REACHABILITY_TYPE_UNREACHABLE: Call graph analysis determined that the dependency is likely not
     reachable.
      - REACHABILITY_TYPE_UNKNOWN: Not enough information to perform reachability analysis.
+     - REACHABILITY_TYPE_REACHABLE_BY_INCLUSION: The vulnerability is assumed reachable due to how the dependency is typically used; no call paths exist for this finding.
     """
 
     REACHABILITY_TYPE_UNSPECIFIED = 'REACHABILITY_TYPE_UNSPECIFIED'
     REACHABILITY_TYPE_REACHABLE = 'REACHABILITY_TYPE_REACHABLE'
     REACHABILITY_TYPE_UNREACHABLE = 'REACHABILITY_TYPE_UNREACHABLE'
     REACHABILITY_TYPE_UNKNOWN = 'REACHABILITY_TYPE_UNKNOWN'
+    REACHABILITY_TYPE_REACHABLE_BY_INCLUSION = (
+        'REACHABILITY_TYPE_REACHABLE_BY_INCLUSION'
+    )
 
 
 class AllSecretsExposedItem(BaseModel):
@@ -1082,6 +1086,12 @@ class VulnerabilityComponent(BaseModel):
     """
     Indicates the artifact group id that the CVE affects.
     """
+    reachable_by_inclusion: bool | None = None
+    """
+    The vulnerability is assumed reachable due to how the artifact is
+    typically used; endor_uri is empty and call-path analysis does not apply.
+    The json_name pins the curated feed's key for protojson parsing.
+    """
     versions_range: list[str] | None = None
     """
     Vulnerable version range in Maven notation. For example, "[1.1.0,2.1.3)".
@@ -1191,6 +1201,12 @@ class ComponentItem(BaseModel):
     group_id: str
     """
     Indicates the artifact group id that the CVE affects.
+    """
+    reachable_by_inclusion: bool | None = None
+    """
+    The vulnerability is assumed reachable due to how the artifact is
+    typically used; endor_uri is empty and call-path analysis does not apply.
+    The json_name pins the curated feed's key for protojson parsing.
     """
     versions_range: list[str] | None = None
     """
@@ -4320,6 +4336,11 @@ class VulnSpecAffected(BaseModel):
     )
     package: SpecAffectedPackage | None = None
     ranges: list[Range] | None = None
+    reachable_by_inclusion: bool | None = None
+    """
+    The vulnerability is assumed reachable whenever this package is
+    included; there are no affected function URIs for call-path analysis.
+    """
     source: AffectedSource | None = 'SOURCE_UNSPECIFIED'
     versions: list[str] | None = None
 
@@ -5023,6 +5044,11 @@ class AffectedItem1(BaseModel):
     )
     package: SpecAffectedPackage | None = None
     ranges: list[Range3] | None = None
+    reachable_by_inclusion: bool | None = None
+    """
+    The vulnerability is assumed reachable whenever this package is
+    included; there are no affected function URIs for call-path analysis.
+    """
     source: AffectedSource | None = 'SOURCE_UNSPECIFIED'
     versions: list[str] | None = None
 

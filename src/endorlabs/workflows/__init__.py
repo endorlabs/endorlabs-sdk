@@ -22,4 +22,5 @@ Subpackages:
     reports: Tenant report analyze → export → bundle workflows (``endor-reports``).
     semgrep: Semgrep rule import/export, calibration, metadata inventory.
     troubleshooting_scans: Scan result/log triage scripts (CLI-oriented).
+    log_export: Scheduleable PackageFirewallLog / AgentHookEvent file dumps.
 """

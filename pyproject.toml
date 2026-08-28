@@ -1,6 +1,6 @@
 [project]
 name = "endorlabs"
-version = "0.7.1"
+version = "0.7.0"
 description = "Type-safe Python SDK for the Endor Labs REST API — resource facades, operational workflows, and optional agent-context bootstrap"
 authors = [
     { name = "Tim Gowan", email = "tgowan@endor.ai" }
@@ -66,6 +66,7 @@ endor-reachability-context = "endorlabs.workflows.reachability.cli:main"
 endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
 endor-auth = "endorlabs.workflows.auth.cli:main"
 endor-reports = "endorlabs.workflows.reports.cli:main"
+endor-log-export = "endorlabs.workflows.log_export.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/endorlabs/endorlabs-sdk"

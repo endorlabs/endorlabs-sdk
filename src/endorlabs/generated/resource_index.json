@@ -166,6 +166,25 @@
       ]
     },
     {
+      "attr_name": "MalwareExposure",
+      "doc_path": "docs/generated-reference/resources/MalwareExposure.md",
+      "resource_name": "malware-exposure",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "MalwareExposureQuery",
+      "doc_path": "docs/generated-reference/resources/MalwareExposureQuery.md",
+      "resource_name": "queries/malware-exposure",
+      "scope": "tenant",
+      "supported_ops": [
+        "create"
+      ]
+    },
+    {
       "attr_name": "Metric",
       "doc_path": "docs/generated-reference/resources/Metric.md",
       "resource_name": "metrics",
@@ -231,6 +250,19 @@
       "attr_name": "PackageLicense",
       "doc_path": "docs/generated-reference/resources/PackageLicense.md",
       "resource_name": "package-licenses",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "PackageManager",
+      "doc_path": "docs/generated-reference/resources/PackageManager.md",
+      "resource_name": "package-managers",
       "scope": "tenant",
       "supported_ops": [
         "create",
@@ -422,6 +454,19 @@
       "attr_name": "SemgrepRule",
       "doc_path": "docs/generated-reference/resources/SemgrepRule.md",
       "resource_name": "semgrep-rules",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "SystemConfig",
+      "doc_path": "docs/generated-reference/resources/SystemConfig.md",
+      "resource_name": "system-config",
       "scope": "tenant",
       "supported_ops": [
         "create",

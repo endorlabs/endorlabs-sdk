@@ -12,6 +12,8 @@
   "Invitation": "User invitation for platform access.",
   "LinterResult": "Linter analysis result for a package or repository version.",
   "Malware": "Open-source malware records.",
+  "MalwareExposure": "Tenant-scoped malware blast-radius / exposure records.",
+  "MalwareExposureQuery": "Query tenant malware exposure by malware UUID or filter.",
   "Metric": "Analytics output attached to packages or repositories.",
   "Namespace": "Isolate and organize resources in a parent-child hierarchy.",
   "NotificationTarget": "Integration endpoint for notification delivery.",

@@ -74,8 +74,10 @@ Optional flags:
 - `--output-dir <path>` — override default runs bucket
 - `--date-suffix 082126` — override today's MMDDYY on default dirs
   (`<tenant>-executive-packet-MMDDYY/` or `--patches-only` `<tenant>-MMDDYY/`)
-- `--skip-version-sprawl` / `--skip-findings-burndown` / `--skip-patches` —
+- `--skip-version-sprawl` / `--skip-findings-burndown` / `--skip-code-findings-burndown` /
+  `--skip-patches` —
   partial packets
+- `--patches` — opt-in Endor Patches page (Finding list); omitted by default
 - `--patches-only` — Endor Patches page only (Finding list); default output
   `.endorlabs-context/workspace/runs/patches-reports/<tenant>-MMDDYY/`. Writes
   only `05-endor-patches.html` + `patches-*.csv`; pages 01–04 are not emitted.

@@ -9,6 +9,7 @@ Thin index of SDK workflow entry points. See `MANIFEST.json` for machine-readabl
 | callgraph-path | `endor-callgraph-path` | `endorlabs.workflows.callgraph.path_cli` | — | stdout or caller path |
 | callgraph-search | `endor-callgraph-search` | `endorlabs.workflows.callgraph.search` | endor-fetch-and-search-call-graph | stdout or caller path |
 | context-bootstrap | `endor-context` | `endorlabs.context.cli` | — | .endorlabs-context/ |
+| log-export | `endor-log-export` | `endorlabs.workflows.log_export.cli` | — | .endorlabs-context/workspace/runs/log-export/ |
 | policies-validate | `—` | `endorlabs.workflows.policies.validate` | endor-validate-policy | stdout or --output-json |
 | query-estate-routing | `—` | `endorlabs.query` | endor-route-estate-queries | — |
 | reachability-context | `endor-reachability-context` | `endorlabs.workflows.reachability.cli` | endor-reachability-provenance | .endorlabs-context/workspace/projects/<uuid>/reachability_context.json |

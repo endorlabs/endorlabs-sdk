@@ -46,6 +46,11 @@ from .resources.installation import CreateInstallationPayload, Installation
 from .resources.invitation import CreateInvitationPayload, Invitation
 from .resources.linter_result import CreateLinterResultPayload, LinterResult
 from .resources.malware import Malware
+from .resources.malware_exposure import MalwareExposure
+from .resources.malware_exposure_query import (
+    CreateMalwareExposureQueryPayload,
+    MalwareExposureQuery,
+)
 from .resources.metric import CreateMetricPayload, Metric
 from .resources.namespace import CreateNamespacePayload, Namespace
 from .resources.notification_target import (
@@ -54,6 +59,7 @@ from .resources.notification_target import (
 )
 from .resources.package_firewall_log import PackageFirewallLog
 from .resources.package_license import CreatePackageLicensePayload, PackageLicense
+from .resources.package_manager import CreatePackageManagerPayload, PackageManager
 from .resources.package_version import CreatePackageVersionPayload, PackageVersion
 from .resources.policy import CreatePolicyPayload, Policy
 from .resources.policy_template import PolicyTemplate
@@ -77,6 +83,7 @@ from .resources.scan_result import CreateScanResultPayload, ScanResult
 from .resources.scan_workflow import ScanWorkflow
 from .resources.scan_workflow_result import ScanWorkflowResult
 from .resources.semgrep_rule import CreateSemgrepRulePayload, SemgrepRule
+from .resources.system_config import CreateSystemConfigPayload, SystemConfig
 from .resources.vector_store import VectorStore
 from .resources.vector_store_query import (
     CreateVectorStoreQueryPayload,
@@ -371,7 +378,8 @@ class _DependencyMetadataFacade(ResourceRuntimeFacade[DependencyMetadata]):
         description: str | None = None,
         namespace_uuid: str | None = None,
         namespace: str | None = None,
-        data: dict[str, Any] | None = None,
+        dependency_data: Any | None = None,
+        importer_data: Any | None = None,
         **kwargs: Any,
     ) -> DependencyMetadata: ...
 
@@ -836,6 +844,90 @@ class _MalwareFacade(ListableFacade[Malware]):
         namespace: str | None = ...,
     ) -> Malware: ...
 
+class _MalwareExposureFacade(ListableFacade[MalwareExposure]):
+    """Tenant-scoped malware blast-radius / exposure records."""
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[MalwareExposure] | list[dict[str, Any]]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | MalwareExposure,
+        namespace: str | None = ...,
+    ) -> MalwareExposure: ...
+
+class _MalwareExposureQueryFacade(ResourceRuntimeFacade[MalwareExposureQuery]):
+    """Query tenant malware exposure by malware UUID or filter.
+
+    Create mode: both.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[MalwareExposureQuery] | list[dict[str, Any]]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def create(
+        self,
+        payload: CreateMalwareExposureQueryPayload | None = None,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        namespace_uuid: str | None = None,
+        namespace: str | None = None,
+        malware_uuids: Any | None = None,
+        filter: Any | None = None,
+        traverse: Any | None = None,
+        project_uuid: Any | None = None,
+        **kwargs: Any,
+    ) -> MalwareExposureQuery: ...
+
 class _MetricFacade(ResourceRuntimeFacade[Metric]):
     """Analytics output attached to packages or repositories.
 
@@ -1117,6 +1209,65 @@ class _PackageLicenseFacade(ResourceRuntimeFacade[PackageLicense]):
         version: Any | None = None,
         **kwargs: Any,
     ) -> PackageLicense: ...
+
+class _PackageManagerFacade(ResourceRuntimeFacade[PackageManager]):
+    """Consumer facade model for PackageManager (generated wire shape).
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[PackageManager] | list[dict[str, Any]]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def create(
+        self,
+        payload: CreatePackageManagerPayload | None = None,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        namespace_uuid: str | None = None,
+        namespace: str | None = None,
+        auth_provider: Any | None = None,
+        npm: Any | None = None,
+        mvn: Any | None = None,
+        cargo: Any | None = None,
+        pypi: Any | None = None,
+        gem: Any | None = None,
+        nuget: Any | None = None,
+        packagist: Any | None = None,
+        gradle: Any | None = None,
+        cocoapod: Any | None = None,
+        swift: Any | None = None,
+        conan: Any | None = None,
+        package_manager_status: Any | None = None,
+        **kwargs: Any,
+    ) -> PackageManager: ...
 
 class _PackageVersionFacade(PackageVersionFacade):
     """Package version with dependency information.
@@ -1970,6 +2121,63 @@ class _SemgrepRuleFacade(ResourceRuntimeFacade[SemgrepRule]):
         **kwargs: Any,
     ) -> SemgrepRule: ...
 
+class _SystemConfigFacade(ResourceRuntimeFacade[SystemConfig]):
+    """Consumer facade model for SystemConfig (generated wire shape).
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[SystemConfig] | list[dict[str, Any]]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def create(
+        self,
+        payload: CreateSystemConfigPayload | None = None,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        namespace_uuid: str | None = None,
+        namespace: str | None = None,
+        policy: Any | None = None,
+        logging: Any | None = None,
+        analytics: Any | None = None,
+        finding_prioritization: Any | None = None,
+        artifactory: Any | None = None,
+        sast: Any | None = None,
+        cloud_deployment: Any | None = None,
+        ai: Any | None = None,
+        urgent_notification: Any | None = None,
+        endor_ignore: Any | None = None,
+        package_firewall: Any | None = None,
+        **kwargs: Any,
+    ) -> SystemConfig: ...
+
 class _VectorStoreFacade(VectorStoreFacade):
     """Tenant vector store inventory (embeddings index metadata).
 
@@ -2144,13 +2352,14 @@ class Client:
     Resources:
     APIKey, AuditLog, AuthenticationLog, AuthorizationPolicy, CodeOwners,
     DependencyMetadata, EndorLicense, Finding, FindingLog, IdentityProvider,
-    Installation, Invitation, LinterResult, Malware, Metric, Namespace,
-    NotificationTarget, PRCommentConfig, PackageFirewallLog, PackageLicense,
+    Installation, Invitation, LinterResult, Malware, MalwareExposure,
+    MalwareExposureQuery, Metric, Namespace, NotificationTarget,
+    PRCommentConfig, PackageFirewallLog, PackageLicense, PackageManager,
     PackageVersion, Policy, PolicyTemplate, Project, Query, QueryMalware,
     QuerySimilarPackages, QueryVulnerability, Repository, RepositoryVersion,
     SavedQuery, ScanLogRequest, ScanProfile, ScanResult, ScanWorkflow,
-    ScanWorkflowResult, SemgrepRule, VectorStore, VectorStoreQuery,
-    VersionUpgrade, Vulnerability
+    ScanWorkflowResult, SemgrepRule, SystemConfig, VectorStore,
+    VectorStoreQuery, VersionUpgrade, Vulnerability
     Custom: CallGraphData, Query
     """
 
@@ -2168,12 +2377,15 @@ class Client:
     Invitation: _InvitationFacade
     LinterResult: _LinterResultFacade
     Malware: _MalwareFacade
+    MalwareExposure: _MalwareExposureFacade
+    MalwareExposureQuery: _MalwareExposureQueryFacade
     Metric: _MetricFacade
     Namespace: _NamespaceFacade
     NotificationTarget: _NotificationTargetFacade
     PRCommentConfig: _PRCommentConfigFacade
     PackageFirewallLog: _PackageFirewallLogFacade
     PackageLicense: _PackageLicenseFacade
+    PackageManager: _PackageManagerFacade
     PackageVersion: _PackageVersionFacade
     Policy: _PolicyFacade
     PolicyTemplate: _PolicyTemplateFacade
@@ -2190,6 +2402,7 @@ class Client:
     ScanWorkflow: _ScanWorkflowFacade
     ScanWorkflowResult: _ScanWorkflowResultFacade
     SemgrepRule: _SemgrepRuleFacade
+    SystemConfig: _SystemConfigFacade
     VectorStore: _VectorStoreFacade
     VectorStoreQuery: _VectorStoreQueryFacade
     VersionUpgrade: _VersionUpgradeFacade

@@ -18,12 +18,6 @@ Tenant vector store inventory (embeddings index metadata).
 | `update` | no |
 | `delete` | no |
 
-## Response / read-only spec fields
-
-Present on responses; not accepted as flat create kwargs:
-
-- `matches`
-
 ## Related resources
 
 - [VectorStoreQuery](VectorStoreQuery.md)

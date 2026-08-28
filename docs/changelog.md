@@ -8,15 +8,9 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
-### Changed
-
-### Fixed
-
-### Breaking
-
-## 0.7.1
-
-### Added
+- `client.MalwareExposure` (list/get) and `client.MalwareExposureQuery` (create) — tenant-scoped malware blast-radius / exposure facades. Prefer these over OSS `Malware` / `QueryMalware` for customer exposure asks.
+- `client.PackageManager` and `client.SystemConfig` registry facades (list/get/create/update/delete).
+- `endor-log-export` — scheduleable full-row dump of Package Firewall logs (`--source package-firewall-logs` → `PackageFirewallLog`) or Agent Governance Policy Violations (`--source policy-violations` → wire `AgentHookEvent`) for a time window (JSONL or CSV `payload` column; time-slice batched lists). Per-namespace density probe (`probe_log_density` / `--probe-only` / `--discover-namespaces` / `--min-events`) gates multi-NS pulls.
 
 - `endor-reports package-resolution` — tenant-wide main-context PackageVersion resolution CSV plus interactive HTML (unresolved/manifest, dependency resolution, reachability); playbook `agent-knowledge/workflow-reports/endor-package-resolution-report/`.
 - Executive packet Endor Patches page (`reports.patches` / `05-endor-patches.html`): reach-weighted Available risk, version heat map, impact calculator; CLI `--skip-patches` / `--patches-only` (default output under `runs/patches-reports/`).
@@ -29,7 +23,10 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 - Runtime and `analytics` optional dependencies use compatible version ranges instead of exact pins, so consumers can co-install and patch `pydantic` / `httpx` / analytics stacks without an unsolvable conflict. CI exercises lowest-direct and highest permitted resolutions.
 - Drop the Endor Package Firewall `[[tool.uv.index]]` default from `pyproject.toml` and regenerate `uv.lock` against public PyPI so CI/MDM runners sync without firewall credentials.
-- Refresh model-sync ship surface from upstream OpenAPI (endorctl watermark 1.7.1128).
+- Executive packet **Endor Patches is opt-in**: pass `--patches` (or `--patches-only`) to pull Finding lists; default full packet skips patches. `--skip-patches` is a deprecated no-op.
+- Executive packet post-discover slices (cadence, sprawl, SCA, code, optional patches) run concurrently; leaf ScanResult/DM loops and SCA FindingLog∥throughput overlap for wall time without changing filters. Java Maven denom reuses discover leaves (no second `Query.Project.discover`).
+- `QueryMalwareSpec` exposes typed `package_names` (version-less package lookup) matching the wire / create-convenience fields.
+- Agent docs soft-prefer tenant `MalwareExposure` / Finding / PackageFirewallLog for malware investigations; OSS catalog facades remain callable (`scope=oss` overrides unchanged).
 - Executive packet code burndown: **OpenGrep vs AI-SAST** categories (disjoint on
   `FINDING_TAGS_AI`) share **TP/FP triage facets**; Secrets keeps valid/invalid only.
   SCA reach filter expands to selection-based RF / PRF / RD / PRD / RD+PRD / unreachable.
@@ -43,7 +40,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - Packet FindingLog burndown cells escalate on timeout via project shards (`query_operation_group_counts_resilient`, same ladder as chart `query_operation_counts`); leaf matrices pull in parallel; patches reuses packet discover shards.
 - Endor Patches risk: stop treating PRF as reachable; tiered multipliers across function and dependency tags (`RF×1.5` > `RD×1.25` > `PRF×1.0` / `PRD×1.0` > else `×0.75`) on milder Crit/High bases (`×2`/`×1`). Cube emits RF/PRF/UF and RD/PRD/UD counts; `reachable` remains RF-only.
 - `endor-reports packet` emits INFO stage milestones on stdout (`packet.discover.*`, burndowns, patches, render) via `endorlabs.workflows.reports.logging` (`get_resource_logger` + `RedactingFilter`); optional `--log-level` / `ENDOR_LOG_LEVEL`.
-- Refresh model-sync ship surface from upstream OpenAPI (endorctl watermark 1.7.1118; includes MalwareExposureQuery models, Finding `target_dependency_native_scope`, DependencyMetadata `native_scope`).
+- Refresh model-sync ship surface from upstream OpenAPI (endorctl watermark 1.7.1133).
 - Patch-fix report and executive packet patches pulls exclude dismissed findings (`spec.dismiss != true`), matching the product findings UI exception filter. Counts drop relative to earlier runs on tenants that use finding exceptions.
 - `endor-reports packet --patches-only` writes only `05-endor-patches.html`, the patches CSVs, and a patches-scoped `README.txt`. Earlier runs also emitted pages 01–04 and header-only CSVs from a cube that never held those slices, so the output looked broken rather than intentionally scoped.
 - Executive packet cubes carry the SCA burndown slice once under `scaBurndown`; the duplicate `findingsBurndown` copy is no longer written (readers still accept it on older cubes). Cuts roughly a quarter of `packet.cube.json` on large tenants.

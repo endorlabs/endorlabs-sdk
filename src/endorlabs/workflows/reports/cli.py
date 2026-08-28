@@ -88,9 +88,20 @@ def _packet_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
         help="Skip SAST / AI-SAST / Secrets FindingLog burndown.",
     )
     packet.add_argument(
+        "--patches",
+        action="store_true",
+        help=(
+            "Include the Endor Patches executive page (Finding list pull). "
+            "Opt-in; omitted by default."
+        ),
+    )
+    packet.add_argument(
         "--skip-patches",
         action="store_true",
-        help="Skip Endor Patches executive page (Finding list pull).",
+        help=(
+            "Deprecated no-op: patches are opt-in (use --patches to enable). "
+            "Errors if combined with --patches."
+        ),
     )
     packet.add_argument(
         "--patches-only",
@@ -391,10 +402,20 @@ def _run_upsert_code_findings(args: argparse.Namespace) -> int:
 def _run_packet(args: argparse.Namespace) -> int:
     configure_reports_cli_logging(level=getattr(args, "log_level", None))
     patches_only = bool(getattr(args, "patches_only", False))
+    include_patches = bool(getattr(args, "patches", False))
     skip_patches = bool(getattr(args, "skip_patches", False))
     if patches_only and skip_patches:
         print("error: --patches-only conflicts with --skip-patches", file=sys.stderr)
         return 2
+    if include_patches and skip_patches:
+        print("error: --patches conflicts with --skip-patches", file=sys.stderr)
+        return 2
+    if skip_patches:
+        print(
+            "warning: --skip-patches is a no-op; Endor Patches is opt-in "
+            "(pass --patches to include).",
+            file=sys.stderr,
+        )
 
     if args.output_dir:
         out_dir = Path(args.output_dir)
@@ -414,6 +435,7 @@ def _run_packet(args: argparse.Namespace) -> int:
             resolve_log_level(getattr(args, "log_level", None))
         ),
         patches_only=int(patches_only),
+        patches=int(include_patches or patches_only),
     )
     client = endorlabs.Client(tenant=args.namespace, timeout=float(args.timeout))
     try:
@@ -443,7 +465,7 @@ def _run_packet(args: argparse.Namespace) -> int:
                 include_code_findings_burndown=not getattr(
                     args, "skip_code_findings_burndown", False
                 ),
-                include_patches=not skip_patches,
+                include_patches=include_patches,
             )
     finally:
         client.close()
