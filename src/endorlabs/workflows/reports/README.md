@@ -20,7 +20,11 @@ Tenant and namespace report workflows under `endorlabs.workflows.reports`:
 ## CLI subcommands
 
 ```bash
-uv run endor-reports packet -n <tenant>
+uv run endor-reports list                  # report picker (categories + default paths)
+uv run endor-reports -n <tenant>                    # default build
+uv run endor-reports build -n <tenant>
+uv run endor-reports patches -n <tenant>
+uv run endor-reports refresh-code --packet-dir <path>
 uv run endor-reports parity -n <tenant> --baseline-adoption <path> ...
 uv run endor-reports duplicates -n <tenant>
 uv run endor-reports cli-vs-cloud -n <tenant>
@@ -33,10 +37,12 @@ uv run endor-reports prf-analysis -n <tenant>
 uv run endor-reports package-resolution -n <tenant>
 ```
 
+Deprecated (one release): `packet`, `upsert-code-findings`.
+
 ## Executive packet
 
-`endor-reports packet` writes a browser-ready HTML set under
-`.endorlabs-context/workspace/runs/executive-report-packet/<tenant>-executive-packet-MMDDYY/`:
+Default build writes a browser-ready HTML set under
+`.endorlabs/reports/<slug>-<YYYY-MM-DD>/`:
 
 | Page | Content |
 |------|---------|
@@ -44,13 +50,13 @@ uv run endor-reports package-resolution -n <tenant>
 | `02-version-sprawl.html` | Dependency version sprawl |
 | `03-sca-burndown.html` | SCA FindingLog burndown |
 | `04-sast-burndown.html` | OpenGrep / AI-SAST / Secrets FindingLog burndown |
-| `05-endor-patches.html` | Endor Patches impact (opt-in: `--patches` or `--patches-only`) |
+| `05-endor-patches.html` | Endor Patches impact (opt-in: `--patches` or `patches` subcommand) |
 
 Default full packet **omits** Patches (Finding list pull — slow on large
-estates). Pass `--patches` to include, or `--patches-only` for a campaign
-batch that writes under
-`.endorlabs-context/workspace/runs/patches-reports/<tenant>-MMDDYY/`
-(override date with `--date-suffix 082126`). A `--patches-only` run
+estates). Pass `--patches` to include, or `endor-reports patches -n <tenant>`
+for a campaign batch that writes under
+`.endorlabs/reports/patches/<slug>-<YYYY-MM-DD>/`
+(override date with `--date-suffix 2026-08-28`). A patches-only run
 emits only page 05 and the `patches-*.csv` exports.
 
 Packet Available is any reachability; the product Patches dashboard header is
@@ -77,7 +83,7 @@ differentials, onboarding, throughput, tag catalog) — see `data/EXPORTS.txt`.
 
 `endorlabs.workflows.reports.parity` compares live packet cubes to gitignored
 scratch baselines (paths from flags or `ENDOR_VALIDATE_*` env vars). Output:
-`.endorlabs-context/workspace/runs/report-parity/<tenant>-<YYYYMMDD>/`.
+`.endorlabs/tasks/parity/<slug>-<YYYY-MM-DD>/`.
 
 Tolerances: onboarding ≤1%; sprawl/burndown aggregates ≤2%; throughput ≤5%;
 `gapEnd` exact match.
@@ -85,7 +91,7 @@ Tolerances: onboarding ≤1%; sprawl/burndown aggregates ≤2%; throughput ≤5%
 ## Portable content
 
 Tracked code uses `example-tenant` / `<tenant>` only. Never commit customer
-tenant names, project URLs, production UUIDs, or `.endorlabs-context/` outputs.
+tenant names, project URLs, production UUIDs, or `.endorlabs/` outputs.
 
 ## Agent playbooks
 

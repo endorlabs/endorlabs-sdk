@@ -79,11 +79,11 @@ Exclude **SBOM projects** (`spec.sbom` set) from the scan and CSV.
 
 ### Step 1: Run the bundled script
 
-Default output: `.endorlabs-context/workspace/runs/cli-vs-cloud-projects/<tenant>-cli-vs-cloud.csv`
+Default output: `.endorlabs/reports/cli-vs-cloud/<tenant>-cli-vs-cloud.csv`
 
 ```bash
 uv run --env-file .env endor-reports cli-vs-cloud -n <tenant> \
-  --output .endorlabs-context/workspace/runs/cli-vs-cloud-projects/<tenant>-cli-vs-cloud.csv
+  --output .endorlabs/reports/cli-vs-cloud/<tenant>-cli-vs-cloud.csv
 ```
 
 Optional flags (pass after the command; forwarded to the report module):
@@ -127,7 +127,7 @@ Before finishing, confirm:
 - [ ] Cloud rows include resolved **`installation name`** when a matching `Installation` exists
 - [ ] SBOM projects excluded
 - [ ] Chat summary covers counts, installations, and any CLI exceptions
-- [ ] Artifacts under `.endorlabs-context/workspace/runs/cli-vs-cloud-projects/` (gitignored)
+- [ ] Artifacts under `.endorlabs/reports/cli-vs-cloud/` (gitignored)
 
 ## When to use this skill vs others
 

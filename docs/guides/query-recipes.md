@@ -42,7 +42,7 @@ buckets = group_by_time_counts(
 )
 ```
 
-Normative agent contract: shipped `query-vs-list-semantics.md` (wheel / `.endorlabs-context/sdk/contracts/`).
+Normative agent contract: shipped `query-vs-list-semantics.md` (wheel / `.endorlabs/_cache/sdk/contracts/`).
 
 ## Generic Query (any root kind)
 

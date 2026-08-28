@@ -4,7 +4,7 @@ Pulls per-project context (findings, policies, repository versions,
 dependencies, call graphs) from the Endor Labs API and writes structured
 artifacts into a progressive-disclosure directory tree. Primary production
 use is under a project bundle at
-``.endorlabs-context/workspace/projects/<slug>_<timestamp>/`` (see
+``.endorlabs/tasks/<slug>-<YYYY-MM-DD>/projects/<slug>_<timestamp>/`` (see
 ``endor-agent-context`` with ``--session-summaries``).
 
 Experimental: API may change without the same stability guarantees

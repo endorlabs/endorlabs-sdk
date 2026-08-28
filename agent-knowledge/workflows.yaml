@@ -5,13 +5,13 @@ workflows:
     cli: endor-context
     module: endorlabs.context.cli
     skill: null
-    default_output: .endorlabs-context/
+    default_output: .endorlabs/
     agent_visible: true
   - id: estate-workspace
     cli: endor-estate
     module: endorlabs.workflows.estate.cli.main
     skill: null
-    default_output: .endorlabs-context/workspace/<slug>-<YYYYMMDD>/
+    default_output: .endorlabs/tasks/<slug>-<YYYY-MM-DD>/estate/
     agent_visible: false
     composition: library_api
     library_entrypoints:
@@ -65,7 +65,7 @@ workflows:
     cli: endor-reports
     module: endorlabs.workflows.reports.cli
     skill: endor-workflow-reports
-    default_output: .endorlabs-context/workspace/runs/auth-login-count/
+    default_output: .endorlabs/reports/auth-login-count/
     agent_visible: false
     composition: library_api
     library_entrypoints:
@@ -76,7 +76,7 @@ workflows:
     cli: endor-reports
     module: endorlabs.workflows.reports.cli
     skill: endor-workflow-reports
-    default_output: .endorlabs-context/workspace/runs/auth-credential-expiry/
+    default_output: .endorlabs/reports/auth-credential-expiry/
     agent_visible: false
     composition: library_api
     library_entrypoints:
@@ -97,7 +97,7 @@ workflows:
     cli: endor-reports
     module: endorlabs.workflows.reports.cli
     skill: endor-workflow-reports
-    default_output: .endorlabs-context/workspace/runs/cli-vs-cloud-projects/
+    default_output: .endorlabs/reports/cli-vs-cloud/
     agent_visible: false
     composition: library_api
     library_entrypoints:
@@ -106,7 +106,7 @@ workflows:
     cli: endor-reports
     module: endorlabs.workflows.reports.cli
     skill: endor-workflow-reports
-    default_output: .endorlabs-context/workspace/runs/ci-endorctl-version-audit/
+    default_output: .endorlabs/reports/ci-endorctl/
     agent_visible: false
     composition: library_api
     library_entrypoints:
@@ -115,7 +115,7 @@ workflows:
     cli: endor-reports
     module: endorlabs.workflows.reports.cli
     skill: endor-workflow-reports
-    default_output: .endorlabs-context/workspace/runs/duplicate-projects/
+    default_output: .endorlabs/reports/duplicates/
     agent_visible: false
     composition: library_api
     library_entrypoints:
@@ -124,7 +124,7 @@ workflows:
     cli: endor-reports
     module: endorlabs.workflows.reports.cli
     skill: endor-workflow-reports
-    default_output: .endorlabs-context/workspace/runs/finding-log-weekly-trends/
+    default_output: .endorlabs/reports/findings-trend/
     agent_visible: false
     composition: library_api
     library_entrypoints:
@@ -137,7 +137,7 @@ workflows:
     cli: endor-reports
     module: endorlabs.workflows.reports.cli
     skill: endor-workflow-reports
-    default_output: .endorlabs-context/workspace/runs/executive-report-packet/
+    default_output: .endorlabs/reports/<slug>-<YYYY-MM-DD>/
     agent_visible: false
     composition: library_api
     library_entrypoints:
@@ -149,7 +149,7 @@ workflows:
     cli: endor-reports
     module: endorlabs.workflows.reports.cli
     skill: endor-workflow-reports
-    default_output: .endorlabs-context/workspace/runs/potentially-reachable-analysis/
+    default_output: .endorlabs/reports/prf-analysis/
     agent_visible: false
     composition: library_api
     library_entrypoints:
@@ -159,7 +159,7 @@ workflows:
     cli: endor-reports
     module: endorlabs.workflows.reports.cli
     skill: endor-workflow-reports
-    default_output: .endorlabs-context/workspace/runs/package-resolution/
+    default_output: .endorlabs/reports/package-resolution/
     agent_visible: false
     composition: library_api
     library_entrypoints:
@@ -171,7 +171,7 @@ workflows:
     cli: endor-log-export
     module: endorlabs.workflows.log_export.cli
     skill: null
-    default_output: .endorlabs-context/workspace/runs/log-export/
+    default_output: .endorlabs/tasks/<slug>-<YYYY-MM-DD>/logs/
     agent_visible: true
     composition: library_api
     library_entrypoints:

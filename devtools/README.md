@@ -2,7 +2,7 @@
 
 Contributor setup: [CONTRIBUTORS.md](../CONTRIBUTORS.md).
 
-Tracked maintainer automation lives under three buckets. Optional local scratch (probes, benchmarks) stays gitignored under `.endorlabs-context/workspace/` — never commit estate identifiers.
+Tracked maintainer automation lives under three buckets. Optional local scratch (probes, benchmarks) stays gitignored under `.endorlabs/tasks/scratch/` — never commit estate identifiers.
 
 ## Layout
 

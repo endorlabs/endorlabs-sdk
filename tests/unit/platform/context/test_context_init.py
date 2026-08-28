@@ -162,8 +162,8 @@ class TestInit:
             status = init(output_dir=output_dir)
 
         mock_cls.assert_not_called()
-        assert status.agent_knowledge_path == output_dir / "sdk"
-        assert status.context_json_path == output_dir / "context.json"
+        assert status.agent_knowledge_path == output_dir / "_cache" / "sdk"
+        assert status.context_json_path == output_dir / "_cache" / "context.json"
         assert status.platform_openapi_path is None
 
     def test_init_openapi_only(self, tmp_path: Path) -> None:
@@ -181,11 +181,9 @@ class TestInit:
         )
 
         assert isinstance(status, InitStatus)
-        assert status.platform_openapi_path == (
-            output_dir / "platform" / "openapi" / "openapiv2.swagger.json"
-        )
+        assert status.platform_openapi_path == (output_dir / "_cache" / "openapi.json")
         assert status.agent_knowledge_path is None
-        assert status.context_json_path == output_dir / "context.json"
+        assert status.context_json_path == output_dir / "_cache" / "context.json"
         assert status.downloaded_at is not None
 
     def test_init_warns_agent_about_gitignore(
@@ -233,7 +231,7 @@ class TestInit:
         from endorlabs.context._sync import init
 
         output_dir = tmp_path / ".endor-context"
-        openapi_file = output_dir / "platform" / "openapi" / "openapiv2.swagger.json"
+        openapi_file = output_dir / "_cache" / "openapi.json"
         openapi_file.parent.mkdir(parents=True, exist_ok=True)
         openapi_file.write_text('{"old": true}')
 
@@ -257,7 +255,7 @@ class TestInit:
         from endorlabs.context._sync import init
 
         output_dir = tmp_path / ".endor-context"
-        openapi_file = output_dir / "platform" / "openapi" / "openapiv2.swagger.json"
+        openapi_file = output_dir / "_cache" / "openapi.json"
         openapi_file.parent.mkdir(parents=True, exist_ok=True)
         openapi_file.write_text('{"old": true}')
 
@@ -302,7 +300,7 @@ class TestInit:
 
         mock_cls.assert_not_called()
         assert output_dir.exists()
-        assert not (output_dir / "sdk" / "INDEX.md").exists()
+        assert not (output_dir / "_cache" / "sdk" / "INDEX.md").exists()
         assert status.platform_openapi_path is None
         assert status.synced_skill_paths == {"cursor": mirrored_path}
         mock_sync.assert_called_once()
@@ -318,5 +316,5 @@ class TestInit:
         with patch("endorlabs.api_client.APIClient") as mock_cls:
             status = init(output_dir=output_dir)
         mock_cls.assert_not_called()
-        assert status.agent_knowledge_path == output_dir / "sdk"
-        assert status.context_json_path == output_dir / "context.json"
+        assert status.agent_knowledge_path == output_dir / "_cache" / "sdk"
+        assert status.context_json_path == output_dir / "_cache" / "context.json"

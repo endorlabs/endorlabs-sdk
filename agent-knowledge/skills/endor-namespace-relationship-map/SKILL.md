@@ -9,7 +9,7 @@ endorlabs:
   catalog:
     workflow_id: relationships-map
     module: endorlabs.workflows.estate.analyze.project_map.map
-    default_output: .endorlabs-context/workspace/runs/relationships-map/<namespace>/
+    default_output: .endorlabs/tasks/<slug>-<YYYY-MM-DD>/relationships/<namespace>/
     agent_visible: true
 ---
 
@@ -46,7 +46,7 @@ uv run --env-file .env python -m endorlabs.workflows.estate.analyze.project_map.
   --tenant "<client_tenant>" \
   --namespace "<namespace_scope>" \
   --focus-producer-project-uuid "<producer_project_uuid>" \
-  --output-dir .endorlabs-context/workspace/runs/relationships-map/<namespace_scope>
+  --output-dir .endorlabs/tasks/<slug>-<YYYY-MM-DD>/relationships/<namespace_scope>
 ```
 
 Or:
@@ -65,7 +65,7 @@ uv run --env-file .env python -m endorlabs.workflows.estate.analyze.project_map.
   --tenant "<client_tenant>" \
   --namespace "<namespace_scope>" \
   --max-depth 3 \
-  --output-dir .endorlabs-context/workspace/runs/relationships-map/<namespace_scope>
+  --output-dir .endorlabs/tasks/<slug>-<YYYY-MM-DD>/relationships/<namespace_scope>
 ```
 
 **Writes:** `project_relationship_graph.json`, `project_relationship_paths.json`, `project_relationship_stats.json`.
@@ -74,7 +74,7 @@ uv run --env-file .env python -m endorlabs.workflows.estate.analyze.project_map.
 
 | Deliverable | Default path | Override |
 |-------------|--------------|----------|
-| Relationship JSON | `workspace/runs/relationships-map/<namespace>/project_relationship_*.json` | `--output-dir` |
+| Relationship JSON | `tasks/<slug>-<YYYY-MM-DD>/relationships/project_relationship_*.json` | `--output-dir` |
 
 **Run bucket:** `relationships-map` (catalog `workflow_id`).
 - `focus_producer_project_uuid` (optional)
@@ -87,5 +87,5 @@ uv run --env-file .env python -m endorlabs.workflows.estate.analyze.project_map.
 
 ## Documentation hops
 
-- OpenAPI: `.endorlabs-context/platform/openapi/openapiv2.swagger.json`
+- OpenAPI: `.endorlabs/_cache/openapi.json`
 - Product docs: Docs MCP (`https://docs.endorlabs.com/mcp` — [setup](https://docs.endorlabs.com/introduction/docs-mcp-server))

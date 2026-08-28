@@ -11,7 +11,7 @@ endorlabs:
   catalog:
     workflow_id: troubleshooting-scans
     module: endorlabs.workflows.troubleshooting_scans
-    default_output: .endorlabs-context/workspace/runs/troubleshooting-scans/
+    default_output: .endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/
     agent_visible: true
     composition: artifact_chain
     library_entrypoints:
@@ -146,7 +146,7 @@ for pv in client.PackageVersion.list_by_project(project, namespace=project_ns, m
 | `regression_detected: false` but user named two scans | Use explicit-pair path; user intent overrides heuristic |
 | Pair differs on `scan_execution` / `quick_scan` | Treat as config mismatch first; tenant-wide inventory still [endor-workflow-reports](../endor-workflow-reports/SKILL.md) |
 
-Artifacts live under `.endorlabs-context/workspace/runs/troubleshooting-scans/`.
+Artifacts live under `.endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/`.
 See [workspace-layout](../../rules/endor-workspace-layout.md). Filename
 contract:
 

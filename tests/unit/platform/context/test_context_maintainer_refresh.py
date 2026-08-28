@@ -61,9 +61,7 @@ def test_main_skips_context_refresh_when_context_dir_missing(
     """Context refresh should no-op when no local context download exists."""
     init_mock = Mock()
 
-    monkeypatch.setattr(
-        _maintainer_refresh, "CONTEXT_DIR", tmp_path / ".endorlabs-context"
-    )
+    monkeypatch.setattr(_maintainer_refresh, "CONTEXT_DIR", tmp_path / ".endorlabs")
     monkeypatch.setattr(_maintainer_refresh.endorlabs, "init", init_mock)
 
     result = _maintainer_refresh.main(["src/endorlabs/context/_sync.py"])
@@ -76,7 +74,7 @@ def test_main_refreshes_context_without_openapi_when_auth_missing(
     tmp_path: Path, monkeypatch: object
 ) -> None:
     """Context refresh should skip OpenAPI when auth is unavailable."""
-    context_dir = tmp_path / ".endorlabs-context"
+    context_dir = tmp_path / ".endorlabs"
     context_dir.mkdir()
     status = Mock(platform_openapi_path=None)
     init_mock = Mock(return_value=status)

@@ -15,15 +15,15 @@ contracts agree — before changing client code.
 
 When explaining root cause to the user:
 
-- **Evidence-backed** — cite live API rows, `endorctl` output, workflow JSON under `.endorlabs-context/workspace/`, or normative text in `contracts/` / this skill.
+- **Evidence-backed** — cite live API rows, `endorctl` output, workflow JSON under `.endorlabs/`, or normative text in `contracts/` / this skill.
 - **Inferred** — heuristic scan pairing, partial hydration, or backend-behavior guesses without a reproducing call. Label **Inferred:** and say what to fetch next.
 
 Deep triangulation playbook: [validation-reference.md](validation-reference.md). Repo clone only: `docs/contributing/troubleshooting.md`.
 
 ## Workflow
 
-1. **Document** — capture the task, context, approach, and full error (including stack trace and `response.text`). Persist triage notes, repro scripts, and JSON exports under `.endorlabs-context/workspace/runs/scratch/` (see [workspace-layout](../../rules/endor-workspace-layout.md)); For CLI → library → script escalation, see [workflow-composition](../../rules/endor-workflow-composition.md).
-2. **Research** — search codebase, `contracts/`, and API spec. Local OpenAPI: `.endorlabs-context/platform/openapi/openapiv2.swagger.json`. Product docs: Docs MCP (`https://docs.endorlabs.com/mcp` — [setup](https://docs.endorlabs.com/introduction/docs-mcp-server)). Online OpenAPI fallback: <https://api.endorlabs.com/download/openapiv2.swagger.json>.
+1. **Document** — capture the task, context, approach, and full error (including stack trace and `response.text`). Persist triage notes, repro scripts, and JSON exports under `.endorlabs/tasks/scratch/` (see [workspace-layout](../../rules/endor-workspace-layout.md)); For CLI → library → script escalation, see [workflow-composition](../../rules/endor-workflow-composition.md).
+2. **Research** — search codebase, `contracts/`, and API spec. Local OpenAPI: `.endorlabs/_cache/openapi.json`. Product docs: Docs MCP (`https://docs.endorlabs.com/mcp` — [setup](https://docs.endorlabs.com/introduction/docs-mcp-server)). Online OpenAPI fallback: <https://api.endorlabs.com/download/openapiv2.swagger.json>.
 3. **Investigate** — replay the same call with `endorctl` (same resource, namespace, filter, traverse); compare outcomes using [validation-reference.md](validation-reference.md).
 4. **Resolve** — fix usage, scope, model-sync, or SDK bug; document what evidence changed.
 

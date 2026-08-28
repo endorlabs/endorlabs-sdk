@@ -15,7 +15,7 @@ Never write a rule from scratch. Find an existing rule that is
 structurally close to what you need and adapt it.
 
 Good sources for reference rules:
-- `.endorlabs-context/semgrep-rules/` (rules already imported into your namespace)
+- `.endorlabs/semgrep-rules/` (rules already imported into your namespace)
 - [semgrep/semgrep-rules](https://github.com/semgrep/semgrep-rules) (community registry)
 - The Endor Labs platform UI or SDK export (see [import-export.md](import-export.md))
 

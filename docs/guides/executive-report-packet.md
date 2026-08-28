@@ -10,20 +10,24 @@ Open the HTML files in any browser — no Cursor runtime required.
 ## Command
 
 ```bash
-uv run --env-file .env endor-reports packet -n <tenant>
+uv run --env-file .env endor-reports -n <tenant>
+# or explicitly:
+uv run --env-file .env endor-reports build -n <tenant>
 ```
+
+List all report subcommands: `uv run endor-reports list`.
 
 Privileged read against customer tenants: refresh SSO against `endor-admin`, then
 pass the **customer** namespace only on `-n` (see skill **endor-auth-setup** /
 employee auth notes).
 
 Optional flags:
-    20|`--lookback`, `--min-projects`, `--workers`, `--output-dir`,
-`--date-suffix` (default today's MMDDYY on the output folder),
+`--lookback`, `--min-projects`, `--workers`, `--output-dir`,
+`--date-suffix` (default UTC `YYYY-MM-DD` on the output folder),
 `--log-level` (stdout stage milestones: `packet.discover.*`, burndowns, patches,
 render; also `ENDOR_LOG_LEVEL`), `--skip-version-sprawl`,
 `--skip-findings-burndown`, `--patches` (opt-in Endor Patches Finding list),
-`--patches-only` (Patches page only → `runs/patches-reports/<tenant>-MMDDYY/`).
+`--patches-only` (Patches page only → `.endorlabs/reports/patches/<slug>-<YYYY-MM-DD>/`).
 
 `--patches-only` writes just `05-endor-patches.html` and the `patches-*.csv`
 exports — pages 01–04 are omitted rather than rendered from slices the run never
@@ -37,7 +41,7 @@ Leaf FindingLog aggregates escalate to per-project shards on timeout.
 ## Outputs
 
 Default directory:
-`.endorlabs-context/workspace/runs/executive-report-packet/<tenant>-executive-packet-MMDDYY/`.
+`.endorlabs/reports/<slug>-<YYYY-MM-DD>/` (namespace slug uses underscores, e.g. `example_tenant_child-2026-08-28/`).
 
 | File | Content |
 |------|---------|

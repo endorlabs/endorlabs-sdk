@@ -41,9 +41,10 @@ def test_resolve_workspace_from_explicit_path(tmp_path: Path) -> None:
 
 
 def test_resolve_workspace_from_namespace_slug() -> None:
-    args = Namespace(workspace=None, namespace="tenant.example", date="20260101")
+    args = Namespace(workspace=None, namespace="tenant.example", date="2026-08-28")
     path = _resolve_workspace(args)
-    assert path.name == "tenant_example-20260101"
+    assert path.name == "estate"
+    assert path.parent.name == "tenant_example-2026-08-28"
 
 
 def test_cmd_summarize_prints_text(tmp_path: Path, capsys) -> None:

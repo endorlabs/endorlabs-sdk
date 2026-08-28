@@ -18,7 +18,7 @@ from importlib import resources
 from pathlib import Path
 from typing import Any
 
-from endorlabs.context.paths import default_runs_dir, sanitize_path_segment
+from endorlabs.context.paths import default_reports_subdir, sanitize_path_segment
 
 RUN_BUCKET = "package-resolution"
 PAGE_SIZE = 100
@@ -750,8 +750,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=None,
         help=(
-            "Output directory "
-            "(default: workspace/runs/package-resolution/<tenant>-html/)."
+            f"Output directory "
+            f"(default: {default_reports_subdir(RUN_BUCKET).as_posix()}/<tenant>/)."
         ),
     )
     return parser.parse_args(argv)
@@ -771,7 +771,7 @@ def main(argv: list[str] | None = None) -> int:
     out_dir = args.output_dir
     if out_dir is None:
         safe = sanitize_path_segment(tenant)
-        out_dir = default_runs_dir(RUN_BUCKET) / f"{safe}-html"
+        out_dir = default_reports_subdir(RUN_BUCKET) / safe
 
     out_dir.mkdir(parents=True, exist_ok=True)
     _copy_assets(out_dir)

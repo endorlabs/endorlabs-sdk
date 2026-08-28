@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-from .common import default_troubleshooting_output_dir, load_json, write_json
+from .common import load_json, resolve_troubleshooting_output_dir, write_json
 
 
 def anomaly_score(
@@ -73,7 +73,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Rank anomalous scan pairs")
     _ = parser.add_argument("--input-summary", required=True)
     _ = parser.add_argument(
-        "--output-dir", default=default_troubleshooting_output_dir()
+        "--output-dir",
+        default=None,
+        help=(
+            "Directory for generated artifacts (default: "
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/)."
+        ),
     )
     _ = parser.add_argument("--root-tenant", required=True)
     _ = parser.add_argument("--project-uuid", required=True)
@@ -124,6 +129,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     else:
         selected = ranked
     regression_detected = bool(selected and selected[0]["score"] > 0)
+    output_dir = resolve_troubleshooting_output_dir(args.root_tenant, args.output_dir)
     payload: dict[str, Any] = {
         "root_tenant": args.root_tenant,
         "project_uuid": args.project_uuid,
@@ -133,7 +139,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "regression_detected": regression_detected,
     }
     artifact = write_json(
-        output_dir=Path(args.output_dir),
+        output_dir=output_dir,
         root_tenant_name=args.root_tenant,
         object_kind="scan_result_pairs",
         object_uuid=args.project_uuid,

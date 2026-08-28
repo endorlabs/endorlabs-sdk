@@ -9,7 +9,6 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from pathlib import Path
 from typing import Any
 
 import endorlabs
@@ -22,8 +21,8 @@ from endorlabs.utils.namespace import resource_namespace
 
 from .common import (
     date_window_from_bounds,
-    default_troubleshooting_output_dir,
     object_to_dict,
+    resolve_troubleshooting_output_dir,
     root_tenant,
     scan_result_extended_summary,
     write_json,
@@ -62,7 +61,14 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Max pages for ScanResult list (0 = unlimited within date window).",
     )
     p.add_argument("--page-size", type=int, default=100)
-    p.add_argument("--output-dir", default=default_troubleshooting_output_dir())
+    p.add_argument(
+        "--output-dir",
+        default=None,
+        help=(
+            "Directory for generated artifacts (default: "
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/)."
+        ),
+    )
     p.add_argument("--timestamped", action="store_true")
     return p
 
@@ -120,7 +126,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "scan_results_summary": summaries,
     }
     path = write_json(
-        output_dir=Path(args.output_dir),
+        output_dir=resolve_troubleshooting_output_dir(
+            args.tenant or args.namespace, args.output_dir
+        ),
         root_tenant_name=rt,
         object_kind="scan_results",
         object_uuid=args.project_uuid,

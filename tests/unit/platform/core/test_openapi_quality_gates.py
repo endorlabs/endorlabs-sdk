@@ -13,13 +13,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[4]
 _SRC_DIR = str(_REPO_ROOT / "src")
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
-_SPEC_PATH = (
-    _REPO_ROOT
-    / ".endorlabs-context"
-    / "platform"
-    / "openapi"
-    / "openapiv2.swagger.json"
-)
+_SPEC_PATH = _REPO_ROOT / ".endorlabs" / "_cache" / "openapi.json"
 
 
 def _load_facade_contract() -> dict[str, Any]:

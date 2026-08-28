@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.context.paths import default_runs_dir, sanitize_path_segment
+from endorlabs.context.paths import default_reports_subdir, sanitize_path_segment
 from endorlabs.workflows.projects.inventory import (
     fetch_latest_scan_execution_labels,
     is_mixed_registration_execution,
@@ -186,12 +186,12 @@ def write_csv(
     return rows
 
 
-RUN_BUCKET = "duplicate-projects"
+RUN_BUCKET = "duplicates"
 
 
 def default_duplicate_projects_csv(tenant: str) -> Path:
     safe = sanitize_path_segment(tenant)
-    return default_runs_dir(RUN_BUCKET) / f"{safe}-duplicates.csv"
+    return default_reports_subdir(RUN_BUCKET) / f"{safe}-duplicates.csv"
 
 
 def parse_strip_tokens(raw: list[str]) -> frozenset[str] | None:
@@ -211,7 +211,10 @@ def main(argv: list[str] | None = None) -> int:
         "--output",
         type=Path,
         default=None,
-        help="CSV output path (default: workspace/runs/duplicate-projects/<tenant>-duplicates.csv)",
+        help=(
+            f"CSV output path (default: "
+            f"{default_reports_subdir(RUN_BUCKET).as_posix()}/<tenant>-duplicates.csv)"
+        ),
     )
     parser.add_argument(
         "--name-strip-tokens",

@@ -202,9 +202,9 @@ def blast_requests(
 
 def _default_report_path(namespace: str) -> Path:
     # Lazy import so unit-style imports of helpers stay light if paths missing.
-    from endorlabs.context.paths import default_runs_dir, sanitize_path_segment
+    from endorlabs.context.paths import flat_task_dir, sanitize_path_segment
 
-    runs = default_runs_dir("pfw-test-util")
+    runs = flat_task_dir("pfw-test-util")
     runs.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(tz=UTC).strftime("%Y%m%dT%H%M%SZ")
     slug = sanitize_path_segment(namespace)
@@ -227,6 +227,8 @@ def write_report(path: Path, *, namespace: str, results: list[BlastResult]) -> N
 
 
 def _build_parser() -> argparse.ArgumentParser:
+    from endorlabs.context.paths import flat_task_dir
+
     parser = argparse.ArgumentParser(
         description=(
             "PFW test util: GET Package Firewall factory URLs for "
@@ -248,7 +250,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "--report",
         type=Path,
         default=None,
-        help="Write JSON summary path (default under workspace/runs/pfw-test-util/).",
+        help=(
+            f"Write JSON summary path (default under "
+            f"{flat_task_dir('pfw-test-util').as_posix()}/)."
+        ),
     )
     _ = parser.add_argument(
         "--timeout",

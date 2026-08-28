@@ -6,7 +6,7 @@ from ``Finding.spec.target_dependency_*`` / ``spec.fixing_patch`` instead of
 ``DependencyMetadata`` usage counts.
 
 Design notes (verified against real tenants before writing this module — see
-``.endorlabs-context/workspace/runs/scratch/`` probes, not committed):
+``.endorlabs/tasks/scratch/`` probes, not committed):
 
 - ``spec.fixing_patch.endor_patch_available`` is the platform's own "Endor
   Patch" signal — Endor Labs republished a hardened build for this exact
@@ -53,7 +53,10 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from endorlabs.context.paths import default_runs_dir
+from endorlabs.context.paths import (
+    task_activity_dir,
+    tasks_dir,
+)
 from endorlabs.filters import FINDING_CATEGORY_VULNERABILITY
 from endorlabs.workflows.findings.patch_core import (
     FINDING_MASK,
@@ -261,8 +264,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--output",
         "-o",
         help=(
-            "Output CSV path for the package/version rollup "
-            f"(default: {default_runs_dir('patch-fix-report').as_posix()}/"
+            "Output CSV path for the package/version rollup (default: "
+            f"{tasks_dir().as_posix()}/<slug>-<YYYY-MM-DD>/estate/"
             "patch_fix_report_<slug>.csv)."
         ),
     )
@@ -342,7 +345,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         slug = _namespace_slug(args.namespace)
         output_path = (
-            default_runs_dir("patch-fix-report") / f"patch_fix_report_{slug}.csv"
+            task_activity_dir(args.namespace, "estate") / f"patch_fix_report_{slug}.csv"
         )
 
     with endorlabs.Client(tenant=args.namespace) as client:

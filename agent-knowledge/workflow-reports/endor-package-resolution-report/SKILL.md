@@ -16,7 +16,7 @@ namespaces):
    `traverse=True`).
 2. Enrich each row with concurrent scoped counts (`Finding`, `DependencyMetadata`)
    and cached `Project` metadata — **not** a single graph Query join.
-3. Write CSV under `.endorlabs-context/workspace/runs/package-resolution/`.
+3. Write CSV under `.endorlabs/reports/package-resolution/`.
 4. Render a self-contained interactive HTML report (Endor executive shell styling)
    with filters and an outcome-distribution pie chart.
 
@@ -87,8 +87,8 @@ Optional flags:
 
 | Flag | Default | Meaning |
 |------|---------|---------|
-| `--output` | `workspace/runs/package-resolution/<tenant>-package-resolution.csv` | CSV path |
-| `--html-dir` | `workspace/runs/package-resolution/<tenant>-html/` | HTML output directory |
+| `--output` | `reports/package-resolution/<tenant>-package-resolution.csv` | CSV path |
+| `--html-dir` | `reports/package-resolution/<tenant>-html/` | HTML output directory |
 | `--max-workers` | `16` | Concurrent related-object API workers |
 | `--max-inflight` | `64` | Max in-flight PackageVersion enrichments |
 | `--json-summary` | unset | Optional JSON summary beside the CSV run |
@@ -101,7 +101,7 @@ HTML-only refresh:
 
 ```bash
 uv run endor-reports package-resolution -n <tenant> --html-only \
-  --csv .endorlabs-context/workspace/runs/package-resolution/<tenant>-package-resolution.csv
+  --csv .endorlabs/reports/package-resolution/<tenant>-package-resolution.csv
 ```
 
 ## Outputs

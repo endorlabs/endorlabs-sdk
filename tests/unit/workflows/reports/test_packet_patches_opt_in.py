@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 from endorlabs.workflows.reports.analyze.patches import count_java_maven_crit_high
 from endorlabs.workflows.reports.analyze.projects import non_sbom_leaf_namespaces
 from endorlabs.workflows.reports.bundles.executive_packet import build_report_packet
-from endorlabs.workflows.reports.cli import _packet_parser
+from endorlabs.workflows.reports.cli import _namespace_parent, _packet_parser
 
 
 def test_non_sbom_leaf_namespaces_filters_sbom() -> None:
@@ -117,7 +117,7 @@ def test_packet_cli_patches_flag_present() -> None:
 
     parser = ArgumentParser()
     sub = parser.add_subparsers()
-    packet = _packet_parser(sub)
+    packet = _packet_parser(sub, ns_parent=_namespace_parent())
     ns = packet.parse_args(["-n", "example-tenant", "--patches"])
     assert ns.patches is True
     assert ns.patches_only is False

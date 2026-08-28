@@ -1,5 +1,5 @@
 ---
-description: Write workflow artifacts under workspace/projects, workspace/runs/<run-bucket>, or workspace/inventory; not repo-root .tmp/.
+description: Write workflow artifacts under .endorlabs/reports/, .endorlabs/tasks/<slug>-<date>/<activity>/, or flat .endorlabs/tasks/<activity>/; not repo-root .tmp/.
 globs:
   - src/endorlabs/**
   - **/*.py
@@ -10,56 +10,69 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workspace-layout.md
-x-endor-source-sha256: 8c5218a2e95d7d614334fff5f489af77ce3625342163d39e2bf071b556f8dae4
+x-endor-source-sha256: 27eac24437755eec4894e358499d20c3cd10e464d2d13c054265f34ed8270a05
 ---
 
 # Workspace layout
 
-Run outputs and agent-written files belong under **`.endorlabs-context/workspace/`**
+Run outputs and agent-written files belong under **`.endorlabs/`**
 (gitignored). Do **not** write session/triage debugging artifacts or ad-hoc probe
 scripts to repo-root `.tmp/` unless the user explicitly requests that path.
 
-## Three buckets (+ estate)
+## Layout
 
-| Bucket | Use for | Default pattern |
-|--------|---------|-----------------|
-| **`projects/`** | One project: bundles, per-finding reachability | `projects/<slug>_<timestamp>/` · `projects/<uuid>/reachability_context.json` |
-| **`runs/`** | Ephemeral workflow CSV/JSON/RCA/HTML | `runs/<run-bucket>/` + tenant in **filename** |
-| **`inventory/`** | Namespace-scoped inventories | `inventory/<artifact-name>.json` |
-| **`<estate-slug>-<YYYYMMDD>/`** | Explicit `endor-estate` bulk only | unchanged |
+```text
+.endorlabs/
+  _cache/                          # init(): context.json, sdk/, openapi.json
+  reports/
+    <slug>-<YYYY-MM-DD>/           # executive HTML (endor-reports default build)
+    patches/<slug>-<YYYY-MM-DD>/   # patches-only HTML
+    <subcommand>/…                 # CSV/canvas (duplicates, login-count, …)
+  tasks/
+    <slug>-<YYYY-MM-DD>/           # tenant-day bucket (UTC date)
+      estate/                      # endor-estate IR (data/, ir/, viz/, logs/)
+      troubleshooting/
+      projects/
+      logs/
+      relationships/
+      …
+    <activity>/                    # no tenant-day (inventory/, parity/, scratch/)
+```
 
-SDK helpers: `default_runs_dir(run_bucket)`, `workflow_projects_root()`,
-`workflow_inventory_root()`, `project_workspace_dir()`.
+**`<slug>`** = `namespace_path_slug(namespace)` — `tenant.child` → `tenant_child`.
 
-## Run bucket (not a timestamp)
+**Day suffix:** UTC `YYYY-MM-DD` (API day-grain parity). Same slug+date ties
+`reports/<slug>-<date>/` to `tasks/<slug>-<date>/`.
 
-**Run bucket** is a fixed folder name under `runs/` — authored per skill, not
-generated at runtime.
+SDK helpers: `report_packet_dir()`, `task_activity_dir()`, `flat_task_dir()`,
+`default_reports_subdir()`, `project_workspace_dir()`.
 
-1. Skill has `endorlabs.catalog.workflow_id` → use that string (see `MANIFEST.json` → `workflows[].id`).
-2. Script-only skill → skill id minus `endor-` prefix (e.g. `endor-duplicate-projects` → `duplicate-projects`).
-3. Never use timestamps as run bucket names.
+## Activity segments (not timestamps)
 
-**Filename convention** in `runs/`: `<tenant-sanitized>-<purpose>.{ext}` unless a
-workflow documents a richer pattern (e.g. troubleshooting `--timestamped`).
+| Workflow | Activity / path |
+|----------|-----------------|
+| `endor-estate` pull/analyze | `tasks/<slug>-<date>/estate/` |
+| Troubleshooting scan RCA | `tasks/<slug>-<date>/troubleshooting/` |
+| `endor-agent-context` | `tasks/<slug>-<date>/projects/<slug>_<timestamp>/` |
+| `endor-log-export` | `tasks/<slug>-<date>/logs/` |
+| Relationship map | `tasks/<slug>-<date>/relationships/` |
+| Semgrep inventory (no tenant) | `tasks/inventory/` |
+| Packet parity (maintainer) | `tasks/parity/<slug>-<date>/` |
 
-## Timestamps
+## Filename conventions
 
-| Location | Pattern | When |
-|----------|---------|------|
-| `projects/` bundle | `<slug>_YYYYMMDDTHHMMSSZ/` | `endor-agent-context` |
-| `runs/troubleshooting-scans/` files | `…__purpose[__YYYYMMDDTHHMMSSZ].ext` | optional `--timestamped` |
-| Estate | `<slug>-<YYYYMMDD>/` | `endor-estate` collect |
+- Troubleshooting artifacts: `rootTenant__objectKind__objectUuid__purpose[__timestamp].ext`
+- Project bundle: `<slug>_YYYYMMDDTHHMMSSZ/` under `projects/`
+- Same-day reruns share the tenant-day folder; use `__purpose` / optional `__timestamp` where supported
 
 ## Agent scratch (optional)
 
-Ad-hoc probes and ephemeral notes may use `runs/scratch/` (scripts, markdown).
-Do not commit under `docs/`.
+Ad-hoc probes may use `tasks/scratch/` (scripts, markdown). Do not commit under `docs/`.
 
 ## Agent rules
 
-1. **Project workflows** — `--output-dir` under `workspace/projects/` (or CLI default).
-2. **Report / RCA workflows** — default `workspace/runs/<run-bucket>/`; override with `--output` / `--output-dir`.
-3. **Temp scripts** — `runs/scratch/`; never commit to `src/` or repo root.
-4. **Do not** assume `.endorlabs-context/` exists; create parent dirs before writing.
-5. **Gitignore** — consumer projects should ignore `.endorlabs-context/` (`uv run endor-context --print-gitignore-line`).
+1. **Project workflows** — default under `tasks/<slug>-<date>/projects/` (or `--output-dir`).
+2. **Report deliverables** — `reports/`; session work — `tasks/<slug>-<date>/<activity>/`.
+3. **Temp scripts** — `tasks/scratch/`; never commit to `src/` or repo root.
+4. **Do not** assume `.endorlabs/` exists; create parent dirs before writing.
+5. **Gitignore** — consumer projects should ignore `.endorlabs/` (`uv run endor-context --print-gitignore-line`).

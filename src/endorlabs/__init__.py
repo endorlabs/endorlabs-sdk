@@ -3,7 +3,7 @@
 A Python SDK for the Endor Labs platform.
 
 For agents: ``endorlabs.init()`` materializes skills under
-``.endorlabs-context/sdk/``; read ``INDEX.md`` via ``discover().index`` first.
+``.endorlabs/_cache/sdk/``; read ``INDEX.md`` via ``discover().index`` first.
 
 Quick start::
 
@@ -171,7 +171,7 @@ def init(
         >>> import endorlabs
         >>> status = endorlabs.init()
         >>> print(status.agent_knowledge_path)
-        .endorlabs-context/sdk
+        .endorlabs/_cache/sdk
 
     """
     from .context import _sync

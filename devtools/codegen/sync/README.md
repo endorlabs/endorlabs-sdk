@@ -36,7 +36,7 @@ Runtime-consumed generated files:
 uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
 ```
 
-**Regenerate using an already-downloaded spec** (repo root; spec at `.endorlabs-context/platform/openapi/openapiv2.swagger.json`):
+**Regenerate using an already-downloaded spec** (repo root; spec at `.endorlabs/_cache/openapi.json`):
 
 ```bash
 uv run python devtools/codegen/model_sync.py --generate-stubs --generate-reference-docs

@@ -12,7 +12,7 @@ Example::
     >>> import endorlabs
     >>> status = endorlabs.init()
     >>> print(status.agent_knowledge_path)
-    .endorlabs-context/sdk
+    .endorlabs/_cache/sdk
 
 """
 

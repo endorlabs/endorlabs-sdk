@@ -10,7 +10,7 @@ shipped playbooks.
 **Skill locations:**
 
 - Wheel: `endorlabs.agent_knowledge_index_path()` → `skills/<id>/SKILL.md`
-- Materialized: `.endorlabs-context/sdk/skills/<id>/SKILL.md` after `endorlabs.init()`
+- Materialized: `.endorlabs/_cache/sdk/skills/<id>/SKILL.md` after `endorlabs.init()`
 
 ## 1. Verify auth and tenant
 
@@ -138,7 +138,7 @@ See [consumer-ux-list-update.md](consumer-ux-list-update.md).
 ## 6. Scan troubleshooting — logs and diffs
 
 When scan results look wrong or regressed, use the troubleshooting workflow (writes
-artifacts under `.endorlabs-context/workspace/runs/troubleshooting-scans/`):
+artifacts under `.endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting-scans/`):
 
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results \

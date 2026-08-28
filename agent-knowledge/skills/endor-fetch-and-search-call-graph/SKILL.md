@@ -52,13 +52,13 @@ Do **not** skip to ad-hoc `CallGraphData.decode` on the first `PackageVersion` r
      --tenant "<tenant>" \
      --namespace "<namespace>" \
      --project "<project-uuid-or-name>" \
-     --output-dir .endorlabs-context/workspace/projects \
+     --output-dir .endorlabs/projects \
      --callgraph-export \
      --decode-zstd
    ```
 
 3. **Discover paths** — read **`context_manifest.json`** → `artifacts.callgraph_export`. Nested `callgraph_export/callgraph_export_manifest.json` lists decoded file paths.
-4. **Reuse only when present** — if a prior bundle exists under `workspace/projects/`, read its manifest first; do not re-fetch unless stale or `force` requested.
+4. **Reuse only when present** — if a prior bundle exists under `tasks/<slug>-<YYYY-MM-DD>/projects/`, read its manifest first; do not re-fetch unless stale or `force` requested.
 5. **Single-PV spot-check (last resort)** — `client.CallGraphData.decode(package_version)` only after [PackageVersion selection](#packageversion-selection). See [facade-helpers.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/facade-helpers.md).
 6. **Search** — `uv run endor-callgraph-search` with `--callables`, `--edges`, and patterns; use `--path-from` / `--path-to` for multi-hop BFS. Follow [path search protocol](call-graph-format-and-search.md#path-search-protocol).
 7. **Reason** — join on `method_id`; record direct edges **and** transitive chains when wrappers sit in between.
@@ -98,7 +98,7 @@ uv run endor-callgraph-search \
   --path-from "get" \
   --path-to "Client.request" \
   --max-depth 6 \
-  --out .endorlabs-context/workspace/runs/callgraph-search/path.json
+  --out .endorlabs/tasks/callgraph-search/path.json
 
 # Live probe (no bundle): endor-callgraph-path --tenant … --project … --path-from … --path-to …
 ```
@@ -129,7 +129,7 @@ Raw call graph payloads are not directly search-friendly. Safe retrieval starts 
 
 ## Outputs
 
-- Directory under `.endorlabs-context/workspace/projects/` (bundle) or `workspace/runs/callgraph-search/` (ad-hoc) with `callgraph_export_manifest.json` when using export.
+- Directory under `.endorlabs/tasks/<slug>-<YYYY-MM-DD>/projects/` (bundle) or `.endorlabs/tasks/callgraph-search/` (ad-hoc) with `callgraph_export_manifest.json` when using export.
 - Decoded `decoded_*.json` when `--decode-zstd` is set.
 - **`context_manifest.json`** at bundle root: `artifacts.callgraph_export` locates export output (`null` if Pass 3 was not run).
 

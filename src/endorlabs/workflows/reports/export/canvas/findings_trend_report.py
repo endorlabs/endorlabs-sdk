@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from endorlabs.context.paths import default_runs_dir
+from endorlabs.context.paths import default_reports_subdir
 from endorlabs.workflows.reports.analyze.findings_chart_analysis import (
     main as analysis_main,
 )
@@ -13,7 +13,7 @@ from endorlabs.workflows.reports.export.canvas.findings_trend_canvas import (
     main as canvas_main,
 )
 
-RUN_BUCKET = "finding-log-weekly-trends"
+RUN_BUCKET = "findings-trend"
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -29,10 +29,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=default_runs_dir(RUN_BUCKET),
+        default=default_reports_subdir(RUN_BUCKET),
         help=(
-            "Directory for analysis JSON "
-            "(default: workspace/runs/finding-log-weekly-trends/)."
+            f"Directory for analysis JSON "
+            f"(default: {default_reports_subdir(RUN_BUCKET).as_posix()}/)."
         ),
     )
     parser.add_argument(

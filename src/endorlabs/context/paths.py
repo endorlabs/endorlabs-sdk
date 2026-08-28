@@ -1,4 +1,4 @@
-"""Path helpers for the unified .endorlabs-context layout."""
+"""Path helpers for the unified ``.endorlabs`` local layout."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-DEFAULT_CONTEXT_DIR = ".endorlabs-context"
+DEFAULT_CONTEXT_DIR = ".endorlabs"
 GITIGNORE_ENTRY = f"{DEFAULT_CONTEXT_DIR}/"
+CACHE_DIRNAME = "_cache"
 CONTEXT_JSON_FILENAME = "context.json"
 SDK_DIRNAME = "sdk"
-PLATFORM_DIRNAME = "platform"
-WORKSPACE_DIRNAME = "workspace"
-PLATFORM_OPENAPI_DIRNAME = "openapi"
-OPENAPI_FILENAME = "openapiv2.swagger.json"
+REPORTS_DIRNAME = "reports"
+TASKS_DIRNAME = "tasks"
+OPENAPI_FILENAME = "openapi.json"
 
 
 def default_context_dir() -> Path:
@@ -31,59 +31,155 @@ def namespace_path_slug(namespace: str) -> str:
     return cleaned.replace(".", "_")
 
 
-def workspace_date_suffix(*, when: datetime | None = None) -> str:
-    """UTC compact date (``YYYYMMDD``) for default workspace directory names."""
+def tenant_day_suffix(*, when: datetime | None = None) -> str:
+    """UTC calendar day (``YYYY-MM-DD``) for tenant-day directory names."""
     dt = when or datetime.now(UTC)
-    return dt.strftime("%Y%m%d")
+    return dt.strftime("%Y-%m-%d")
 
 
-def workspace_dir_for(
+def tenant_day_slug(
+    namespace: str,
+    *,
+    date_suffix: str | None = None,
+) -> str:
+    """Return ``<namespace-slug>-<YYYY-MM-DD>``."""
+    suffix = date_suffix if date_suffix is not None else tenant_day_suffix()
+    return f"{namespace_path_slug(namespace)}-{suffix}"
+
+
+def _context_root(context_dir: str | Path | None) -> Path:
+    return Path(context_dir) if context_dir is not None else default_context_dir()
+
+
+def cache_dir(context_dir: str | Path | None = None) -> Path:
+    """Return ``<context>/_cache``."""
+    return _context_root(context_dir) / CACHE_DIRNAME
+
+
+def sdk_dir(context_dir: str | Path | None = None) -> Path:
+    """Return materialized SDK agent bundle path under ``_cache/sdk``."""
+    return cache_dir(context_dir) / SDK_DIRNAME
+
+
+def platform_openapi_path(context_dir: str | Path | None = None) -> Path:
+    """Canonical OpenAPI spec path after init."""
+    return cache_dir(context_dir) / OPENAPI_FILENAME
+
+
+def context_json_path(context_dir: str | Path | None = None) -> Path:
+    """Return path to init manifest JSON."""
+    return cache_dir(context_dir) / CONTEXT_JSON_FILENAME
+
+
+def reports_dir(context_dir: str | Path | None = None) -> Path:
+    """Return ``<context>/reports``."""
+    return _context_root(context_dir) / REPORTS_DIRNAME
+
+
+def tasks_dir(context_dir: str | Path | None = None) -> Path:
+    """Return ``<context>/tasks``."""
+    return _context_root(context_dir) / TASKS_DIRNAME
+
+
+def report_packet_dir(
     namespace: str,
     *,
     context_dir: str | Path | None = None,
     date_suffix: str | None = None,
 ) -> Path:
-    """Return ``<context>/workspace/<namespace-slug>-<YYYYMMDD>/``.
-
-    Used by estate collect/analyze defaults. Pass ``context_dir`` to override the
-    project-local root (default: :data:`DEFAULT_CONTEXT_DIR`).
-    """
-    root = Path(context_dir) if context_dir is not None else default_context_dir()
-    suffix = date_suffix if date_suffix is not None else workspace_date_suffix()
-    return workspace_dir(root) / f"{namespace_path_slug(namespace)}-{suffix}"
+    """Default executive HTML packet directory."""
+    return reports_dir(context_dir) / tenant_day_slug(
+        namespace, date_suffix=date_suffix
+    )
 
 
-def sdk_dir(context_dir: str | Path) -> Path:
-    """Return materialized SDK agent bundle path under context."""
-    return Path(context_dir) / SDK_DIRNAME
+def task_session_dir(
+    namespace: str,
+    *,
+    context_dir: str | Path | None = None,
+    date_suffix: str | None = None,
+) -> Path:
+    """Return ``tasks/<slug>-<YYYY-MM-DD>/``."""
+    return tasks_dir(context_dir) / tenant_day_slug(namespace, date_suffix=date_suffix)
 
 
-def platform_dir(context_dir: str | Path) -> Path:
-    """Return platform downloads root under context."""
-    return Path(context_dir) / PLATFORM_DIRNAME
+def task_activity_dir(
+    namespace: str,
+    activity: str,
+    *,
+    context_dir: str | Path | None = None,
+    date_suffix: str | None = None,
+) -> Path:
+    """Return ``tasks/<slug>-<YYYY-MM-DD>/<activity>/``."""
+    from endorlabs.core.exceptions import WorkspaceLayoutError
+
+    segment = activity.strip()
+    if not segment or "/" in segment or "\\" in segment:
+        raise WorkspaceLayoutError(
+            f"activity={activity!r} must be a single path segment "
+            "(endor-workspace-layout)."
+        )
+    return (
+        task_session_dir(namespace, context_dir=context_dir, date_suffix=date_suffix)
+        / segment
+    )
 
 
-def platform_openapi_path(context_dir: str | Path) -> Path:
-    """Canonical OpenAPI spec path after init."""
-    return platform_dir(context_dir) / PLATFORM_OPENAPI_DIRNAME / OPENAPI_FILENAME
+def flat_task_dir(
+    activity: str,
+    *,
+    context_dir: str | Path | None = None,
+) -> Path:
+    """Return ``tasks/<activity>/`` when no tenant-day bucket applies."""
+    from endorlabs.core.exceptions import WorkspaceLayoutError
+
+    segment = activity.strip()
+    if not segment or "/" in segment or "\\" in segment:
+        raise WorkspaceLayoutError(
+            f"activity={activity!r} must be a single path segment "
+            "(endor-workspace-layout)."
+        )
+    return tasks_dir(context_dir) / segment
 
 
-def workspace_dir(context_dir: str | Path) -> Path:
-    """Return workspace root for generated run artifacts."""
-    return Path(context_dir) / WORKSPACE_DIRNAME
+def default_reports_subdir(
+    subcommand: str,
+    *,
+    context_dir: str | Path | None = None,
+) -> Path:
+    """Return ``reports/<subcommand>/`` for tabular or canvas report outputs."""
+    from endorlabs.core.exceptions import WorkspaceLayoutError
+
+    segment = subcommand.strip()
+    if not segment or "/" in segment or "\\" in segment:
+        raise WorkspaceLayoutError(
+            f"subcommand={subcommand!r} must be a single path segment "
+            "(endor-workspace-layout)."
+        )
+    return reports_dir(context_dir) / segment
 
 
-def project_workspace_dir(context_dir: str | Path, project_uuid: str) -> Path:
-    """Return workspace directory for a project UUID."""
-    return workspace_dir(context_dir) / "projects" / project_uuid
+def project_workspace_dir(
+    project_uuid: str,
+    *,
+    namespace: str | None = None,
+    context_dir: str | Path | None = None,
+    date_suffix: str | None = None,
+) -> Path:
+    """Return project-scoped path under ``tasks/<slug>-<date>/projects/<uuid>``."""
+    if namespace:
+        base = task_activity_dir(
+            namespace,
+            "projects",
+            context_dir=context_dir,
+            date_suffix=date_suffix,
+        )
+    else:
+        base = flat_task_dir("projects", context_dir=context_dir)
+    return base / project_uuid
 
 
-def context_json_path(context_dir: str | Path) -> Path:
-    """Return path to init manifest JSON."""
-    return Path(context_dir) / CONTEXT_JSON_FILENAME
-
-
-def load_context_json(context_dir: str | Path) -> dict[str, Any] | None:
+def load_context_json(context_dir: str | Path | None = None) -> dict[str, Any] | None:
     """Load context.json when present."""
     path = context_json_path(context_dir)
     if not path.is_file():
@@ -91,13 +187,13 @@ def load_context_json(context_dir: str | Path) -> dict[str, Any] | None:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def resolve_openapi_spec_path(context_dir: str | Path) -> Path | None:
-    """Resolve OpenAPI spec path under platform layout."""
+def resolve_openapi_spec_path(context_dir: str | Path | None = None) -> Path | None:
+    """Resolve OpenAPI spec path under ``_cache``."""
     path = platform_openapi_path(context_dir)
     return path if path.is_file() else None
 
 
-def require_openapi_spec(context_dir: str | Path) -> Path:
+def require_openapi_spec(context_dir: str | Path | None = None) -> Path:
     """Return the OpenAPI path or raise :class:`LocalContextError` if absent."""
     from endorlabs.core.exceptions import LocalContextError
 
@@ -114,68 +210,6 @@ def require_openapi_spec(context_dir: str | Path) -> Path:
     )
 
 
-def _context_root(context_dir: str | Path | None) -> Path:
-    return Path(context_dir) if context_dir is not None else default_context_dir()
-
-
-def workflow_projects_root(context_dir: str | Path | None = None) -> Path:
-    """Default base directory for project-scoped workflow artifacts."""
-    return workspace_dir(_context_root(context_dir)) / "projects"
-
-
-def workflow_sessions_root(
-    context_dir: str | Path | None = None,
-    *,
-    user: str | None = None,
-    subdir: str | None = None,
-) -> Path:
-    """Legacy session layout under ``workspace/sessions/``.
-
-    Prefer :func:`default_runs_dir` for new workflow output. This helper remains for
-    callers not yet migrated to the ``workspace/runs/<run-bucket>/`` layout.
-    """
-    base = workspace_dir(_context_root(context_dir)) / "sessions"
-    if user:
-        base = base / user
-    if subdir:
-        base = base / subdir
-    return base
-
-
-def default_runs_dir(
-    run_bucket: str,
-    context_dir: str | Path | None = None,
-) -> Path:
-    """Return ``workspace/runs/<run-bucket>/`` for ephemeral workflow artifacts.
-
-    ``run_bucket`` is a fixed, authored string (catalog ``workflow_id`` or skill id
-    minus ``endor-``). It is not generated at runtime and must not be a timestamp.
-    """
-    from endorlabs.core.exceptions import WorkspaceLayoutError
-
-    bucket = run_bucket.strip()
-    # Timestamps: YYYYMMDD, YYYYMMDDTHHMMSS, YYYYMMDDTHHMMSSZ
-    if re.fullmatch(r"\d{8}(T\d{6}Z?)?", bucket):
-        raise WorkspaceLayoutError(
-            f"run_bucket={bucket!r} looks like a timestamp. Use a fixed catalog "
-            "workflow id or skill id (e.g. 'troubleshooting-scans'), and write "
-            "under .endorlabs-context/workspace/runs/<bucket>/ "
-            "(endor-workspace-layout)."
-        )
-    if not bucket or "/" in bucket or "\\" in bucket:
-        raise WorkspaceLayoutError(
-            f"run_bucket={run_bucket!r} must be a single path segment (catalog "
-            "workflow_id or skill id minus 'endor-'), not a nested path "
-            "(endor-workspace-layout)."
-        )
-    return workspace_dir(_context_root(context_dir)) / "runs" / bucket
-
-
-def workflow_inventory_root(context_dir: str | Path | None = None) -> Path:
-    """Return ``workspace/inventory/`` for namespace-scoped inventory artifacts."""
-    return workspace_dir(_context_root(context_dir)) / "inventory"
-
-
 def sanitize_path_segment(value: str) -> str:
     """Normalize a namespace or tenant segment for use in filesystem paths."""
     cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip())
@@ -183,11 +217,7 @@ def sanitize_path_segment(value: str) -> str:
 
 
 def resolve_session_user_slug(client: Any) -> str:
-    """Derive a short session slug from ``Client().whoami()`` for metadata only.
-
-    Default run paths do not include this slug; use for JSON summaries when needed.
-    Fallback is ``agent``.
-    """
+    """Derive a short session slug from ``Client().whoami()`` for metadata only."""
     try:
         whoami = client.whoami()
     except Exception:
@@ -200,31 +230,33 @@ def resolve_session_user_slug(client: Any) -> str:
 
 
 __all__ = [
+    "CACHE_DIRNAME",
     "CONTEXT_JSON_FILENAME",
     "DEFAULT_CONTEXT_DIR",
     "GITIGNORE_ENTRY",
     "OPENAPI_FILENAME",
-    "PLATFORM_DIRNAME",
-    "PLATFORM_OPENAPI_DIRNAME",
+    "REPORTS_DIRNAME",
     "SDK_DIRNAME",
-    "WORKSPACE_DIRNAME",
+    "TASKS_DIRNAME",
+    "cache_dir",
     "context_json_path",
     "default_context_dir",
-    "default_runs_dir",
+    "default_reports_subdir",
+    "flat_task_dir",
     "load_context_json",
     "namespace_path_slug",
-    "platform_dir",
     "platform_openapi_path",
     "project_workspace_dir",
+    "report_packet_dir",
+    "reports_dir",
     "require_openapi_spec",
     "resolve_openapi_spec_path",
     "resolve_session_user_slug",
     "sanitize_path_segment",
     "sdk_dir",
-    "workflow_inventory_root",
-    "workflow_projects_root",
-    "workflow_sessions_root",
-    "workspace_date_suffix",
-    "workspace_dir",
-    "workspace_dir_for",
+    "task_activity_dir",
+    "task_session_dir",
+    "tasks_dir",
+    "tenant_day_slug",
+    "tenant_day_suffix",
 ]

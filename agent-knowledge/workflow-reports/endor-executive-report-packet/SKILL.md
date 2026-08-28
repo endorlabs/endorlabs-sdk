@@ -23,14 +23,14 @@ endorlabs:
 Build a **self-contained HTML packet** for a tenant or namespace: organization
 onboarding (registration + ScanResult MAIN/CI cadence), dependency version
 sprawl, FindingLog CREATE/DELETE burndown (SCA + SAST/AI-SAST/Secrets), and
-optional Endor Patches (`--patches` / `--patches-only`).
+optional Endor Patches (`--patches` or `endor-reports patches`).
 
 ## Scope
 
 **In scope**
 
 - Tenant/namespace executive HTML under
-  `.endorlabs-context/workspace/runs/executive-report-packet/<tenant>-executive-packet-MMDDYY/`.
+  `.endorlabs/reports/<slug>-<YYYY-MM-DD>/`.
 - Project tag discovery from `Project.meta.tags` (full catalog; no allowlists).
 - Onboarding scan cadence: weekly MAIN `TYPE_ALL_SCANS` + `CONTEXT_TYPE_CI_RUN`
   (analytics off by default); tag/project leaderboards by cadence.
@@ -57,36 +57,42 @@ Then pass the **customer** namespace only on the report command (never commit
 customer names in tracked files):
 
 ```bash
-uv run --env-file .env-admin endor-reports packet -n <tenant>
+uv run --env-file .env-admin endor-reports -n <tenant>
 ```
 
 ## Default command
 
 ```bash
-uv run --env-file .env endor-reports packet -n <tenant>
+uv run --env-file .env endor-reports -n <tenant>
 ```
+
+Equivalent explicit subcommand: `endor-reports build -n <tenant>`.
 
 Optional flags:
 
 - `--lookback 13` — FindingLog weeks
 - `--min-projects 1` — display filter: omit tags with fewer tagged projects
 - `--workers 24` — parallel FindingLog matrix pulls for tagged projects
-- `--output-dir <path>` — override default runs bucket
-- `--date-suffix 082126` — override today's MMDDYY on default dirs
-  (`<tenant>-executive-packet-MMDDYY/` or `--patches-only` `<tenant>-MMDDYY/`)
+- `--output-dir <path>` — override default output directory
+- `--date-suffix 2026-08-28` — override today's UTC date on default dirs
+  (`.endorlabs/reports/<slug>-<YYYY-MM-DD>/` or patches-only
+  `.endorlabs/reports/patches/<slug>-<YYYY-MM-DD>/`)
 - `--skip-version-sprawl` / `--skip-findings-burndown` / `--skip-code-findings-burndown` —
   partial packets (omit slices from a full packet run)
 - `--patches` — opt-in Endor Patches page (Finding list); omitted by default
-- `--patches-only` — Endor Patches page only (Finding list); default output
-  `.endorlabs-context/workspace/runs/patches-reports/<tenant>-MMDDYY/`. Writes
-  only `05-endor-patches.html` + `patches-*.csv`; pages 01–04 are not emitted.
+- Patches-only campaign: `endor-reports patches -n <tenant>` (default output
+  `.endorlabs/reports/patches/<slug>-<YYYY-MM-DD>/`). Writes only
+  `05-endor-patches.html` + `patches-*.csv`; pages 01–04 are not emitted.
+- Refresh code burndown only: `endor-reports refresh-code --packet-dir <path>`
+
+Deprecated (one release): `endor-reports packet` and `endor-reports upsert-code-findings`.
 On a live slice failure (e.g. FindingLog timeout), HTML still writes; cube
 `dataGaps` / `reportsMeta` name the failed slice; CLI exits `1`.
 
 ## Scratch parity (gitignored baselines)
 
 Compare a fresh packet cube to prior session JSON under
-`.endorlabs-context/workspace/runs/scratch/` (never commit customer baselines).
+`.endorlabs/tasks/scratch/` (never commit customer baselines).
 
 Set baseline paths via **environment only** (PowerShell example):
 
@@ -106,7 +112,7 @@ uv run --env-file .env-admin endor-reports parity \
   --baseline-adoption <path> \
   --baseline-sprawl <path> \
   --baseline-burndown <path> \
-  --output-dir .endorlabs-context/workspace/runs/report-parity/
+  --output-dir .endorlabs/tasks/parity/
 ```
 
 Writes `packet/` (fresh HTML + cube) and `compare-summary.json` (metric deltas

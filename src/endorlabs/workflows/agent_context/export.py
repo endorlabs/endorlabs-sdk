@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.context.paths import workflow_projects_root
+from endorlabs.context.paths import task_activity_dir
 from endorlabs.utils.artifact_io import slugify, write_json
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
@@ -130,9 +130,13 @@ def parse_args() -> argparse.Namespace:
         )
     )
     p.add_argument(
+        "-n",
         "--tenant",
         required=True,
-        help="Client tenant (auth context), e.g. endor from ENDOR_NAMESPACE root.",
+        help=(
+            "Client tenant (auth context). Use --namespace to override "
+            "project resolution scope (default: same as --tenant)."
+        ),
     )
     p.add_argument(
         "--namespace",
@@ -146,8 +150,11 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--output-dir",
-        default=str(workflow_projects_root()),
-        help=(f"Base output directory. Default: {workflow_projects_root().as_posix()}"),
+        default=None,
+        help=(
+            "Base output directory. Default: "
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/projects/"
+        ),
     )
     p.add_argument(
         "--pv-limit",
@@ -298,7 +305,12 @@ def main() -> int:
 
         ts = datetime.now(UTC).strftime("%Y%m%d-%H%M%SZ")
         slug = slugify(project_name)
-        bundle = Path(args.output_dir) / f"{slug}_{ts}"
+        output_base = (
+            Path(args.output_dir)
+            if args.output_dir
+            else task_activity_dir(ns, "projects")
+        )
+        bundle = output_base / f"{slug}_{ts}"
         bundle.mkdir(parents=True, exist_ok=True)
 
         run_index = bool(args.pv_index) or bool(args.hydrate_top_n)

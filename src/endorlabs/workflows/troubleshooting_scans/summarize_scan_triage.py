@@ -10,7 +10,7 @@ from typing import Any, cast
 from endorlabs.workflows.wire_access import as_dict, dict_str, nested_dict, nested_str
 
 from .common import (
-    default_troubleshooting_output_dir,
+    resolve_troubleshooting_output_dir,
     root_tenant,
     write_json,
     write_text,
@@ -70,8 +70,11 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--output-dir",
-        default=default_troubleshooting_output_dir(),
-        help="Output directory",
+        default=None,
+        help=(
+            "Directory for generated artifacts (default: "
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/)."
+        ),
     )
     p.add_argument("--timestamped", action="store_true")
     return p
@@ -519,8 +522,9 @@ def main() -> int:
 
     scan_uuid_out = scan_uuid or "unknown-scan"
     root = root_tenant(args.tenant)
+    output_dir = resolve_troubleshooting_output_dir(args.tenant, args.output_dir)
     out_path = write_text(
-        output_dir=Path(args.output_dir),
+        output_dir=output_dir,
         root_tenant_name=root,
         object_kind="scan_triage",
         object_uuid=scan_uuid_out,
@@ -530,7 +534,7 @@ def main() -> int:
         timestamped=args.timestamped,
     )
     evidence_path = write_json(
-        output_dir=Path(args.output_dir),
+        output_dir=output_dir,
         root_tenant_name=root,
         object_kind="scan_triage_evidence",
         object_uuid=scan_uuid_out,

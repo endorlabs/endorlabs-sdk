@@ -6,6 +6,15 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ## Unreleased
 
+### Breaking
+
+- **Local layout:** `.endorlabs-context/` is replaced by flat `.endorlabs/` with `_cache/` (SDK, OpenAPI, `context.json`), `reports/` (CSV/HTML deliverables), and `tasks/<slug>-<YYYY-MM-DD>/<activity>/` (session work). Update gitignore (`uv run endor-context --print-gitignore-line`), `init()` paths, and any hard-coded artifact locations. Executive packet defaults: `.endorlabs/reports/<slug>-<YYYY-MM-DD>/`; patches-only: `.endorlabs/reports/patches/<slug>-<YYYY-MM-DD>/`. Date suffixes use UTC `YYYY-MM-DD` (not `MMDDYY` / `YYYYMMDD`).
+
+### Changed
+
+- **`endor-reports` CLI ergonomics:** `-n` may appear before or after subcommands; `ENDOR_NAMESPACE` fallback; new `list` subcommand; grouped `--help` epilog. Several workflow CLIs add `-n` as alias for `--tenant`; reachability defaults `--namespace` to `--tenant`.
+- Repo `.gitignore` and consumer guidance use `.endorlabs/` (was `.endorlabs-context/`).
+
 ### Added
 
 - `SECURITY.md` — vulnerability reporting policy and supported versions.

@@ -92,7 +92,7 @@ def test_git_diff_dirty_reports_when_diff_nonzero() -> None:
 
 
 def _write_skip_upstream_fixtures(root: Path) -> None:
-    spec = root / ".endorlabs-context/platform/openapi/openapiv2.swagger.json"
+    spec = root / ".endorlabs/_cache/openapi.json"
     spec.parent.mkdir(parents=True)
     spec.write_text("{}", encoding="utf-8")
     regen = root / "src/endorlabs/generated/registry_contract.py"

@@ -32,6 +32,15 @@ rules live in [errors-and-auth](../../contracts/errors-and-auth.md).
 
 **SSO tenant precedence** (refresh + reauth): `endor-auth refresh -n` → `ENDOR_NAMESPACE` (shell, then `.env`) → `ENDOR_NAMESPACE` in endorctl `config.yaml` (via `ENDOR_CONFIG_PATH`).
 
+### SSO root segment vs fully qualified `-n` elsewhere
+
+| Surface | `-n example-tenant.child` behavior |
+|---------|---------------------------|
+| `endor-auth refresh` / SSO reauth | Uses **root segment only** (`tenant`) for the IdP login tenant |
+| `endor-reports`, `endor-estate`, `endor-log-export`, … | Uses the **full path** for `Client(tenant=…)`, list scope, and output slug (`tenant_child-YYYY-MM-DD`) |
+
+Do not assume a child namespace passed to `endor-auth refresh` becomes the API list path — set `ENDOR_NAMESPACE` or pass `-n` on the workflow CLI you run after auth.
+
 **Single auth mode:** never set `ENDOR_TOKEN` and both API key vars (same rule as endorctl). No `ENDOR_AUTH_MODE` env — unset one credential set or pass `auth_method=` to `Client(...)` in code.
 
 **Do not document or invent:** `ENDOR_AUTH_TENANT`, `ENDOR_AUTH_MODE`, `ENDOR_AUTH_METHOD`, `ENDOR_BROWSER`, `ENDOR_AUTH_INTERACTIVE`, `ENDOR_AUTH_PERSIST_TOKEN`, `ENDOR_TOKEN_REFRESH_METHOD`.

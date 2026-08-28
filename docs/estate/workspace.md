@@ -5,7 +5,7 @@ Schema: `endor.workspace_collect.v1` in `data/collect_manifest.json`.
 ## Directory tree
 
 ```text
-.endorlabs-context/workspace/<namespace_slug>-<YYYYMMDD>/
+.endorlabs/tasks/<namespace_slug>-<YYYY-MM-DD>/estate/
   data/
     collect_manifest.json
     project.jsonl
@@ -39,16 +39,16 @@ Validation (`validate_workspace_collect`) ensures manifest keys match JSONL line
 
 ```bash
 # Pull all resources (project, dependency_metadata, finding, package_version)
-uv run --env-file .env endor-estate pull -n tenant.example
+uv run --env-file .env endor-estate pull -n example-tenant.example
 
 # Resume partial pull
-uv run endor-estate pull -n tenant.example --workspace .endorlabs-context/workspace/tenant_example-20260608 --resume
+uv run endor-estate pull -n example-tenant.example --workspace .endorlabs/tasks/example_tenant_example-2026-06-08/estate --resume
 
 # Analyze (disk-only IR + dashboard)
-uv run endor-estate analyze -n tenant.example --workspace .endorlabs-context/workspace/tenant_example-20260608
+uv run endor-estate analyze -n example-tenant.example --workspace .endorlabs/tasks/example_tenant_example-2026-06-08/estate
 
 # Summarize IR
-uv run endor-estate summarize -n tenant.example --workspace ...
+uv run endor-estate summarize -n example-tenant.example --workspace ...
 ```
 
 ## Resource alignment

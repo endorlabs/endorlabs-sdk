@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.context.paths import default_runs_dir
+from endorlabs.context.paths import default_reports_subdir
 from endorlabs.filters import prd_vuln_filter, prf_vuln_filter, pv_main_context_filter
 from endorlabs.workflows.findings.prf_analysis import (
     ECO_LABEL,
@@ -27,7 +27,7 @@ from endorlabs.workflows.findings.prf_analysis import (
 PRF_BASE = prf_vuln_filter()
 PRD_BASE = prd_vuln_filter()
 PV_MAIN = pv_main_context_filter()
-RUN_BUCKET = "potentially-reachable-analysis"
+RUN_BUCKET = "prf-analysis"
 
 
 def parse_best_match(item: dict[str, Any] | None) -> dict[str, str]:
@@ -368,10 +368,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=default_runs_dir(RUN_BUCKET),
+        default=default_reports_subdir(RUN_BUCKET),
         help=(
-            "Directory for {tenant}-prf-analysis.json "
-            "(default: workspace/runs/potentially-reachable-analysis/)."
+            f"Directory for {{tenant}}-prf-analysis.json "
+            f"(default: {default_reports_subdir(RUN_BUCKET).as_posix()}/)."
         ),
     )
     parser.add_argument(

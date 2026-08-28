@@ -7,17 +7,33 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from endorlabs.context.paths import default_runs_dir
+from endorlabs.context.paths import flat_task_dir, task_activity_dir
 from endorlabs.utils.artifact_io import write_json as write_json_file
 from endorlabs.utils.path_safety import safe_write_text
 
-RUN_BUCKET = "troubleshooting-scans"
+RUN_BUCKET = "troubleshooting"
 
 
-def default_troubleshooting_output_dir(*, user: str | None = None) -> str:
-    """Default RCA/triage directory under ``workspace/runs/troubleshooting-scans/``."""
-    _ = user  # legacy param; user slug no longer in path
-    return str(default_runs_dir(RUN_BUCKET))
+def resolve_troubleshooting_output_dir(
+    namespace: str | None,
+    output_dir: str | Path | None = None,
+) -> Path:
+    """Resolve RCA output directory under ``tasks/<slug>-<date>/troubleshooting/``."""
+    if output_dir:
+        return Path(output_dir)
+    if namespace and str(namespace).strip():
+        return task_activity_dir(str(namespace).strip(), RUN_BUCKET)
+    return flat_task_dir(RUN_BUCKET)
+
+
+def default_troubleshooting_output_dir(
+    namespace: str | None = None,
+    *,
+    user: str | None = None,
+) -> str:
+    """Default RCA directory (requires namespace for tenant-day bucket)."""
+    _ = user
+    return str(resolve_troubleshooting_output_dir(namespace))
 
 
 def iso_now_compact() -> str:

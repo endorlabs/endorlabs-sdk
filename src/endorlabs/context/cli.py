@@ -34,7 +34,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--sync-openapi",
         action="store_true",
         dest="include_openapi",
-        help="Download OpenAPI spec to platform/openapi/.",
+        help="Download OpenAPI spec to _cache/openapi.json.",
     )
 
     _ = parser.add_argument(

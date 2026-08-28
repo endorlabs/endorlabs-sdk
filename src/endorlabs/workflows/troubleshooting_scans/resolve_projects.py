@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 from typing import Any
 
 from endorlabs.client_surface import Client
 from endorlabs.workflows.wire_access import dict_str
 
 from .common import (
-    default_troubleshooting_output_dir,
     match_projects,
     object_to_dict,
+    resolve_troubleshooting_output_dir,
     root_tenant,
     write_json,
 )
@@ -27,7 +26,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--project-name")
     parser.add_argument("--project-url")
     parser.add_argument("--project-name-regex")
-    parser.add_argument("--output-dir", default=default_troubleshooting_output_dir())
+    parser.add_argument(
+        "--output-dir",
+        default=None,
+        help=(
+            "Directory for generated artifacts (default: "
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/)."
+        ),
+    )
     parser.add_argument("--timestamped", action="store_true")
     return parser
 
@@ -48,7 +54,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         project_name_regex=args.project_name_regex,
     )
     root = root_tenant(ns)
-    output_dir = Path(args.output_dir)
+    output_dir = resolve_troubleshooting_output_dir(
+        args.tenant or args.namespace, args.output_dir
+    )
 
     object_uuid = dict_str(selected[0], "uuid") if selected else "no-match"
 

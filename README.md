@@ -211,7 +211,7 @@ Bearer sessions are **in-memory only**: load `ENDOR_TOKEN` once (or `token=` on 
 | Need | Approach |
 | ---- | -------- |
 | INDEX, contracts, traps, stub path — **no cwd writes** | `print(endorlabs.discover())` or `python -m endorlabs.examples.agent_bootstrap --dry-run` — then read every `bootstrap_paths` entry |
-| Skill playbooks on disk (call graph, scan RCA, bundles) | `endorlabs.init()` → `.endorlabs-context/sdk/skills/<id>/SKILL.md` |
+| Skill playbooks on disk (call graph, scan RCA, bundles) | `endorlabs.init()` → `.endorlabs/_cache/sdk/skills/<id>/SKILL.md` |
 | Platform OpenAPI | `init(include_openapi=True)` (auth required). Product docs: [Docs MCP](https://docs.endorlabs.com/introduction/docs-mcp-server) (or [llms.txt](https://docs.endorlabs.com/llms.txt)) |
 
 Runnable probe (paths only): `python -m endorlabs.examples.agent_bootstrap --dry-run`. Shipped consumer guide: `discover().agents_guide`.
@@ -220,13 +220,13 @@ Runnable probe (paths only): `python -m endorlabs.examples.agent_bootstrap --dry
 
 ### AI agents
 
-Before `Client()`, run `print(endorlabs.discover())` (or `agent_bootstrap --dry-run`) and read every path in `bootstrap_paths`. Before **workflow** tasks (call graph, project bundle, scan RCA), run `endorlabs.init()` and open the relevant skill under `.endorlabs-context/sdk/skills/`.
+Before `Client()`, run `print(endorlabs.discover())` (or `agent_bootstrap --dry-run`) and read every path in `bootstrap_paths`. Before **workflow** tasks (call graph, project bundle, scan RCA), run `endorlabs.init()` and open the relevant skill under `.endorlabs/_cache/sdk/skills/`.
 
 Browser auth, SSO setup, and skill walkthroughs: [docs/guides/examples.md](docs/guides/examples.md). Credential probe and refresh: `uv run endor-auth check` / `endor-auth refresh` (skill **endor-auth-setup**).
 
 ## Try it with skills
 
-Guided tenant sessions use shipped agent skills — start with [docs/guides/examples.md](docs/guides/examples.md). Wheel entry: `print(endorlabs.discover())` or `agent_bootstrap --dry-run`; materialize with `init()` to `.endorlabs-context/sdk/`.
+Guided tenant sessions use shipped agent skills — start with [docs/guides/examples.md](docs/guides/examples.md). Wheel entry: `print(endorlabs.discover())` or `agent_bootstrap --dry-run`; materialize with `init()` to `.endorlabs/_cache/sdk/`.
 
 ## Further reading
 

@@ -12,7 +12,7 @@ from endorlabs.context._project_context import GITIGNORE_ENTRY
 def test_parse_args_defaults() -> None:
     """CLI defaults map to init defaults."""
     parsed = context_cli._parse_args([])
-    assert parsed.output_dir == ".endorlabs-context"
+    assert parsed.output_dir == ".endorlabs"
     assert parsed.include_openapi is False
     assert parsed.force is False
     assert parsed.sync_skills == "none"

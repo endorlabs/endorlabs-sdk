@@ -22,11 +22,12 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from endorlabs.context.paths import platform_openapi_path
+
 logger = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SPEC_URL = "https://api.endorlabs.com/download/openapiv2.swagger.json"
-SPEC_REL = Path(".endorlabs-context/platform/openapi/openapiv2.swagger.json")
 CHANGELOG_REL = Path("docs/changelog.md")
 
 SHIP_GIT_PATHS: tuple[str, ...] = (
@@ -129,7 +130,7 @@ def run_verify(
 ) -> int:
     """Run the full ship-artifact verification pipeline. Return exit code."""
     base = root or repo_root()
-    spec_path = base / SPEC_REL
+    spec_path = base / platform_openapi_path()
 
     if verify_changelog:
         changelog_err = verify_changelog_version(verify_changelog, root=base)

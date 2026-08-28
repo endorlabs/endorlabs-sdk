@@ -12,7 +12,7 @@
 | You need | Go to |
 | -------- | ----- |
 | Install and first API calls | [README.md](README.md) |
-| Skill playbooks | Wheel or `.endorlabs-context/sdk/INDEX.md` → `skills/<id>/SKILL.md` |
+| Skill playbooks | Wheel or `.endorlabs/_cache/sdk/INDEX.md` → `skills/<id>/SKILL.md` |
 | Bootstrap depth (SDK-only vs `init()`) | [Bootstrap](#bootstrap) below · [CONTRIBUTORS.md — Optional: SDK bootstrap and OpenAPI](CONTRIBUTORS.md#optional-sdk-bootstrap-and-openapi) |
 | Repo regions and gitignored paths | [docs/contributing/repository-layout.md](docs/contributing/repository-layout.md) |
 | Extend the SDK surface | [docs/contributing/architecture.md](docs/contributing/architecture.md) · skill **endor-implement-sdk-resource** |
@@ -23,9 +23,9 @@
 
 **Default:** `endorlabs.Client(...)` without `init()` — sufficient for API calls and `endorlabs.workflows` CLIs.
 
-**Bootstrap when:** the agent reads skills/rules/contracts from disk, greps offline OpenAPI, or writes under `.endorlabs-context/workspace/`. See [Bootstrap](#bootstrap).
+**Bootstrap when:** the agent reads skills/rules/contracts from disk, greps offline OpenAPI, or writes under `.endorlabs/` (`reports/`, `tasks/`). See [Bootstrap](#bootstrap).
 
-Shipped bootstrap rules (`endor-namespace-scoping`, `endor-list-query-performance`, `endor-workspace-layout`, …) expand namespace, list, and workspace topics — load via `agent_knowledge_bootstrap_paths()` or `.endorlabs-context/sdk/rules/`.
+Shipped bootstrap rules (`endor-namespace-scoping`, `endor-list-query-performance`, `endor-workspace-layout`, …) expand namespace, list, and workspace topics — load via `agent_knowledge_bootstrap_paths()` or `.endorlabs/_cache/sdk/rules/`.
 
 ## Agent notes
 
@@ -52,7 +52,7 @@ Prefer these before assuming full-tenant sweeps or hand-built relationship filte
 
 | Need | Approach |
 | ---- | -------- |
-| API + workflow CLIs | **SDK-only** — no `.endorlabs-context/` |
+| API + workflow CLIs | **SDK-only** — no `.endorlabs/` |
 | INDEX / MANIFEST / skills without cwd writes | `agent_knowledge_index_path()`, `agent_knowledge_manifest()` (wheel) |
 | Cwd-relative skills + optional OpenAPI | `endorlabs.init()` or `uv run endor-context` |
 | IDE skill mirrors | `init(sync_skills="cursor")` / `"claude"` / `"both"` after SDK bootstrap |
@@ -61,11 +61,11 @@ Pick the shallowest depth:
 
 1. **SDK-only** — `Client(...)` only.
 2. **Wheel-only** — `agent_knowledge_index_path()` → `INDEX.md`; `agent_knowledge_manifest()` for skill paths. No auth, no cwd writes.
-3. **SDK bootstrap** — `init()` copies agent knowledge to `.endorlabs-context/sdk/` by default. Optional OpenAPI goes under `.endorlabs-context/platform/openapi/`. Product docs: Docs MCP (`https://docs.endorlabs.com/mcp`); unsupported harnesses: [llms.txt](https://docs.endorlabs.com/llms.txt). Full option list: [CONTRIBUTORS.md — Optional: SDK bootstrap and OpenAPI](CONTRIBUTORS.md#optional-sdk-bootstrap-and-openapi).
+3. **SDK bootstrap** — `init()` copies agent knowledge to `.endorlabs/_cache/sdk/` by default. Optional OpenAPI goes under `.endorlabs/_cache/openapi.json`. Product docs: Docs MCP (`https://docs.endorlabs.com/mcp`); unsupported harnesses: [llms.txt](https://docs.endorlabs.com/llms.txt). Full option list: [CONTRIBUTORS.md — Optional: SDK bootstrap and OpenAPI](CONTRIBUTORS.md#optional-sdk-bootstrap-and-openapi).
 
-After SDK bootstrap, read **INDEX.md** → **MANIFEST.json** → `skills/<id>/SKILL.md`. Non-Cursor harnesses: prepend `agent_knowledge_bootstrap_paths()`. Workflow outputs: `.endorlabs-context/workspace/` (shipped rule `rules/endor-workspace-layout.md`).
+After SDK bootstrap, read **INDEX.md** → **MANIFEST.json** → `skills/<id>/SKILL.md`. Non-Cursor harnesses: prepend `agent_knowledge_bootstrap_paths()`. Workflow outputs: `.endorlabs/reports/` and `.endorlabs/tasks/` (shipped rule `rules/endor-workspace-layout.md`).
 
-Consumer projects should **gitignore** `.endorlabs-context/`. Print the entry: `uv run endor-context --print-gitignore-line`. Agents must **ask the user** to add it — do not edit `.gitignore` automatically.
+Consumer projects should **gitignore** `.endorlabs/`. Print the entry: `uv run endor-context --print-gitignore-line`. Agents must **ask the user** to add it — do not edit `.gitignore` automatically.
 
 ### Agent knowledge naming
 
@@ -73,7 +73,7 @@ Consumer projects should **gitignore** `.endorlabs-context/`. Print the entry: `
 | ----- | ------------- |
 | Authoring (repo) | `agent-knowledge/` |
 | Shipped (wheel) | `src/endorlabs/agent_knowledge/` → `endorlabs.agent_knowledge` |
-| Materialized (runtime) | `.endorlabs-context/sdk/` |
+| Materialized (runtime) | `.endorlabs/_cache/sdk/` |
 
 Maintainers editing authoring: `uv run python devtools/codegen/sync_agent_knowledge.py` — see [repository-layout.md](docs/contributing/repository-layout.md).
 
@@ -94,17 +94,17 @@ Maintainers editing authoring: `uv run python devtools/codegen/sync_agent_knowle
 | [`src/endorlabs/workflows/`](src/endorlabs/workflows/) | Executable workflows + console scripts |
 | [`src/endorlabs/generated/`](src/endorlabs/generated/) | Model-sync models and registry contract |
 | [`docs/`](docs/) | Tracked public docs |
-| [`.endorlabs-context/`](.endorlabs-context/) | Gitignored — `sdk/`, `platform/`, `workspace/` |
+| [`.endorlabs/`](.endorlabs/) | Gitignored — `_cache/`, `reports/`, `tasks/` |
 
 **Workflows** = code in `src/endorlabs/workflows/`. **Skills** = playbooks in the shipped bundle. Catalog: `MANIFEST.json` → `workflows[]`. Full map: [docs/contributing/repository-layout.md](docs/contributing/repository-layout.md).
 
 ## Skills and handoffs
 
-**Discovery:** `.endorlabs-context/sdk/INDEX.md` → `MANIFEST.json` → `skills/`; or wheel via `agent_knowledge_index_path()`. Authoring index (maintainers): [agent-knowledge/README.md](agent-knowledge/README.md).
+**Discovery:** `.endorlabs/_cache/sdk/INDEX.md` → `MANIFEST.json` → `skills/`; or wheel via `agent_knowledge_index_path()`. Authoring index (maintainers): [agent-knowledge/README.md](agent-knowledge/README.md).
 
 Common entry skills: **endor-auth-setup**, **endor-retrieve-scan-results**, **endor-troubleshooting-scans**, **endor-troubleshoot-sdk**, **endor-troubleshoot-authlog**. Full list: `MANIFEST.json` → `skills[]`.
 
-Tenant / namespace **executive HTML reports** (QBR read-out, onboarding growth, sprawl, FindingLog burndown): skill **endor-workflow-reports** → `uv run endor-reports packet -n <tenant>` — see [docs/guides/executive-report-packet.md](docs/guides/executive-report-packet.md).
+Tenant / namespace **executive HTML reports** (QBR read-out, onboarding growth, sprawl, FindingLog burndown): skill **endor-workflow-reports** → `uv run endor-reports -n <tenant>` — see [docs/guides/executive-report-packet.md](docs/guides/executive-report-packet.md).
 
 Skills compose with handoffs — [agent-knowledge/schema/README.md — Skill composition](agent-knowledge/schema/README.md#skill-composition-and-handoffs).
 
@@ -116,10 +116,10 @@ Skills compose with handoffs — [agent-knowledge/schema/README.md — Skill com
 | Examples + browser auth | [docs/guides/examples.md](docs/guides/examples.md) |
 | Generated resource matrix | [docs/generated-reference/resources.md](docs/generated-reference/resources.md) |
 | SDK layers (contributors) | [docs/contributing/architecture.md](docs/contributing/architecture.md) |
-| Local OpenAPI | `.endorlabs-context/platform/openapi/` after bootstrap |
+| Local OpenAPI | `.endorlabs/_cache/openapi.json` after bootstrap |
 | Platform docs (online) | <https://docs.endorlabs.com/> |
 | Troubleshooting / surface extension | skills **endor-troubleshoot-sdk**, **endor-implement-sdk-resource** |
 
 ---
 
-Behavioral invariants also live in shipped `rules/` and `contracts/` (wheel or `.endorlabs-context/sdk/`). Maintainer setup: [CONTRIBUTORS.md](CONTRIBUTORS.md).
+Behavioral invariants also live in shipped `rules/` and `contracts/` (wheel or `.endorlabs/_cache/sdk/`). Maintainer setup: [CONTRIBUTORS.md](CONTRIBUTORS.md).

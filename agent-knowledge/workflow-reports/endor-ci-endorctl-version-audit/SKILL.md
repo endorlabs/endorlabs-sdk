@@ -44,11 +44,11 @@ Projects whose latest scan is Cloud/agentless or older than the window are exclu
 
 ### Step 1: Run the bundled script
 
-Default output: `.endorlabs-context/workspace/runs/ci-endorctl-version-audit/<tenant>-ci-endorctl-versions.csv`
+Default output: `.endorlabs/reports/ci-endorctl/<tenant>-ci-endorctl-versions.csv`
 
 ```bash
 uv run --env-file .env endor-reports ci-endorctl -n <tenant> \
-  --output .endorlabs-context/workspace/runs/ci-endorctl-version-audit/<tenant>-ci-endorctl-versions.csv
+  --output .endorlabs/reports/ci-endorctl/<tenant>-ci-endorctl-versions.csv
 ```
 
 Optional flags (forwarded to the report module):
@@ -101,7 +101,7 @@ Before finishing, confirm:
 - [ ] Every row has `latest scan execution` = `CLI`
 - [ ] Version histogram covers all included projects
 - [ ] Exclusion counts printed when projects were dropped
-- [ ] Artifacts under `.endorlabs-context/workspace/runs/ci-endorctl-version-audit/` (gitignored)
+- [ ] Artifacts under `.endorlabs/reports/ci-endorctl/` (gitignored)
 
 ## When to use this skill vs others
 

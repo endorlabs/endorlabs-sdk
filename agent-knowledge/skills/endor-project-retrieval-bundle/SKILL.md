@@ -11,7 +11,7 @@ endorlabs:
     workflow_id: agent-context
     cli: endor-agent-context
     module: endorlabs.workflows.agent_context.cli
-    default_output: .endorlabs-context/workspace/projects/<slug>_<timestamp>/
+    default_output: .endorlabs/tasks/<slug>-<YYYY-MM-DD>/projects/<slug>_<timestamp>/
     agent_visible: true
     composition: library_api
     library_entrypoints:

@@ -9,7 +9,6 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from pathlib import Path
 from typing import Any
 
 import endorlabs
@@ -19,9 +18,9 @@ from endorlabs.workflows.projects.discovery import (
 )
 
 from .common import (
-    default_troubleshooting_output_dir,
     parse_app_scan_history_url,
     parse_endor_app_url,
+    resolve_troubleshooting_output_dir,
     root_tenant,
     write_json,
 )
@@ -67,7 +66,14 @@ def _build_parser() -> argparse.ArgumentParser:
             "(routing only; --tenant still required)"
         ),
     )
-    p.add_argument("--output-dir", default=default_troubleshooting_output_dir())
+    p.add_argument(
+        "--output-dir",
+        default=None,
+        help=(
+            "Directory for generated artifacts (default: "
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/)."
+        ),
+    )
     p.add_argument("--timestamped", action="store_true")
     return p
 
@@ -118,6 +124,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     )
 
     rt = root_tenant(args.tenant)
+    output_dir = resolve_troubleshooting_output_dir(
+        args.tenant or args.namespace, args.output_dir
+    )
     client = endorlabs.Client(tenant=args.tenant)
     warnings: list[str] = []
     projects_out: list[dict[str, Any]] = []
@@ -164,7 +173,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     ),
                 }
                 path = write_json(
-                    output_dir=Path(args.output_dir),
+                    output_dir=output_dir,
                     root_tenant_name=rt,
                     object_kind="project_search",
                     object_uuid="too-many",
@@ -213,7 +222,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     }
     obj_uuid = projects_out[0].get("uuid", "resolved") if projects_out else "none"
     path = write_json(
-        output_dir=Path(args.output_dir),
+        output_dir=output_dir,
         root_tenant_name=rt,
         object_kind="project_search",
         object_uuid=str(obj_uuid)[:24],

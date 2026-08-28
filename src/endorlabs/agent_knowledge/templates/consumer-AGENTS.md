@@ -23,7 +23,7 @@ print(client.whoami())  # not Namespace.list()
 
 # 2. Workflows — skills not on dir(client)
 endorlabs.init(include_openapi=False)
-# Read .endorlabs-context/sdk/skills/<id>/SKILL.md
+# Read .endorlabs/_cache/sdk/skills/<id>/SKILL.md
 ```
 
 ## Auth (`.env`)
@@ -42,7 +42,7 @@ See INDEX.md for the full table. Most common:
 
 ## Outputs
 
-Write artifacts under `.endorlabs-context/workspace/` (gitignore this tree):
+Write artifacts under `.endorlabs/` (gitignore this tree):
 
 - `projects/` — project bundles and per-uuid reachability JSON
 - `runs/<run-bucket>/` — CSV, JSON, RCA (run bucket is fixed per skill; see INDEX)

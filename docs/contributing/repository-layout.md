@@ -8,7 +8,7 @@ Map of tracked repo regions, gitignored runtime paths, and how agent knowledge f
 | ------ | ---------- |
 | SDK consumer (pip install) | [README.md](../../README.md) — no repo checkout required |
 | Agent with shipped knowledge only | Wheel `agent_knowledge_index_path()` → `INDEX.md` / `MANIFEST.json` |
-| Agent in a consumer project | `endorlabs.init()` or `endor-context` → `.endorlabs-context/sdk/` |
+| Agent in a consumer project | `endorlabs.init()` or `endor-context` → `.endorlabs/_cache/sdk/` |
 | Agent or human in **this repo** | [AGENTS.md](../../AGENTS.md) (bootstrap + API gotchas) · this page (full map) · [CONTRIBUTORS.md](../../CONTRIBUTORS.md) (setup) |
 
 `AGENTS.md` is **repo-root only** — not shipped in the `endorlabs` wheel. Cursor and similar tools may auto-load it when the workspace is this repository.
@@ -18,10 +18,10 @@ Map of tracked repo regions, gitignored runtime paths, and how agent knowledge f
 ```text
 GIT TRACKED                          GITIGNORED (per project)
 ───────────                          ────────────────────────
-agent-knowledge/  ──sync──►         .endorlabs-context/
-  rules contracts skills               ├── sdk/          ← materialized agent bundle
-src/endorlabs/agent_knowledge/         ├── platform/     ← OpenAPI (optional)
-  (shipped in wheel)                     └── workspace/    ← workflow + session outputs
+agent-knowledge/  ──sync──►         .endorlabs/
+  rules contracts skills               ├── _cache/       ← context.json, sdk/, openapi.json
+src/endorlabs/agent_knowledge/         ├── reports/      ← endor-reports deliverables
+  (shipped in wheel)                     └── tasks/        ← session work (estate, troubleshooting, …)
 src/endorlabs/  (SDK + workflows)
 docs/  (public docs)
 devtools/  (maintainer automation)
@@ -29,7 +29,7 @@ devtools/  (maintainer automation)
 .cursor/skills/  (optional IDE skill mirror)
 ```
 
-**Runtime read rule:** at execution time, read the **wheel** or **`.endorlabs-context/sdk/`** — not repo `agent-knowledge/` (authoring only).
+**Runtime read rule:** at execution time, read the **wheel** or **`.endorlabs/_cache/sdk/`** — not repo `agent-knowledge/` (authoring only).
 
 ## Top-level regions
 
@@ -44,27 +44,24 @@ devtools/  (maintainer automation)
 | [`docs/`](../../docs/) | Tracked public docs — contracts, guides, contributing, generated reference |
 | [`tests/`](../../tests/) | `unit/` (client, workflows, platform, tooling) · `integration/` (client, resources, workflows) |
 | [`.github/workflows/`](../../.github/workflows/) | CI, model-sync verify, PyPI release |
-| [`.endorlabs-context/`](../../.endorlabs-context/) | Local runtime root (see below) |
+| [`.endorlabs/`](../../.endorlabs/) | Local runtime root (see below) |
 | [`.cursor/skills/`](../../.cursor/skills/) | Optional IDE skill mirror after `sync_skills` — not authoring source |
 
 Edit `agent-knowledge/` → `uv run python devtools/codegen/sync_agent_knowledge.py` → commit `src/endorlabs/agent_knowledge/`.
 
-## `.endorlabs-context/` layout
+## `.endorlabs/` layout
 
 | Path | Purpose |
 | ---- | ------- |
-| `context.json` | Materialization manifest |
-| `sdk/` | Copy of shipped agent knowledge (`rules/`, `skills/`, `contracts/`, `INDEX.md`, `MANIFEST.json`) |
-| `platform/openapi/` | Downloaded OpenAPI (`openapiv2.swagger.json`) when synced |
-| `workspace/projects/<slug>_<timestamp>/` | Project bundles (`endor-agent-context`), per-uuid reachability |
-| `workspace/runs/<run-bucket>/` | Workflow CSV/JSON/RCA/report outputs (e.g. `troubleshooting-scans/`, `relationships-map/`) |
-| `workspace/runs/scratch/` | Ephemeral probes, triage scripts, session notes (gitignored) |
-| `workspace/inventory/` | Namespace inventories (e.g. **`SemgrepRule`** metadata from `endor-semgrep-inventory`) |
-| `workspace/<slug>-<YYYYMMDD>/` | Estate pull/analyze workspaces — [estate/workspace.md](../estate/workspace.md) |
+| `_cache/context.json` | Materialization manifest |
+| `_cache/sdk/` | Copy of shipped agent knowledge (`rules/`, `skills/`, `contracts/`, `INDEX.md`, `MANIFEST.json`) |
+| `_cache/openapi.json` | Downloaded OpenAPI when synced |
+| `reports/` | Workflow CSV/HTML/report outputs (`endor-reports` default deliverables) |
+| `tasks/<slug>-<YYYY-MM-DD>/<activity>/` | Session work — estate pull/analyze (`estate/`), troubleshooting (`troubleshooting-scans/`), project bundles (`projects/`), log exports (`logs/`), scratch (`scratch/`) |
 
 Path helpers: `endorlabs.context.paths`.
 
-Consumer projects should **gitignore** `.endorlabs-context/`. Print the line: `uv run endor-context --print-gitignore-line`.
+Consumer projects should **gitignore** `.endorlabs/`. Print the line: `uv run endor-context --print-gitignore-line`.
 
 ## Workflows vs skills vs rules
 
@@ -80,7 +77,7 @@ Skills **condense and route**; workflows **run**. Full skill index: [agent-knowl
 
 ## Documentation placement
 
-Tracked [`docs/`](../README.md) is durable and public-safe. Ephemeral markdown → `.endorlabs-context/workspace/runs/scratch/` (gitignored). Do not commit `docs/findings/`, `*-draft.md`, or parallel `*-migration.md` — use [changelog.md](../changelog.md). Details: [design.md](../design.md).
+Tracked [`docs/`](../README.md) is durable and public-safe. Ephemeral markdown → `.endorlabs/tasks/<slug>-<YYYY-MM-DD>/scratch/` (gitignored). Do not commit `docs/findings/`, `*-draft.md`, or parallel `*-migration.md` — use [changelog.md](../changelog.md). Details: [design.md](../design.md).
 
 ## Cursor / IDE mirrors (this repo)
 

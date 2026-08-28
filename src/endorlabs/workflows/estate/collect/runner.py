@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from endorlabs.context.paths import workspace_dir_for
+from endorlabs.context.paths import task_activity_dir
 from endorlabs.core.exceptions import OutputShapeRoutingError
 from endorlabs.filters import main_context_filter
 from endorlabs.tools.list_bounds import (
@@ -84,7 +84,7 @@ def _resolve_workspace(
 
             return resolve_workspace_root(path)
         return path
-    return workspace_dir_for(namespace, date_suffix=date_suffix)
+    return task_activity_dir(namespace, "estate", date_suffix=date_suffix)
 
 
 def _project_shards(

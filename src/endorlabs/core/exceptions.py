@@ -256,7 +256,7 @@ class WorkflowCompositionError(EndorRuleError):
 
 
 class LocalContextError(EndorRuleError):
-    """Expected ``.endorlabs-context`` / OpenAPI path is absent."""
+    """Expected ``.endorlabs`` / OpenAPI path is absent."""
 
     rule_id = "endor-local-context"
 

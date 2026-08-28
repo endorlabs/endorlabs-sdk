@@ -24,7 +24,7 @@ uv run --env-file .env python devtools/pfw_test_util/blast_requests.py --include
 Expected for the **npm version** GET (`…/firewall/npm/endor-firewall-test/1.0.0`):
 **HTTP 403** (policy BLOCK; writes `PackageFirewallLog`). Other npm/PyPI URLs are
 observational (status printed; not required for exit 0). JSON summary defaults to
-``.endorlabs-context/workspace/runs/pfw-test-util/``.
+``.endorlabs/tasks/pfw-test-util/``.
 
 ## Pair with log export
 

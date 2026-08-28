@@ -18,7 +18,7 @@ summary: >-
 | **Utils** | `endorlabs.utils.*` | Transport/concurrency/namespace helpers | Domain list composition |
 | **Workflow libraries** | `endorlabs.workflows.*` (non-`cli`) | `Client` in → typed `WorkflowResult` out | `print()`, argparse, cwd-relative writes |
 | **Workflow CLIs** | `*.cli`, `troubleshooting_scans/*` | Args, artifacts, filenames | Become copy-paste targets for agents |
-| **Session scripts** | `workspace/runs/scratch/` | Thin glue on artifacts + library imports | Live in `src/`, reimplement discovery |
+| **Session scripts** | `tasks/scratch/` | Thin glue on artifacts + library imports | Live in `src/`, reimplement discovery |
 
 `endorlabs.workflows` ships **documented contracts** — prefer importing
 `library_entrypoints` from `MANIFEST.json` over vendoring workflow source.
@@ -30,7 +30,7 @@ Use one step at a time:
 1. **Workflow CLI** — run the skill's documented command with defaults.
 2. **Workflow library** — import composable functions (see `MANIFEST.json` `library_entrypoints`).
 3. **`Client` facade** — when no workflow covers the query.
-4. **Session script** — minimal glue under `runs/scratch/` (see `endor-workspace-layout`).
+4. **Session script** — minimal glue under `tasks/scratch/` (see `endor-workspace-layout`).
 
 ## Artifact-first
 

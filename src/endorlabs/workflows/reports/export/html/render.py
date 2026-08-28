@@ -10,14 +10,9 @@ from importlib import resources
 from pathlib import Path
 from typing import Any
 
-from endorlabs.context.paths import sanitize_path_segment
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.reports.export.csv.packet_exports import (
     write_packet_raw_exports,
-)
-from endorlabs.workflows.reports.schemas.packet_v0 import (
-    PATCHES_RUN_BUCKET,
-    RUN_BUCKET,
 )
 
 from . import chrome as chrome_mod
@@ -1283,14 +1278,10 @@ def default_packet_output_dir(
     *,
     date_suffix: str | None = None,
 ) -> Path:
-    """Default ``runs/executive-report-packet/<tenant>-executive-packet-MMDDYY``."""
-    from datetime import UTC, datetime
+    """Default ``reports/<slug>-<YYYY-MM-DD>/``."""
+    from endorlabs.context.paths import report_packet_dir
 
-    from endorlabs.context.paths import default_runs_dir
-
-    slug = sanitize_path_segment(namespace)
-    suffix = (date_suffix or datetime.now(UTC).strftime("%m%d%y")).strip()
-    return default_runs_dir(RUN_BUCKET) / f"{slug}-executive-packet-{suffix}"
+    return report_packet_dir(namespace, date_suffix=date_suffix)
 
 
 def default_patches_report_dir(
@@ -1298,11 +1289,9 @@ def default_patches_report_dir(
     *,
     date_suffix: str | None = None,
 ) -> Path:
-    """Default ``runs/patches-reports/<tenant>-MMDDYY`` path for ``--patches-only``."""
-    from datetime import UTC, datetime
+    """Default ``reports/patches/<slug>-<YYYY-MM-DD>/``."""
+    from endorlabs.context.paths import reports_dir, tenant_day_slug
 
-    from endorlabs.context.paths import default_runs_dir
-
-    slug = sanitize_path_segment(namespace)
-    suffix = (date_suffix or datetime.now(UTC).strftime("%m%d%y")).strip()
-    return default_runs_dir(PATCHES_RUN_BUCKET) / f"{slug}-{suffix}"
+    return (
+        reports_dir() / "patches" / tenant_day_slug(namespace, date_suffix=date_suffix)
+    )

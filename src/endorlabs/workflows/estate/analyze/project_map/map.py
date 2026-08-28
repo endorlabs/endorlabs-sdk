@@ -9,8 +9,7 @@ from pathlib import Path
 
 import endorlabs
 from endorlabs.context.paths import (
-    default_runs_dir,
-    sanitize_path_segment,
+    task_activity_dir,
 )
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.project_map.run import (
@@ -18,12 +17,12 @@ from endorlabs.workflows.estate.analyze.project_map.run import (
 )
 
 LOGGER = get_resource_logger(__name__)
-RUN_BUCKET = "relationships-map"
+RUN_BUCKET = "relationships"
 
 
 def default_relationship_map_output_dir(namespace: str) -> Path:
-    """``workspace/runs/relationships-map/<namespace>/``."""
-    return default_runs_dir(RUN_BUCKET) / sanitize_path_segment(namespace)
+    """``tasks/<slug>-<YYYY-MM-DD>/relationships/``."""
+    return task_activity_dir(namespace, RUN_BUCKET)
 
 
 def parse_args() -> argparse.Namespace:
@@ -82,7 +81,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Output directory. Default: "
-            f"{default_runs_dir('relationships-map').as_posix()}/<namespace>/"
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/relationships/"
         ),
     )
     p.add_argument(

@@ -10,7 +10,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import endorlabs
-from endorlabs.context.paths import default_runs_dir, sanitize_path_segment
+from endorlabs.context.paths import sanitize_path_segment, task_activity_dir
 from endorlabs.workflows.logs.density import (
     probe_log_density,
     probe_result_to_dict,
@@ -69,7 +69,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "-o",
         type=Path,
         default=None,
-        help="Output file path (default under workspace/runs/log-export/).",
+        help=(
+            f"Output file path (default under "
+            f"{task_activity_dir('<namespace>', 'logs').as_posix()}/)."
+        ),
     )
     _ = parser.add_argument(
         "--slice-hours",
@@ -138,28 +141,28 @@ def _default_output(
     since: datetime,
     until: datetime,
 ) -> Path:
-    runs = default_runs_dir("log-export")
-    runs.mkdir(parents=True, exist_ok=True)
+    logs = task_activity_dir(namespace, "logs")
+    logs.mkdir(parents=True, exist_ok=True)
     slug = sanitize_path_segment(namespace)
     src = source.replace("-", "_")
     start = since.strftime("%Y%m%dT%H%M%SZ")
     end = until.strftime("%Y%m%dT%H%M%SZ")
-    return runs / f"{slug}-{src}-{start}_{end}.{fmt}"
+    return logs / f"{slug}-{src}-{start}_{end}.{fmt}"
 
 
 def _default_probe_output(*, namespace: str, source: str) -> Path:
-    runs = default_runs_dir("log-export")
-    runs.mkdir(parents=True, exist_ok=True)
+    logs = task_activity_dir(namespace, "logs")
+    logs.mkdir(parents=True, exist_ok=True)
     slug = sanitize_path_segment(namespace)
     src = source.replace("-", "_")
-    return runs / f"{slug}-{src}-density-probe.json"
+    return logs / f"{slug}-{src}-density-probe.json"
 
 
 def _default_multi_output_dir(*, namespace: str, source: str) -> Path:
-    runs = default_runs_dir("log-export")
+    logs = task_activity_dir(namespace, "logs")
     slug = sanitize_path_segment(namespace)
     src = source.replace("-", "_")
-    out = runs / f"{slug}-{src}-by-namespace"
+    out = logs / f"{slug}-{src}-by-namespace"
     out.mkdir(parents=True, exist_ok=True)
     return out
 

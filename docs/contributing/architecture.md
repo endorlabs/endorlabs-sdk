@@ -70,7 +70,7 @@ New API resources are **modeled by model sync**, not hand-added to `Client` one 
 
 ### Canonical generation policy
 
-- Mapping is from `.endorlabs-context/platform/openapi/openapiv2.swagger.json` to deterministic Pydantic modules under `src/endorlabs/generated/models/` (wire mirror only — not the consumer types in `resources/`).
+- Mapping is from `.endorlabs/_cache/openapi.json` to deterministic Pydantic modules under `src/endorlabs/generated/models/` (wire mirror only — not the consumer types in `resources/`).
 - Eligibility defaults to include when `x-internal != true`, with explicit allowlist exceptions in model-sync profiles when metadata is incomplete.
 - Mapping must be deterministic (stable bucketing, naming, `entity -> module` manifest).
 
@@ -108,7 +108,7 @@ flowchart TB
         APIClient["api_client.py"]
     end
     subgraph contract [Contract_Generated_NeverHandEdit]
-        OpenAPI[".endorlabs-context/platform/openapi/"]
+        OpenAPI[".endorlabs/_cache/openapi.json"]
         GenModels["generated/models/**"]
         GenContract["generated/registry_contract.py"]
     end

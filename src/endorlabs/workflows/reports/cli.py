@@ -7,14 +7,24 @@ import json
 import logging
 import os
 import sys
-from datetime import UTC, datetime
+import warnings
 from pathlib import Path
 
 import endorlabs
-from endorlabs.context.paths import default_runs_dir, sanitize_path_segment
+from endorlabs.context.paths import (
+    default_reports_subdir,
+    flat_task_dir,
+    reports_dir,
+    tenant_day_slug,
+)
 from endorlabs.workflows.reports.bundles.executive_packet import (
     build_report_packet,
     upsert_code_findings_burndown,
+)
+from endorlabs.workflows.reports.catalog import (
+    REPORT_CATALOG,
+    catalog_epilog,
+    catalog_for_list,
 )
 from endorlabs.workflows.reports.export.html.render import (
     default_packet_output_dir,
@@ -27,36 +37,59 @@ from endorlabs.workflows.reports.logging import (
     resolve_log_level,
 )
 from endorlabs.workflows.reports.parity import compare_packet_cube
-from endorlabs.workflows.reports.schemas.packet_v0 import PATCHES_RUN_BUCKET, RUN_BUCKET
+
+_NAMESPACE_HELP = (
+    "Namespace scope for API lists and output paths (tenant root or child "
+    "segment, e.g. example-tenant or example-tenant.child). "
+    "Falls back to ENDOR_NAMESPACE."
+)
 
 
-def _add_namespace(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument(
+def _namespace_parent() -> argparse.ArgumentParser:
+    """Shared ``-n`` / ``--namespace`` for root and subcommands."""
+    parent = argparse.ArgumentParser(add_help=False)
+    parent.add_argument(
         "-n",
         "--namespace",
-        required=True,
-        help="Tenant or namespace root (e.g. example-tenant).",
-    )
-
-
-def _packet_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
-    packet = sub.add_parser(
-        "packet",
-        help="Build and render the executive HTML report packet.",
-    )
-    _add_namespace(packet)
-    packet.add_argument(
-        "--output-dir",
         default=None,
-        help=(
-            "Output directory for HTML + cube "
-            f"(default: .endorlabs-context/workspace/runs/{RUN_BUCKET}/"
-            "<namespace>-executive-packet-MMDDYY/; "
-            f"or {PATCHES_RUN_BUCKET}/<namespace>-MMDDYY/ with --patches-only)."
-        ),
+        help=_NAMESPACE_HELP,
     )
-    packet.add_argument("--lookback", type=int, default=13)
-    packet.add_argument(
+    return parent
+
+
+def _resolve_namespace(
+    args: argparse.Namespace,
+    parser: argparse.ArgumentParser,
+    *,
+    required: bool = True,
+) -> str:
+    """Merge explicit ``-n``, subcommand ``-n``, and ``ENDOR_NAMESPACE``."""
+    ns = (getattr(args, "namespace", None) or "").strip()
+    if not ns:
+        ns = (os.environ.get("ENDOR_NAMESPACE") or "").strip()
+    if required and not ns:
+        parser.error("Namespace required: pass -n/--namespace or set ENDOR_NAMESPACE.")
+    return ns
+
+
+def _catalog_description(subcommand: str) -> str:
+    for entry in REPORT_CATALOG:
+        if entry.subcommand == subcommand:
+            return f"{entry.summary} Default output: {entry.default_output}"
+    return ""
+
+
+def _warn_deprecated(command: str, replacement: str) -> None:
+    warnings.warn(
+        f"endor-reports {command} is deprecated; use {replacement} instead.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+
+
+def _add_build_flags(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--lookback", type=int, default=13)
+    parser.add_argument(
         "--min-projects",
         type=int,
         default=1,
@@ -65,29 +98,29 @@ def _packet_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
             "projects (default: 1 = all tags with series)."
         ),
     )
-    packet.add_argument(
+    parser.add_argument(
         "--workers",
         type=int,
         default=24,
         help="Parallel FindingLog matrix pulls for tagged projects (default: 24).",
     )
-    packet.add_argument("--skip-version-sprawl", action="store_true")
-    packet.add_argument(
+    parser.add_argument("--skip-version-sprawl", action="store_true")
+    parser.add_argument(
         "--skip-findings-burndown",
         action="store_true",
         help="Skip SCA (vulnerability) FindingLog burndown.",
     )
-    packet.add_argument(
+    parser.add_argument(
         "--skip-sca-burndown",
         action="store_true",
         help="Alias for --skip-findings-burndown.",
     )
-    packet.add_argument(
+    parser.add_argument(
         "--skip-code-findings-burndown",
         action="store_true",
         help="Skip SAST / AI-SAST / Secrets FindingLog burndown.",
     )
-    packet.add_argument(
+    parser.add_argument(
         "--patches",
         action="store_true",
         help=(
@@ -95,7 +128,7 @@ def _packet_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
             "Opt-in; omitted by default."
         ),
     )
-    packet.add_argument(
+    parser.add_argument(
         "--skip-patches",
         action="store_true",
         help=(
@@ -103,32 +136,35 @@ def _packet_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
             "Errors if combined with --patches."
         ),
     )
-    packet.add_argument(
+    parser.add_argument(
         "--patches-only",
         action="store_true",
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--output-dir",
+        default=None,
         help=(
-            "Build and render only the Endor Patches page (skip onboarding, "
-            "sprawl, burndowns). Default output under "
-            f".endorlabs-context/workspace/runs/{PATCHES_RUN_BUCKET}/"
-            "<namespace>-MMDDYY/."
+            "Output directory for HTML + cube "
+            f"(default: {reports_dir().as_posix()}/<slug>-<YYYY-MM-DD>/; "
+            f"patches-only: {reports_dir().as_posix()}/patches/<slug>-<YYYY-MM-DD>/)."
         ),
     )
-    packet.add_argument(
+    parser.add_argument(
         "--date-suffix",
         default=None,
         help=(
-            "Date suffix for default output dirs (default: today's MMDDYY). "
-            "Applies to full packets (<tenant>-executive-packet-MMDDYY) and "
-            "--patches-only (<tenant>-MMDDYY). Example: 082126."
+            "UTC date suffix YYYY-MM-DD for default output dirs "
+            "(default: today). Example: 2026-08-28."
         ),
     )
-    packet.add_argument(
+    parser.add_argument(
         "--patches-date-suffix",
         default=None,
-        help=argparse.SUPPRESS,  # alias for --date-suffix
+        help=argparse.SUPPRESS,
     )
-    packet.add_argument("--timeout", type=float, default=900.0)
-    packet.add_argument(
+    parser.add_argument("--timeout", type=float, default=900.0)
+    parser.add_argument(
         "--log-level",
         default=None,
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
@@ -138,16 +174,121 @@ def _packet_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
             "(RedactingFilter)."
         ),
     )
+
+
+def _packet_parser(
+    sub: argparse._SubParsersAction,
+    *,
+    ns_parent: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
+    packet = sub.add_parser(
+        "packet",
+        parents=[ns_parent],
+        help="(deprecated) Build and render the executive HTML report packet.",
+        description=_catalog_description("packet"),
+    )
+    _add_build_flags(packet)
     return packet
+
+
+def _build_parser_sub(
+    sub: argparse._SubParsersAction,
+    *,
+    ns_parent: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
+    build = sub.add_parser(
+        "build",
+        parents=[ns_parent],
+        help="Build and render the executive HTML report packet.",
+        description=_catalog_description("build"),
+    )
+    _add_build_flags(build)
+    return build
+
+
+def _patches_parser(
+    sub: argparse._SubParsersAction,
+    *,
+    ns_parent: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
+    patches = sub.add_parser(
+        "patches",
+        parents=[ns_parent],
+        help="Build and render only the Endor Patches executive page.",
+        description=_catalog_description("patches"),
+    )
+    _add_build_flags(patches)
+    patches.set_defaults(patches_only=True)
+    return patches
+
+
+def _list_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    list_cmd = sub.add_parser(
+        "list",
+        help="List report subcommands, categories, and default output paths.",
+    )
+    list_cmd.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON.",
+    )
+    list_cmd.add_argument(
+        "--include-deprecated",
+        action="store_true",
+        help="Include deprecated subcommands (packet, upsert-code-findings).",
+    )
+    return list_cmd
+
+
+def _run_list(args: argparse.Namespace) -> int:
+    rows = catalog_for_list(include_deprecated=bool(args.include_deprecated))
+    if args.json:
+        print(json.dumps(rows, indent=2))
+        return 0
+    current = ""
+    for row in rows:
+        cat = row["category"]
+        if cat != current:
+            current = cat
+            print(f"\n{cat}:")
+        subcmd = row["subcommand"] or "(default build)"
+        print(f"  {subcmd:22} {row['summary']}")
+        print(f"    -> {row['default_output']}")
+    print()
+    return 0
+
+
+def _refresh_code_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    refresh = sub.add_parser(
+        "refresh-code",
+        help=(
+            "Rebuild only SAST/AI-SAST/Secrets burndown into an existing packet "
+            "directory (keeps onboarding, sprawl, SCA)."
+        ),
+    )
+    refresh.add_argument(
+        "--packet-dir",
+        type=Path,
+        required=True,
+        help="Existing packet output dir containing data/packet.cube.json.",
+    )
+    refresh.add_argument("--lookback", type=int, default=None)
+    refresh.add_argument("--min-projects", type=int, default=1)
+    refresh.add_argument("--workers", type=int, default=24)
+    refresh.add_argument("--timeout", type=float, default=900.0)
+    refresh.add_argument(
+        "--log-level",
+        default=None,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help=("Progress log level on stdout (default: ENDOR_LOG_LEVEL or INFO)."),
+    )
+    return refresh
 
 
 def _upsert_code_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
     upsert = sub.add_parser(
         "upsert-code-findings",
-        help=(
-            "Rebuild only SAST/AI-SAST/Secrets burndown into an existing packet "
-            "directory (keeps onboarding, sprawl, SCA)."
-        ),
+        help="(deprecated) Use refresh-code instead.",
     )
     upsert.add_argument(
         "--packet-dir",
@@ -168,12 +309,17 @@ def _upsert_code_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentPar
     return upsert
 
 
-def _parity_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def _parity_parser(
+    sub: argparse._SubParsersAction,
+    *,
+    ns_parent: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
     parity = sub.add_parser(
         "parity",
+        parents=[ns_parent],
         help="Build packet and compare metrics to scratch baseline JSON files.",
+        description=_catalog_description("parity"),
     )
-    _add_namespace(parity)
     parity.add_argument(
         "--baseline-adoption",
         type=Path,
@@ -198,7 +344,7 @@ def _parity_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentParser:
         default=None,
         help=(
             "Parity run directory "
-            "(default: workspace/runs/report-parity/<tenant>-<YYYYMMDD>/)."
+            f"(default: {flat_task_dir('parity').as_posix()}/<slug>-<YYYY-MM-DD>/)."
         ),
     )
     parity.add_argument("--lookback", type=int, default=13)
@@ -238,48 +384,91 @@ def _tenant_report_parser(
     sub: argparse._SubParsersAction,
     name: str,
     help_text: str,
+    *,
+    ns_parent: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
-    parser = sub.add_parser(name, help=help_text)
-    _add_namespace(parser)
+    parser = sub.add_parser(
+        name,
+        parents=[ns_parent],
+        help=help_text,
+        description=_catalog_description(name) or help_text,
+    )
     parser.add_argument(
         "--output",
         type=Path,
         default=None,
-        help="CSV output path (default: workspace/runs/<bucket>/).",
+        help=f"CSV output path (default: {default_reports_subdir(name).as_posix()}/).",
     )
     parser.add_argument("--timeout", type=float, default=120.0)
     return parser
 
 
 def build_parser() -> argparse.ArgumentParser:
+    ns_parent = _namespace_parent()
     parser = argparse.ArgumentParser(
         prog="endor-reports",
-        description="Endor Labs tenant and namespace report workflows.",
+        parents=[ns_parent],
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "Endor Labs tenant and namespace report workflows. "
+            "Default (no subcommand): build executive HTML packet with -n. "
+            "Use `list` to see all report subcommands."
+        ),
+        epilog=catalog_epilog(),
     )
-    sub = parser.add_subparsers(dest="command", required=True)
-    _packet_parser(sub)
+    _add_build_flags(parser)
+
+    sub = parser.add_subparsers(dest="command", required=False)
+    _list_parser(sub)
+    _build_parser_sub(sub, ns_parent=ns_parent)
+    _patches_parser(sub, ns_parent=ns_parent)
+    _packet_parser(sub, ns_parent=ns_parent)
+    _refresh_code_parser(sub)
     _upsert_code_parser(sub)
-    _parity_parser(sub)
-    _tenant_report_parser(sub, "duplicates", "Find duplicate project registrations.")
+    _parity_parser(sub, ns_parent=ns_parent)
     _tenant_report_parser(
-        sub, "cli-vs-cloud", "Classify CLI vs cloud project registrations."
+        sub,
+        "duplicates",
+        "Find duplicate project registrations.",
+        ns_parent=ns_parent,
     )
     _tenant_report_parser(
-        sub, "login-count", "AuthenticationLog login counts by identity."
+        sub,
+        "cli-vs-cloud",
+        "Classify CLI vs cloud project registrations.",
+        ns_parent=ns_parent,
     )
-    _tenant_report_parser(sub, "credential-expiry", "Credential expiry horizon report.")
     _tenant_report_parser(
-        sub, "auth-policies", "Audit AuthorizationPolicy claim forms."
+        sub,
+        "login-count",
+        "AuthenticationLog login counts by identity.",
+        ns_parent=ns_parent,
     )
     _tenant_report_parser(
-        sub, "ci-endorctl", "Audit CI endorctl versions from scan metadata."
+        sub,
+        "credential-expiry",
+        "Credential expiry horizon report.",
+        ns_parent=ns_parent,
+    )
+    _tenant_report_parser(
+        sub,
+        "auth-policies",
+        "Audit AuthorizationPolicy claim forms.",
+        ns_parent=ns_parent,
+    )
+    _tenant_report_parser(
+        sub,
+        "ci-endorctl",
+        "Audit CI endorctl versions from scan metadata.",
+        ns_parent=ns_parent,
     )
 
     findings = sub.add_parser(
         "findings-trend",
+        parents=[ns_parent],
         help="FindingLog weekly new-vs-resolved chart (JSON + optional canvas).",
+        description=_catalog_description("findings-trend"),
     )
-    _add_namespace(findings)
     findings.add_argument("--output-dir", type=Path, default=None)
     findings.add_argument("--canvas-dir", type=Path, default=None)
     findings.add_argument("--interval", default="week")
@@ -289,9 +478,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     prf = sub.add_parser(
         "prf-analysis",
+        parents=[ns_parent],
         help="Potentially reachable findings analysis (JSON + canvas + PDF).",
+        description=_catalog_description("prf-analysis"),
     )
-    _add_namespace(prf)
     prf.add_argument("--output-dir", type=Path, default=None)
     prf.add_argument("--canvas-dir", type=Path, default=None)
     prf.add_argument("--chrome", type=Path, default=None)
@@ -302,17 +492,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     pkg = sub.add_parser(
         "package-resolution",
+        parents=[ns_parent],
         help=(
             "Main-context PackageVersion resolution CSV + interactive HTML "
             "(unresolved/manifest, dependency resolution, reachability)."
         ),
+        description=_catalog_description("package-resolution"),
     )
-    _add_namespace(pkg)
     pkg.add_argument(
         "--output",
         type=Path,
         default=None,
-        help="CSV output path (default: workspace/runs/package-resolution/...).",
+        help=(
+            "CSV output path "
+            f"(default: {default_reports_subdir('package-resolution').as_posix()}/)."
+        ),
     )
     pkg.add_argument(
         "--html-dir",
@@ -320,7 +514,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "HTML output directory "
-            "(default: workspace/runs/package-resolution/<tenant>-html/)."
+            f"(default: {default_reports_subdir('package-resolution').as_posix()}/"
+            "<tenant>/)."
         ),
     )
     pkg.add_argument(
@@ -348,12 +543,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _default_parity_dir(namespace: str) -> Path:
-    slug = sanitize_path_segment(namespace)
-    day = datetime.now(UTC).strftime("%Y%m%d")
-    return default_runs_dir("report-parity") / f"{slug}-{day}"
+    return flat_task_dir("parity") / tenant_day_slug(namespace)
 
 
-def _run_upsert_code_findings(args: argparse.Namespace) -> int:
+def _run_refresh_code(args: argparse.Namespace) -> int:
     configure_reports_cli_logging(level=getattr(args, "log_level", None))
     packet_dir = Path(args.packet_dir)
     cube_path = packet_dir / "data" / "packet.cube.json"
@@ -581,50 +774,80 @@ def _tenant_argv(args: argparse.Namespace) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
-    args, remainder = parser.parse_known_args(argv)
+    argv_list = sys.argv[1:] if argv is None else list(argv)
+    ns_peek = argparse.ArgumentParser(add_help=False)
+    ns_peek.add_argument("-n", "--namespace", default=None)
+    ns_from_anywhere, _ = ns_peek.parse_known_args(argv_list)
 
-    if args.command == "packet":
+    parser = build_parser()
+    args, remainder = parser.parse_known_args(argv_list)
+
+    if (ns_from_anywhere.namespace or "").strip():
+        args.namespace = ns_from_anywhere.namespace
+
+    command = args.command
+    if command == "list":
+        return _run_list(args)
+    if command in (None, "build"):
+        args.namespace = _resolve_namespace(args, parser)
         return _run_packet(args)
-    if args.command == "upsert-code-findings":
-        return _run_upsert_code_findings(args)
-    if args.command == "parity":
+    if command == "patches":
+        args.namespace = _resolve_namespace(args, parser)
+        return _run_packet(args)
+    if command == "packet":
+        _warn_deprecated("packet", "endor-reports -n <tenant> (default build)")
+        args.namespace = _resolve_namespace(args, parser)
+        return _run_packet(args)
+    if command == "refresh-code":
+        return _run_refresh_code(args)
+    if command == "upsert-code-findings":
+        _warn_deprecated("upsert-code-findings", "refresh-code")
+        return _run_refresh_code(args)
+    if command == "parity":
+        args.namespace = _resolve_namespace(args, parser)
         return _run_parity(args)
     if args.command == "duplicates":
+        args.namespace = _resolve_namespace(args, parser)
         from endorlabs.workflows.reports.analyze.duplicate_projects import (
             main as run,
         )
 
         return run(_tenant_argv(args) + remainder)
     if args.command == "cli-vs-cloud":
+        args.namespace = _resolve_namespace(args, parser)
         from endorlabs.workflows.reports.analyze.cli_vs_cloud import main as run
 
         return run(_tenant_argv(args) + remainder)
     if args.command == "login-count":
+        args.namespace = _resolve_namespace(args, parser)
         from endorlabs.workflows.reports.analyze.auth_login_count import (
             main as run,
         )
 
         return run(_tenant_argv(args) + remainder)
     if args.command == "credential-expiry":
+        args.namespace = _resolve_namespace(args, parser)
         from endorlabs.workflows.reports.analyze.auth_credential_expiry import (
             main as run,
         )
 
         return run(_tenant_argv(args) + remainder)
     if args.command == "auth-policies":
+        args.namespace = _resolve_namespace(args, parser)
         from endorlabs.workflows.reports.analyze.auth_policies_audit import (
             main as run,
         )
 
         return run(_tenant_hint_argv(args) + remainder)
     if args.command == "ci-endorctl":
+        args.namespace = _resolve_namespace(args, parser)
         from endorlabs.workflows.reports.analyze.ci_endorctl_audit import (
             main as run,
         )
 
         return run(_tenant_argv(args) + remainder)
     if args.command == "findings-trend":
+        args.namespace = _resolve_namespace(args, parser)
         from endorlabs.workflows.reports.export.canvas.findings_trend_report import (
             main as run,
         )
@@ -641,6 +864,7 @@ def main(argv: list[str] | None = None) -> int:
             ft_argv.append("--skip-canvas")
         return run(ft_argv)
     if args.command == "prf-analysis":
+        args.namespace = _resolve_namespace(args, parser)
         from endorlabs.workflows.reports.export.canvas.prf_report import main as run
 
         prf_argv = [args.namespace]
@@ -660,6 +884,7 @@ def main(argv: list[str] | None = None) -> int:
             prf_argv.append("--analysis-only")
         return run(prf_argv)
     if args.command == "package-resolution":
+        args.namespace = _resolve_namespace(args, parser)
         return _run_package_resolution(args)
 
     parser.error(f"unknown command {args.command!r}")
@@ -668,7 +893,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def _run_package_resolution(args: argparse.Namespace) -> int:
     from endorlabs.workflows.reports.analyze.package_resolution import (
-        RUN_BUCKET,
+        default_package_resolution_csv_path,
     )
     from endorlabs.workflows.reports.analyze.package_resolution import (
         main as collect_main,
@@ -680,8 +905,7 @@ def _run_package_resolution(args: argparse.Namespace) -> int:
     csv_path = args.csv or args.output
     if args.html_only:
         if csv_path is None:
-            safe = sanitize_path_segment(args.namespace)
-            csv_path = default_runs_dir(RUN_BUCKET) / f"{safe}-package-resolution.csv"
+            csv_path = default_package_resolution_csv_path(args.namespace)
         if not Path(csv_path).is_file():
             print(f"CSV not found for --html-only: {csv_path}", file=sys.stderr)
             return 2
@@ -714,8 +938,7 @@ def _run_package_resolution(args: argparse.Namespace) -> int:
     if args.output is not None:
         csv_path = args.output
     else:
-        safe = sanitize_path_segment(args.namespace)
-        csv_path = default_runs_dir(RUN_BUCKET) / f"{safe}-package-resolution.csv"
+        csv_path = default_package_resolution_csv_path(args.namespace)
     html_argv = ["--csv", str(csv_path), "--tenant", args.namespace]
     if args.html_dir is not None:
         html_argv.extend(["--output-dir", str(args.html_dir)])

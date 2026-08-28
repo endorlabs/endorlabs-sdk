@@ -8,7 +8,11 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 
 from endorlabs import AGENT_RULE_EXCEPTION_TYPES, agent_knowledge_manifest
-from endorlabs.context.paths import default_runs_dir, require_openapi_spec
+from endorlabs.context.paths import (
+    flat_task_dir,
+    require_openapi_spec,
+    task_activity_dir,
+)
 from endorlabs.core.exceptions import (
     ListQueryPerformanceError,
     LocalContextError,
@@ -127,12 +131,12 @@ def test_local_context_error_missing_openapi(tmp_path: Path) -> None:
     assert exc_info.value.rule_id == "endor-local-context"
 
 
-def test_workspace_layout_error_timestamp_bucket(tmp_path: Path) -> None:
-    with pytest.raises(WorkspaceLayoutError, match="timestamp") as exc_info:
-        default_runs_dir("20260827T120000Z", context_dir=tmp_path)
+def test_workspace_layout_error_invalid_activity(tmp_path: Path) -> None:
+    with pytest.raises(WorkspaceLayoutError, match="activity") as exc_info:
+        task_activity_dir("tenant", "bad/nested", context_dir=tmp_path)
     assert exc_info.value.rule_id == "endor-workspace-layout"
-    path = default_runs_dir("troubleshooting-scans", context_dir=tmp_path)
-    assert path.name == "troubleshooting-scans"
+    path = flat_task_dir("parity", context_dir=tmp_path)
+    assert path.name == "parity"
 
 
 def test_portable_examples_error_nonportable_tenant() -> None:
