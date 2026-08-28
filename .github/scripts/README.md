@@ -6,6 +6,8 @@ Scripts invoked only from workflows or composite actions under `.github/`. Keep 
 | ------ | ---- |
 | [`check_endorctl_version.py`](check_endorctl_version.py) | Compare published endorctl vs committed OpenAPI provenance (CI cron / release gates) |
 
+Model-sync bot: [`.github/workflows/model-sync-dispatch.yml`](../workflows/model-sync-dispatch.yml).
+
 Run locally the same way CI does, for example:
 
 ```bash

@@ -8,6 +8,9 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- `SECURITY.md` — vulnerability reporting policy and supported versions.
+- `devtools/ship/extract_release_notes.py` — GitHub Release body from `docs/changelog.md` `## X.Y.Z` sections.
+- `.github/workflows/model-sync-dispatch.yml` — bot PR when live OpenAPI drifts (dispatch, cron, manual).
 - `client.MalwareExposure` (list/get) and `client.MalwareExposureQuery` (create) — tenant-scoped malware blast-radius / exposure facades. Prefer these over OSS `Malware` / `QueryMalware` for customer exposure asks.
 - `client.PackageManager` and `client.SystemConfig` registry facades (list/get/create/update/delete).
 - `endor-log-export` — scheduleable full-row dump of Package Firewall logs (`--source package-firewall-logs` → `PackageFirewallLog`) or Agent Governance Policy Violations (`--source policy-violations` → wire `AgentHookEvent`) for a time window (JSONL or CSV `payload` column; time-slice batched lists). Per-namespace density probe (`probe_log_density` / `--probe-only` / `--discover-namespaces` / `--min-events`) gates multi-NS pulls.
@@ -21,6 +24,9 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- GitHub Releases use changelog-derived notes (consumer bullets + compare link) instead of auto-generated PR lists only.
+- README documents SDK ↔ OpenAPI watermark compatibility; `pyproject.toml` adds Security project URL.
+- Release publishing guide: golden-path checklist, TestPyPI RC flow, model-sync bot dispatch contract.
 - Runtime and `analytics` optional dependencies use compatible version ranges instead of exact pins, so consumers can co-install and patch `pydantic` / `httpx` / analytics stacks without an unsolvable conflict. CI exercises lowest-direct and highest permitted resolutions.
 - Drop the Endor Package Firewall `[[tool.uv.index]]` default from `pyproject.toml` and regenerate `uv.lock` against public PyPI so CI/MDM runners sync without firewall credentials.
 - Executive packet **Endor Patches is opt-in**: pass `--patches` (or `--patches-only`) to pull Finding lists; default full packet skips patches. `--skip-patches` is a deprecated no-op.

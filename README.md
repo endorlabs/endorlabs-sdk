@@ -31,6 +31,17 @@ Type-safe, resource-oriented Python client for the Endor Labs REST API. List, ge
 - **Python:** 3.12+ (CI gates run on 3.13 — see [CONTRIBUTORS.md](CONTRIBUTORS.md))
 - **API spec:** [OpenAPI (Swagger)](https://api.endorlabs.com/download/openapiv2.swagger.json)
 
+### Version compatibility
+
+The SDK wheel version (`endorlabs`) is **independent** of [endorctl](https://docs.endorlabs.com/endorctl/) semver. Each release documents the OpenAPI watermark it was built and tested against (see `docs/changelog.md` and the provenance header in `src/endorlabs/generated/registry_contract.py`).
+
+| PyPI `endorlabs` | OpenAPI watermark (endorctl) | Notes |
+| ---------------- | ---------------------------- | ----- |
+| **0.7.0** (latest) | 1.7.1080 | [changelog](docs/changelog.md#070) |
+| `main` (unreleased) | 1.7.1133 | Integration branch; targets **0.8.0** — not on PyPI yet |
+
+Refresh model-sync before publishing when live API has moved: `uv run python devtools/codegen/model_sync.py --verify-upstream-only`. Automated bot PRs: [`.github/workflows/model-sync-dispatch.yml`](.github/workflows/model-sync-dispatch.yml).
+
 ## Start here
 
 

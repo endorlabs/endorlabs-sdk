@@ -105,6 +105,20 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+      - name: Write GitHub Release notes
+        run: |
+          set -euo pipefail
+          uv run python devtools/ship/extract_release_notes.py \
+            --version "${{ needs.classify.outputs.version }}" \
+            --output release-notes.md
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: release-notes
+          path: release-notes.md
+          if-no-files-found: error
+
   publish-pypi:
     name: Publish to PyPI (OIDC)
     runs-on: ubuntu-latest
@@ -144,12 +158,19 @@ jobs:
           name: dist
           path: dist/
 
+      - name: Download release notes
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        with:
+          name: release-notes
+          path: release-notes/
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: v${{ needs.classify.outputs.version }}
           files: dist/*
-          generate_release_notes: true
+          body_path: release-notes/release-notes.md
+          generate_release_notes: false
 
   release-summary:
     name: Publish Release Summary

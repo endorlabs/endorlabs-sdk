@@ -18,6 +18,8 @@ GitHub Actions–only helpers (not regen): [`.github/scripts/`](../.github/scrip
 | Entry | Command |
 | ----- | ------- |
 | Ship gate | `uv run python devtools/ship/verify_ship_artifacts.py --fetch-spec` |
+| Release notes | `uv run python devtools/ship/extract_release_notes.py --version X.Y.Z` |
+| Release preflight | `uv run python devtools/ship/check_release_ready.py --expect X.Y.Z` |
 | Model sync | `uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs` |
 | Agent knowledge | `uv run python devtools/codegen/sync_agent_knowledge.py` |
 | Commit guards | `uv run python devtools/precommit/pre_commit_guards.py <subcommand>` |

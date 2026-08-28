@@ -74,6 +74,7 @@ Repository = "https://github.com/endorlabs/endorlabs-sdk"
 Documentation = "https://docs.endorlabs.com/"  # Endor Labs platform docs; SDK docs in repo README
 Changelog = "https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md"
 Issues = "https://github.com/endorlabs/endorlabs-sdk/issues"
+Security = "https://github.com/endorlabs/endorlabs-sdk/blob/main/SECURITY.md"
 
 [dependency-groups]
 dev = [

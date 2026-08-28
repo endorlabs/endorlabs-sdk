@@ -189,6 +189,39 @@ Or install manually from the TestPyPI project page for `endorlabs`.
 
 ## Production release
 
+**Golden path (recommended):**
+
+1. Merge feature work to `main` (Unreleased changelog bullets; `[project].version` stays at last shipped).
+2. Open **release cut PR**: rename Unreleased → `## X.Y.Z`, set `[project].version = "X.Y.Z"`, add OpenAPI watermark line in **Changed**.
+3. `uv run python devtools/ship/check_release_ready.py --expect X.Y.Z --require-unpublished`
+4. **Actions → Release TestPyPI Publish** with `version: X.Y.Z` (or `X.Y.Zrc1` for a candidate) → smoke install.
+5. Merge cut PR to `main`.
+6. **Actions → Release Tag Publish** → `workflow_dispatch`: `version: X.Y.Z`, `ref: main`, `publish: true`.
+7. Approve the **`pypi`** environment deployment.
+8. Confirm PyPI, GitHub Release (notes from `docs/changelog.md` via `extract_release_notes.py`), and optional tag `vX.Y.Z`.
+
+Pre-release candidates (`X.Y.Zrc1`, `X.Y.Zb1`) use **Release TestPyPI Publish** only — add a matching `## X.Y.Zrc1` changelog section and TOML version in a short-lived branch or the cut PR; do not publish RC builds to production PyPI.
+
+## Automated model-sync PRs
+
+When live OpenAPI drifts from committed provenance, [`.github/workflows/model-sync-dispatch.yml`](../.github/workflows/model-sync-dispatch.yml) opens a **`chore(model-sync-…)`** PR to `main`:
+
+- **Trigger:** `repository_dispatch` (`platform-openapi-published`), cron every 6h, or `workflow_dispatch`.
+- **Scope:** generated ship surface only — no SDK semver bump.
+- **Review:** check `resource_count` / new kinds for facade overlay follow-up.
+
+Platform monorepo dispatch example (after prod API spec is live):
+
+```yaml
+- uses: peter-evans/repository-dispatch@v3
+  with:
+    repository: endorlabs/endorlabs-sdk
+    event-type: platform-openapi-published
+    client-payload: '{"endorctl_version":"1.7.1133","spec_sha256":"<sha>"}'
+```
+
+## Production release (checklist detail)
+
 1. Ensure PyPI pending publisher is registered for **`release-tag-publish.yml`** / environment **`pypi`**
 2. **Release PR on `main`:** promote [`docs/changelog.md`](../changelog.md) **Unreleased** → **`## X.Y.Z`** and set **`[project].version = "X.Y.Z"`** in `pyproject.toml` (see [Changelog at release cut](#changelog-at-release-cut) below).
 3. **Same PR must be publish-ready:** upstream OpenAPI/model-sync verify green (`uv run python devtools/ship/check_release_ready.py --expect X.Y.Z`). Do not merge a cut that only bumps the version while ship artifacts are stale — release CI will fail the same check.
