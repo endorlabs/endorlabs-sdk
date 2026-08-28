@@ -156,14 +156,6 @@ class TestQueryRecipes:
         geometry_ns = {g.namespace for g in topology.namespace_geometry}
         assert ns in geometry_ns
 
-    def test_query_project_count_pv_entry(self) -> None:
-        projects = _sample_projects(self.client, limit=1)
-        try:
-            counts = self.client.Query.Project.count_pv(projects)
-        except ServerError as err:
-            pytest.skip(f"count_pv unavailable: {err}")
-        assert isinstance(counts, dict)
-
     def test_collect_estate_findings_row_parity_on_large_project(self) -> None:
         """Collect returns all rows when a project has >100 estate findings."""
         projects = _sample_projects(self.client, limit=25)

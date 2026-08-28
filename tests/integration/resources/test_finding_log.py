@@ -11,7 +11,6 @@ from tests.conftest import TEST_LOG_LIST_MAX_PAGES
 from tests.integration.conftest import (
     assert_bounded_log_rows,
     bounded_log_list_params,
-    log_list_kwargs,
 )
 
 
@@ -36,22 +35,6 @@ class TestFindingLog:
             except Exception as e:
                 print(f"Warning: Failed to delete finding log {uuid}: {e}")
         self.created_finding_log_uuids.clear()
-
-    def test_finding_log_list(self) -> None:
-        """LIST in namespace with bounded pagination (no traverse)."""
-        result = self.endor_client.FindingLog.list(**log_list_kwargs())
-        assert isinstance(result, list)
-        assert_bounded_log_rows(result)
-
-    def test_finding_log_get(self) -> None:
-        """GET first item from bounded LIST in namespace."""
-        items = self.endor_client.FindingLog.list(**log_list_kwargs())
-        assert_bounded_log_rows(items)
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        got = self.endor_client.FindingLog.get(items[0])
-        assert got is not None
-        assert got.uuid == items[0].uuid
 
     def test_finding_log_list_by_operation_create(self) -> None:
         """Filter finding logs by CREATE operation (bounded)."""

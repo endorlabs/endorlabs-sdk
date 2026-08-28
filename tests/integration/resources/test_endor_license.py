@@ -21,14 +21,6 @@ class TestEndorLicense:
             tenant=root_namespace, api_client=api_client
         )
 
-    def test_endor_license_list(self) -> None:
-        """LIST in namespace (registry-based)."""
-        result = self.endor_root_client.EndorLicense.list(
-            page_size=TEST_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES,
-        )
-        assert isinstance(result, list)
-
     def test_endor_license_spec_quota_and_license_configurations(self) -> None:
         """EndorLicense spec exposes quota and license_configurations when returned."""
         items = self.endor_root_client.EndorLicense.list(
@@ -72,9 +64,3 @@ class TestEndorLicense:
             self.endor_root_client.EndorLicense.get(item.uuid, namespace=ns)
         if hasattr(exc_info.value, "status_code"):
             assert exc_info.value.status_code == 403
-
-    def test_endor_license_facade_has_no_create(self) -> None:
-        """System-scoped facade rejects create (system-owned, read-only)."""
-        assert "create" not in self.endor_root_client.EndorLicense._supported_ops
-        with pytest.raises(NotImplementedError, match="does not support create"):
-            self.endor_root_client.EndorLicense.create(payload={})

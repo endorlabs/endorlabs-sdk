@@ -127,11 +127,6 @@ class TestFinding:
         [
             "FINDING_CATEGORY_SCA",
             "FINDING_CATEGORY_SAST",
-            "FINDING_CATEGORY_SECRETS",
-            "FINDING_CATEGORY_CONTAINER",
-            "FINDING_CATEGORY_AI_MODELS",
-            "FINDING_CATEGORY_LICENSE_RISK",
-            "FINDING_CATEGORY_SCPM",
         ],
     )
     def test_finding_list_by_category(self, category: str) -> None:

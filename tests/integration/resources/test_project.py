@@ -73,12 +73,7 @@ class TestProject:
 
     def test_project_spec_has_scan_profile_and_archived_attrs(self) -> None:
         """Project spec has scan_profile_uuid, toolchain_profile_uuid and related."""
-        items = self.endor_client.Project.list(
-            max_pages=TEST_MAX_PAGES,
-        )
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        item = items[0]
+        item = self.projects[0]
         assert item.spec is not None
         assert hasattr(item.spec, "scan_profile_uuid")
         assert hasattr(item.spec, "toolchain_profile_uuid")
