@@ -29,14 +29,13 @@ from resource_user_space import load_resource_user_space  # noqa: E402
 
 import endorlabs  # noqa: E402
 from endorlabs import resources as resource_modules  # noqa: E402
+from endorlabs.context.paths import platform_openapi_path  # noqa: E402
 from endorlabs.facade import ResourceRuntimeFacade, _ListableFacade  # noqa: E402
 from endorlabs.registry import RESOURCE_REGISTRY  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
-SPEC_PATH = (
-    REPO_ROOT / ".endorlabs-context" / "platform" / "openapi" / "openapiv2.swagger.json"
-)
+SPEC_PATH = REPO_ROOT / platform_openapi_path()
 SPEC_URL = "https://api.endorlabs.com/download/openapiv2.swagger.json"
 REGISTRY_CONTRACT_PATH = (
     REPO_ROOT / "src" / "endorlabs" / "generated" / "registry_contract.py"

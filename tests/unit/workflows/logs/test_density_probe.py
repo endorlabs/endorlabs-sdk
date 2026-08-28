@@ -35,7 +35,17 @@ def test_count_agent_hook_events_parses_count_response() -> None:
 
 def test_probe_log_density_threshold_and_soft_fail() -> None:
     client = MagicMock()
-    client.PackageFirewallLog.count.side_effect = [0, 5, RuntimeError("boom")]
+
+    def _count_by_namespace(*, namespace: str, **_kwargs: Any) -> int:
+        if namespace == "example-tenant.a":
+            return 0
+        if namespace == "example-tenant.b":
+            return 5
+        if namespace == "example-tenant.c":
+            raise RuntimeError("boom")
+        raise AssertionError(f"unexpected namespace: {namespace}")
+
+    client.PackageFirewallLog.count.side_effect = _count_by_namespace
 
     result = probe_log_density(
         client,

@@ -74,5 +74,5 @@ gates (`IsCallerEndorAccount`) are additional field/route restrictions.
 | VersionUpgrade | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | Platform-managed |
 | Vulnerability | yes/yes | yes/yes | no/yes | no/no | no/yes | oss | — | OSS-scoped vulnerability dataset |
 
-Spec (local preferred): `.endorlabs-context/platform/openapi/openapiv2.swagger.json`.
+Spec (local preferred): `.endorlabs/_cache/openapi.json`.
 Fallback URL: `https://api.endorlabs.com/download/openapiv2.swagger.json`.

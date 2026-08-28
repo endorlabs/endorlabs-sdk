@@ -14,6 +14,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from endorlabs.context.paths import platform_openapi_path
+
 from .codegen import generate_modules_in_memory, load_profiles
 from .contract import (
     build_facade_contract,
@@ -43,7 +45,7 @@ def _repo_root() -> Path:
 
 def default_spec_path(repo_root: Path | None = None) -> Path:
     root = repo_root or _repo_root()
-    return root / ".endorlabs-context" / "platform" / "openapi" / "openapiv2.swagger.json"
+    return root / platform_openapi_path()
 
 
 def default_custom_profiles_dir(repo_root: Path | None = None) -> Path:
