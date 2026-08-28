@@ -3,7 +3,7 @@ description: Classify OutputShape and discover topology before estate-scale list
 globs:
   - src/endorlabs/**
   - **/*.py
-  - **/.endorlabs-context/**
+  - **/.endorlabs/**
   - agent-knowledge/**
   - docs/**
   - devtools/**

@@ -3,7 +3,7 @@ description: Place maintainer automation in `devtools/precommit|codegen|ship` or
 globs:
   - src/endorlabs/**
   - **/*.py
-  - **/.endorlabs-context/**
+  - **/.endorlabs/**
   - agent-knowledge/**
   - docs/**
   - devtools/**

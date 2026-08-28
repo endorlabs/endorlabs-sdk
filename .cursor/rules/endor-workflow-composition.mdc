@@ -3,7 +3,7 @@ description: Prefer workflow CLI, then library imports, then Client; extend arti
 globs:
   - src/endorlabs/**
   - **/*.py
-  - **/.endorlabs-context/**
+  - **/.endorlabs/**
   - agent-knowledge/**
   - docs/**
   - devtools/**

@@ -22,7 +22,7 @@ When renaming a skill directory, script, or cited runtime path, **keep tests and
 
 - Grep `tests/` for the old skill id or script path; update any `candidate_paths` loaders (see `tests/unit/tooling/scripts/test_*` for precedent).
 - Update skill body examples (`.cursor/skills/endor-<name>/…` in commands) and cross-links under `agent-knowledge/skills/`.
-- Run sync so `src/endorlabs/agent_knowledge/` matches authoring; integration tests may assert materialized paths under `.endorlabs-context/sdk/skills/`.
+- Run sync so `src/endorlabs/agent_knowledge/` matches authoring; integration tests may assert materialized paths under `.endorlabs/_cache/sdk/skills/`.
 - Do **not** add shared test helper modules for path resolution — inline loaders in the tests that need them are the contract.
 
 ## Tests (manifest and drift)

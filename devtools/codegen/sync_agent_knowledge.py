@@ -96,7 +96,7 @@ CURSOR_ALWAYS_APPLY_RULE_IDS: frozenset[str] = frozenset(
 CURSOR_BOOTSTRAP_RULE_GLOBS: tuple[str, ...] = (
     "src/endorlabs/**",
     "**/*.py",
-    "**/.endorlabs-context/**",
+    "**/.endorlabs/**",
     "agent-knowledge/**",
     "docs/**",
     "devtools/**",

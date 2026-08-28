@@ -3,7 +3,7 @@ description: Write workflow artifacts under .endorlabs/reports/, .endorlabs/task
 globs:
   - src/endorlabs/**
   - **/*.py
-  - **/.endorlabs-context/**
+  - **/.endorlabs/**
   - agent-knowledge/**
   - docs/**
   - devtools/**

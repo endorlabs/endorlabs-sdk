@@ -3,7 +3,7 @@ description: Prefer Docs MCP for product docs; check gitignored .endorlabs for O
 globs:
   - src/endorlabs/**
   - **/*.py
-  - **/.endorlabs-context/**
+  - **/.endorlabs/**
   - agent-knowledge/**
   - docs/**
   - devtools/**

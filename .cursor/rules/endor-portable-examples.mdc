@@ -3,7 +3,7 @@ description: Use placeholders in all git-tracked content; never commit customer 
 globs:
   - src/endorlabs/**
   - **/*.py
-  - **/.endorlabs-context/**
+  - **/.endorlabs/**
   - agent-knowledge/**
   - docs/**
   - devtools/**

@@ -3,7 +3,7 @@ description: Record breaking changes and notable features in docs/changelog.md o
 globs:
   - src/endorlabs/**
   - **/*.py
-  - **/.endorlabs-context/**
+  - **/.endorlabs/**
   - agent-knowledge/**
   - docs/**
   - devtools/**
