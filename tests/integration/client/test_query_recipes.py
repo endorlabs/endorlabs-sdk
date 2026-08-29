@@ -50,9 +50,9 @@ def _sample_projects(client, *, limit: int = _QUERY_SAMPLE_PROJECTS) -> list[obj
     return with_ns[:limit]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def query_sample_projects(facade_root_client):
-    """One leaf project reused across Query recipe tests in this module."""
+    """One leaf project for Query recipe tests."""
     return _sample_projects(facade_root_client, limit=_QUERY_SAMPLE_PROJECTS)
 
 
