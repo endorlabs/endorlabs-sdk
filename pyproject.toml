@@ -90,7 +90,7 @@ dev = [
     "pyarrow>=18.0.0,<25",
     "igraph>=0.11.6,<2",
     "leidenalg>=0.10.2,<1",
-    "datamodel-code-generator==0.61.0",
+    "datamodel-code-generator==0.64.0",
     # Build Dependencies
     "twine==6.2.0",
 ]
