@@ -127,14 +127,36 @@ class TestRedactingFilterQuotingCombinations:
 
     # -- All sensitive key names -------------------------------------------
 
-    @pytest.mark.parametrize("key_name", ["authorization", "secret", "token", "key"])
+    @pytest.mark.parametrize(
+        "key_name",
+        [
+            "authorization",
+            "secret",
+            "token",
+            "key",
+            "password",
+            "api_key",
+            "refresh_token",
+        ],
+    )
     def test_all_keys_single_key_double_value(self, key_name: str) -> None:
         """Mixed quoting works for every key in REDACTED_KEYS."""
         result = _apply(self.rf, f"'{key_name}': \"sensitive-val'ue\"")
         assert "sensitive-val'ue" not in result
         assert "REDACTED" in result
 
-    @pytest.mark.parametrize("key_name", ["authorization", "secret", "token", "key"])
+    @pytest.mark.parametrize(
+        "key_name",
+        [
+            "authorization",
+            "secret",
+            "token",
+            "key",
+            "password",
+            "api_key",
+            "refresh_token",
+        ],
+    )
     def test_all_keys_double_key_single_value(self, key_name: str) -> None:
         """Mixed quoting works for every key in REDACTED_KEYS."""
         result = _apply(self.rf, f"\"{key_name}\": 'sensitive-value'")

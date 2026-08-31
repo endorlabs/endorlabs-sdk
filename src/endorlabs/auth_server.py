@@ -3,6 +3,19 @@
 This module provides browser-based OAuth authentication by starting a local
 HTTP server to capture the bearer token from the OAuth redirect callback.
 
+Threat model (accepted for interactive SSO)
+-------------------------------------------
+The platform callback delivers the bearer token as a ``?token=`` query
+parameter on ``http://localhost:<port>/``. That is intentional for CLI SSO
+(same shape as endorctl ``browserauth``): protection is **loopback binding**
+(only local processes can complete the redirect).
+
+CSRF ``state`` is sent on the outbound auth URL when using direct provider
+modes. When the callback **includes** ``state``, it must match the issued
+value (mismatch → 400). Endor ``redirect=cli`` callbacks currently omit
+``state``, so missing ``state`` is still accepted — requiring it would break
+SSO until the platform echoes ``state`` on CLI redirects.
+
 Aligned with endorctl ``browserauth``:
 
 - ``sso`` requires ``auth_tenant`` (no silent ``endor-admin`` default).
@@ -392,15 +405,16 @@ def _make_token_handler(
                     return
 
                 params = parse_qs(parsed_url.query, keep_blank_values=False)
-                # Endor CLI redirects (`redirect=cli`) currently return only
-                # `token` and do not echo `state`. Enforce CSRF only when the
-                # platform includes a state parameter on the callback.
-                states = params.get("state", [])
-                if states and (len(states) != 1 or states[0] != expected_state):
-                    logger.warning("OAuth state mismatch in redirect")
-                    self.send_response(400)
-                    self.end_headers()
-                    return
+                # CSRF when platform echoes state: must match expected_state.
+                # Endor `redirect=cli` callbacks currently omit state (endorctl
+                # parity); missing state is accepted until the platform echoes it.
+                if expected_state:
+                    states = params.get("state", [])
+                    if states and (len(states) != 1 or states[0] != expected_state):
+                        logger.warning("OAuth state mismatch in redirect")
+                        self.send_response(400)
+                        self.end_headers()
+                        return
 
                 tokens = params.get("token", [])
                 if len(tokens) == 1 and tokens[0]:

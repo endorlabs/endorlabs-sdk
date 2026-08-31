@@ -44,6 +44,9 @@ from .utils.redaction import (
 # Pre-compiled redaction patterns for _redact_log_data (avoid re.compile per call)
 _REPR_REDACT_RE: re.Pattern[str] = re.compile(redaction_pattern, re.IGNORECASE)
 _JSON_REDACT_RE: re.Pattern[str] = re.compile(json_redaction_pattern, re.IGNORECASE)
+_URL_TOKEN_REDACT_RE: re.Pattern[str] = re.compile(
+    url_token_redaction_pattern, re.IGNORECASE
+)
 
 DEFAULT_API_BASE_URL = "https://api.endorlabs.com"
 
@@ -470,6 +473,8 @@ class APIClient:
         # Apply both single-quote (Python repr) and double-quote (JSON) patterns
         data_str = _REPR_REDACT_RE.sub(r"'\1': '***REDACTED***'", data_str)
         data_str = _JSON_REDACT_RE.sub(JSON_REDACTION_REPLACEMENT, data_str)
+        # Defense in depth: scrub token= query params embedded in logged bodies
+        data_str = _URL_TOKEN_REDACT_RE.sub(url_token_redaction_replacement, data_str)
         return data_str
 
     def _truncate_for_logging(self, text: str, max_length: int = 500) -> str:

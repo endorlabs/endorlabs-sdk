@@ -126,6 +126,7 @@ uv run python devtools/ship/smoke_test_wheel.py --expect-version 0.6.0
 ### PyPI (dry-run) — `.github/workflows/release-pypi.yml`
 
 - **Trigger:** `workflow_dispatch` with inputs `version`, `ref` (default `main`), and `publish` (default **`false`**)
+- **`ref` allowlist:** `main`, a version tag/name (`vX.Y.Z` / `X.Y.Z` with optional pre/post/dev segments), or a full 40-char lowercase commit SHA — validated before checkout
 - **Build job:** same composite gate as TestPyPI
 - **Publish job:** runs only when `publish: true`; `environment: pypi`, OIDC publish to PyPI
 - **Supported use today:** `publish: false` — build, gate, and upload artifacts only (no OIDC)

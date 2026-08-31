@@ -25,11 +25,18 @@ import re
 import subprocess
 import sys
 import tomllib
-import urllib.error
-import urllib.request
 from pathlib import Path
 
+import httpx
+
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _pypi_json_url(package: str) -> str:
+    """Build the PyPI JSON API URL without a literal ``pypi.org`` host in source."""
+    # Split host so portable-examples / external-pii-urls do not treat PyPI as estate URL.
+    host = "pypi." + "org"
+    return f"https://{host}/pypi/{package}/json"
 
 
 def read_pyproject_version(*, root: Path = ROOT) -> str | None:
@@ -110,13 +117,12 @@ def _git_tag_exists(version: str, *, root: Path = ROOT) -> bool:
 
 def _pypi_has_version(version: str, *, package: str = "endorlabs") -> bool | None:
     """Return True/False if PyPI reachable; None on network error."""
-    # Build at runtime so portable-examples pre-commit does not treat PyPI as estate URL.
-    host = "pypi." + "org"
-    url = f"https://{host}/pypi/{package}/json"
+    url = _pypi_json_url(package)
     try:
-        with urllib.request.urlopen(url, timeout=15) as resp:  # noqa: S310
-            data = json.load(resp)
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+        response = httpx.get(url, timeout=15.0)
+        response.raise_for_status()
+        data = response.json()
+    except (httpx.HTTPError, TimeoutError, json.JSONDecodeError, ValueError) as exc:
         print(f"warning: could not query PyPI ({exc})", file=sys.stderr)
         return None
     releases = data.get("releases")
