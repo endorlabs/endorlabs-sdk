@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-08-19T15:53:55.676601+00:00",
+  "generated_at": "2026-08-28T17:54:14.263959+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -87,11 +87,10 @@
     {
       "id": "endor-local-context",
       "path": "rules/endor-local-context.md",
-      "summary": "Prefer Docs MCP for product docs; check gitignored .endorlabs-context for OpenAPI and sdk/; never print secrets.",
+      "summary": "Prefer Docs MCP for product docs; check gitignored .endorlabs for OpenAPI and sdk/; never print secrets.",
       "tags": [
         "bootstrap",
         "context",
-        "docs-mcp",
         "openapi"
       ]
     },
@@ -141,7 +140,7 @@
     {
       "id": "endor-workspace-layout",
       "path": "rules/endor-workspace-layout.md",
-      "summary": "Write workflow artifacts under workspace/projects, workspace/runs/<run-bucket>, or workspace/inventory; not repo-root .tmp/.",
+      "summary": "Write workflow artifacts under .endorlabs/reports/, .endorlabs/tasks/<slug>-<date>/<activity>/, or flat .endorlabs/tasks/<activity>/; not repo-root .tmp/.",
       "tags": [
         "artifacts",
         "sessions",
@@ -311,7 +310,7 @@
       "agent_visible": true,
       "cli": "endor-agent-context",
       "composition": "library_api",
-      "default_output": ".endorlabs-context/workspace/projects/<slug>_<timestamp>/",
+      "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/projects/<slug>_<timestamp>/",
       "id": "agent-context",
       "library_entrypoints": [
         "endorlabs.workflows.agent_context.build_context_manifest",
@@ -325,7 +324,7 @@
       "agent_visible": false,
       "cli": "endor-reports",
       "composition": "library_api",
-      "default_output": ".endorlabs-context/workspace/runs/auth-credential-expiry/",
+      "default_output": ".endorlabs/reports/auth-credential-expiry/",
       "id": "auth-credential-expiry",
       "library_entrypoints": [
         "endorlabs.workflows.reports.analyze.auth_credential_expiry",
@@ -339,7 +338,7 @@
       "agent_visible": false,
       "cli": "endor-reports",
       "composition": "library_api",
-      "default_output": ".endorlabs-context/workspace/runs/auth-login-count/",
+      "default_output": ".endorlabs/reports/auth-login-count/",
       "id": "auth-login-count",
       "library_entrypoints": [
         "endorlabs.workflows.reports.analyze.auth_login_count",
@@ -409,7 +408,7 @@
       "agent_visible": false,
       "cli": "endor-reports",
       "composition": "library_api",
-      "default_output": ".endorlabs-context/workspace/runs/ci-endorctl-version-audit/",
+      "default_output": ".endorlabs/reports/ci-endorctl/",
       "id": "ci-endorctl-version-audit",
       "library_entrypoints": [
         "endorlabs.workflows.reports.analyze.ci_endorctl_audit"
@@ -421,7 +420,7 @@
       "agent_visible": false,
       "cli": "endor-reports",
       "composition": "library_api",
-      "default_output": ".endorlabs-context/workspace/runs/cli-vs-cloud-projects/",
+      "default_output": ".endorlabs/reports/cli-vs-cloud/",
       "id": "cli-vs-cloud-projects",
       "library_entrypoints": [
         "endorlabs.workflows.reports.analyze.cli_vs_cloud"
@@ -432,7 +431,7 @@
     {
       "agent_visible": true,
       "cli": "endor-context",
-      "default_output": ".endorlabs-context/",
+      "default_output": ".endorlabs/",
       "id": "context-bootstrap",
       "module": "endorlabs.context.cli",
       "skill": null
@@ -441,7 +440,7 @@
       "agent_visible": false,
       "cli": "endor-reports",
       "composition": "library_api",
-      "default_output": ".endorlabs-context/workspace/runs/duplicate-projects/",
+      "default_output": ".endorlabs/reports/duplicates/",
       "id": "duplicate-projects",
       "library_entrypoints": [
         "endorlabs.workflows.reports.analyze.duplicate_projects"
@@ -453,7 +452,7 @@
       "agent_visible": false,
       "cli": "endor-estate",
       "composition": "library_api",
-      "default_output": ".endorlabs-context/workspace/<slug>-<YYYYMMDD>/",
+      "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/estate/",
       "id": "estate-workspace",
       "library_entrypoints": [
         "endorlabs.workflows.estate.collect_workspace",
@@ -470,7 +469,7 @@
       "agent_visible": false,
       "cli": "endor-reports",
       "composition": "library_api",
-      "default_output": ".endorlabs-context/workspace/runs/executive-report-packet/",
+      "default_output": ".endorlabs/reports/<slug>-<YYYY-MM-DD>/",
       "id": "executive-report-packet",
       "library_entrypoints": [
         "endorlabs.workflows.reports.bundles.executive_packet.build_report_packet",
@@ -485,7 +484,7 @@
       "agent_visible": false,
       "cli": "endor-reports",
       "composition": "library_api",
-      "default_output": ".endorlabs-context/workspace/runs/finding-log-weekly-trends/",
+      "default_output": ".endorlabs/reports/findings-trend/",
       "id": "finding-log-weekly-trends",
       "library_entrypoints": [
         "endorlabs.workflows.reports.analyze.findings_chart_analysis",
@@ -498,10 +497,24 @@
       "skill": "endor-workflow-reports"
     },
     {
+      "agent_visible": true,
+      "cli": "endor-log-export",
+      "composition": "library_api",
+      "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/logs/",
+      "id": "log-export",
+      "library_entrypoints": [
+        "endorlabs.workflows.log_export.export_logs",
+        "endorlabs.workflows.log_export.export_logs_for_namespaces",
+        "endorlabs.workflows.logs.probe_log_density"
+      ],
+      "module": "endorlabs.workflows.log_export.cli",
+      "skill": null
+    },
+    {
       "agent_visible": false,
       "cli": "endor-reports",
       "composition": "library_api",
-      "default_output": ".endorlabs-context/workspace/runs/package-resolution/",
+      "default_output": ".endorlabs/reports/package-resolution/",
       "id": "package-resolution",
       "library_entrypoints": [
         "endorlabs.workflows.reports.analyze.package_resolution.collect_rows",
@@ -528,7 +541,7 @@
       "agent_visible": false,
       "cli": "endor-reports",
       "composition": "library_api",
-      "default_output": ".endorlabs-context/workspace/runs/potentially-reachable-analysis/",
+      "default_output": ".endorlabs/reports/prf-analysis/",
       "id": "potentially-reachable-analysis",
       "library_entrypoints": [
         "endorlabs.workflows.reports.analyze.prf_report_analysis",
@@ -559,7 +572,7 @@
     {
       "agent_visible": true,
       "cli": "endor-reachability-context",
-      "default_output": ".endorlabs-context/workspace/projects/<uuid>/reachability_context.json",
+      "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/projects/<uuid>/reachability_context.json",
       "id": "reachability-context",
       "module": "endorlabs.workflows.reachability.cli",
       "skill": "endor-reachability-provenance"
@@ -567,7 +580,7 @@
     {
       "agent_visible": true,
       "cli": null,
-      "default_output": ".endorlabs-context/workspace/runs/relationships-map/<namespace>/",
+      "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/relationships/<namespace>/",
       "id": "relationships-map",
       "module": "endorlabs.workflows.estate.analyze.project_map.map",
       "skill": "endor-namespace-relationship-map"
@@ -575,7 +588,7 @@
     {
       "agent_visible": true,
       "cli": "endor-semgrep-inventory",
-      "default_output": ".endorlabs-context/workspace/inventory/semgrep_rule_metadata_inventory.json",
+      "default_output": ".endorlabs/tasks/inventory/semgrep_rule_metadata_inventory.json",
       "id": "semgrep-inventory",
       "module": "endorlabs.workflows.semgrep.inventory",
       "skill": "endor-custom-sast-rules"
@@ -584,7 +597,7 @@
       "agent_visible": true,
       "cli": null,
       "composition": "artifact_chain",
-      "default_output": ".endorlabs-context/workspace/runs/troubleshooting-scans/",
+      "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/",
       "id": "troubleshooting-scans",
       "library_entrypoints": [
         "endorlabs.Client.ScanResult.list_by_project",

@@ -7,10 +7,8 @@ from pathlib import Path
 from endorlabs.context.paths import (
     default_context_dir,
     namespace_path_slug,
-    workspace_date_suffix,
-)
-from endorlabs.context.paths import (
-    workspace_dir_for as context_workspace_dir_for,
+    task_activity_dir,
+    tenant_day_suffix,
 )
 from endorlabs.workflows.estate.contracts.resources import (
     ANALYZE_LOG_FILENAME,
@@ -37,13 +35,10 @@ def workspace_dir_for(
     *,
     date_suffix: str | None = None,
 ) -> Path:
-    """Return estate workspace under ``context_dir`` (positional context first).
-
-    Prefer :func:`endorlabs.context.paths.workspace_dir_for` for new call sites
-    (``namespace`` first, optional ``context_dir``).
-    """
-    return context_workspace_dir_for(
+    """Return estate workspace under ``tasks/<slug>-<YYYY-MM-DD>/estate/``."""
+    return task_activity_dir(
         namespace,
+        "estate",
         context_dir=context_dir,
         date_suffix=date_suffix,
     )
@@ -120,8 +115,8 @@ __all__ = [
     "pull_log_path",
     "resolve_workspace_root",
     "resource_path",
+    "tenant_day_suffix",
     "viz_dir",
     "viz_path",
-    "workspace_date_suffix",
     "workspace_dir_for",
 ]

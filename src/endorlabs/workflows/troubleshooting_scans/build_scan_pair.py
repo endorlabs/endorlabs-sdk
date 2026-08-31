@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 from typing import Any
 
 from .common import (
-    default_troubleshooting_output_dir,
     parse_app_scan_history_url,
+    resolve_troubleshooting_output_dir,
     root_tenant,
     write_json,
 )
@@ -27,7 +26,12 @@ def build_parser() -> argparse.ArgumentParser:
     _ = parser.add_argument("--secondary-scan-result-url")
     _ = parser.add_argument("--reason", default="user_supplied")
     _ = parser.add_argument(
-        "--output-dir", default=default_troubleshooting_output_dir()
+        "--output-dir",
+        default=None,
+        help=(
+            "Directory for generated artifacts (default: "
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/)."
+        ),
     )
     _ = parser.add_argument("--timestamped", action="store_true")
     return parser
@@ -55,6 +59,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         label="secondary",
     )
     root = root_tenant(args.tenant)
+    output_dir = resolve_troubleshooting_output_dir(args.tenant, args.output_dir)
     payload: dict[str, Any] = {
         "root_tenant": root,
         "project_uuid": args.project_uuid,
@@ -72,7 +77,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "regression_detected": True,
     }
     artifact = write_json(
-        output_dir=Path(args.output_dir),
+        output_dir=output_dir,
         root_tenant_name=root,
         object_kind="scan_result_pairs",
         object_uuid=args.project_uuid,

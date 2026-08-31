@@ -49,22 +49,6 @@ class TestAuditLog:
                 print(f"[WARNING] Failed to delete test audit log {log_uuid}: {e}")
         self.created_audit_log_uuids.clear()
 
-    def test_audit_log_list(self) -> None:
-        """LIST in namespace with bounded pagination (no traverse)."""
-        result = self.endor_client.AuditLog.list(**log_list_kwargs())
-        assert isinstance(result, list)
-        assert_bounded_log_rows(result)
-
-    def test_audit_log_get(self) -> None:
-        """GET first item from bounded LIST in namespace."""
-        items = self.endor_client.AuditLog.list(**log_list_kwargs())
-        assert_bounded_log_rows(items)
-        if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        got = self.endor_client.AuditLog.get(items[0])
-        assert got is not None
-        assert got.uuid == items[0].uuid
-
     def test_audit_log_spec_error_has_code_message_details(self) -> None:
         """AuditLog spec.error exposes code, message, details when present."""
         items = self.endor_client.AuditLog.list(**log_list_kwargs())

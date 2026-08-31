@@ -35,7 +35,7 @@ from pre_commit_guards import (  # noqa: E402
 
 def test_is_blocked_staged_path() -> None:
     assert is_blocked_staged_path(".env")
-    assert is_blocked_staged_path(".endorlabs-context/sdk/INDEX.md")
+    assert is_blocked_staged_path(".endorlabs/_cache/sdk/INDEX.md")
     assert not is_blocked_staged_path("README.md")
     assert not is_blocked_staged_path("src/endorlabs/__init__.py")
 
@@ -60,7 +60,7 @@ def test_check_blocked_staged_paths_fails(mock_staged_paths: object) -> None:
 
 @patch(
     "pre_commit_guards.staged_paths",
-    return_value=[".endorlabs-context/workspace/runs/foo.json"],
+    return_value=[".endorlabs/tasks/scratch/foo.json"],
 )
 def test_check_blocked_staged_paths_context(mock_staged_paths: object) -> None:
     assert check_blocked_staged_paths() == 1
@@ -291,7 +291,7 @@ def test_check_context_root_literals_blocks(tmp_path: Path, monkeypatch) -> None
     bad = tmp_path / "src" / "endorlabs" / "workflows" / "foo.py"
     bad.parent.mkdir(parents=True)
     bad.write_text(
-        'from pathlib import Path\nroot = Path(".endorlabs-context")\n',
+        'from pathlib import Path\nroot = Path(".endorlabs")\n',
         encoding="utf-8",
     )
     assert check_context_root_literals(paths=["src/endorlabs/workflows/foo.py"]) == 1
@@ -303,7 +303,7 @@ def test_check_context_root_literals_allows_paths_module(
     monkeypatch.setattr("pre_commit_guards._REPO_ROOT", tmp_path)
     ok = tmp_path / "src" / "endorlabs" / "context" / "paths.py"
     ok.parent.mkdir(parents=True)
-    ok.write_text('DEFAULT_CONTEXT_DIR = ".endorlabs-context"\n', encoding="utf-8")
+    ok.write_text('DEFAULT_CONTEXT_DIR = ".endorlabs"\n', encoding="utf-8")
     assert check_context_root_literals(paths=["src/endorlabs/context/paths.py"]) == 0
 
 
@@ -314,7 +314,7 @@ def test_check_context_root_literals_allows_prose_mention(
     ok = tmp_path / "src" / "endorlabs" / "workflows" / "foo.py"
     ok.parent.mkdir(parents=True)
     ok.write_text(
-        '"""Write under .endorlabs-context/workspace/ after init."""\n',
+        '"""Write under .endorlabs/tasks/ after init."""\n',
         encoding="utf-8",
     )
     assert check_context_root_literals(paths=["src/endorlabs/workflows/foo.py"]) == 0
@@ -328,7 +328,7 @@ def test_check_context_root_literals_scans_skill_scripts(
         tmp_path / "agent-knowledge" / "skills" / "endor-foo" / "scripts" / "report.py"
     )
     bad.parent.mkdir(parents=True)
-    bad.write_text('OUT = ".endorlabs-context/workspace/runs/foo"\n', encoding="utf-8")
+    bad.write_text('OUT = ".endorlabs/reports/foo"\n', encoding="utf-8")
     assert (
         check_context_root_literals(
             paths=["agent-knowledge/skills/endor-foo/scripts/report.py"],

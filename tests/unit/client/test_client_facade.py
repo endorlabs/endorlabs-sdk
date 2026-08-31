@@ -102,14 +102,14 @@ def test_client_explicit_tenant_overrides_endor_namespace_env(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Explicit tenant= wins over ENDOR_NAMESPACE."""
-    monkeypatch.setenv("ENDOR_NAMESPACE", "env.tenant.namespace")
+    monkeypatch.setenv("ENDOR_NAMESPACE", "example-tenant.env")
     mock = Mock(spec=APIClient)
-    client = endorlabs.Client(api_client=mock, tenant="explicit.tenant")
+    client = endorlabs.Client(api_client=mock, tenant="example-tenant.explicit")
     mock_list = Mock(return_value=[])
     client.Namespace._ops.list = mock_list
     client.Namespace.list(max_pages=TEST_MAX_PAGES)
     args, _ = mock_list.call_args
-    assert args[0] == "explicit.tenant"
+    assert args[0] == "example-tenant.explicit"
 
 
 def test_client_requires_namespace_or_tenant_for_list(
@@ -293,6 +293,14 @@ def test_registry_supported_ops_not_implemented_contract(
                 facade.delete("unit-uuid", namespace=namespace)
 
 
+def test_system_config_exposes_list_get_update_only() -> None:
+    """SystemConfig is onboard-seeded; SDK must not expose create/delete."""
+    from endorlabs.registry import RESOURCE_REGISTRY
+
+    entry = next(r for r in RESOURCE_REGISTRY if r.attr_name == "SystemConfig")
+    assert entry.supported_ops == frozenset({"get", "list", "update"})
+
+
 class TestBuildFacade:
     """_build_facade factory produces the correct facade scope per registry entry."""
 
@@ -389,6 +397,26 @@ def test_query_vulnerability_create_builds_payload_and_uses_oss_namespace(
     assert args[1] is built_payload
 
 
+def test_query_malware_create_builds_payload_and_uses_oss_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """Create-only QueryMalware uses builder and OSS namespace (catalog plane)."""
+    client = client_with_mock_transport
+    built_payload = Mock()
+    client.QueryMalware._build_create_payload_fn = Mock(return_value=built_payload)
+    client.QueryMalware._ops.create = Mock(return_value=Mock(uuid="qm-1"))
+    client.QueryMalware.create(
+        name="query-malware",
+        package_version_name="npm://keyv@6.0.0",
+        package_names={"names": ["npm://keyv"]},
+    )
+    client.QueryMalware._build_create_payload_fn.assert_called_once()
+    client.QueryMalware._ops.create.assert_called_once()
+    args, _ = client.QueryMalware._ops.create.call_args
+    assert args[0] == "oss"
+    assert args[1] is built_payload
+
+
 def test_vector_store_query_create_builds_payload_and_uses_tenant_namespace(
     client_with_mock_transport: Client,
 ) -> None:
@@ -407,6 +435,42 @@ def test_vector_store_query_create_builds_payload_and_uses_tenant_namespace(
     args, _ = client.VectorStoreQuery._ops.create.call_args
     assert args[0] == TEST_NAMESPACE_DEFAULT
     assert args[1] is built_payload
+
+
+def test_malware_exposure_query_create_builds_payload_and_uses_tenant_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """MalwareExposureQuery create uses builder and client tenant (not oss)."""
+    client = client_with_mock_transport
+    built_payload = Mock()
+    client.MalwareExposureQuery._build_create_payload_fn = Mock(
+        return_value=built_payload
+    )
+    client.MalwareExposureQuery._ops.create = Mock(return_value=Mock(uuid="meq-1"))
+    client.MalwareExposureQuery.create(
+        name="exposure-check",
+        malware_uuids=["malware-uuid-1"],
+        filter='meta.create_time >= now("-168h")',
+    )
+    client.MalwareExposureQuery._build_create_payload_fn.assert_called_once()
+    client.MalwareExposureQuery._ops.create.assert_called_once()
+    args, _ = client.MalwareExposureQuery._ops.create.call_args
+    assert args[0] == TEST_NAMESPACE_DEFAULT
+    assert args[0] != "oss"
+    assert args[1] is built_payload
+
+
+def test_malware_exposure_list_uses_tenant_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """MalwareExposure list hits the client tenant path, not oss."""
+    client = client_with_mock_transport
+    client.MalwareExposure._ops.list = Mock(return_value=[])
+    client.MalwareExposure.list(max_pages=1)
+    client.MalwareExposure._ops.list.assert_called_once()
+    args, _ = client.MalwareExposure._ops.list.call_args
+    assert args[0] == TEST_NAMESPACE_DEFAULT
+    assert args[0] != "oss"
 
 
 def test_client_exposes_all_custom_facades(
@@ -1089,14 +1153,17 @@ def test_resource_namespace_property_returns_tenant_meta_namespace() -> None:
     assert resource_none_ns.namespace is None
 
 
-def test_finding_empty_list_warns_at_default_namespace(
+def test_finding_empty_list_raises_at_default_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """Empty project-scoped list at tenant root emits a namespace scoping warning."""
+    """Project-scoped list at tenant root raises before the network call."""
+    from endorlabs.core.exceptions import NamespaceScopingError
+
     client = client_with_mock_transport
     client.Finding._ops.list = Mock(return_value=[])
-    with pytest.warns(UserWarning, match="list_by_project"):
+    with pytest.raises(NamespaceScopingError, match="list_by_project"):
         client.Finding.list(max_pages=TEST_MAX_PAGES)
+    client.Finding._ops.list.assert_not_called()
 
 
 def test_finding_empty_list_no_warn_with_child_namespace(
@@ -1113,17 +1180,20 @@ def test_finding_empty_list_no_warn_with_child_namespace(
     assert not [w for w in caught if issubclass(w.category, UserWarning)]
 
 
-def test_finding_empty_list_warns_with_project_uuid_filter_at_tenant_root(
+def test_finding_project_uuid_filter_still_requires_child_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """project_uuid filter does not widen namespace; empty list still warns at tenant root."""
+    """project_uuid filter does not widen namespace; tenant-root list still errors."""
+    from endorlabs.core.exceptions import NamespaceScopingError
+
     client = client_with_mock_transport
     client.Finding._ops.list = Mock(return_value=[])
-    with pytest.warns(UserWarning, match="list_by_project"):
+    with pytest.raises(NamespaceScopingError, match="namespace="):
         client.Finding.list(
             filter='spec.project_uuid=="proj-1"',
             max_pages=TEST_MAX_PAGES,
         )
+    client.Finding._ops.list.assert_not_called()
 
 
 def test_facade_count_delegates_to_ops(client_with_mock_transport: Client) -> None:

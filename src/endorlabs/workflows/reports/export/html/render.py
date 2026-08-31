@@ -10,14 +10,9 @@ from importlib import resources
 from pathlib import Path
 from typing import Any
 
-from endorlabs.context.paths import sanitize_path_segment
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.reports.export.csv.packet_exports import (
     write_packet_raw_exports,
-)
-from endorlabs.workflows.reports.schemas.packet_v0 import (
-    PATCHES_RUN_BUCKET,
-    RUN_BUCKET,
 )
 
 from . import chrome as chrome_mod
@@ -291,11 +286,48 @@ def _sca_burndown_report(cube: dict[str, Any]) -> dict[str, Any]:
     return reports.get("scaBurndown") or reports.get("findingsBurndown") or {}
 
 
+def patches_slice_included(cube: dict[str, Any], *, patches_only: bool = False) -> bool:
+    """Whether to emit the Endor Patches page, nav link, and patches CSVs.
+
+    Opt-in pull (``--patches`` / ``patches`` / ``patches_only``) and license
+    entitlement record ``reportsMeta.patches.status``. ``skipped`` means the
+    Finding list never ran — omit the empty shell page. Legacy cubes without
+    ``reportsMeta`` keep prior behavior (emit when a ``reports.patches``
+    object is present).
+    """
+    if patches_only:
+        return True
+    meta = (cube.get("reportsMeta") or {}).get("patches") or {}
+    status = meta.get("status")
+    if status == "skipped":
+        return False
+    if status in {"ok", "failed", "error"}:
+        return True
+    return isinstance((cube.get("reports") or {}).get("patches"), dict)
+
+
+def code_findings_slice_included(cube: dict[str, Any]) -> bool:
+    """Whether to emit the SAST burndown page, nav link, and code CSVs."""
+    meta = (cube.get("reportsMeta") or {}).get("codeFindingsBurndown") or {}
+    status = meta.get("status")
+    if status == "skipped":
+        return False
+    if status in {"ok", "failed", "error"}:
+        return True
+    reports = cube.get("reports") or {}
+    return isinstance(reports.get("codeFindingsBurndown"), dict)
+
+
 def _page(body: str, *, title: str) -> str:
     return chrome_mod.page(body, title=title, include_chart_js=True)
 
 
-def _render_onboarding(cube: dict[str, Any]) -> str:
+def _render_onboarding(
+    cube: dict[str, Any],
+    *,
+    include_sast: bool = True,
+    include_patches: bool = True,
+) -> str:
     tenant = cube.get("tenant") or ""
     pulled = cube.get("pulledAt") or ""
     report = (cube.get("reports") or {}).get("onboarding") or {}
@@ -309,7 +341,7 @@ def _render_onboarding(cube: dict[str, Any]) -> str:
     }
     payload = json.dumps(slim, separators=(",", ":"))
     return _page(
-        f"""{chrome_mod.header(title=copy_mod.H1_ONBOARDING, purpose=copy_mod.PURPOSE_ONBOARDING, tenant=tenant, pulled_at=pulled, nav_html=chrome_mod.nav("on"))}
+        f"""{chrome_mod.header(title=copy_mod.H1_ONBOARDING, purpose=copy_mod.PURPOSE_ONBOARDING, tenant=tenant, pulled_at=pulled, nav_html=chrome_mod.nav("on", include_sast=include_sast, include_patches=include_patches))}
 {copy_mod.GLOSSARY_HTML}
 <div class="card">
   <div class="card-h">Filters</div>
@@ -624,7 +656,12 @@ render();
     )
 
 
-def _render_version_sprawl(cube: dict[str, Any]) -> str:
+def _render_version_sprawl(
+    cube: dict[str, Any],
+    *,
+    include_sast: bool = True,
+    include_patches: bool = True,
+) -> str:
     tenant = cube.get("tenant") or ""
     pulled = cube.get("pulledAt") or ""
     report = (cube.get("reports") or {}).get("versionSprawl") or {}
@@ -646,7 +683,7 @@ def _render_version_sprawl(cube: dict[str, Any]) -> str:
     }
     payload = json.dumps(slim, separators=(",", ":"))
     return _page(
-        f"""{chrome_mod.header(title=copy_mod.H1_VERSION_SPRAWL, purpose=copy_mod.PURPOSE_VERSION_SPRAWL, tenant=tenant, pulled_at=pulled, nav_html=chrome_mod.nav("vs"))}
+        f"""{chrome_mod.header(title=copy_mod.H1_VERSION_SPRAWL, purpose=copy_mod.PURPOSE_VERSION_SPRAWL, tenant=tenant, pulled_at=pulled, nav_html=chrome_mod.nav("vs", include_sast=include_sast, include_patches=include_patches))}
 {copy_mod.GLOSSARY_HTML}
 <div class="card">
   <div class="card-h">Filters</div>
@@ -844,7 +881,12 @@ def _slim_throughput(tp: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _render_sca_burndown(cube: dict[str, Any]) -> str:
+def _render_sca_burndown(
+    cube: dict[str, Any],
+    *,
+    include_sast: bool = True,
+    include_patches: bool = True,
+) -> str:
     tenant = cube.get("tenant") or ""
     pulled = cube.get("pulledAt") or ""
     report = _sca_burndown_report(cube)
@@ -875,7 +917,7 @@ def _render_sca_burndown(cube: dict[str, Any]) -> str:
     leaders_narrow = copy_mod.TAG_LEADERS_NARROWING
     leaders_widen = copy_mod.TAG_LEADERS_WIDENING
     return _page(
-        f"""{chrome_mod.header(title=copy_mod.H1_SCA_BURNDOWN, purpose=copy_mod.PURPOSE_SCA_BURNDOWN, tenant=tenant, pulled_at=pulled, nav_html=chrome_mod.nav("sca"))}
+        f"""{chrome_mod.header(title=copy_mod.H1_SCA_BURNDOWN, purpose=copy_mod.PURPOSE_SCA_BURNDOWN, tenant=tenant, pulled_at=pulled, nav_html=chrome_mod.nav("sca", include_sast=include_sast, include_patches=include_patches))}
 {copy_mod.GLOSSARY_HTML}
 <div class="card">
   <div class="card-h">Filters</div>
@@ -958,14 +1000,12 @@ function render() {{
   if (ns === "all") bits.push("Entire organization"); else bits.push(ns);
   if (tag !== "all") bits.push("tag:" + tag);
   if (sev !== "high_plus") bits.push(SEV_LABELS[sev] || sev);
-  if (reach !== "all") {{
+  if (reach !== "any") {{
     const reachLabels = {{
+      all: "function reach (RF or PRF)",
       reachable: "reachable function",
       prf: "PRF",
-      prd: "PRD",
-      unreachable: "unreachable",
       unreachable_function: "unreachable function",
-      unreachable_dependency: "unreachable dependency",
     }};
     bits.push(reachLabels[reach] || reach);
   }}
@@ -1024,16 +1064,13 @@ fillSelect(document.getElementById("tag"), [
 fillSelect(document.getElementById("sev"), SEV_OPTIONS);
 document.getElementById("sev").value = "high_plus";
 fillSelect(document.getElementById("reach"), [
+  {{v:"any", l:"Any reachability"}},
   {{v:"all", l:"Function reach (RF or PRF)"}},
   {{v:"reachable", l:"Reachable function (RF)"}},
   {{v:"prf", l:"Potentially reachable function (PRF)"}},
-  {{v:"reachable_dependency", l:"Reachable dependency (RD)"}},
-  {{v:"prd", l:"Potentially reachable dependency (PRD)"}},
-  {{v:"dependency_reach", l:"Dependency reach (RD or PRD)"}},
-  {{v:"unreachable", l:"Unreachable (function or dependency)"}},
-  {{v:"unreachable_function", l:"Unreachable function only"}},
-  {{v:"unreachable_dependency", l:"Unreachable dependency only"}},
+  {{v:"unreachable_function", l:"Unreachable function"}},
 ]);
+document.getElementById("reach").value = "any";
 ["ns","tag","sev","reach"].forEach(id => document.getElementById(id).addEventListener("change", render));
 render();
 </script>
@@ -1042,7 +1079,12 @@ render();
     )
 
 
-def _render_sast_burndown(cube: dict[str, Any]) -> str:
+def _render_sast_burndown(
+    cube: dict[str, Any],
+    *,
+    include_sast: bool = True,
+    include_patches: bool = True,
+) -> str:
     tenant = cube.get("tenant") or ""
     pulled = cube.get("pulledAt") or ""
     report = (cube.get("reports") or {}).get("codeFindingsBurndown") or {}
@@ -1070,7 +1112,7 @@ def _render_sast_burndown(cube: dict[str, Any]) -> str:
     leaders_narrow = copy_mod.TAG_LEADERS_NARROWING
     leaders_widen = copy_mod.TAG_LEADERS_WIDENING
     return _page(
-        f"""{chrome_mod.header(title=copy_mod.H1_SAST_BURNDOWN, purpose=copy_mod.PURPOSE_SAST_BURNDOWN, tenant=tenant, pulled_at=pulled, nav_html=chrome_mod.nav("sast"))}
+        f"""{chrome_mod.header(title=copy_mod.H1_SAST_BURNDOWN, purpose=copy_mod.PURPOSE_SAST_BURNDOWN, tenant=tenant, pulled_at=pulled, nav_html=chrome_mod.nav("sast", include_sast=include_sast, include_patches=include_patches))}
 {copy_mod.GLOSSARY_HTML}
 <div class="card">
   <div class="card-h">Filters</div>
@@ -1215,11 +1257,12 @@ fillSelect(document.getElementById("tag"), [
   {{v:"all", l:"All project tags"}},
   ...(CUBE.tagCatalog||[]).map(t => ({{v:t.tag, l: tagLabel(t.tag)}}))
 ]);
-fillSelect(document.getElementById("category"), [
-  {{v:"sast", l:"OpenGrep"}},
-  {{v:"ai_sast", l:"AI-SAST"}},
-  {{v:"secrets", l:"Secrets"}},
-]);
+fillSelect(document.getElementById("category"),
+  (CUBE.categories||["sast","ai_sast","secrets"]).map(k => ({{
+    v: k,
+    l: ({{sast:"OpenGrep", ai_sast:"AI-SAST", secrets:"Secrets"}})[k] || k
+  }}))
+);
 fillSelect(document.getElementById("sev"), SEV_OPTIONS);
 document.getElementById("sev").value = "high_plus";
 syncFacetOptions();
@@ -1244,6 +1287,10 @@ def render_report_packet(
     rendering those pages would produce reports that look broken rather than
     intentionally skipped.
 
+    Skipped slices (``reportsMeta.*.status == "skipped"`` — opt-in Patches or
+    unentitled SAST/AI-SAST/Secrets/Patches) omit their HTML page, nav link,
+    and related CSV exports.
+
     Returns paths written (assets, HTML, cube, CSVs, README).
     """
     out = Path(out_dir)
@@ -1251,18 +1298,35 @@ def render_report_packet(
     data_dir = out / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
 
-    pages = [
-        (out / "05-endor-patches.html", render_patches_html(cube)),
-    ]
+    include_patches = patches_slice_included(cube, patches_only=patches_only)
+    include_sast = False if patches_only else code_findings_slice_included(cube)
+    nav_kw = {"include_sast": include_sast, "include_patches": include_patches}
+
+    pages: list[tuple[Path, str]] = []
+    if include_patches:
+        pages.append(
+            (
+                out / "05-endor-patches.html",
+                render_patches_html(cube, **nav_kw),
+            )
+        )
     if not patches_only:
         pages = [
-            (out / "01-onboarding.html", _render_onboarding(cube)),
-            (out / "02-version-sprawl.html", _render_version_sprawl(cube)),
-            (out / "03-sca-burndown.html", _render_sca_burndown(cube)),
-            (out / "04-sast-burndown.html", _render_sast_burndown(cube)),
+            (out / "01-onboarding.html", _render_onboarding(cube, **nav_kw)),
+            (out / "02-version-sprawl.html", _render_version_sprawl(cube, **nav_kw)),
+            (out / "03-sca-burndown.html", _render_sca_burndown(cube, **nav_kw)),
+            *(
+                [(out / "04-sast-burndown.html", _render_sast_burndown(cube, **nav_kw))]
+                if include_sast
+                else []
+            ),
             *pages,
         ]
-    readme = copy_mod.README_PATCHES_ONLY_TEXT if patches_only else copy_mod.README_TEXT
+    readme = copy_mod.packet_readme(
+        include_sast=include_sast,
+        include_patches=include_patches,
+        patches_only=patches_only,
+    )
     files = [
         *pages,
         (data_dir / "packet.cube.json", json.dumps(cube, indent=2) + "\n"),
@@ -1274,7 +1338,15 @@ def render_report_packet(
     for path, content in files:
         safe_write_text(out, path, content)
         written.append(path)
-    written.extend(write_packet_raw_exports(cube, data_dir, patches_only=patches_only))
+    written.extend(
+        write_packet_raw_exports(
+            cube,
+            data_dir,
+            patches_only=patches_only,
+            include_sast=include_sast,
+            include_patches=include_patches,
+        )
+    )
     return written
 
 
@@ -1283,14 +1355,10 @@ def default_packet_output_dir(
     *,
     date_suffix: str | None = None,
 ) -> Path:
-    """Default ``runs/executive-report-packet/<tenant>-executive-packet-MMDDYY``."""
-    from datetime import UTC, datetime
+    """Default ``reports/<slug>-<YYYY-MM-DD>/``."""
+    from endorlabs.context.paths import report_packet_dir
 
-    from endorlabs.context.paths import default_runs_dir
-
-    slug = sanitize_path_segment(namespace)
-    suffix = (date_suffix or datetime.now(UTC).strftime("%m%d%y")).strip()
-    return default_runs_dir(RUN_BUCKET) / f"{slug}-executive-packet-{suffix}"
+    return report_packet_dir(namespace, date_suffix=date_suffix)
 
 
 def default_patches_report_dir(
@@ -1298,11 +1366,9 @@ def default_patches_report_dir(
     *,
     date_suffix: str | None = None,
 ) -> Path:
-    """Default ``runs/patches-reports/<tenant>-MMDDYY`` path for ``--patches-only``."""
-    from datetime import UTC, datetime
+    """Default ``reports/patches/<slug>-<YYYY-MM-DD>/``."""
+    from endorlabs.context.paths import reports_dir, tenant_day_slug
 
-    from endorlabs.context.paths import default_runs_dir
-
-    slug = sanitize_path_segment(namespace)
-    suffix = (date_suffix or datetime.now(UTC).strftime("%m%d%y")).strip()
-    return default_runs_dir(PATCHES_RUN_BUCKET) / f"{slug}-{suffix}"
+    return (
+        reports_dir() / "patches" / tenant_day_slug(namespace, date_suffix=date_suffix)
+    )

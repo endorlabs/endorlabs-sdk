@@ -11,9 +11,10 @@ from pathlib import Path
 import endorlabs
 from endorlabs.context.paths import (
     DEFAULT_CONTEXT_DIR,
-    workspace_date_suffix,
-    workspace_dir_for,
+    task_activity_dir,
+    tenant_day_suffix,
 )
+from endorlabs.query.routing import OutputShape
 from endorlabs.tools.list_bounds import resolve_collect_max_workers
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.workspace import analyze_workspace
@@ -48,10 +49,8 @@ def _resolve_workspace(args: argparse.Namespace) -> Path:
     if args.workspace:
         return resolve_workspace_root(Path(args.workspace))
     if args.namespace:
-        date_suffix = (
-            args.date if getattr(args, "date", None) else workspace_date_suffix()
-        )
-        return workspace_dir_for(args.namespace, date_suffix=date_suffix)
+        date_suffix = args.date if getattr(args, "date", None) else tenant_day_suffix()
+        return task_activity_dir(args.namespace, "estate", date_suffix=date_suffix)
     raise ValueError("Provide --workspace or --namespace")
 
 
@@ -66,13 +65,13 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
         "--workspace",
         "-w",
         help=(
-            f"Workspace directory (default: {DEFAULT_CONTEXT_DIR}/workspace/"
-            "<slug>-<YYYYMMDD>/)"
+            f"Workspace directory (default: {DEFAULT_CONTEXT_DIR}/tasks/"
+            "<slug>-<YYYY-MM-DD>/estate/)"
         ),
     )
     parser.add_argument(
         "--date",
-        help="UTC YYYYMMDD suffix for default workspace path (default: today)",
+        help="UTC YYYY-MM-DD suffix for default workspace path (default: today)",
     )
 
 
@@ -99,6 +98,7 @@ def cmd_pull(args: argparse.Namespace) -> int:
             overwrite=args.overwrite,
             preflight=args.preflight,
             validate_counts=args.validate_counts,
+            output_shape=OutputShape.FINDING_ROWS,
         )
     finally:
         client.close()

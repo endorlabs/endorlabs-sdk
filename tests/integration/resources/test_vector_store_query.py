@@ -23,8 +23,9 @@ class TestVectorStoreQuery:
         self.client = endorlabs.Client(tenant=namespace, api_client=api_client)
         self.namespace = namespace
 
-    def test_vector_store_search_by_name_function_summary(self) -> None:
-        """Resolve function_summary store when present (read-only)."""
+    @pytest.fixture
+    def function_summary_store(self):
+        """Resolve the function_summary vector store when present in this tenant."""
         try:
             matches = self.client.VectorStore.search_by_name("function_summary")
         except ServerError:
@@ -34,17 +35,12 @@ class TestVectorStoreQuery:
         vs = matches[0]
         assert vs.uuid
         assert vs.meta is not None
+        return vs
 
     @pytest.mark.writes
-    def test_vector_store_query_natural_language(self) -> None:
+    def test_vector_store_query_natural_language(self, function_summary_store) -> None:
         """POST vector store query via VectorStore.query helper."""
-        try:
-            matches = self.client.VectorStore.search_by_name("function_summary")
-        except ServerError:
-            pytest.skip("No function_summary VectorStore in this tenant")
-        if not matches:
-            pytest.skip("No function_summary VectorStore in this tenant")
-        vs = matches[0]
+        vs = function_summary_store
         try:
             result = vs.query(
                 "functions that sanitize a command injection",
@@ -62,15 +58,11 @@ class TestVectorStoreQuery:
         assert result.meta is not None
 
     @pytest.mark.writes
-    def test_vector_store_query_metadata_filter_round_trip(self) -> None:
+    def test_vector_store_query_metadata_filter_round_trip(
+        self, function_summary_store
+    ) -> None:
         """Flat metadata_filter on create is accepted by the API."""
-        try:
-            matches = self.client.VectorStore.search_by_name("function_summary")
-        except ServerError:
-            pytest.skip("No function_summary VectorStore in this tenant")
-        if not matches:
-            pytest.skip("No function_summary VectorStore in this tenant")
-        vs = matches[0]
+        vs = function_summary_store
         filter_value = {"repo": "https://github.com/endorlabs/endorlabs-sdk.git"}
         try:
             result = self.client.VectorStoreQuery.create(

@@ -18,11 +18,18 @@ Tenant vector store inventory (embeddings index metadata).
 | `update` | no |
 | `delete` | no |
 
-## Response / read-only spec fields
+## User-space access
 
-Present on responses; not accepted as flat create kwargs:
+Customer tenant semantics (distinct from raw OpenAPI and SDK exposure).
+Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
 
-- `matches`
+| Operation | Customer user-space | SDK exposed |
+|-----------|---------------------|-------------|
+| `list` | read-only | yes |
+| `get` | read-only | yes |
+| `create` | not-supported | no |
+| `update` | not-supported | no |
+| `delete` | not-supported | no |
 
 ## Related resources
 

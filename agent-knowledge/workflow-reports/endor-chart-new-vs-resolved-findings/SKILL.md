@@ -220,7 +220,7 @@ Producer: `endorlabs.workflows.findings.finding_log_trends.build_analysis` (via
 Use a Cursor canvas (`.canvas.tsx`) for interactive charts. Store under the Cursor
 project `canvases/` folder (typically `~/.cursor/projects/<repo-slug>/canvases/` —
 outside the git repo). Write artifacts under
-`.endorlabs-context/workspace/runs/finding-log-weekly-trends/` only when the user asks for
+`.endorlabs/reports/findings-trend/` only when the user asks for
 a repo-local copy.
 
 ### Cumulative weekly line chart (default)

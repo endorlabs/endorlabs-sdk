@@ -91,25 +91,26 @@ def test_expand_severity_reach_matrix_sums_four_levels() -> None:
 
     raw = {
         sev: {
+            "any": cell(10),
             "reachable": cell(1),
             "prf": cell(2),
-            "reachable_dependency": cell(4),
-            "prd": cell(0),
             "unreachable_function": cell(0),
-            "unreachable_dependency": cell(0),
         }
         for sev in ("critical", "high", "medium", "low")
     }
     expanded = expand_severity_reach_matrix(
         raw, categories=cats, period_caption=caption
     )
-    # per-sev all = RF+PRF = 1+2
+    # per-sev all = RF+PRF = 1+2; any passes through unfiltered pull
+    assert expanded["critical"]["any"]["weeklyNew"] == [10]
     assert expanded["critical"]["all"]["weeklyNew"] == [3]
-    assert expanded["critical"]["dependency_reach"]["weeklyNew"] == [4]
+    assert expanded["critical"]["unreachable_function"]["weeklyNew"] == [0]
     # top-level all = 4 * 3
     assert expanded["all"]["all"]["weeklyNew"] == [12]
+    assert expanded["all"]["any"]["weeklyNew"] == [40]
     assert expanded["all"]["reachable"]["weeklyNew"] == [4]
-    assert expanded["all"]["reachable_dependency"]["weeklyNew"] == [16]
+    assert "reachable_dependency" not in expanded["critical"]
+    assert "dependency_reach" not in expanded["critical"]
 
 
 def test_sev_facet_cells_include_medium_low() -> None:

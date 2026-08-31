@@ -1,4 +1,18 @@
-"""Live integration tests for Query facade recipes and validation."""
+"""Live Query graph-join integration tests.
+
+Layers (use the narrowest assertion each case needs):
+
+- **Wiring** — ``Query.Project.count_*`` returns a dict with non-negative ints (POST
+  shape + client parsing only; not compared to facade).
+- **Parity** — ``validate_sample`` matches facade ``count`` for the same project
+  (recipe correctness on live data).
+- **Estate pagination** (``long``) — ``collect_estate_findings`` row cardinality
+  matches facade ``Finding.count`` when a project has many rows (pagination
+  completeness, not model field coverage).
+
+Default CI runs one wiring + one parity smoke. Multi-recipe parity, topology,
+and estate collect run under ``pytest -m long``.
+"""
 
 from __future__ import annotations
 
@@ -10,8 +24,14 @@ from endorlabs.query import discover_topology, validate_sample
 from tests.conftest import TEST_MAX_PAGES_TRAVERSE
 from tests.integration.client.conftest import require_first_project
 
+# Minimal live samples — estate probes scan only a few projects before skip.
+_QUERY_SAMPLE_PROJECTS = 1
+_VALIDATE_SAMPLE_SIZE = 1
+_ESTATE_COLLECT_PROBE_PROJECTS = 3
+_ESTATE_COLLECT_MIN_FINDINGS = 100
 
-def _sample_projects(client, *, limit: int = 3) -> list[object]:
+
+def _sample_projects(client, *, limit: int = _QUERY_SAMPLE_PROJECTS) -> list[object]:
     """Return up to ``limit`` projects with a leaf namespace for Query grouping."""
     try:
         projects = client.Project.list(
@@ -30,6 +50,12 @@ def _sample_projects(client, *, limit: int = 3) -> list[object]:
     return with_ns[:limit]
 
 
+@pytest.fixture
+def query_sample_projects(facade_root_client):
+    """One leaf project for Query recipe tests."""
+    return _sample_projects(facade_root_client, limit=_QUERY_SAMPLE_PROJECTS)
+
+
 @pytest.mark.integration
 class TestQueryRecipes:
     """Validate graph-join count recipes against live tenant data."""
@@ -38,10 +64,10 @@ class TestQueryRecipes:
     def setup_client(self, facade_root_client) -> None:
         self.client = facade_root_client
 
-    def test_query_facade_count_pv_by_project(self) -> None:
-        projects = _sample_projects(self.client)
+    def test_query_facade_count_pv_wiring(self, query_sample_projects) -> None:
+        """Wiring: count_pv POST returns uuid→int map."""
         try:
-            counts = self.client.Query.Project.count_pv(projects)
+            counts = self.client.Query.Project.count_pv(query_sample_projects)
         except ServerError as err:
             pytest.skip(f"Query PV count unavailable: {err}")
         assert isinstance(counts, dict)
@@ -50,10 +76,33 @@ class TestQueryRecipes:
             assert isinstance(value, int)
             assert value >= 0
 
-    def test_query_facade_count_findings_by_category(self) -> None:
-        projects = _sample_projects(self.client)
+    def test_validate_sample_pv_parity(self, query_sample_projects) -> None:
+        """Parity: validate_sample(pv) matches facade count on the same project."""
         try:
-            counts = self.client.Query.Project.count_findings_by_category(projects)
+            result = validate_sample(
+                self.client,
+                query_sample_projects,
+                recipe="pv",
+                sample_size=_VALIDATE_SAMPLE_SIZE,
+            )
+        except ServerError as err:
+            pytest.skip(f"Query validation unavailable: {err}")
+        assert result.recipe == "pv"
+        assert result.sample_size <= _VALIDATE_SAMPLE_SIZE
+        if not result.matched:
+            pytest.fail(
+                f"Query vs facade PV count mismatch: {result.to_dict()['mismatches']}"
+            )
+
+    @pytest.mark.long
+    def test_query_facade_count_findings_by_category_wiring(
+        self, query_sample_projects
+    ) -> None:
+        """Wiring: count_findings_by_category POST returns nested category counts."""
+        try:
+            counts = self.client.Query.Project.count_findings_by_category(
+                query_sample_projects
+            )
         except ServerError as err:
             pytest.skip(f"Query finding count unavailable: {err}")
         assert isinstance(counts, dict)
@@ -65,37 +114,20 @@ class TestQueryRecipes:
                 assert isinstance(value, int)
                 assert value >= 0
 
-    def test_validate_sample_pv_matches_facade_count(self) -> None:
-        projects = _sample_projects(self.client, limit=2)
+    @pytest.mark.long
+    def test_validate_sample_findings_parity(self, query_sample_projects) -> None:
+        """Parity: validate_sample(findings) matches facade category counts."""
         try:
             result = validate_sample(
                 self.client,
-                projects,
-                recipe="pv",
-                sample_size=2,
-            )
-        except ServerError as err:
-            pytest.skip(f"Query validation unavailable: {err}")
-        assert result.recipe == "pv"
-        assert result.sample_size <= 2
-        if not result.matched:
-            pytest.fail(
-                f"Query vs facade PV count mismatch: {result.to_dict()['mismatches']}"
-            )
-
-    def test_validate_sample_findings_matches_facade_count(self) -> None:
-        projects = _sample_projects(self.client, limit=2)
-        try:
-            result = validate_sample(
-                self.client,
-                projects,
+                query_sample_projects,
                 recipe="findings",
-                sample_size=2,
+                sample_size=_VALIDATE_SAMPLE_SIZE,
             )
         except ServerError as err:
             pytest.skip(f"Query findings validation unavailable: {err}")
         assert result.recipe == "findings"
-        assert result.sample_size <= 2
+        assert result.sample_size <= _VALIDATE_SAMPLE_SIZE
         if not result.matched:
             mismatches = result.to_dict()["mismatches"]
             malware_only = all(m.get("category") == "MALWARE" for m in mismatches)
@@ -105,44 +137,48 @@ class TestQueryRecipes:
                 )
             pytest.fail(f"Query vs facade finding count mismatch: {mismatches}")
 
-    def test_validate_sample_dm_matches_facade_count(self) -> None:
-        projects = _sample_projects(self.client, limit=2)
+    @pytest.mark.long
+    def test_validate_sample_dm_parity(self, query_sample_projects) -> None:
+        """Parity: validate_sample(dm) matches facade DependencyMetadata count."""
         try:
             result = validate_sample(
                 self.client,
-                projects,
+                query_sample_projects,
                 recipe="dm",
-                sample_size=2,
+                sample_size=_VALIDATE_SAMPLE_SIZE,
             )
         except ServerError as err:
             pytest.skip(f"Query DM validation unavailable: {err}")
         assert result.recipe == "dm"
-        assert result.sample_size <= 2
+        assert result.sample_size <= _VALIDATE_SAMPLE_SIZE
         if not result.matched:
             pytest.fail(
                 f"Query vs facade DM count mismatch: {result.to_dict()['mismatches']}"
             )
 
-    def test_validate_sample_severity_matches_facade_count(self) -> None:
-        projects = _sample_projects(self.client, limit=2)
+    @pytest.mark.long
+    def test_validate_sample_severity_parity(self, query_sample_projects) -> None:
+        """Parity: validate_sample(severity) matches facade severity buckets."""
         try:
             result = validate_sample(
                 self.client,
-                projects,
+                query_sample_projects,
                 recipe="severity",
-                sample_size=2,
+                sample_size=_VALIDATE_SAMPLE_SIZE,
             )
         except ServerError as err:
             pytest.skip(f"Query severity validation unavailable: {err}")
         assert result.recipe == "severity"
-        assert result.sample_size <= 2
+        assert result.sample_size <= _VALIDATE_SAMPLE_SIZE
         if not result.matched:
             pytest.fail(
                 f"Query vs facade severity count mismatch: "
                 f"{result.to_dict()['mismatches']}"
             )
 
+    @pytest.mark.long
     def test_discover_topology_returns_geometry(self, root_namespace: str) -> None:
+        """Wiring: discover_topology returns namespace geometry containing a project."""
         project = require_first_project(self.client)
         ns = getattr(getattr(project, "tenant_meta", None), "namespace", None)
         if not ns:
@@ -156,17 +192,10 @@ class TestQueryRecipes:
         geometry_ns = {g.namespace for g in topology.namespace_geometry}
         assert ns in geometry_ns
 
-    def test_query_project_count_pv_entry(self) -> None:
-        projects = _sample_projects(self.client, limit=1)
-        try:
-            counts = self.client.Query.Project.count_pv(projects)
-        except ServerError as err:
-            pytest.skip(f"count_pv unavailable: {err}")
-        assert isinstance(counts, dict)
-
-    def test_collect_estate_findings_row_parity_on_large_project(self) -> None:
-        """Collect returns all rows when a project has >100 estate findings."""
-        projects = _sample_projects(self.client, limit=25)
+    @pytest.mark.long
+    def test_collect_estate_findings_pagination_parity(self) -> None:
+        """Estate pagination: collect row count matches facade count on a large project."""
+        projects = _sample_projects(self.client, limit=_ESTATE_COLLECT_PROBE_PROJECTS)
         target: object | None = None
         facade_total = 0
         for project in projects:
@@ -187,12 +216,15 @@ class TestQueryRecipes:
                 )
             except ServerError as err:
                 pytest.skip(f"Finding count unavailable: {err}")
-            if count > 100:
+            if count > _ESTATE_COLLECT_MIN_FINDINGS:
                 target = project
                 facade_total = count
                 break
         if target is None:
-            pytest.skip("No project with >100 estate findings in sample")
+            pytest.skip(
+                f"No project with >{_ESTATE_COLLECT_MIN_FINDINGS} estate findings "
+                f"in {_ESTATE_COLLECT_PROBE_PROJECTS}-project probe"
+            )
 
         mask = "uuid,spec.level,spec.finding_categories"
         try:

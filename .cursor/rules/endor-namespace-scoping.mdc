@@ -3,15 +3,26 @@ description: Resolve Project first; pass namespace=project.namespace on project-
 alwaysApply: true
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-namespace-scoping.md
-x-endor-source-sha256: f8f653aa36fb0af3cb691e47c7368c3d3af49ddb3d25741ba5b6526416c585fe
+x-endor-source-sha256: c6d5a1bf7f41411036ff7b4806b50f079950edaf800ec2948a4e0889c722f3c8
 ---
 
 # Namespace scoping
 
 ## OSS catalog plane
 
-`Vulnerability`, `Malware`, `QueryVulnerability`, and `QueryMalware` use registry `scope="oss"`.
-List/get and catalog query creates hit `/v1/namespaces/oss/…` regardless of `Client(tenant=…)`.
+`Vulnerability`, `Malware`, `QueryVulnerability`, and `QueryMalware` use registry
+`scope="oss"`. List/get and catalog query creates hit `/v1/namespaces/oss/…`
+regardless of `Client(tenant=…)`. OpenAPI paths for these kinds are already
+parameterized as `{tenant_meta.namespace}`; the SDK **forces** the literal `oss`
+plane via `resource_scope_overrides.json`.
+
+**Customer investigations prefer the tenant plane:** use **`MalwareExposure`** /
+**`MalwareExposureQuery`**, Finding malware category
+(`FINDING_CATEGORY_MALWARE`), and **`PackageFirewallLog`** under the customer
+namespace. Treat `QueryMalware` / `Malware` as **catalog identity**
+(“is this coordinate malware?”) — secondary for blast-radius / exposure asks.
+Do not delete or ignore-tenant→oss callers; soft-deprecate means docs/skills
+preference, not removing the facades.
 
 ## Resource-scoped operations
 

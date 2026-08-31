@@ -30,6 +30,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Probe env keys, endorctl, and Client().whoami() (no secret output).",
     )
     _ = check.add_argument(
+        "-n",
         "--tenant",
         default=None,
         help="Optional tenant namespace for Client(tenant=...).",

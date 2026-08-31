@@ -31,7 +31,7 @@ judgment using the classes below; pre-commit covers the high-confidence patterns
 | **devtools / probes / scripts** (if tracked) | Example flags only (`-n example-tenant`). Prefer gitignored workspace for live customer runs. |
 | **Generated / mirrored** (`src/endorlabs/generated/`, shipped `agent_knowledge/`) | Do not hand-edit to add estate data; authoring under `agent-knowledge/` must stay portable before sync. |
 
-**Out of git (OK for real estate):** `.endorlabs-context/workspace/`, `.tmp/`, local `.env` — never stage those (pre-commit blocks `.env` / `.endorlabs-context/`).
+**Out of git (OK for real estate):** `.endorlabs/`, `.tmp/`, local `.env` — never stage those (pre-commit blocks `.env` / `.endorlabs/`).
 
 ## Name classes
 

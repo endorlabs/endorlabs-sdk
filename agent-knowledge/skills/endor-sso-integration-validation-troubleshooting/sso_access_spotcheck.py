@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.context.paths import default_runs_dir
+from endorlabs.context.paths import task_activity_dir
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.auth import (
     auth_log_snapshot,
@@ -24,7 +24,11 @@ from endorlabs.workflows.auth import (
     probe_auth_logs,
 )
 
-RUN_BUCKET = "sso-integration-validation-troubleshooting"
+RUN_ACTIVITY = "sso"
+
+
+def _default_output_dir(tenant_hint: str) -> Path:
+    return task_activity_dir(tenant_hint, RUN_ACTIVITY)
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -70,10 +74,10 @@ def parse_args() -> argparse.Namespace:
     )
     _ = parser.add_argument(
         "--output-dir",
-        default=str(default_runs_dir(RUN_BUCKET)),
+        default=None,
         help=(
             "Output directory for JSON report files "
-            f"(default: {default_runs_dir(RUN_BUCKET).as_posix()}/)."
+            f"(default: .endorlabs/tasks/<slug>-<YYYY-MM-DD>/{RUN_ACTIVITY}/)."
         ),
     )
     return parser.parse_args()
@@ -82,7 +86,11 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     """Execute SSO access mapping and write report artifacts."""
     args = parse_args()
-    output_dir = Path(args.output_dir)
+    output_dir = (
+        Path(args.output_dir)
+        if args.output_dir
+        else _default_output_dir(args.tenant_hint)
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(tz=UTC).strftime("%Y%m%dT%H%M%SZ")
 

@@ -10,8 +10,8 @@ from endorlabs.client_surface import Client
 from endorlabs.utils.logging_config import get_resource_logger
 
 from .common import (
-    default_troubleshooting_output_dir,
     load_json,
+    resolve_troubleshooting_output_dir,
     root_tenant,
     scanlog_entries_have_content,
     scanlog_line,
@@ -30,7 +30,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--project-uuid", required=True)
     parser.add_argument("--input-pairs", required=True)
     parser.add_argument("--max-entries", type=int, default=500)
-    parser.add_argument("--output-dir", default=default_troubleshooting_output_dir())
+    parser.add_argument(
+        "--output-dir",
+        default=None,
+        help=(
+            "Directory for generated artifacts (default: "
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/)."
+        ),
+    )
     parser.add_argument("--timestamped", action="store_true")
     return parser
 
@@ -53,7 +60,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         raise ValueError("No selected pairs found in input")
 
     root = root_tenant(args.tenant)
-    output_dir = Path(args.output_dir)
+    output_dir = resolve_troubleshooting_output_dir(args.tenant, args.output_dir)
     scanlogs_client = Client(tenant=args.namespace)
 
     uuids: list[str] = []

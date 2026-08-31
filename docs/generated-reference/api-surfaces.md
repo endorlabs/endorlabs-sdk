@@ -4,31 +4,40 @@ Auto-generated inventories for stable/public surfaces.
 
 ## Model-sync coverage snapshot
 
-- facade contract resources: `41`
-- canonical entities (union): `41`
+- facade contract resources: `45`
+- canonical entities (union): `45`
 
 Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 
 ## Top-level exports (`endorlabs.__all__`)
 
+- `AGENT_RULE_EXCEPTION_TYPES`
 - `APIClient`
 - `AmbiguousError`
 - `Client`
 - `ConflictError`
 - `EndorAPIError`
+- `EndorRuleError`
 - `F`
 - `FilterExpression`
 - `ListParameters`
+- `ListQueryPerformanceError`
+- `LocalContextError`
 - `MethodNotSupportedError`
+- `NamespaceScopingError`
 - `NetworkError`
 - `NotFoundError`
+- `OutputShapeRoutingError`
 - `PermissionDeniedError`
+- `PortableExamplesError`
 - `RateLimitError`
 - `SdkDiscovery`
 - `ServerError`
 - `UnauthorizedError`
 - `ValidationError`
 - `WhoamiResult`
+- `WorkflowCompositionError`
+- `WorkspaceLayoutError`
 - `agent_knowledge_bootstrap_paths`
 - `agent_knowledge_dir`
 - `agent_knowledge_index_path`
@@ -69,6 +78,8 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `invitation`
 - `linter_result`
 - `malware`
+- `malware_exposure`
+- `malware_exposure_query`
 - `metric`
 - `namespace`
 - `notification_target`
@@ -124,26 +135,29 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 | Attr | Resource path | Scope | Parent kind | Supported ops |
 |------|---------------|-------|-------------|---------------|
 | APIKey | api-keys | tenant | — | list, get, create, delete |
-| AuditLog | audit-logs | tenant | — | list, get, create, delete |
+| AuditLog | audit-logs | tenant | — | list, get |
 | AuthenticationLog | authentication-logs | tenant | — | list, get |
 | AuthorizationPolicy | authorization-policies | tenant | — | list, get, create, update, delete |
 | CodeOwners | codeowners | tenant | — | list, get, create, update, delete |
 | DependencyMetadata | dependency-metadata | tenant | — | list, get, create, delete |
 | EndorLicense | endor-licenses | tenant | — | list, get |
-| Finding | findings | tenant | — | list, get, create, update, delete |
-| FindingLog | finding-logs | tenant | — | list, get, create, delete |
+| Finding | findings | tenant | — | list, get, update, delete |
+| FindingLog | finding-logs | tenant | — | list, get |
 | IdentityProvider | identity-providers | tenant | — | list, get |
 | Installation | installations | tenant | — | list, get, create, update, delete |
 | Invitation | invitations | tenant | — | list, get, create, update, delete |
-| LinterResult | linter-results | tenant | — | list, get, create, delete |
+| LinterResult | linter-results | tenant | — | list, get |
 | Malware | malware | oss | — | list, get |
-| Metric | metrics | tenant | — | list, get, create, update, delete |
+| MalwareExposure | malware-exposure | tenant | — | list, get |
+| MalwareExposureQuery | queries/malware-exposure | tenant | — | create |
+| Metric | metrics | tenant | — | list, get |
 | Namespace | namespaces | tenant | — | list, get, create, update, delete |
 | NotificationTarget | notification-targets | tenant | — | list, get, create, update, delete |
 | PRCommentConfig | pr-comment-configs | tenant | — | list, get, create, update, delete |
 | PackageFirewallLog | package-firewall-logs | tenant | — | list, get |
 | PackageLicense | package-licenses | tenant | — | list, get, create, update, delete |
-| PackageVersion | package-versions | tenant | — | list, get, create, update, delete |
+| PackageManager | package-managers | tenant | — | list, get, create, update, delete |
+| PackageVersion | package-versions | tenant | — | list, get, update, delete |
 | Policy | policies | tenant | — | list, get, create, update, delete |
 | PolicyTemplate | policy-templates | tenant | — | list, get |
 | Project | projects | tenant | — | list, get, create, update, delete |
@@ -151,15 +165,16 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 | QueryMalware | queries/malware | oss | — | create |
 | QuerySimilarPackages | queries/similar-packages | tenant | — | create |
 | QueryVulnerability | queries/vulnerabilities | oss | — | create |
-| Repository | repositories | tenant | — | list, get, create, update, delete |
-| RepositoryVersion | repository-versions | tenant | project | list, get, create, update, delete |
+| Repository | repositories | tenant | — | list, get, update |
+| RepositoryVersion | repository-versions | tenant | project | list, get, update |
 | SavedQuery | saved-queries | tenant | — | list, get |
 | ScanLogRequest | scan-log-requests | tenant | — | create |
 | ScanProfile | scan-profiles | tenant | — | list, get, create, update, delete |
-| ScanResult | scan-results | tenant | project | list, get, create, update, delete |
+| ScanResult | scan-results | tenant | project | list, get, update, delete |
 | ScanWorkflow | scan-workflows | tenant | — | list, get, delete |
 | ScanWorkflowResult | scan-workflow-results | tenant | — | list, get, delete |
 | SemgrepRule | semgrep-rules | tenant | — | list, get, create, update, delete |
+| SystemConfig | system-config | tenant | — | list, get, update |
 | VectorStore | vector-stores | tenant | — | list, get |
 | VectorStoreQuery | queries/vector-stores | tenant | — | create |
 | VersionUpgrade | version-upgrades | tenant | — | list, get, delete |

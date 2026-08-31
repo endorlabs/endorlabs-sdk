@@ -39,6 +39,12 @@ def _row_uuid(row: Any) -> str:
     return str(getattr(row, "uuid", None) or "")
 
 
+def _row_is_sbom(row: Any) -> bool:
+    from endorlabs.resources.project import is_sbom_project_row
+
+    return bool(is_sbom_project_row(row))
+
+
 def normalize_project_row(row: Any) -> dict[str, Any]:
     """Normalize a Project list/mask row into a plain dict."""
     meta = _row_meta(row)
@@ -49,7 +55,24 @@ def normalize_project_row(row: Any) -> dict[str, Any]:
         "namespace": _row_namespace(row),
         "tags": tags,
         "create_time": str(meta.get("create_time") or ""),
+        "is_sbom": _row_is_sbom(row),
     }
+
+
+def non_sbom_leaf_namespaces(
+    projects: list[dict[str, Any]],
+    *,
+    fallback: str,
+) -> list[str]:
+    """Leaf namespaces from non-SBOM projects (Java denom / exclude_sbom parity)."""
+    leaves = sorted(
+        {
+            str(p.get("namespace") or "")
+            for p in projects
+            if p.get("namespace") and not p.get("is_sbom")
+        }
+    )
+    return leaves or [fallback]
 
 
 def path_options_from_namespaces(namespaces: list[str]) -> list[str]:
@@ -80,11 +103,14 @@ def discover_projects(
     rows = client.Project.list(
         namespace=namespace,
         traverse=traverse,
-        mask="uuid,meta.name,meta.tags,meta.create_time,tenant_meta.namespace",
+        mask=(
+            "uuid,meta.name,meta.tags,meta.create_time,tenant_meta.namespace,spec.sbom"
+        ),
         max_pages=None,
     )
     projects = [normalize_project_row(r) for r in rows]
     projects = [p for p in projects if p["uuid"]]
+    projects.sort(key=lambda p: str(p.get("uuid") or ""))
 
     by_tag_uuids: dict[str, list[str]] = defaultdict(list)
     tag_counts: Counter[str] = Counter()
@@ -99,16 +125,16 @@ def discover_projects(
     catalog = [
         {
             "tag": tag,
-            "projectCount": tag_counts[tag],
-            "projectUuids": list(dict.fromkeys(by_tag_uuids[tag])),
+            "projectCount": count,
+            "projectUuids": sorted(set(by_tag_uuids[tag])),
         }
-        for tag, _ in tag_counts.most_common()
+        for tag, count in sorted(tag_counts.items(), key=lambda kv: (-kv[1], kv[0]))
     ]
     leaves = sorted(leaf_set)
     return {
         "projects": projects,
         "tagCatalog": catalog,
-        "tagCounts": dict(tag_counts.most_common()),
+        "tagCounts": dict(sorted(tag_counts.items(), key=lambda kv: (-kv[1], kv[0]))),
         "leafNamespaces": leaves,
         "pathOptions": path_options_from_namespaces(leaves or [namespace]),
     }

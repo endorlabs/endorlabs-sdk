@@ -146,10 +146,10 @@ Merge overlapping groups (same UUID appearing in multiple candidate groups) befo
 
 ### Step 3: Write CSV
 
-Default path: `.endorlabs-context/workspace/runs/duplicate-projects/<tenant>-duplicates.csv`
+Default path: `.endorlabs/reports/duplicates/<tenant>-duplicates.csv`
 
 ```python
-output = Path(".endorlabs-context/workspace/runs/duplicate-projects/<tenant>-duplicates.csv")
+output = Path(".endorlabs/reports/duplicates/<tenant>-duplicates.csv")
 output.parent.mkdir(parents=True, exist_ok=True)
 
 fieldnames = [
@@ -173,7 +173,7 @@ Or run the bundled helper:
 
 ```bash
 uv run --env-file .env endor-reports duplicates -n <tenant> \
-  --output .endorlabs-context/workspace/runs/duplicate-projects/<tenant>-duplicates.csv
+  --output .endorlabs/reports/duplicates/<tenant>-duplicates.csv
 ```
 
 ### Step 4: Canvas (required when duplicates exist)
@@ -196,7 +196,7 @@ Before finishing, confirm:
 - [ ] SBOM projects (`spec.sbom` set) excluded from scan and output
 - [ ] Only projects in multi-member duplicate groups are included
 - [ ] Canvas groups the same rows visually (when duplicates exist)
-- [ ] Artifacts under `.endorlabs-context/workspace/runs/duplicate-projects/` (gitignored)
+- [ ] Artifacts under `.endorlabs/reports/duplicates/` (gitignored)
 
 ## When to use this skill vs others
 

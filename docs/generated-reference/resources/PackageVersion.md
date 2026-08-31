@@ -14,62 +14,22 @@ Package version with dependency information.
 |-----------|-----------|
 | `list` | yes |
 | `get` | yes |
-| `create` | yes |
+| `create` | no |
 | `update` | yes |
 | `delete` | yes |
 
-## Create
+## User-space access
 
-- **Mode:** `both`
-- **Model import:** `endorlabs.resources.package_version:PackageVersion`
-- **Payload model:** `CreatePackageVersionPayload`
+Customer tenant semantics (distinct from raw OpenAPI and SDK exposure).
+Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
 
-### Payload top-level fields
-
-- `context`
-- `meta`
-- `processing_status`
-- `tenant_meta`
-
-### Create convenience kwargs (flat)
-
-**Spec (flat, promoted into `spec`):**
-
-Required:
-
-- `project_uuid`
-
-Optional:
-
-- `bazel_metadata`
-- `call_graph_available`
-- `code_owners`
-- `container_metadata`
-- `language`
-- `precomputed_call_graph_state`
-- `relative_path`
-- `release_timestamp`
-- `resolution_errors`
-- `resolved_dependencies`
-- `source_code_reference`
-- `unresolved_dependencies`
-- `upstream_reference`
-
-Unknown flat kwargs raise `TypeError`. Use `payload=` or nested `spec=` / `meta=` for full control.
-
-### Examples
-
-**Python:**
-
-```python
-client.PackageVersion.create(project_uuid="...", namespace='tenant.ns')
-```
-
-**endorctl:**
-
-```bash
-endorctl api create --resource=PackageVersion --namespace=<tenant.ns> -f payload.json
-```
+| Operation | Customer user-space | SDK exposed |
+|-----------|---------------------|-------------|
+| `list` | yes | yes |
+| `get` | yes | yes |
+| `create` | scan-generated | no |
+| `update` | yes | yes |
+| `delete` | yes | yes |
 
 ## Response / read-only spec fields
 

@@ -1,7 +1,7 @@
 # Resources (SDK API Surface)
 
 Auto-generated from `src/endorlabs/registry.py` and OpenAPI spec.
-Model sync contract: `src/endorlabs/generated/registry_contract.py` (41 resources, 41 canonical entities).
+Model sync contract: `src/endorlabs/generated/registry_contract.py` (45 resources, 45 canonical entities).
 Each operation column is `sdk/spec` where spec is derived from OpenAPI
 collection and item paths.
 
@@ -12,57 +12,67 @@ Legend:
 - `yes/no`: SDK exposes operation but collection/item OpenAPI
   method was not found.
 - `no/no`: operation not exposed by SDK and not present in OpenAPI paths.
+- **Limitations** = customer user-space semantics (from
+  `resource_user_space.json`); **sdk/spec** shows SDK exposure vs OpenAPI.
 - Scope values: `tenant` (default namespace resolution), `oss`
   (namespace fixed to `oss`).
 
+Customer **tenant admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer
+where user-space docs say `admin-only` or `yes`. Endor internal account
+gates (`IsCallerEndorAccount`) are additional field/route restrictions.
+
 ## Model-sync coverage snapshot
 
-- facade contract resources: `41`
-- canonical entities (union): `41`
+- facade contract resources: `45`
+- canonical entities (union): `45`
 
 | Resource | List (sdk/spec) | Get (sdk/spec) | Create (sdk/spec) | Update (sdk/spec) | Delete (sdk/spec) | Scope | Parent | Limitations |
 |----------|------------------|----------------|-------------------|-------------------|-------------------|-------|--------|-------------|
-| APIKey | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
-| AuditLog | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
+| APIKey | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | Admin-managed programmatic credentials |
+| AuditLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Append-only audit trail |
 | AuthenticationLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Tenant-context read-only resource |
-| AuthorizationPolicy | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| CodeOwners | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
+| AuthorizationPolicy | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Permission grants for identities |
+| CodeOwners | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Project-scoped code ownership |
 | DependencyMetadata | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | Relationship resource; see dependency-metadata contract |
 | EndorLicense | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Tenant-context read-only resource |
-| Finding | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Scan-generated |
-| FindingLog | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
-| IdentityProvider | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
+| Finding | yes/yes | yes/yes | no/yes | yes/no | yes/yes | tenant | — | Scan-generated |
+| FindingLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Finding state history log |
+| IdentityProvider | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | SSO identity provider configuration |
 | Installation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Platform-managed |
-| Invitation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| LinterResult | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | Scan-generated |
-| Malware | yes/yes | yes/yes | no/yes | no/no | no/yes | oss | — | OSS-scoped malware dataset |
-| Metric | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Analytics-generated |
-| Namespace | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| NotificationTarget | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| PRCommentConfig | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| PackageFirewallLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
-| PackageLicense | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| PackageVersion | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Scan-discovered; API may return 501 for PATCH |
+| Invitation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | User invitations |
+| LinterResult | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Scan-generated |
+| Malware | yes/yes | yes/yes | no/yes | no/no | no/yes | oss | — | OSS-scoped malware catalog |
+| MalwareExposure | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Tenant malware exposure index |
+| MalwareExposureQuery | no/no | no/no | yes/yes | no/no | no/no | tenant | — | Query tenant malware exposure |
+| Metric | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Analytics-generated |
+| Namespace | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Tenant hierarchy nodes |
+| NotificationTarget | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Notification delivery endpoints |
+| PRCommentConfig | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | PR comment integration settings |
+| PackageFirewallLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Package firewall audit events |
+| PackageLicense | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Package license metadata |
+| PackageManager | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Package manager integration settings |
+| PackageVersion | yes/yes | yes/yes | no/yes | yes/no | yes/yes | tenant | — | Scan-discovered; API may return 501 for PATCH |
 | Policy | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Rego in payload |
-| PolicyTemplate | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Tenant-context read-only resource |
-| Project | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Platform-managed |
-| Query | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
+| PolicyTemplate | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Read-only policy templates |
+| Project | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Platform-managed registration; scan inventory is derived |
+| Query | no/no | no/no | yes/yes | no/no | no/no | tenant | — | Graph join query (create only) |
 | QueryMalware | no/no | no/no | yes/yes | no/no | no/no | oss | — | Request-based query endpoint (create only) |
-| QuerySimilarPackages | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
+| QuerySimilarPackages | no/no | no/no | yes/yes | no/no | no/no | tenant | — | Similar-package query (create only) |
 | QueryVulnerability | no/no | no/no | yes/yes | no/no | no/no | oss | — | Request-based query endpoint (create only) |
-| Repository | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Platform-managed |
-| RepositoryVersion | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | project | Platform-managed |
-| SavedQuery | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
+| Repository | yes/yes | yes/yes | no/yes | yes/no | no/yes | tenant | — | Platform-managed |
+| RepositoryVersion | yes/yes | yes/yes | no/yes | yes/no | no/yes | tenant | project | Platform-managed |
+| SavedQuery | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Saved query definitions |
 | ScanLogRequest | no/no | no/no | yes/yes | no/no | no/no | tenant | — | Request-based only; no list/get/delete for log messages |
-| ScanProfile | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| ScanResult | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | project | Scan-generated |
+| ScanProfile | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Scan configuration profiles |
+| ScanResult | yes/yes | yes/yes | no/yes | yes/no | yes/yes | tenant | project | Scan-generated |
 | ScanWorkflow | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | Platform-managed |
 | ScanWorkflowResult | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | Platform-managed |
-| SemgrepRule | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| VectorStore | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
-| VectorStoreQuery | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
+| SemgrepRule | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Custom SAST rules |
+| SystemConfig | yes/yes | yes/yes | no/yes | yes/no | no/yes | tenant | — | Singleton per namespace; onboard-seeded; ADMIN update |
+| VectorStore | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Vector store inventory (read-only) |
+| VectorStoreQuery | no/no | no/no | yes/yes | no/no | no/no | tenant | — | Natural-language vector store query |
 | VersionUpgrade | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | Platform-managed |
 | Vulnerability | yes/yes | yes/yes | no/yes | no/no | no/yes | oss | — | OSS-scoped vulnerability dataset |
 
-Spec (local preferred): `.endorlabs-context/platform/openapi/openapiv2.swagger.json`.
+Spec (local preferred): `.endorlabs/_cache/openapi.json`.
 Fallback URL: `https://api.endorlabs.com/download/openapiv2.swagger.json`.

@@ -18,7 +18,7 @@ summary: >-
 | **Utils** | `endorlabs.utils.*` | Transport/concurrency/namespace helpers | Domain list composition |
 | **Workflow libraries** | `endorlabs.workflows.*` (non-`cli`) | `Client` in → typed `WorkflowResult` out | `print()`, argparse, cwd-relative writes |
 | **Workflow CLIs** | `*.cli`, `troubleshooting_scans/*` | Args, artifacts, filenames | Become copy-paste targets for agents |
-| **Session scripts** | `workspace/runs/scratch/` | Thin glue on artifacts + library imports | Live in `src/`, reimplement discovery |
+| **Session scripts** | `tasks/scratch/` | Thin glue on artifacts + library imports | Live in `src/`, reimplement discovery |
 
 `endorlabs.workflows` ships **documented contracts** — prefer importing
 `library_entrypoints` from `MANIFEST.json` over vendoring workflow source.
@@ -30,7 +30,7 @@ Use one step at a time:
 1. **Workflow CLI** — run the skill's documented command with defaults.
 2. **Workflow library** — import composable functions (see `MANIFEST.json` `library_entrypoints`).
 3. **`Client` facade** — when no workflow covers the query.
-4. **Session script** — minimal glue under `runs/scratch/` (see `endor-workspace-layout`).
+4. **Session script** — minimal glue under `tasks/scratch/` (see `endor-workspace-layout`).
 
 ## Artifact-first
 
@@ -62,6 +62,8 @@ Generic entrypoints (no estate literals):
 - `endorlabs.workflows.findings.finding_log_trends.build_finding_log_new_vs_resolved_analysis` — FindingLog CREATE/DELETE weekly chart data (online aggregated)
 - `endorlabs.workflows.findings.build_patch_fix_report` — findings fixable by a patch, rolled up by package + current version (`endor-estate patch-fix-report`)
 - `endorlabs.workflows.logs.group_by_time.group_by_time_counts` — generic log `list_groups` + `group_by_time` aggregation
+- `endorlabs.workflows.logs.probe_log_density` — per-namespace time-window count vs threshold (PFW / AgentHookEvent)
+- `endorlabs.workflows.log_export.export_logs` / `export_logs_for_namespaces` — full-row log dump (`endor-log-export`)
 - `endorlabs.workflows.auth.verify_auth` / `refresh_token_to_dotenv` — credential probe and browser refresh (`endor-auth`)
 - `endorlabs.workflows.auth.probe_auth_logs` — tenant list-path auth-log RCA rows
 - `endorlabs.workflows.auth.count_logins_from_groups` — server-side login counts (`list_groups`)
@@ -91,3 +93,12 @@ See `MANIFEST.json` → `workflows[].library_entrypoints` for the catalog row ti
 
 Reusable, tested orchestration belongs in `endorlabs.workflows` (contributor PR), not a
 permanent session script.
+
+## SDK ↔ product ontology
+
+UI nav labels and CLI/SDK kinds diverge. See **INDEX.md → SDK ↔ product ontology
+(glossary)** for Package Firewall logs / Policy Violations / Finding vs
+FindingLog / Malware catalog vs MalwareExposure. Prefer product-aligned
+`endor-log-export --source` tokens (`package-firewall-logs`,
+`policy-violations`); wire paths may remain kebab kinds such as
+`agent-hook-events`.

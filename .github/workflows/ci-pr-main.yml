@@ -7,8 +7,6 @@ name: CI PR Main
 # Secrets (Settings > Secrets and variables > Actions > Secrets):
 #   - ENDOR_API_CREDENTIALS_KEY: API credentials key (integration tests only)
 #   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret (integration tests only)
-#   - UV_INDEX_ENDOR_FIREWALL_USERNAME: package-firewall index username (all uv sync jobs)
-#   - UV_INDEX_ENDOR_FIREWALL_PASSWORD: package-firewall index password/token (all uv sync jobs)
 # Security: This repo is scanned by the Endor Labs app integration.
 #
 # Noop strategy (first principles — a job runs only when its inputs change):
@@ -81,10 +79,6 @@ env:
 
   # Action versions - pinned for security
   ACTIONS_CHECKOUT_VERSION: "v6.0.3"
-
-  # uv named index "endor-firewall" (see [[tool.uv.index]] in pyproject.toml)
-  UV_INDEX_ENDOR_FIREWALL_USERNAME: ${{ secrets.UV_INDEX_ENDOR_FIREWALL_USERNAME }}
-  UV_INDEX_ENDOR_FIREWALL_PASSWORD: ${{ secrets.UV_INDEX_ENDOR_FIREWALL_PASSWORD }}
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -309,6 +303,49 @@ jobs:
           echo "View detailed coverage with: uv run pytest tests/unit/ --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=html"
 
   # ---------------------------------------------------------------------------
+  # Dependency bounds — resolve and test at lowest and highest permitted versions
+  # of each declared range. Makes library ranges safe (catch API breakage at edges).
+  # Runs when pyproject/lock, src, or CI definitions change.
+  # ---------------------------------------------------------------------------
+  dependency-bounds:
+    name: Dependency Bounds (${{ matrix.resolution }})
+    runs-on: ubuntu-latest
+    needs: [resolve-dependencies, detect-changes]
+    if: >-
+      needs.detect-changes.outputs.src == 'true' ||
+      needs.detect-changes.outputs.config == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        # lowest-direct: floor each direct dep; do not regress transitive packages
+        # to ancient versions (lowest would e.g. resolve cryptography 0.1 via twine).
+        resolution: [lowest-direct, highest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          uv-version: ${{ env.UV_VERSION }}
+          install-dependencies: "false"
+
+      - name: Sync dependencies at ${{ matrix.resolution }} resolution
+        run: |
+          set -euo pipefail
+          # Re-resolve against declared ranges (do not reuse the committed lock pins).
+          uv sync --dev --resolution "${{ matrix.resolution }}" --upgrade
+          echo "::group::Resolved runtime + analytics packages"
+          uv pip freeze | grep -E '^(pydantic|httpx|pyyaml|PyYAML|tenacity|zstandard|defusedxml|pandas|pyarrow|igraph|leidenalg)==' || true
+          echo "::endgroup::"
+
+      - name: Run unit tests at ${{ matrix.resolution }} bounds
+        run: |
+          uv run pytest tests/unit/ --maxfail=${{ env.PYTEST_MAXFAIL }} --durations=15 -m "not interactive and not long"
+
+  # ---------------------------------------------------------------------------
   # Integration tests — slower, requires secrets.
   # Domain buckets live under tests/integration/{client,resources,workflows}.
   # Uses always() because unit-tests may be correctly skipped (e.g. only
@@ -525,7 +562,7 @@ jobs:
     name: Branch Protection CI Gate
     runs-on: ubuntu-latest
     if: always()
-    needs: [detect-changes, resolve-dependencies, lint, unit-tests, test-integration, endorlabs-security-scan, security-content-guards]
+    needs: [detect-changes, resolve-dependencies, lint, unit-tests, dependency-bounds, test-integration, endorlabs-security-scan, security-content-guards]
     steps:
       - name: Verify no failures
         run: |
@@ -534,6 +571,7 @@ jobs:
             "${{ needs.resolve-dependencies.result }}"
             "${{ needs.lint.result }}"
             "${{ needs.unit-tests.result }}"
+            "${{ needs.dependency-bounds.result }}"
             "${{ needs.test-integration.result }}"
             "${{ needs.endorlabs-security-scan.result }}"
             "${{ needs.security-content-guards.result }}"
@@ -569,6 +607,7 @@ jobs:
             echo "| Resolve dependencies | \`${{ needs.resolve-dependencies.result }}\` |"
             echo "| Lint/typecheck | \`${{ needs.lint.result }}\` |"
             echo "| Unit tests and coverage | \`${{ needs.unit-tests.result }}\` |"
+            echo "| Dependency bounds | \`${{ needs.dependency-bounds.result }}\` |"
             echo "| Integration tests | \`${{ needs.test-integration.result }}\` |"
             echo "| Endor Labs security scan | \`${{ needs.endorlabs-security-scan.result }}\` |"
             echo "| Security content guards | \`${{ needs.security-content-guards.result }}\` |"

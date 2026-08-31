@@ -3,7 +3,7 @@
 A Python SDK for the Endor Labs platform.
 
 For agents: ``endorlabs.init()`` materializes skills under
-``.endorlabs-context/sdk/``; read ``INDEX.md`` via ``discover().index`` first.
+``.endorlabs/_cache/sdk/``; read ``INDEX.md`` via ``discover().index`` first.
 
 Quick start::
 
@@ -35,17 +35,26 @@ from .api_client import APIClient
 from .client_surface import Client
 from .context.paths import DEFAULT_CONTEXT_DIR
 from .core.exceptions import (
+    AGENT_RULE_EXCEPTION_TYPES,
     AmbiguousError,
     ConflictError,
     EndorAPIError,
+    EndorRuleError,
+    ListQueryPerformanceError,
+    LocalContextError,
     MethodNotSupportedError,
+    NamespaceScopingError,
     NetworkError,
     NotFoundError,
+    OutputShapeRoutingError,
     PermissionDeniedError,
+    PortableExamplesError,
     RateLimitError,
     ServerError,
     UnauthorizedError,
     ValidationError,
+    WorkflowCompositionError,
+    WorkspaceLayoutError,
     map_status_code_to_exception,
 )
 from .core.filter import F, FilterExpression
@@ -162,7 +171,7 @@ def init(
         >>> import endorlabs
         >>> status = endorlabs.init()
         >>> print(status.agent_knowledge_path)
-        .endorlabs-context/sdk
+        .endorlabs/_cache/sdk
 
     """
     from .context import _sync
@@ -194,24 +203,33 @@ def sync_agent_skills(
 
 
 __all__ = [
+    "AGENT_RULE_EXCEPTION_TYPES",
     "APIClient",
     "AmbiguousError",
     "Client",
     "ConflictError",
     "EndorAPIError",
+    "EndorRuleError",
     "F",
     "FilterExpression",
     "ListParameters",
+    "ListQueryPerformanceError",
+    "LocalContextError",
     "MethodNotSupportedError",
+    "NamespaceScopingError",
     "NetworkError",
     "NotFoundError",
+    "OutputShapeRoutingError",
     "PermissionDeniedError",
+    "PortableExamplesError",
     "RateLimitError",
     "SdkDiscovery",
     "ServerError",
     "UnauthorizedError",
     "ValidationError",
     "WhoamiResult",
+    "WorkflowCompositionError",
+    "WorkspaceLayoutError",
     "agent_knowledge_bootstrap_paths",
     "agent_knowledge_dir",
     "agent_knowledge_index_path",

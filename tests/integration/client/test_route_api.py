@@ -1,4 +1,14 @@
-"""Live integration tests for generated facade accessor helpers."""
+"""Live integration tests for generated facade route accessors.
+
+Layers:
+
+- **Wiring** (default CI) — ``list_by_project`` / ``count`` scope rows to the
+  source project without scan-plane probing.
+- **Scan-plane routing** (``long``) — ``list_for_context`` resolves the correct
+  scan partition and matches manual ``context_partition_filter`` (route contract).
+- **Stitch** — ``to_*`` returns ``RouteResult`` with the expected edge and target
+  uuid when a sample row exists.
+"""
 
 from __future__ import annotations
 
@@ -42,7 +52,7 @@ SCAN_CONTEXT_LIST_METHODS: tuple[tuple[str, str], ...] = (
 
 @pytest.mark.integration
 class TestRouteAPI:
-    """Validate stitched routes return the intended resources on a live tenant."""
+    """Validate stitched routes on a live tenant (see module docstring for layers)."""
 
     @pytest.fixture(autouse=True)
     def setup_client(
@@ -52,6 +62,7 @@ class TestRouteAPI:
         self.root_client = facade_root_client
         self.oss_client = facade_oss_client
 
+    @pytest.mark.long
     def test_linter_result_list_for_context_when_tenant_has_rows(self) -> None:
         """LinterResult exists in many tenants but not every scan plane — probe, do not skip blindly."""
         if not resource_has_rows_in_scope(
@@ -72,6 +83,7 @@ class TestRouteAPI:
                 str(project_uuid),
             )
 
+    @pytest.mark.long
     def test_package_license_list_for_context_skips_only_when_absent(self) -> None:
         """PackageLicense catalog rows live on the ``oss`` namespace path — probe it."""
         if not resource_has_rows_in_scope(
@@ -101,6 +113,7 @@ class TestRouteAPI:
             )
 
     def test_finding_list_by_project_scoped_to_source(self) -> None:
+        """Wiring: list_by_project rows belong to the source project."""
         project = require_first_project(self.client)
         rows = self.client.Finding.list_by_project(
             project,
@@ -115,6 +128,7 @@ class TestRouteAPI:
             )
 
     def test_scan_result_list_by_project_scoped_to_source(self) -> None:
+        """Wiring: ScanResult list_by_project rows reference parent project."""
         project = require_first_project(self.client)
         rows = self.client.ScanResult.list_by_project(
             project,
@@ -129,6 +143,7 @@ class TestRouteAPI:
             )
 
     def test_package_version_list_by_project_scoped_to_source(self) -> None:
+        """Wiring: PackageVersion list_by_project rows reference source project."""
         project = require_first_project(self.client)
         rows = self.client.PackageVersion.list_by_project(
             project,
@@ -142,6 +157,7 @@ class TestRouteAPI:
                 project.uuid,
             )
 
+    @pytest.mark.long
     def test_finding_list_for_context_partition_integrity(self) -> None:
         _project, scan = require_scan_with_context(
             self.client, require_first_project(self.client)
@@ -163,6 +179,7 @@ class TestRouteAPI:
                     str(project_uuid),
                 )
 
+    @pytest.mark.long
     def test_finding_list_for_context_equivalent_to_manual_filter(self) -> None:
         project, scan = require_scan_with_context(
             self.client, require_first_project(self.client)
@@ -183,6 +200,7 @@ class TestRouteAPI:
         manual_ids = {nested_attr(r, "uuid") for r in manual_rows}
         assert accessor_ids.issubset(manual_ids)
 
+    @pytest.mark.long
     @pytest.mark.parametrize(("edge_id", "list_method"), SCAN_CONTEXT_LIST_METHODS)
     def test_list_for_context_returns_intended_resources(
         self, edge_id: str, list_method: str
@@ -205,6 +223,7 @@ class TestRouteAPI:
                 assert_rows_have_field_value(rows, row_field, str(expected))
 
     def test_finding_to_dependency_metadata_matches_target(self) -> None:
+        """Stitch: to_dependency_metadata resolves spec.target_uuid when present."""
         project = require_first_project(self.client)
         findings = self.client.Finding.list_by_project(
             project,
@@ -252,6 +271,7 @@ class TestRouteAPI:
         assert nested_attr(parent, "uuid") == parent_uuid
 
     def test_finding_count_matches_bounded_list(self) -> None:
+        """Wiring: facade count is at least the bounded list row count."""
         project = require_first_project(self.client)
         ns = project.namespace
         if not ns:

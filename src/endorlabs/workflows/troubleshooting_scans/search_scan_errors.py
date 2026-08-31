@@ -18,10 +18,10 @@ from endorlabs.tools.list_sharding import ProjectShard
 from endorlabs.workflows.wire_access import as_dict, dict_str, nested_dict, nested_str
 
 from .common import (
-    default_troubleshooting_output_dir,
     load_json,
     object_to_dict,
     parallel_collect_for_projects,
+    resolve_troubleshooting_output_dir,
     root_tenant,
     write_json,
 )
@@ -72,7 +72,14 @@ def build_parser() -> argparse.ArgumentParser:
         default=1,
         help="Reserved for future use (embedded logs are single-line JSON strings)",
     )
-    parser.add_argument("--output-dir", default=default_troubleshooting_output_dir())
+    parser.add_argument(
+        "--output-dir",
+        default=None,
+        help=(
+            "Directory for generated artifacts (default: "
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/)."
+        ),
+    )
     parser.add_argument("--timestamped", action="store_true")
     return parser
 
@@ -209,6 +216,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             hits.extend(_search_project(shard))
 
     scope_uuid = args.project_uuid or dict_str(selected_projects[0], "uuid") or "scoped"
+    output_dir = resolve_troubleshooting_output_dir(
+        args.tenant or args.namespace, args.output_dir
+    )
     payload: dict[str, Any] = {
         "root_tenant": root,
         "query_namespace": ns,
@@ -219,7 +229,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "hits": hits,
     }
     artifact = write_json(
-        output_dir=Path(args.output_dir),
+        output_dir=output_dir,
         root_tenant_name=root,
         object_kind="scan_error_hits",
         object_uuid=str(scope_uuid),

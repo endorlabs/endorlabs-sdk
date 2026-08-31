@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.context.paths import default_runs_dir, sanitize_path_segment
+from endorlabs.context.paths import default_reports_subdir, sanitize_path_segment
 from endorlabs.workflows.auth import (
     LoginActivityRow,
     count_logins_from_groups,
@@ -24,7 +24,7 @@ RUN_BUCKET = "auth-login-count"
 
 def _default_output_path(tenant: str, days: int) -> Path:
     safe_tenant = sanitize_path_segment(tenant)
-    return default_runs_dir(RUN_BUCKET) / f"login-count-{safe_tenant}-{days}d.csv"
+    return default_reports_subdir(RUN_BUCKET) / f"login-count-{safe_tenant}-{days}d.csv"
 
 
 def _csv_fieldnames(days: int) -> list[str]:
@@ -96,7 +96,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--output",
         type=Path,
         default=None,
-        help="CSV output path (default: workspace/runs/auth-login-count/...).",
+        help=(
+            f"CSV output path (default: "
+            f"{default_reports_subdir(RUN_BUCKET).as_posix()}/...)."
+        ),
     )
     parser.add_argument(
         "--max-pages",

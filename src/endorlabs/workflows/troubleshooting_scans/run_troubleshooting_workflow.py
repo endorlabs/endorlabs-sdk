@@ -16,8 +16,8 @@ from . import (
     select_anomalous_scans,
 )
 from .common import (
-    default_troubleshooting_output_dir,
     load_json,
+    resolve_troubleshooting_output_dir,
     root_tenant,
 )
 
@@ -55,7 +55,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="When used with --regression-only, also generate diff report.",
     )
     _ = parser.add_argument(
-        "--output-dir", default=default_troubleshooting_output_dir()
+        "--output-dir",
+        default=None,
+        help=(
+            "Directory for generated artifacts (default: "
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/)."
+        ),
     )
     _ = parser.add_argument("--timestamped", action="store_true")
     return parser
@@ -66,6 +71,11 @@ def main() -> int:
     args = build_parser().parse_args()
     ns = args.namespace or args.tenant
     root = root_tenant(ns)
+    output_dir = str(
+        resolve_troubleshooting_output_dir(
+            args.tenant or args.namespace, args.output_dir
+        )
+    )
     effective_limit = args.scan_window or args.limit
     selected_pair_mode = "latest" if args.regression_only else args.pair_mode
 
@@ -77,7 +87,7 @@ def main() -> int:
             project_name=args.project_name,
             project_url=args.project_url,
             project_name_regex=args.project_name_regex,
-            output_dir=args.output_dir,
+            output_dir=output_dir,
             timestamped=args.timestamped,
         )
     )
@@ -106,14 +116,14 @@ def main() -> int:
             limit=effective_limit,
             scan_window=effective_limit,
             status_filter=args.status_filter,
-            output_dir=args.output_dir,
+            output_dir=output_dir,
             timestamped=args.timestamped,
         )
     )
     step3 = select_anomalous_scans.run(
         SimpleNamespace(
             input_summary=step2["summary_artifact"],
-            output_dir=args.output_dir,
+            output_dir=output_dir,
             root_tenant=root,
             project_uuid=project_uuid,
             pair_mode=selected_pair_mode,
@@ -135,7 +145,7 @@ def main() -> int:
             project_uuid=project_uuid,
             input_pairs=step3["artifact"],
             max_entries=args.max_log_entries,
-            output_dir=args.output_dir,
+            output_dir=output_dir,
             timestamped=args.timestamped,
         )
     )
@@ -149,7 +159,7 @@ def main() -> int:
             namespace=project_ns,
             input_pairs=step3["artifact"],
             input_logs_index=step4["artifact"],
-            output_dir=args.output_dir,
+            output_dir=output_dir,
             timestamped=args.timestamped,
         )
     )

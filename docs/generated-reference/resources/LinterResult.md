@@ -14,66 +14,22 @@ Linter analysis result for a package or repository version.
 |-----------|-----------|
 | `list` | yes |
 | `get` | yes |
-| `create` | yes |
+| `create` | no |
 | `update` | no |
-| `delete` | yes |
+| `delete` | no |
 
-## Create
+## User-space access
 
-- **Mode:** `both`
-- **Model import:** `endorlabs.resources.linter_result:LinterResult`
-- **Payload model:** `CreateLinterResultPayload`
+Customer tenant semantics (distinct from raw OpenAPI and SDK exposure).
+Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
 
-### Payload top-level fields
-
-- `context`
-- `meta`
-- `tenant_meta`
-
-### Create convenience kwargs (flat)
-
-**Spec (flat, promoted into `spec`):**
-
-Required:
-
-- `extra_key`
-- `level`
-- `origin`
-- `project_uuid`
-
-Optional:
-
-- `ai_result`
-- `aisast`
-- `distribution_format`
-- `ecosystem`
-- `endor_fingerprint`
-- `fingerprint_count`
-- `fingerprints`
-- `linter_correctness_analyses`
-- `ref`
-- `sarif_result`
-- `secret`
-- `semgrep`
-- `storage_location`
-- `suppressed`
-- `version`
-
-Unknown flat kwargs raise `TypeError`. Use `payload=` or nested `spec=` / `meta=` for full control.
-
-### Examples
-
-**Python:**
-
-```python
-client.LinterResult.create(project_uuid="...", origin="...", namespace='tenant.ns')
-```
-
-**endorctl:**
-
-```bash
-endorctl api create --resource=LinterResult --namespace=<tenant.ns> -f payload.json
-```
+| Operation | Customer user-space | SDK exposed |
+|-----------|---------------------|-------------|
+| `list` | yes | yes |
+| `get` | yes | yes |
+| `create` | scan-generated | no |
+| `update` | not-supported | no |
+| `delete` | not-supported | no |
 
 ## Facade helpers
 

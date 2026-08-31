@@ -36,7 +36,7 @@ Runtime-consumed generated files:
 uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
 ```
 
-**Regenerate using an already-downloaded spec** (repo root; spec at `.endorlabs-context/platform/openapi/openapiv2.swagger.json`):
+**Regenerate using an already-downloaded spec** (repo root; spec at `.endorlabs/_cache/openapi.json`):
 
 ```bash
 uv run python devtools/codegen/model_sync.py --generate-stubs --generate-reference-docs
@@ -86,6 +86,15 @@ uv run python devtools/codegen/model_sync.py --inventory-only
   - `src/endorlabs/registry_overlay.py` (runtime behavior overrides),
   - `devtools/codegen/model_sync_profiles/*.json` (policy/profile metadata),
   - tests + docs for explicit rationale.
+
+**User-space guardrails:** customer semantics and SDK op-trim intent live in
+`devtools/codegen/model_sync_profiles/resource_user_space.json` (`limitations_short`,
+`customer_ops`, optional `sdk_ops` / `sdk_ops_trim_exempt` only — no field-level prose).
+When trimming
+`supported_ops`, update `registry_overlay.py` in the same PR; CI/tests assert
+overlay matches profile via `devtools/codegen/resource_user_space.py`.
+**ServiceRequest** (if facaded later): set `sdk_ops_trim_exempt: true` — document
+Endor-only auth only; do not shrink public SR ops.
 
 ## Determinism contract
 

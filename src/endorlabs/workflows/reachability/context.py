@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any, cast
 
 import endorlabs
-from endorlabs.context.paths import workflow_projects_root
 from endorlabs.core.exceptions import NotFoundError
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.reachability.resolve import (
@@ -33,7 +32,7 @@ class ReachabilityContextRequest:
 
     tenant: str
     namespace: str
-    output_dir: str = str(workflow_projects_root())
+    output_dir: str = ""
     finding_uuid: str | None = None
     pv_uuid: str | None = None
     decode_zstd: bool = True

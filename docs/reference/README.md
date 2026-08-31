@@ -2,13 +2,13 @@
 
 **For SDK usage:** Start with [README.md](../../README.md) (install, quick start, configuration). This section is reference and boundaries.
 
-SDK reference documentation. OpenAPI spec (local): `.endorlabs-context/platform/openapi/openapiv2.swagger.json`.
+SDK reference documentation. OpenAPI spec (local): `.endorlabs/_cache/openapi.json`.
 Generated reference surfaces are canonical in `docs/generated-reference/`. Per-resource create/list kwargs: [generated-reference/resources/README.md](../generated-reference/resources/README.md).
 Runtime generated artifacts are documented in `src/endorlabs/generated/README.md`.
 
 ## Public API
 
-Stable surface: `endorlabs.__all__` — APIClient, Client, exported exception classes (EndorAPIError, NotFoundError, etc.). **Client:** `endorlabs.Client(tenant="...")` exposes all resources via `client.Namespace`, `client.Project`, `client.Finding`, etc.; the list is driven by the registry in `endorlabs.registry`. Resources without update or delete raise `NotImplementedError` for those operations. The **full** resource set is under `endorlabs.resources` (list in [resources.md](resources.md)); the top-level package re-exports a subset. Signatures and behavior: see module and function docstrings (Pydantic/Pyright).
+Stable surface: `endorlabs.__all__` — APIClient, Client, exported exception classes (EndorAPIError, NotFoundError, etc.). **Client:** `endorlabs.Client(tenant="example-tenant")` exposes all resources via `client.Namespace`, `client.Project`, `client.Finding`, etc.; the list is driven by the registry in `endorlabs.registry`. Resources without update or delete raise `NotImplementedError` for those operations. The **full** resource set is under `endorlabs.resources` (list in [resources.md](resources.md)); the top-level package re-exports a subset. Signatures and behavior: see module and function docstrings (Pydantic/Pyright).
 
 ## Other surfaces
 

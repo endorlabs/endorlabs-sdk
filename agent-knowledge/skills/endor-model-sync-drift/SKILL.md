@@ -34,7 +34,7 @@ From repo root (public spec download):
 uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
 ```
 
-**Spec already in `.endorlabs-context/platform/openapi/openapiv2.swagger.json`:**
+**Spec already in `.endorlabs/_cache/openapi.json`:**
 
 ```bash
 uv run python devtools/codegen/model_sync.py --generate-stubs --generate-reference-docs

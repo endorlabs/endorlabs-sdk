@@ -12,8 +12,8 @@ from endorlabs.utils.serialization import object_to_dict, to_json_dict
 from endorlabs.workflows.troubleshooting_scans.artifacts import (
     RUN_BUCKET,
     build_filename,
-    default_troubleshooting_output_dir,
     iso_now_compact,
+    resolve_troubleshooting_output_dir,
     root_tenant,
     sanitize_segment,
     write_json,
@@ -43,7 +43,6 @@ __all__ = [
     "build_filename",
     "date_window_from_bounds",
     "date_window_from_days",
-    "default_troubleshooting_output_dir",
     "extract_scan_mode",
     "iso_now_compact",
     "load_json",
@@ -53,6 +52,7 @@ __all__ = [
     "parse_app_scan_history_url",
     "parse_common_args",
     "parse_endor_app_url",
+    "resolve_troubleshooting_output_dir",
     "root_tenant",
     "sanitize_segment",
     "scan_result_extended_summary",
@@ -70,13 +70,18 @@ __all__ = [
 def parse_common_args(description: str) -> argparse.ArgumentParser:
     """Build parser with common options used by all scripts."""
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("--tenant", required=True, help="Target namespace/tenant root")
+    parser.add_argument(
+        "-n",
+        "--tenant",
+        required=True,
+        help="Target namespace/tenant root",
+    )
     parser.add_argument(
         "--output-dir",
-        default=default_troubleshooting_output_dir(),
+        default=None,
         help=(
-            "Directory for generated artifacts "
-            f"(default: {default_troubleshooting_output_dir()})"
+            "Directory for generated artifacts (default: "
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/)."
         ),
     )
     parser.add_argument(

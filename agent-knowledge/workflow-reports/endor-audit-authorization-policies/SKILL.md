@@ -146,7 +146,7 @@ client.close()
 
 ```bash
 uv run --env-file .env endor-reports auth-policies -n <tenant> \
-  --output-dir .endorlabs-context/workspace/runs/audit-authorization-policies
+  --output-dir .endorlabs/reports/auth-policies
 ```
 
 Library: `endorlabs.workflows.auth.list_authorization_policies`,
@@ -156,7 +156,7 @@ Library: `endorlabs.workflows.auth.list_authorization_policies`,
 
 | Artifact | Default |
 |----------|---------|
-| Findings JSON | `.endorlabs-context/workspace/runs/audit-authorization-policies/auth_policy_form_audit.json` |
+| Findings JSON | `.endorlabs/reports/auth-policies/auth_policy_form_audit.json` |
 
 Override with `--output-dir`. Never write secrets or full bearer tokens.
 

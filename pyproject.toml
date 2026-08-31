@@ -31,22 +31,25 @@ classifiers = [
     "Topic :: Security",
     "Typing :: Typed",
 ]
+# Library manifest: compatible ranges (lockfile pins resolution). Floors are
+# max(API introduction, first CPython 3.12+/3.13 wheel). CI "Dependency Bounds"
+# exercises lowest-direct and highest resolutions.
 dependencies = [
-    "pydantic==2.13.4",
-    "pyyaml==6.0.3",
-    "httpx==0.28.1",
-    "tenacity==9.1.4",
-    "zstandard==0.25.0",
-    "defusedxml==0.7.1",
+    "pydantic>=2.11,<3",
+    "pyyaml>=6.0.2,<7",
+    "httpx>=0.27,<1",
+    "tenacity>=9,<10",
+    "zstandard>=0.23,<1",
+    "defusedxml>=0.7.1,<1",
 ]
 
 [project.optional-dependencies]
 # DataFrame/Parquet export (estate cardinality tabular) + estate graph metrics (igraph/leidenalg)
 analytics = [
-    "pandas==3.0.3",
-    "pyarrow==24.0.0",
-    "igraph==1.0.0",
-    "leidenalg==0.12.0",
+    "pandas>=2.2.3,<4",  # 2.2.3+: first cp313 wheels (lowest-direct on CI 3.13)
+    "pyarrow>=18.0.0,<25",
+    "igraph>=0.11.6,<2",
+    "leidenalg>=0.10.2,<1",
 ]
 
 [project.scripts]
@@ -63,6 +66,7 @@ endor-reachability-context = "endorlabs.workflows.reachability.cli:main"
 endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
 endor-auth = "endorlabs.workflows.auth.cli:main"
 endor-reports = "endorlabs.workflows.reports.cli:main"
+endor-log-export = "endorlabs.workflows.log_export.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/endorlabs/endorlabs-sdk"
@@ -70,6 +74,7 @@ Repository = "https://github.com/endorlabs/endorlabs-sdk"
 Documentation = "https://docs.endorlabs.com/"  # Endor Labs platform docs; SDK docs in repo README
 Changelog = "https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md"
 Issues = "https://github.com/endorlabs/endorlabs-sdk/issues"
+Security = "https://github.com/endorlabs/endorlabs-sdk/blob/main/SECURITY.md"
 
 [dependency-groups]
 dev = [
@@ -81,10 +86,10 @@ dev = [
     "pre-commit==4.6.0",
     "rich==15.0.0",
     # Analytics deps for unit tests (mirrors [project.optional-dependencies.analytics])
-    "pandas==3.0.3",
-    "pyarrow==24.0.0",
-    "igraph==1.0.0",
-    "leidenalg==0.12.0",
+    "pandas>=2.2.3,<4",  # 2.2.3+: first cp313 wheels (lowest-direct on CI 3.13)
+    "pyarrow>=18.0.0,<25",
+    "igraph>=0.11.6,<2",
+    "leidenalg>=0.10.2,<1",
     "datamodel-code-generator==0.61.0",
     # Build Dependencies
     "twine==6.2.0",
@@ -108,13 +113,6 @@ exclude = [
   "/.github",
   "/.cursor",
 ]
-
-# Default install index: Endor package firewall (auth via UV_INDEX_ENDOR_FIREWALL_*).
-[[tool.uv.index]]
-name = "endor-firewall"
-url = "https://factory.endorlabs.com/v1/namespaces/endor-solutions-tgowan/firewall/pypi/simple/"
-default = true
-authenticate = "always"
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit", "tests/integration"]

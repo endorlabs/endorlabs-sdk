@@ -5,26 +5,29 @@ One page per SDK facade resource (`client.<AttrName>`).
 | Resource | API segment | Scope | Operations | Page |
 |----------|-------------|-------|------------|------|
 | `APIKey` | `api-keys` | `tenant` | create, delete, get, list | [APIKey.md](APIKey.md) |
-| `AuditLog` | `audit-logs` | `tenant` | create, delete, get, list | [AuditLog.md](AuditLog.md) |
+| `AuditLog` | `audit-logs` | `tenant` | get, list | [AuditLog.md](AuditLog.md) |
 | `AuthenticationLog` | `authentication-logs` | `tenant` | get, list | [AuthenticationLog.md](AuthenticationLog.md) |
 | `AuthorizationPolicy` | `authorization-policies` | `tenant` | create, delete, get, list, update | [AuthorizationPolicy.md](AuthorizationPolicy.md) |
 | `CodeOwners` | `codeowners` | `tenant` | create, delete, get, list, update | [CodeOwners.md](CodeOwners.md) |
 | `DependencyMetadata` | `dependency-metadata` | `tenant` | create, delete, get, list | [DependencyMetadata.md](DependencyMetadata.md) |
 | `EndorLicense` | `endor-licenses` | `tenant` | get, list | [EndorLicense.md](EndorLicense.md) |
-| `Finding` | `findings` | `tenant` | create, delete, get, list, update | [Finding.md](Finding.md) |
-| `FindingLog` | `finding-logs` | `tenant` | create, delete, get, list | [FindingLog.md](FindingLog.md) |
+| `Finding` | `findings` | `tenant` | delete, get, list, update | [Finding.md](Finding.md) |
+| `FindingLog` | `finding-logs` | `tenant` | get, list | [FindingLog.md](FindingLog.md) |
 | `IdentityProvider` | `identity-providers` | `tenant` | get, list | [IdentityProvider.md](IdentityProvider.md) |
 | `Installation` | `installations` | `tenant` | create, delete, get, list, update | [Installation.md](Installation.md) |
 | `Invitation` | `invitations` | `tenant` | create, delete, get, list, update | [Invitation.md](Invitation.md) |
-| `LinterResult` | `linter-results` | `tenant` | create, delete, get, list | [LinterResult.md](LinterResult.md) |
+| `LinterResult` | `linter-results` | `tenant` | get, list | [LinterResult.md](LinterResult.md) |
 | `Malware` | `malware` | `oss` | get, list | [Malware.md](Malware.md) |
-| `Metric` | `metrics` | `tenant` | create, delete, get, list, update | [Metric.md](Metric.md) |
+| `MalwareExposure` | `malware-exposure` | `tenant` | get, list | [MalwareExposure.md](MalwareExposure.md) |
+| `MalwareExposureQuery` | `queries/malware-exposure` | `tenant` | create | [MalwareExposureQuery.md](MalwareExposureQuery.md) |
+| `Metric` | `metrics` | `tenant` | get, list | [Metric.md](Metric.md) |
 | `Namespace` | `namespaces` | `tenant` | create, delete, get, list, update | [Namespace.md](Namespace.md) |
 | `NotificationTarget` | `notification-targets` | `tenant` | create, delete, get, list, update | [NotificationTarget.md](NotificationTarget.md) |
 | `PRCommentConfig` | `pr-comment-configs` | `tenant` | create, delete, get, list, update | [PRCommentConfig.md](PRCommentConfig.md) |
 | `PackageFirewallLog` | `package-firewall-logs` | `tenant` | get, list | [PackageFirewallLog.md](PackageFirewallLog.md) |
 | `PackageLicense` | `package-licenses` | `tenant` | create, delete, get, list, update | [PackageLicense.md](PackageLicense.md) |
-| `PackageVersion` | `package-versions` | `tenant` | create, delete, get, list, update | [PackageVersion.md](PackageVersion.md) |
+| `PackageManager` | `package-managers` | `tenant` | create, delete, get, list, update | [PackageManager.md](PackageManager.md) |
+| `PackageVersion` | `package-versions` | `tenant` | delete, get, list, update | [PackageVersion.md](PackageVersion.md) |
 | `Policy` | `policies` | `tenant` | create, delete, get, list, update | [Policy.md](Policy.md) |
 | `PolicyTemplate` | `policy-templates` | `tenant` | get, list | [PolicyTemplate.md](PolicyTemplate.md) |
 | `Project` | `projects` | `tenant` | create, delete, get, list, update | [Project.md](Project.md) |
@@ -32,15 +35,16 @@ One page per SDK facade resource (`client.<AttrName>`).
 | `QueryMalware` | `queries/malware` | `oss` | create | [QueryMalware.md](QueryMalware.md) |
 | `QuerySimilarPackages` | `queries/similar-packages` | `tenant` | create | [QuerySimilarPackages.md](QuerySimilarPackages.md) |
 | `QueryVulnerability` | `queries/vulnerabilities` | `oss` | create | [QueryVulnerability.md](QueryVulnerability.md) |
-| `Repository` | `repositories` | `tenant` | create, delete, get, list, update | [Repository.md](Repository.md) |
-| `RepositoryVersion` | `repository-versions` | `tenant` | create, delete, get, list, update | [RepositoryVersion.md](RepositoryVersion.md) |
+| `Repository` | `repositories` | `tenant` | get, list, update | [Repository.md](Repository.md) |
+| `RepositoryVersion` | `repository-versions` | `tenant` | get, list, update | [RepositoryVersion.md](RepositoryVersion.md) |
 | `SavedQuery` | `saved-queries` | `tenant` | get, list | [SavedQuery.md](SavedQuery.md) |
 | `ScanLogRequest` | `scan-log-requests` | `tenant` | create | [ScanLogRequest.md](ScanLogRequest.md) |
 | `ScanProfile` | `scan-profiles` | `tenant` | create, delete, get, list, update | [ScanProfile.md](ScanProfile.md) |
-| `ScanResult` | `scan-results` | `tenant` | create, delete, get, list, update | [ScanResult.md](ScanResult.md) |
+| `ScanResult` | `scan-results` | `tenant` | delete, get, list, update | [ScanResult.md](ScanResult.md) |
 | `ScanWorkflow` | `scan-workflows` | `tenant` | delete, get, list | [ScanWorkflow.md](ScanWorkflow.md) |
 | `ScanWorkflowResult` | `scan-workflow-results` | `tenant` | delete, get, list | [ScanWorkflowResult.md](ScanWorkflowResult.md) |
 | `SemgrepRule` | `semgrep-rules` | `tenant` | create, delete, get, list, update | [SemgrepRule.md](SemgrepRule.md) |
+| `SystemConfig` | `system-config` | `tenant` | get, list, update | [SystemConfig.md](SystemConfig.md) |
 | `VectorStore` | `vector-stores` | `tenant` | get, list | [VectorStore.md](VectorStore.md) |
 | `VectorStoreQuery` | `queries/vector-stores` | `tenant` | create | [VectorStoreQuery.md](VectorStoreQuery.md) |
 | `VersionUpgrade` | `version-upgrades` | `tenant` | delete, get, list | [VersionUpgrade.md](VersionUpgrade.md) |

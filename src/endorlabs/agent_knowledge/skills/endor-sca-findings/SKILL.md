@@ -56,9 +56,16 @@ tenant-wide (costly). For single-project provenance, always pin
 ## OSS namespace (OSS-scoped facades vs tenant-scoped DependencyMetadata)
 
 Some resources use the literal top-level namespace **`oss`** on the wire (facade
-`scope="oss"`), parallel to customer tenants — for example **`Vulnerability`**
-catalog queries. **Do not** derive `<tenant>.oss` or child paths under the
-customer root for those facades.
+`scope="oss"`), parallel to customer tenants — for example **`Vulnerability`** /
+**`QueryVulnerability`** catalog queries. **Do not** derive `<tenant>.oss` or
+child paths under the customer root for those facades.
+
+**Tenant malware exposure (preferred for customer asks):** use
+**`MalwareExposure`** / **`MalwareExposureQuery`**, Finding malware category, or
+**`PackageFirewallLog`** under the **customer** namespace. Use **`QueryMalware`** /
+**`Malware`** only for **coordinate identity** on the OSS catalog plane (“is
+`npm://keyv@6.0.0` malware?”), then map UUIDs into tenant exposure — do not treat
+`Malware.list` on `oss` as tenant blast radius.
 
 **`DependencyMetadata` list/get/group is tenant-scoped** (customer namespace
 segment, same as `Project` / `PackageVersion`). Use the project's
@@ -104,7 +111,7 @@ client.DependencyMetadata.list(
    [OSS namespace vs DependencyMetadata](#oss-namespace-oss-scoped-facades-vs-tenant-scoped-dependencymetadata).
 4. Validate referenced UUIDs from findings (`spec.target_uuid`) and flag non-resolving resources.
 5. When function-level provenance/reachability is required, hand off to:
-   - `uv run endor-reachability-context --tenant <tenant> --namespace <namespace> --finding-uuid <finding_uuid>` (default: `workspace/projects/<finding-uuid>/reachability_context.json`)
+   - `uv run endor-reachability-context --tenant <tenant> --namespace <namespace> --finding-uuid <finding_uuid>` (default: `tasks/<slug>-<YYYY-MM-DD>/projects/<finding-uuid>/reachability_context.json`)
    - Use generated `reachability_context.json` for cross-plane (`customer` + `oss`) stitching evidence.
 
 ## Flow D — Artifact Reconciliation

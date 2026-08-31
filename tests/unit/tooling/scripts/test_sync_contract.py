@@ -20,6 +20,7 @@ from sync.contract import (
     build_payload_schemas,
     build_registry_parity_report,
     build_runtime_index_metadata,
+    extract_create_convenience_fields,
     infer_resource_scope,
     validate_contract_artifacts,
 )
@@ -304,6 +305,111 @@ def test_infer_resource_scope_oss_literal_paths() -> None:
     }
     metadata = build_operation_path_metadata(spec)
     assert infer_resource_scope("malware", metadata) == "oss"
+
+
+def test_extract_create_convenience_flattens_nested_spec_request() -> None:
+    """Nested spec.request fields become flat create convenience kwargs."""
+    definitions = {
+        "ExposureQueryCreateBody": {
+            "properties": {
+                "meta": {"$ref": "#/definitions/V1Meta"},
+                "spec": {"$ref": "#/definitions/ExposureQuerySpec"},
+            }
+        },
+        "ExposureQuerySpec": {
+            "properties": {
+                "request": {"$ref": "#/definitions/ExposureQueryRequest"},
+                "response": {"type": "object"},
+            }
+        },
+        "ExposureQueryRequest": {
+            "properties": {
+                "malware_uuids": {"type": "array", "items": {"type": "string"}},
+                "filter": {"type": "string"},
+                "traverse": {"type": "boolean"},
+                "project_uuid": {"type": "string"},
+            }
+        },
+        "V1Meta": {"properties": {"name": {"type": "string"}}},
+    }
+    nested = extract_create_convenience_fields(
+        definitions,
+        {"ExposureQueryCreateBody": definitions["ExposureQueryCreateBody"]},
+    )
+    assert nested["convenience_skip_reason"] == "nested_spec_request"
+    assert nested["create_convenience_spec_fields"] == [
+        "malware_uuids",
+        "filter",
+        "traverse",
+        "project_uuid",
+    ]
+    assert nested["create_convenience_meta_fields"] == ["name"]
+
+
+def test_build_payload_schemas_isolates_query_path_from_resource(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """queries/{name} POST bodies must not attach to the {name} resource row."""
+    definitions = {
+        "ExposureCreateBody": {
+            "properties": {
+                "meta": {"type": "object"},
+                "spec": {
+                    "type": "object",
+                    "properties": {"malware_uuid": {"type": "string"}},
+                },
+            }
+        },
+        "ExposureQueryCreateBody": {
+            "properties": {
+                "meta": {"type": "object"},
+                "spec": {"type": "object"},
+            }
+        },
+    }
+    entry = SimpleNamespace(
+        attr_name="MalwareExposure",
+        resource_name="malware-exposure",
+        model_class=type("MalwareExposure", (), {}),
+        supported_ops=frozenset({"list", "get"}),
+        build_create_payload_fn=None,
+        filter_kwarg_map={},
+        parent_kind=None,
+        scope=None,
+    )
+    contract_module = sys.modules[build_payload_schemas.__module__]
+    monkeypatch.setattr(contract_module, "RESOURCE_REGISTRY", [entry])
+    operation_metadata = {
+        "operations": [
+            {
+                "path": "/v1/namespaces/{tenant_meta.namespace}/malware-exposure",
+                "method": "post",
+                "operation_id": "CreateExposure",
+                "tags": [],
+                "x_internal": False,
+                "request_refs": ["ExposureCreateBody"],
+                "response_refs": [],
+            },
+            {
+                "path": (
+                    "/v1/namespaces/{tenant_meta.namespace}/queries/malware-exposure"
+                ),
+                "method": "post",
+                "operation_id": "CreateExposureQuery",
+                "tags": [],
+                "x_internal": False,
+                "request_refs": ["ExposureQueryCreateBody"],
+                "response_refs": [],
+            },
+        ]
+    }
+    payload = build_payload_schemas(
+        spec={"definitions": definitions},
+        operation_metadata=operation_metadata,
+    )
+    row = next(r for r in payload["resources"] if r["attr_name"] == "MalwareExposure")
+    assert row["create_payload_entities"] == ["ExposureCreateBody"]
+    assert "ExposureQueryCreateBody" not in row["create_payload_entities"]
 
 
 def test_build_facade_contract_uses_openapi_scope_not_runtime_entry(

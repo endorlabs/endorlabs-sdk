@@ -93,7 +93,7 @@ def test_build_workflow_catalog_merges_yaml_and_skill_rows() -> None:
                 "workflow_id": "agent-context",
                 "cli": "endor-agent-context",
                 "module": "endorlabs.workflows.agent_context.cli",
-                "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+                "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/projects/<uuid>/",
                 "agent_visible": True,
             },
         )
@@ -114,7 +114,7 @@ def test_validate_workflow_cli_entries_matches_pyproject() -> None:
             "cli": "endor-context",
             "module": "endorlabs.context.cli",
             "skill": None,
-            "default_output": ".endorlabs-context/",
+            "default_output": ".endorlabs/",
             "agent_visible": True,
         }
     ]

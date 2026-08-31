@@ -12,6 +12,8 @@
   "Invitation": "User invitation for platform access.",
   "LinterResult": "Linter analysis result for a package or repository version.",
   "Malware": "Open-source malware records.",
+  "MalwareExposure": "Tenant-scoped malware blast-radius / exposure records.",
+  "MalwareExposureQuery": "Query tenant malware exposure by malware UUID or filter.",
   "Metric": "Analytics output attached to packages or repositories.",
   "Namespace": "Isolate and organize resources in a parent-child hierarchy.",
   "NotificationTarget": "Integration endpoint for notification delivery.",
@@ -34,5 +36,12 @@
   "VectorStore": "Tenant vector store inventory (embeddings index metadata).",
   "VectorStoreQuery": "Natural-language query against a vector store (create-only).",
   "VersionUpgrade": "Suggested dependency version upgrade.",
+  "PackageManager": "Package manager integration and resolution settings.",
+  "IdentityProvider": "SSO identity provider configuration for the tenant.",
+  "PRCommentConfig": "Pull-request comment integration settings.",
+  "Query": "Graph join query (create-only); POST query spec to namespace.",
+  "QuerySimilarPackages": "Similar-package query (create-only).",
+  "SavedQuery": "Saved query definition for reuse in the product UI.",
+  "SystemConfig": "Tenant-wide system settings singleton (list/update; onboard-seeded).",
   "Vulnerability": "Open-source vulnerability records."
 }

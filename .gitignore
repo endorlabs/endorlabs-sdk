@@ -74,6 +74,8 @@ Thumbs.db
 canvases/
 
 # Context bootstrap (downloaded by SDK or scripts)
+.endorlabs/
+# Legacy layout (pre flat .endorlabs migration; keep ignored if still on disk)
 .endorlabs-context/
 .tmp/
 .generated/

@@ -54,10 +54,10 @@ CODE_OWNERS_SPEC_REQUIRED = ()
 CODE_OWNERS_META_FIELDS = ()
 CODE_OWNERS_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
 
-DEPENDENCY_METADATA_SPEC_FIELDS = ("data",)
+DEPENDENCY_METADATA_SPEC_FIELDS = ("dependency_data", "importer_data")
 DEPENDENCY_METADATA_SPEC_REQUIRED = ()
-DEPENDENCY_METADATA_META_FIELDS = ("name",)
-DEPENDENCY_METADATA_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
+DEPENDENCY_METADATA_META_FIELDS = ()
+DEPENDENCY_METADATA_PAYLOAD_TOP_LEVEL_FIELDS = ("context", "meta", "tenant_meta")
 
 ENDOR_LICENSE_SPEC_FIELDS = (
     "target_namespace",
@@ -256,6 +256,21 @@ MALWARE_SPEC_REQUIRED = ("ecosystem", "package_name")
 MALWARE_META_FIELDS = ()
 MALWARE_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
 
+MALWARE_EXPOSURE_SPEC_FIELDS = ("malware_uuid", "ecosystem", "malware_detected_on")
+MALWARE_EXPOSURE_SPEC_REQUIRED = ("malware_uuid", "ecosystem")
+MALWARE_EXPOSURE_META_FIELDS = ()
+MALWARE_EXPOSURE_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
+
+MALWARE_EXPOSURE_QUERY_SPEC_FIELDS = (
+    "malware_uuids",
+    "filter",
+    "traverse",
+    "project_uuid",
+)
+MALWARE_EXPOSURE_QUERY_SPEC_REQUIRED = ()
+MALWARE_EXPOSURE_QUERY_META_FIELDS = ("name",)
+MALWARE_EXPOSURE_QUERY_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
+
 METRIC_SPEC_FIELDS = ("analytic", "project_uuid", "metric_values", "raw")
 METRIC_SPEC_REQUIRED = ("analytic", "project_uuid", "metric_values")
 METRIC_META_FIELDS = ()
@@ -315,6 +330,25 @@ PACKAGE_LICENSE_SPEC_FIELDS = (
 PACKAGE_LICENSE_SPEC_REQUIRED = ()
 PACKAGE_LICENSE_META_FIELDS = ()
 PACKAGE_LICENSE_PAYLOAD_TOP_LEVEL_FIELDS = ("context", "meta", "tenant_meta")
+
+PACKAGE_MANAGER_SPEC_FIELDS = (
+    "auth_provider",
+    "npm",
+    "mvn",
+    "cargo",
+    "pypi",
+    "gem",
+    "nuget",
+    "packagist",
+    "gradle",
+    "cocoapod",
+    "swift",
+    "conan",
+    "package_manager_status",
+)
+PACKAGE_MANAGER_SPEC_REQUIRED = ()
+PACKAGE_MANAGER_META_FIELDS = ()
+PACKAGE_MANAGER_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
 
 PACKAGE_VERSION_SPEC_FIELDS = (
     "project_uuid",
@@ -577,10 +611,34 @@ SEMGREP_RULE_SPEC_REQUIRED = ()
 SEMGREP_RULE_META_FIELDS = ()
 SEMGREP_RULE_PAYLOAD_TOP_LEVEL_FIELDS = ("disabled", "meta", "propagate", "tenant_meta")
 
-VECTOR_STORE_SPEC_FIELDS = ("vector_store_uuid", "query", "metadata_filter")
-VECTOR_STORE_SPEC_REQUIRED = ("vector_store_uuid", "query")
-VECTOR_STORE_META_FIELDS = ("name",)
-VECTOR_STORE_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
+SYSTEM_CONFIG_SPEC_FIELDS = (
+    "policy",
+    "logging",
+    "analytics",
+    "finding_prioritization",
+    "artifactory",
+    "sast",
+    "cloud_deployment",
+    "ai",
+    "urgent_notification",
+    "endor_ignore",
+    "package_firewall",
+)
+SYSTEM_CONFIG_SPEC_REQUIRED = ()
+SYSTEM_CONFIG_META_FIELDS = ()
+SYSTEM_CONFIG_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
+
+VECTOR_STORE_SPEC_FIELDS = (
+    "embedding_provider",
+    "embedding_model",
+    "dimensions",
+    "uniqueness_fields",
+    "apply_uniqueness_index_changes",
+    "search_index_fields",
+)
+VECTOR_STORE_SPEC_REQUIRED = ("embedding_provider", "embedding_model")
+VECTOR_STORE_META_FIELDS = ()
+VECTOR_STORE_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
 
 VECTOR_STORE_QUERY_SPEC_FIELDS = ("vector_store_uuid", "query", "metadata_filter")
 VECTOR_STORE_QUERY_SPEC_REQUIRED = ("vector_store_uuid", "query")
@@ -602,18 +660,26 @@ VERSION_UPGRADE_META_FIELDS = ()
 VERSION_UPGRADE_PAYLOAD_TOP_LEVEL_FIELDS = ("context", "meta", "tenant_meta")
 
 VULNERABILITY_SPEC_FIELDS = (
-    "package_version_name",
-    "package_version_names",
-    "vulnerability_name_query",
-    "purls",
-    "mask",
-    "vulnerability_type",
+    "deepdive",
+    "disputed",
+    "additional_notes",
+    "published",
+    "modified",
+    "withdrawn",
+    "aliases",
+    "related",
+    "cvss_v3_severity",
+    "cvss_v4_severity",
+    "credits",
+    "database_specific",
+    "summary",
+    "affected",
+    "references",
+    "epss_score",
+    "raw",
+    "malicious",
+    "additional_endor_notes",
 )
 VULNERABILITY_SPEC_REQUIRED = ()
-VULNERABILITY_META_FIELDS = ("name",)
-VULNERABILITY_PAYLOAD_TOP_LEVEL_FIELDS = (
-    "meta",
-    "response",
-    "responses",
-    "tenant_meta",
-)
+VULNERABILITY_META_FIELDS = ()
+VULNERABILITY_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")

@@ -44,12 +44,16 @@ def vector_store_query_contract() -> dict:
 
 
 def test_render_vector_store_query_page(vector_store_query_contract: dict) -> None:
+    from resource_user_space import load_resource_user_space
+
     page = _render_resource_page(
         "VectorStoreQuery",
         vector_store_query_contract,
         "Natural-language vector store queries.",
         {"VectorStoreQuery": ["VectorStore"]},
+        user_space_entry=load_resource_user_space()["VectorStoreQuery"],
     )
+    assert "## User-space access" in page
     assert "## Create convenience kwargs" in page or "Create convenience kwargs" in page
     assert "`metadata_filter`" in page
     assert "`matches`" in page
@@ -88,5 +92,26 @@ def test_generate_writes_vector_store_query_page() -> None:
     path = repo_root / "docs" / "generated-reference" / "resources" / "VectorStoreQuery.md"
     assert path.is_file()
     content = path.read_text(encoding="utf-8")
+    assert "## User-space access" in content
     assert "metadata_filter" in content
     assert "matches" in content
+
+
+def test_system_config_page_documents_user_space_ops() -> None:
+    generate_resource_reference_pages()
+    repo_root = Path(__file__).resolve().parents[3]
+    path = repo_root / "docs" / "generated-reference" / "resources" / "SystemConfig.md"
+    content = path.read_text(encoding="utf-8")
+    assert "## User-space access" in content
+    assert "platform-managed" in content
+    assert "admin-only" in content
+    assert "## Create" not in content
+
+
+def test_malware_page_documents_user_space_ops() -> None:
+    generate_resource_reference_pages()
+    repo_root = Path(__file__).resolve().parents[3]
+    path = repo_root / "docs" / "generated-reference" / "resources" / "Malware.md"
+    content = path.read_text(encoding="utf-8")
+    assert "## User-space access" in content
+    assert "OSS-scoped" in content or "read-only" in content

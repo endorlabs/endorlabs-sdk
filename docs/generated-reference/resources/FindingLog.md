@@ -14,65 +14,22 @@ Historical snapshot of a finding state.
 |-----------|-----------|
 | `list` | yes |
 | `get` | yes |
-| `create` | yes |
+| `create` | no |
 | `update` | no |
-| `delete` | yes |
+| `delete` | no |
 
-## Create
+## User-space access
 
-- **Mode:** `both`
-- **Model import:** `endorlabs.resources.finding_log:FindingLog`
-- **Payload model:** `CreateFindingLogPayload`
+Customer tenant semantics (distinct from raw OpenAPI and SDK exposure).
+Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
 
-### Payload top-level fields
-
-- `context`
-- `meta`
-- `tenant_meta`
-
-### Create convenience kwargs (flat)
-
-**Spec (flat, promoted into `spec`):**
-
-Required:
-
-- `finding_categories`
-- `finding_parent_kind`
-- `finding_parent_uuid`
-- `finding_tags`
-- `finding_uuid`
-- `introduced_at`
-- `level`
-- `method`
-- `operation`
-
-Optional:
-
-- `approximation`
-- `days_unresolved`
-- `ecosystem`
-- `finding_parent_name`
-- `location`
-- `resolved_at`
-- `snooze`
-- `target_dependency_package_name`
-- `target_uuid`
-
-Unknown flat kwargs raise `TypeError`. Use `payload=` or nested `spec=` / `meta=` for full control.
-
-### Examples
-
-**Python:**
-
-```python
-client.FindingLog.create(finding_uuid="...", finding_parent_kind="...", namespace='tenant.ns')
-```
-
-**endorctl:**
-
-```bash
-endorctl api create --resource=FindingLog --namespace=<tenant.ns> -f payload.json
-```
+| Operation | Customer user-space | SDK exposed |
+|-----------|---------------------|-------------|
+| `list` | read-only | yes |
+| `get` | read-only | yes |
+| `create` | platform-managed | no |
+| `update` | not-supported | no |
+| `delete` | not-supported | no |
 
 ## Facade helpers
 

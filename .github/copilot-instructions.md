@@ -16,6 +16,6 @@
 
 ## Reference – API spec and user docs
 
-- **API spec (OpenAPI)**: <https://api.endorlabs.com/download/openapiv2.swagger.json> (schema drift workflow downloads to `.endorlabs-context/platform/openapi/` in CI; folder is gitignored)
+- **API spec (OpenAPI)**: <https://api.endorlabs.com/download/openapiv2.swagger.json> (schema drift workflow downloads to `.endorlabs/_cache/openapi.json` in CI; folder is gitignored)
 - **User documentation**: Docs MCP (`https://docs.endorlabs.com/mcp`) — [setup](https://docs.endorlabs.com/introduction/docs-mcp-server); unsupported harnesses: [llms.txt](https://docs.endorlabs.com/llms.txt); browse <https://docs.endorlabs.com/>
 - **In-repo docs**: `docs/README.md` (index), `docs/contracts.md` (naming, traverse, ListParameters), `docs/reference/namespace.md`, `docs/contributing/architecture.md`, `docs/contributing/api-validation.md`, `docs/contributing/integration-resource-tests.md`, `docs/contributing/docs-drift-workflow.md`

@@ -1,4 +1,10 @@
-"""End-to-end test for the retrieving-scan-results workflow."""
+"""End-to-end test for the retrieving-scan-results workflow.
+
+Layer: **workflow wiring** — canonical repo → ``search_by_name`` → scan plane →
+findings accessor path documented in the retrieve-scan-results skill. Not a
+schema or payload contract test (those live in unit tests and the roundtrip
+harness). Marked ``long`` because project discovery uses ``traverse=True``.
+"""
 
 from __future__ import annotations
 
@@ -13,6 +19,7 @@ from tests.integration.client.helper_assertions import nested_attr
 
 
 @pytest.mark.integration
+@pytest.mark.long
 class TestRetrievingScanResultsWorkflow:
     """End-to-end test for retrieving scan results workflow."""
 

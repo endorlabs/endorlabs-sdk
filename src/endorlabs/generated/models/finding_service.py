@@ -149,6 +149,21 @@ class ConfigOperator(StrEnum):
     OPERATOR_OR = 'OPERATOR_OR'
 
 
+class ContainerContextDiffRecordScope(StrEnum):
+    """
+    Which finding types a stored suppression covers. Members mirror
+    FindingRecordScope by number.
+
+     - RECORD_SCOPE_UNSPECIFIED: Unset; treated as RECORD_SCOPE_ALL.
+     - RECORD_SCOPE_ALL: Every finding common with the baseline.
+     - RECORD_SCOPE_VULNERABILITY: Vulnerability findings only.
+    """
+
+    RECORD_SCOPE_UNSPECIFIED = 'RECORD_SCOPE_UNSPECIFIED'
+    RECORD_SCOPE_ALL = 'RECORD_SCOPE_ALL'
+    RECORD_SCOPE_VULNERABILITY = 'RECORD_SCOPE_VULNERABILITY'
+
+
 class ContainerProfileDetailsApplicationType(StrEnum):
     """
     ApplicationType represents the type of the application.
@@ -431,6 +446,48 @@ class LLMContextStructuredContent(BaseModel):
     schema_: dict[str, Any] | None = Field(None, alias='schema')
     """
     The schema defining the structure and validation rules for the content.
+    """
+
+
+class LinterCorrectnessAnalysisCodeFix(BaseModel):
+    """
+    CodeFix represents a potential fix to a determined true positive linter result.
+    """
+
+    file_path: str
+    """
+    The file path of the code fix.
+    """
+    line_end: int
+    """
+    The end line number of the code fix.
+    """
+    line_start: int
+    """
+    The start line number of the code fix.
+    """
+    patch: str
+    """
+    The code fix to be applied.
+    """
+
+
+class LinterCorrectnessAnalysisDataFlowNode(BaseModel):
+    """
+    DataFlowNode represents a node in the data flow trace from source to sink.
+    """
+
+    code_line_num: int | None = None
+    """
+    Line number in the source file.
+    """
+    code_snippet: str | None = None
+    """
+    Variable or expression at this point in the flow.
+    """
+    type: str | None = None
+    """
+    Type of node in the data flow (source, step, or sink).
     """
 
 
@@ -1419,6 +1476,12 @@ class VulnerabilityComponent(BaseModel):
     """
     Indicates the artifact group id that the CVE affects.
     """
+    reachable_by_inclusion: bool | None = None
+    """
+    The vulnerability is assumed reachable due to how the artifact is
+    typically used; endor_uri is empty and call-path analysis does not apply.
+    The json_name pins the curated feed's key for protojson parsing.
+    """
     versions_range: list[str] | None = None
     """
     Vulnerable version range in Maven notation. For example, "[1.1.0,2.1.3)".
@@ -1469,6 +1532,12 @@ class ComponentItem(BaseModel):
     group_id: str
     """
     Indicates the artifact group id that the CVE affects.
+    """
+    reachable_by_inclusion: bool | None = None
+    """
+    The vulnerability is assumed reachable due to how the artifact is
+    typically used; endor_uri is empty and call-path analysis does not apply.
+    The json_name pins the curated feed's key for protojson parsing.
     """
     versions_range: list[str] | None = None
     """
@@ -2108,6 +2177,45 @@ class V1ContainerArchitecture(StrEnum):
     CONTAINER_ARCHITECTURE_WASM = 'CONTAINER_ARCHITECTURE_WASM'
 
 
+class V1ContainerContextDiff(BaseModel):
+    """
+    State of the context-diff suppression feature for one container scan.
+    """
+
+    baseline_package_version_uuid: str | None = None
+    """
+    Baseline PackageVersion used by the last reconcile. Informational only:
+    the reconcile always re-resolves the baseline rather than trusting this,
+    since a MAIN rescan replaces the baseline PV with a new UUID.
+    """
+    last_reconcile_time: AwareDatetime | None = None
+    """
+    When the reconcile pass (CLI-triggered or the periodic auto-reconcile)
+    last ran for this scan.
+    """
+    record_scope: ContainerContextDiffRecordScope | None = 'RECORD_SCOPE_UNSPECIFIED'
+    """
+    Which finding types the reconcile pass suppresses, set once by the run
+    that first applied suppression and reused by every later reconcile
+    (CLI-triggered or auto) so scope cannot silently change without an
+    explicit release first. Unset on scans suppressed before this field
+    existed; treated as RECORD_SCOPE_ALL in that case.
+
+    This mirrors FindingRecordScope, which the queries use, rather than
+    sharing it: that enum lives in
+    container_base_image_update_impact_query.proto, and importing that file
+    here would cycle back through finding.proto and package_version.proto.
+    Rehoming it to a shared file instead would move the generated Java class
+    of an enum the queries already publish.
+    """
+    suppress_baseline_findings: bool | None = None
+    """
+    True once --snooze-baseline-findings has been applied to this scan; makes
+    the periodic finding refresh re-run the reconcile pass against the
+    current baseline for as long as this stays true.
+    """
+
+
 class V1ContainerDependencyLayer(BaseModel):
     """
     ContainerDependency is a dependency of a container image.
@@ -2313,6 +2421,43 @@ class V1Context(BaseModel):
     """
 
 
+class V1Correctness(StrEnum):
+    """
+    Correctness represents a correctness assessment.
+
+     - CORRECTNESS_TRUE_POSITIVE: The AI analysis result is a true positive.
+     - CORRECTNESS_FALSE_POSITIVE: The AI analysis result is a false positive.
+     - CORRECTNESS_FALSE_NEGATIVE: The AI analysis result is a false negative.
+     - CORRECTNESS_UNKNOWN: The AI analysis result is unknown.
+    """
+
+    CORRECTNESS_UNSPECIFIED = 'CORRECTNESS_UNSPECIFIED'
+    CORRECTNESS_TRUE_POSITIVE = 'CORRECTNESS_TRUE_POSITIVE'
+    CORRECTNESS_FALSE_POSITIVE = 'CORRECTNESS_FALSE_POSITIVE'
+    CORRECTNESS_FALSE_NEGATIVE = 'CORRECTNESS_FALSE_NEGATIVE'
+    CORRECTNESS_UNKNOWN = 'CORRECTNESS_UNKNOWN'
+
+
+class V1CorrectnessAnalyzer(StrEnum):
+    """
+    CorrectnessAnalyzer represents the analyzer used to determine the correctness of a linter result.
+    """
+
+    CORRECTNESS_ANALYZER_UNSPECIFIED = 'CORRECTNESS_ANALYZER_UNSPECIFIED'
+    CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_2_5 = (
+        'CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_2_5'
+    )
+    CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_2_5_LITE = (
+        'CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_2_5_LITE'
+    )
+    CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_LATEST = (
+        'CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_LATEST'
+    )
+    CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_LITE_LATEST = (
+        'CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_LITE_LATEST'
+    )
+
+
 class V1CountResponse(BaseModel):
     """
     Response to a list count request.
@@ -2344,6 +2489,22 @@ class V1DigestType(StrEnum):
     DIGEST_TYPE_SHA256 = 'DIGEST_TYPE_SHA256'
     DIGEST_TYPE_SHA512 = 'DIGEST_TYPE_SHA512'
     DIGEST_TYPE_MD5 = 'DIGEST_TYPE_MD5'
+
+
+class V1DismissSource(StrEnum):
+    """
+    Which tool created a snooze or ignore, for tooling that maintains its own
+    dismissals over time and must never clear one it did not create.
+
+     - DISMISS_SOURCE_UNSPECIFIED: Created by a person, or by tooling that does not maintain what it writes.
+     - DISMISS_SOURCE_CONTAINER_DIFF: Created by `endorctl container diff --snooze-baseline-findings`, or by the
+    equivalent step of `endorctl container scan --diff`. Those commands clear
+    the dismissals carrying this source once the finding is no longer common
+    with the baseline, so no other writer may set it.
+    """
+
+    DISMISS_SOURCE_UNSPECIFIED = 'DISMISS_SOURCE_UNSPECIFIED'
+    DISMISS_SOURCE_CONTAINER_DIFF = 'DISMISS_SOURCE_CONTAINER_DIFF'
 
 
 class V1Ecosystem(StrEnum):
@@ -2415,6 +2576,9 @@ class V1ExceptionReason(StrEnum):
      - EXCEPTION_REASON_IN_TRIAGE: Issue is actively being triaged.
      - EXCEPTION_REASON_OTHER: Other reason. Use policy description or dismiss comments to elaborate.
      - EXCEPTION_REASON_RESOLVED: Issue has been resolved. For example, a secret is no longer valid.
+     - EXCEPTION_REASON_PRESENT_IN_BASELINE: The finding is also present in the baseline scan this one was diffed
+    against, so it is not newly introduced. Set only by container diff
+    tooling, never by a human.
     """
 
     EXCEPTION_REASON_UNSPECIFIED = 'EXCEPTION_REASON_UNSPECIFIED'
@@ -2423,6 +2587,7 @@ class V1ExceptionReason(StrEnum):
     EXCEPTION_REASON_IN_TRIAGE = 'EXCEPTION_REASON_IN_TRIAGE'
     EXCEPTION_REASON_OTHER = 'EXCEPTION_REASON_OTHER'
     EXCEPTION_REASON_RESOLVED = 'EXCEPTION_REASON_RESOLVED'
+    EXCEPTION_REASON_PRESENT_IN_BASELINE = 'EXCEPTION_REASON_PRESENT_IN_BASELINE'
 
 
 class V1Exceptions(BaseModel):
@@ -2812,6 +2977,10 @@ class V1LLMContext(BaseModel):
 
 
 class V1Language(StrEnum):
+    """
+    - LANGUAGE_GOSU: Gosu, a JVM language used by Guidewire applications.
+    """
+
     LANGUAGE_UNSPECIFIED = 'LANGUAGE_UNSPECIFIED'
     LANGUAGE_GO = 'LANGUAGE_GO'
     LANGUAGE_JAVA = 'LANGUAGE_JAVA'
@@ -2830,6 +2999,7 @@ class V1Language(StrEnum):
     LANGUAGE_CPP = 'LANGUAGE_CPP'
     LANGUAGE_SWIFTURL = 'LANGUAGE_SWIFTURL'
     LANGUAGE_CONAN = 'LANGUAGE_CONAN'
+    LANGUAGE_GOSU = 'LANGUAGE_GOSU'
 
 
 class V1LicenseMappingInfo(StrEnum):
@@ -2855,6 +3025,121 @@ class V1LicenseMappingInfo(StrEnum):
     LICENSE_MAPPING_INFO_PRIVATE = 'LICENSE_MAPPING_INFO_PRIVATE'
     LICENSE_MAPPING_INFO_EXACT = 'LICENSE_MAPPING_INFO_EXACT'
     LICENSE_MAPPING_INFO_UNLICENSED = 'LICENSE_MAPPING_INFO_UNLICENSED'
+
+
+class CodeFix(BaseModel):
+    """
+    CodeFix represents a potential fix to a determined true positive linter result.
+    """
+
+    file_path: str
+    """
+    The file path of the code fix.
+    """
+    line_end: int
+    """
+    The end line number of the code fix.
+    """
+    line_start: int
+    """
+    The start line number of the code fix.
+    """
+    patch: str
+    """
+    The code fix to be applied.
+    """
+
+
+class DataFlowItem(BaseModel):
+    """
+    DataFlowNode represents a node in the data flow trace from source to sink.
+    """
+
+    code_line_num: int | None = None
+    """
+    Line number in the source file.
+    """
+    code_snippet: str | None = None
+    """
+    Variable or expression at this point in the flow.
+    """
+    type: str | None = None
+    """
+    Type of node in the data flow (source, step, or sink).
+    """
+
+
+class V1LinterCorrectnessAnalysis(BaseModel):
+    """
+    LinterCorrectnessAnalysis represents an analysis of a linter result.
+    """
+
+    analysis_summary: str | None = None
+    """
+    Analysis summary, providing an explanation of the linter result and classification.
+    """
+    analyzer: V1CorrectnessAnalyzer
+    """
+    The analyzer of the linter correctness analysis.
+    """
+    code_fixes: list[CodeFix] | None = None
+    """
+    Code fixes are potential fixes to the identified issue.
+    """
+    code_references: str | None = None
+    """
+    Textual description of line references/ fields/variables , etc for the linter result.
+    """
+    confidence_level: V1AIMetaConfidenceLevel
+    """
+    The confidence level of the linter correctness analysis.
+    """
+    content_hash: str | None = None
+    """
+    sha256 over the source spans (finding location + taint dataflow) this analysis
+    was computed against; a mismatch on rescan invalidates the cached verdict and
+    forces re-analysis of the result.
+    """
+    correctness: V1Correctness
+    """
+    The correctness assessment of the linter correctness analysis.
+    """
+    data_flow: list[DataFlowItem] | None = None
+    """
+    Textual Description of the source to sink data flow analysis for the linter result.
+    """
+    description: str | None = None
+    """
+    The textual description of the linter correctness analysis.
+    """
+    risk_assessment: str | None = None
+    """
+    Risk assessment for the linter result. Provides False/True positive classifaction and reasoning for the linter result..
+    """
+    sanitizers: list[str] | None = None
+    """
+    The sanitizers used to determine the correctness of the linter result.
+    """
+    security_control: str | None = None
+    """
+    Description of any sanitizers, validators, or mitigations found (or lack thereof) for the linter result.
+    """
+    security_impact: str | None = None
+    """
+    Description of the security impact/potential consequences for the linter result.
+    """
+    symbols: str | None = None
+    """
+    Key variables/symbols in the data flow path for the linter result.
+    """
+    technical_detail: str | None = None
+    """
+    Further technical details (eg results about the vulnerability type and exploitation potential) for the linter result.
+    """
+    version: str
+    """
+    The version of the linter correctness analysis.
+    """
 
 
 class V1ListResponse(BaseModel):
@@ -3509,6 +3794,79 @@ class ErrorAnalysi(BaseModel):
     matching_snippet: str | None = None
     """
     matching_snippet is the snippet of the error that matched the rule.
+    """
+
+
+class AiAnalyse(BaseModel):
+    """
+    LinterCorrectnessAnalysis represents an analysis of a linter result.
+    """
+
+    analysis_summary: str | None = None
+    """
+    Analysis summary, providing an explanation of the linter result and classification.
+    """
+    analyzer: V1CorrectnessAnalyzer
+    """
+    The analyzer of the linter correctness analysis.
+    """
+    code_fixes: list[CodeFix] | None = None
+    """
+    Code fixes are potential fixes to the identified issue.
+    """
+    code_references: str | None = None
+    """
+    Textual description of line references/ fields/variables , etc for the linter result.
+    """
+    confidence_level: V1AIMetaConfidenceLevel
+    """
+    The confidence level of the linter correctness analysis.
+    """
+    content_hash: str | None = None
+    """
+    sha256 over the source spans (finding location + taint dataflow) this analysis
+    was computed against; a mismatch on rescan invalidates the cached verdict and
+    forces re-analysis of the result.
+    """
+    correctness: V1Correctness
+    """
+    The correctness assessment of the linter correctness analysis.
+    """
+    data_flow: list[DataFlowItem] | None = None
+    """
+    Textual Description of the source to sink data flow analysis for the linter result.
+    """
+    description: str | None = None
+    """
+    The textual description of the linter correctness analysis.
+    """
+    risk_assessment: str | None = None
+    """
+    Risk assessment for the linter result. Provides False/True positive classifaction and reasoning for the linter result..
+    """
+    sanitizers: list[str] | None = None
+    """
+    The sanitizers used to determine the correctness of the linter result.
+    """
+    security_control: str | None = None
+    """
+    Description of any sanitizers, validators, or mitigations found (or lack thereof) for the linter result.
+    """
+    security_impact: str | None = None
+    """
+    Description of the security impact/potential consequences for the linter result.
+    """
+    symbols: str | None = None
+    """
+    Key variables/symbols in the data flow path for the linter result.
+    """
+    technical_detail: str | None = None
+    """
+    Further technical details (eg results about the vulnerability type and exploitation potential) for the linter result.
+    """
+    version: str
+    """
+    The version of the linter correctness analysis.
     """
 
 
@@ -4526,6 +4884,11 @@ class VulnSpecAffected(BaseModel):
     )
     package: SpecAffectedPackage | None = None
     ranges: list[Range1] | None = None
+    reachable_by_inclusion: bool | None = None
+    """
+    The vulnerability is assumed reachable whenever this package is
+    included; there are no affected function URIs for call-path analysis.
+    """
     source: AffectedSource | None = 'SOURCE_UNSPECIFIED'
     versions: list[str] | None = None
 
@@ -4934,6 +5297,16 @@ class V1ContainerMetadata(BaseModel):
     """
     List of container command arguments.
     """
+    context_diff: V1ContainerContextDiff | None = None
+    """
+    State of the context-diff suppression feature for this REF-context scan.
+    Written by `endorctl container diff` / `endorctl container scan --diff`,
+    never by the scan pipeline itself. Preserved across a rescan of this
+    PackageVersion because CreatePackageVersion reads the stored value and
+    carries it into the incoming object before the upsert
+    (carryForwardContextDiffMarker) — without that read the next full-object
+    scan upsert would silently drop this field.
+    """
     digest: str | None = None
     """
     The SHA256 digest of the container image.
@@ -5304,6 +5677,12 @@ class V1DismissParams(BaseModel):
     """
     Reason for snoozing or ignoring the finding.
     """
+    source: V1DismissSource | None = 'DISMISS_SOURCE_UNSPECIFIED'
+    """
+    Which tool created this dismissal. The reason alone cannot carry that:
+    reason is free for any client to set, so a tool that later clears its own
+    dismissals would clear a person's too if it keyed on the reason.
+    """
     update_time: AwareDatetime | None = None
     """
     Timestamp of the last update.
@@ -5523,6 +5902,86 @@ class V1ResolutionStatus(BaseModel):
     """
 
 
+class V1SastData(BaseModel):
+    """
+    Fields common to every SAST-shaped finding: AI SAST and rule-based
+    (opengrep) findings alike. location reuses SourceLocation rather than a
+    separate snippet field.
+    """
+
+    ai_analyses: list[AiAnalyse] | None = None
+    """
+    False-positive analyses. Populating this reroutes the finding to the
+    FP-validation UI tab.
+    """
+    classification: V1FindingClassification | None = (
+        'FINDING_CLASSIFICATION_UNSPECIFIED'
+    )
+    """
+    Classification of the finding type, shared with
+    AIResult.SAST.classification.
+    """
+    confidence: str | None = None
+    """
+    Confidence that the finding is a true positive.
+    """
+    cwes: list[str] | None = None
+    """
+    CWE identifiers associated with the finding.
+    """
+    impact: str | None = None
+    """
+    Impact of the finding if exploited.
+    """
+    languages: list[str] | None = None
+    """
+    Programming languages the finding's location spans.
+    """
+    likelihood: str | None = None
+    """
+    Likelihood the finding is exploitable. Rule-based findings only.
+    """
+    location: V1SourceLocation | None = None
+    """
+    Primary finding location.
+    """
+    message: str | None = None
+    """
+    Detailed finding message, shown when the finding has no explanation or
+    remediation text of its own.
+    """
+    references: list[str] | None = None
+    """
+    Reference links for the finding.
+    """
+    rule_id: str | None = None
+    """
+    Rule identifier: CWE ID for an AI SAST finding, or the rule id for a
+    rule-based finding.
+    """
+    rule_name: str | None = None
+    """
+    Human-readable rule/CWE name, used for UI grouping and rule filtering.
+    """
+    rule_uuid: str | None = None
+    """
+    UUID of the SemgrepRule resource that produced the finding. Rule-based
+    findings only.
+    """
+    rule_version: str | None = None
+    """
+    Version of the rule that produced the finding. Rule-based findings only.
+    """
+    tags: list[str] | None = None
+    """
+    Compliance/classification tags (e.g. OWASP, SANS).
+    """
+    title: str | None = None
+    """
+    Short display title for the detected pattern, distinct from rule_name.
+    """
+
+
 class CategoryScore(BaseModel):
     """
     The score for one score category. The is the overall score
@@ -5651,6 +6110,11 @@ class AffectedItem1(BaseModel):
     )
     package: SpecAffectedPackage | None = None
     ranges: list[Range4] | None = None
+    reachable_by_inclusion: bool | None = None
+    """
+    The vulnerability is assumed reachable whenever this package is
+    included; there are no affected function URIs for call-path analysis.
+    """
     source: AffectedSource | None = 'SOURCE_UNSPECIFIED'
     versions: list[str] | None = None
 
@@ -6597,6 +7061,12 @@ class V1FindingMetadata(BaseModel):
     root_package_version_metadata: V1PackageVersionMetadata | None = None
     """
     Package metadata for the root package.
+    """
+    sast_data: V1SastData | None = None
+    """
+    Fields common to every SAST-shaped finding, AI SAST and rule-based
+    (opengrep) findings alike. ai_sast_data remains the home for
+    AI-SAST-specific workflow output.
     """
     security_review_data: V1SecurityReviewFindingData | None = None
     """

@@ -17,6 +17,7 @@ from tests.conftest import (
     TEST_MAX_PAGES,
     TEST_PAGE_SIZE,
 )
+from tests.integration.list_scope import project_scoped_list_kwargs
 
 
 @pytest.mark.integration
@@ -42,6 +43,7 @@ class TestScanResult:
         Uses namespace client so resources in instance are captured.
         """
         results = self.endor_root_client.ScanResult.list(
+            **project_scoped_list_kwargs(self.endor_root_client),
             list_params=ListParameters(
                 page_size=TEST_PAGE_SIZE,
             ),

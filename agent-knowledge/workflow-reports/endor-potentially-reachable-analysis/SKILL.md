@@ -47,14 +47,14 @@ From the repo root with credentials configured (`ENDOR_TOKEN` or API key/secret)
 
 ```bash
 uv run --env-file .env endor-reports prf-analysis -n <tenant> \
-  --output-dir .endorlabs-context/workspace/runs/potentially-reachable-analysis
+  --output-dir .endorlabs/reports/potentially-reachable-analysis
 ```
 
 Replace `<tenant>` with the tenant root namespace. Child namespaces are included via `list_parameters.traverse=true`.
 
 ## Outputs
 
-Under `--output-dir` (default `.endorlabs-context/workspace/runs/potentially-reachable-analysis/`):
+Under `--output-dir` (default `.endorlabs/reports/prf-analysis/`):
 
 | File | Description |
 |------|-------------|
@@ -121,7 +121,7 @@ Internal consistency checks in `run_analysis.py` assert breakdown row counts sum
 ## Agent workflow
 
 1. Confirm tenant root and credentials (do not print secrets).
-2. Run `run_report.py` with `--output-dir .endorlabs-context/workspace/runs/potentially-reachable-analysis`.
+2. Run `run_report.py` with `--output-dir .endorlabs/reports/potentially-reachable-analysis`.
 3. Open the generated canvas for interactive review; attach or share the PDF.
 4. If PDF fails (no Chrome), use `--html-only` or install Chrome and set `CHROME_PATH`.
 5. If canvas auto-detect fails, pass `--canvas-dir` to the Cursor project `canvases/` folder.
@@ -159,5 +159,5 @@ Internal consistency checks in `run_analysis.py` assert breakdown row counts sum
 
 ## Documentation hops
 
-- Local API spec: `.endorlabs-context/platform/openapi/openapiv2.swagger.json` (`Finding`, `PackageVersion`, `resolution_errors`).
+- Local API spec: `.endorlabs/_cache/openapi.json` (`Finding`, `PackageVersion`, `resolution_errors`).
 - Metric definitions: [resolution-reference.md](resolution-reference.md)

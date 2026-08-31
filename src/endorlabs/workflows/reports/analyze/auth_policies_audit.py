@@ -13,13 +13,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import endorlabs
-from endorlabs.context.paths import default_runs_dir
+from endorlabs.context.paths import default_reports_subdir
 from endorlabs.workflows.auth import (
     audit_authorization_policy_forms,
     list_authorization_policies,
 )
 
-RUN_BUCKET = "audit-authorization-policies"
+RUN_BUCKET = "auth-policies"
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -54,7 +54,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     """CLI entry."""
     args = _parse_args(argv)
-    out_dir = args.output_dir or default_runs_dir(RUN_BUCKET)
+    out_dir = args.output_dir or default_reports_subdir(RUN_BUCKET)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     client = endorlabs.Client(tenant=args.tenant_hint)

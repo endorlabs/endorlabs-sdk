@@ -5,14 +5,14 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from endorlabs.context.paths import default_runs_dir
+from endorlabs.context.paths import default_reports_subdir
 from endorlabs.workflows.reports.analyze.prf_report_analysis import (
     main as analysis_main,
 )
 from endorlabs.workflows.reports.export.canvas.prf_canvas import main as canvas_main
 from endorlabs.workflows.reports.export.canvas.prf_pdf import main as pdf_main
 
-RUN_BUCKET = "potentially-reachable-analysis"
+RUN_BUCKET = "prf-analysis"
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -28,10 +28,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=default_runs_dir(RUN_BUCKET),
+        default=default_reports_subdir(RUN_BUCKET),
         help=(
-            "Directory for JSON, HTML, and PDF "
-            "(default: workspace/runs/potentially-reachable-analysis/)."
+            f"Directory for JSON, HTML, and PDF "
+            f"(default: {default_reports_subdir(RUN_BUCKET).as_posix()}/)."
         ),
     )
     parser.add_argument(

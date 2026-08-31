@@ -215,6 +215,76 @@ class RouteNotApplicableError(EndorAPIError):
         super().__init__(message, **kwargs)
 
 
+class EndorRuleError(EndorAPIError):
+    """Agent-knowledge rule violation with a machine-readable ``rule_id``.
+
+    Raised locally (before the network when possible) so agents that skip
+    bootstrap still receive the correction that the matching rule documents.
+    ``status_code`` is always ``None`` — these are SDK guidance errors, not HTTP.
+    """
+
+    rule_id: str = "endor-unknown"
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        kwargs.pop("status_code", None)
+        super().__init__(message, status_code=None, **kwargs)
+        self.rule_id = type(self).rule_id
+
+
+class NamespaceScopingError(EndorRuleError):
+    """Project-scoped list at tenant root without ``namespace=`` (child path)."""
+
+    rule_id = "endor-namespace-scoping"
+
+
+class ListQueryPerformanceError(EndorRuleError):
+    """Unsafe ``page_size`` / ``max_pages`` on an unscoped or unfiltered list."""
+
+    rule_id = "endor-list-query-performance"
+
+
+class OutputShapeRoutingError(EndorRuleError):
+    """Estate-scale pull/list without ``OutputShape`` classification."""
+
+    rule_id = "endor-output-shape-routing"
+
+
+class WorkflowCompositionError(EndorRuleError):
+    """Workflow entrypoint invoked without prerequisites (wrong order)."""
+
+    rule_id = "endor-workflow-composition"
+
+
+class LocalContextError(EndorRuleError):
+    """Expected ``.endorlabs`` / OpenAPI path is absent."""
+
+    rule_id = "endor-local-context"
+
+
+class WorkspaceLayoutError(EndorRuleError):
+    """Workspace path assumption violated (bucket/layout)."""
+
+    rule_id = "endor-workspace-layout"
+
+
+class PortableExamplesError(EndorRuleError):
+    """Non-portable estate literal used where a placeholder is required."""
+
+    rule_id = "endor-portable-examples"
+
+
+# Stable set for MANIFEST cross-validation (tests + tooling).
+AGENT_RULE_EXCEPTION_TYPES: tuple[type[EndorRuleError], ...] = (
+    NamespaceScopingError,
+    ListQueryPerformanceError,
+    OutputShapeRoutingError,
+    WorkflowCompositionError,
+    LocalContextError,
+    WorkspaceLayoutError,
+    PortableExamplesError,
+)
+
+
 def map_status_code_to_exception(
     status_code: int,
     message: str | None = None,

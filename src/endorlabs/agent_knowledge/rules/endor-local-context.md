@@ -2,11 +2,10 @@
 id: endor-local-context
 tags:
 - context
-- openapi
 - bootstrap
-- docs-mcp
-summary: Prefer Docs MCP for product docs; check gitignored .endorlabs-context for
-  OpenAPI and sdk/; never print secrets.
+- openapi
+summary: Prefer Docs MCP for product docs; check gitignored .endorlabs for OpenAPI
+  and sdk/; never print secrets.
 ---
 
 # Local context discovery
@@ -28,11 +27,11 @@ Product docs are available through Docs MCP or `llms.txt`, not `endorlabs.init()
 ## Check explicitly
 
 - [https://docs.endorlabs.com/mcp](https://docs.endorlabs.com/mcp)
-- `.endorlabs-context/`
-- `.endorlabs-context/context.json`
-- `.endorlabs-context/sdk/INDEX.md`
-- `.endorlabs-context/sdk/MANIFEST.json`
-- `.endorlabs-context/platform/openapi/openapiv2.swagger.json` (canonical OpenAPI)
+- `.endorlabs/`
+- `.endorlabs/_cache/context.json`
+- `.endorlabs/_cache/sdk/INDEX.md`
+- `.endorlabs/_cache/sdk/MANIFEST.json`
+- `.endorlabs/_cache/openapi.json` (canonical OpenAPI after init)
 - `.env` (confirm variables exist only — **never print secrets**)
 
 Gitignored paths may be missing from workspace search; try targeted reads before
@@ -40,9 +39,9 @@ concluding context is unavailable.
 
 ## Research order
 
-1. Wheel: `agent_knowledge_index_path()` / `agent_knowledge_manifest()` (site-packages), or materialized `.endorlabs-context/sdk/` after `init()`.
-2. Docs MCP (`endor-docs`) for product documentation; if MCP is unavailable, [llms.txt](https://docs.endorlabs.com/llms.txt).
-3. Local OpenAPI under `.endorlabs-context/platform/openapi/` when bootstrapped.
+1. Wheel: `agent_knowledge_index_path()` / `agent_knowledge_manifest()` (site-packages), or materialized `.endorlabs/_cache/sdk/` after `init()`.
+2. Docs MCP (`endor-docs`) for product documentation; if MCP unavailable, [llms.txt](https://docs.endorlabs.com/llms.txt).
+3. Local OpenAPI under `.endorlabs/_cache/openapi.json` when bootstrapped.
 4. Online API spec (`https://api.endorlabs.com/download/openapiv2.swagger.json`) only as fallback.
 
 Materialize with `endorlabs.init()` when a cwd-relative sdk/ tree is needed.

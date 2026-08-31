@@ -2,7 +2,7 @@
 
 Contributor setup: [CONTRIBUTORS.md](../CONTRIBUTORS.md).
 
-Tracked maintainer automation lives under three buckets. Optional local scratch (probes, benchmarks) stays gitignored under `.endorlabs-context/workspace/` — never commit estate identifiers.
+Tracked maintainer automation lives under three buckets. Optional local scratch (probes, benchmarks) stays gitignored under `.endorlabs/tasks/scratch/` — never commit estate identifiers.
 
 ## Layout
 
@@ -11,12 +11,15 @@ Tracked maintainer automation lives under three buckets. Optional local scratch 
 | [`precommit/`](precommit/) | Staged-path helpers and commit guards (`git_staged`, `pre_commit_guards`, `audit_consumer_surfaces`) |
 | [`codegen/`](codegen/) | Model-sync, stub/reference generators, agent-knowledge sync, `model_sync_profiles/`, `sync/` |
 | [`ship/`](ship/) | Release/CI gates (`verify_ship_artifacts`, `check_project_version`, wheel smoke tests) |
+| [`pfw_test_util/`](pfw_test_util/) | Package Firewall blast helper for ``endor-firewall-test@1.0.0`` (env-scoped; not shipped) |
 
 GitHub Actions–only helpers (not regen): [`.github/scripts/`](../.github/scripts/README.md).
 
 | Entry | Command |
 | ----- | ------- |
 | Ship gate | `uv run python devtools/ship/verify_ship_artifacts.py --fetch-spec` |
+| Release notes | `uv run python devtools/ship/extract_release_notes.py --version X.Y.Z` |
+| Release preflight | `uv run python devtools/ship/check_release_ready.py --expect X.Y.Z` |
 | Model sync | `uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs` |
 | Agent knowledge | `uv run python devtools/codegen/sync_agent_knowledge.py` |
 | Commit guards | `uv run python devtools/precommit/pre_commit_guards.py <subcommand>` |

@@ -382,6 +382,11 @@ class V1SBOMExportJobResponse(BaseModel):
     The signed download URL for the generated SBOM. Populated by the
     apiserver Job RPC layer on each GetJob call (5-minute TTL).
     """
+    resource_namespace: str | None = None
+    """
+    Namespace jobctl read the referenced resources from — the caller's
+    tenant, or "oss" if the fallback fired.
+    """
     sbom_size_bytes: str | None = None
     """
     Byte length of the generated SBOM artifact in object storage. Useful
@@ -488,6 +493,11 @@ class V1VEXExportJobResponse(BaseModel):
     """
     The signed download URL for the generated VEX document. Populated by the
     apiserver Job RPC layer on each GetJob call (5-minute TTL).
+    """
+    resource_namespace: str | None = None
+    """
+    Namespace jobctl read the referenced resources from — the caller's
+    tenant, or "oss" if the fallback fired.
     """
     vex_size_bytes: str | None = None
     """

@@ -9,8 +9,8 @@ from typing import Any
 from endorlabs.client_surface import Client
 
 from .common import (
-    default_troubleshooting_output_dir,
     load_json,
+    resolve_troubleshooting_output_dir,
     root_tenant,
     scan_result_metrics,
     write_json,
@@ -46,7 +46,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--namespace", required=True)
     parser.add_argument("--input-pairs", required=True)
     parser.add_argument("--input-logs-index")
-    parser.add_argument("--output-dir", default=default_troubleshooting_output_dir())
+    parser.add_argument(
+        "--output-dir",
+        default=None,
+        help=(
+            "Directory for generated artifacts (default: "
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/)."
+        ),
+    )
     parser.add_argument("--timestamped", action="store_true")
     return parser
 
@@ -105,7 +112,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     root = root_tenant(args.tenant)
     base_uuid = f"{primary_uuid}__vs__{secondary_uuid}"
-    output_dir = Path(args.output_dir)
+    output_dir = resolve_troubleshooting_output_dir(args.tenant, args.output_dir)
     report_payload: dict[str, Any] = {
         "root_tenant": root,
         "namespace": args.namespace,

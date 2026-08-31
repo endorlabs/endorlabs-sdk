@@ -13,7 +13,11 @@ from typing import (
 
 from pydantic import BaseModel
 
-from ..core.exceptions import ValidationError
+from ..core.exceptions import (
+    ListQueryPerformanceError,
+    NamespaceScopingError,
+    ValidationError,
+)
 from ..core.filter import F, FilterExpression
 from ..core.types import ListParameters
 from ..operations import BaseResourceOperations
@@ -23,6 +27,16 @@ from ..utils.namespace import resolve_namespace_for_resource
 if TYPE_CHECKING:
     from ..api_client import APIClient
     from ..registry import ResourceEntry
+    from .description import FacadeDescription
+
+# Kinds where page_size=1 without a filter is pathologically expensive (rule text).
+_LOG_STYLE_LIST_KINDS = frozenset(
+    {
+        "AuditLog",
+        "AuthenticationLog",
+        "FindingLog",
+    }
+)
 
 
 class ListableFacade[T: BaseModel]:
@@ -65,6 +79,25 @@ class ListableFacade[T: BaseModel]:
         )
         self._workflow_flags = entry.workflow_flags
 
+    def describe(self) -> FacadeDescription:
+        """Return a live, no-network description of this facade.
+
+        Prefer ``print(client.Finding.describe())`` over reading the stub for
+        resource-specific ``list()`` identity kwargs and route accessors.
+        """
+        from ..generated.route_contract import ROUTE_CONTRACT
+        from .description import build_facade_description
+
+        scope = getattr(self._entry, "scope", None)
+        return build_facade_description(
+            attr_name=self._entry.attr_name,
+            resource_name=self._resource_name,
+            facade_type=type(self),
+            filter_kwarg_map=self._filter_kwarg_map,
+            scope=scope,
+            route_contract=ROUTE_CONTRACT,
+        )
+
     def _maybe_warn_empty_project_namespace_list(
         self,
         rows: list[Any],
@@ -89,6 +122,80 @@ class ListableFacade[T: BaseModel]:
             UserWarning,
             stacklevel=3,
         )
+
+    def _raise_list_agent_rule_errors(
+        self,
+        *,
+        ns: str,
+        traverse: bool,
+        parent: Any,
+        filter: str | F | FilterExpression | None,
+        page_size: int | None,
+        max_pages: int | None,
+        sort_by: str | None,
+        count: bool | None,
+        list_params: ListParameters | None,
+        kwargs: dict[str, Any],
+    ) -> None:
+        """Raise typed rule errors for statically detectable list anti-patterns."""
+        effective_filter = filter
+        if effective_filter is None and list_params is not None:
+            effective_filter = list_params.filter
+        has_identity_kwargs = bool(kwargs) and any(
+            key in self._filter_kwarg_map for key in kwargs
+        )
+        has_filter = effective_filter is not None or has_identity_kwargs
+        tenant_root = "." not in ns
+
+        if (
+            "project-namespace-list" in self._workflow_flags
+            and not traverse
+            and parent is None
+            and tenant_root
+        ):
+            raise NamespaceScopingError(
+                f"{self._entry.attr_name}.list() at tenant root {ns!r} without a "
+                "child namespace=. Resolve Project first and pass "
+                f"namespace=<project>.namespace (e.g. '{ns}.child'), or use "
+                f"{self._entry.attr_name}.list_by_project(project) "
+                "(endor-namespace-scoping)."
+            )
+
+        # Pathological small pages without a filter — hard-error on log-style
+        # kinds (AuditLog / FindingLog / AuthenticationLog). Other resources may
+        # use page_size=1 for intentional sampling; agents still get guidance
+        # via docs/INDEX for the general "omit page_size" rule.
+        if (
+            self._entry.attr_name in _LOG_STYLE_LIST_KINDS
+            and page_size is not None
+            and page_size <= 1
+            and not has_filter
+            and not sort_by
+            and not count
+            and not traverse
+        ):
+            raise ListQueryPerformanceError(
+                f"{self._entry.attr_name}.list(page_size={page_size}) without a "
+                "selective filter. On log-style resources omit page_size (use "
+                "max_pages to bound depth) or add filter=… before setting "
+                "page_size (endor-list-query-performance)."
+            )
+
+        if (
+            max_pages is not None
+            and not has_filter
+            and not traverse
+            and parent is None
+            and tenant_root
+            and not sort_by
+            and "project-namespace-list" in self._workflow_flags
+        ):
+            raise ListQueryPerformanceError(
+                f"{self._entry.attr_name}.list(max_pages={max_pages}) on an "
+                "unscoped, unfiltered list at tenant root. Add filter=… and/or "
+                "namespace=<child> (or traverse=True for bounded discovery) before "
+                "raising page depth (endor-list-query-performance)."
+            )
 
     def _validate_list_remaining_kwargs(self, remaining_kwargs: dict[str, Any]) -> None:
         """Reject unknown flat kwargs before building ``ListParameters``."""
@@ -387,39 +494,22 @@ class ListableFacade[T: BaseModel]:
             )
         ns = self._ns(namespace)
 
-        # Handle concurrent mode: query namespaces in parallel
-        if concurrent and traverse:
-            rows = self._list_concurrent(
-                namespace=ns,
-                max_workers=max_workers,
-                list_params=list_params,
-                max_pages=max_pages,
-                parent=parent,
-                filter=filter,
-                mask=mask,
-                page_size=page_size,
-                page_token=page_token,
-                page_id=page_id,
-                sort_by=sort_by,
-                desc=desc,
-                count=count,
-                from_date=from_date,
-                to_date=to_date,
-                archive=archive,
-                pr_uuid=pr_uuid,
-                ci_run_uuid=ci_run_uuid,
-                **kwargs,
-            )
-            self._maybe_warn_empty_project_namespace_list(
-                list(rows),
-                traverse=True,
-                namespace_arg=namespace,
-            )
-            return rows
-
-        # Standard single-query mode
-        lp = self._effective_list_parameters(
+        self._raise_list_agent_rule_errors(
+            ns=ns,
             traverse=traverse,
+            parent=parent,
+            filter=filter,
+            page_size=page_size,
+            max_pages=max_pages,
+            sort_by=sort_by,
+            count=count,
+            list_params=list_params,
+            kwargs=kwargs,
+        )
+
+        # Per-namespace params use traverse=False (fan-out owns hierarchy).
+        lp = self._effective_list_parameters(
+            traverse=False if (concurrent and traverse) else traverse,
             list_params=list_params,
             parent=parent,
             filter=filter,
@@ -437,6 +527,22 @@ class ListableFacade[T: BaseModel]:
             ci_run_uuid=ci_run_uuid,
             **kwargs,
         )
+
+        # Handle concurrent mode: query namespaces in parallel
+        if concurrent and traverse:
+            rows = self._list_concurrent(
+                namespace=ns,
+                max_workers=max_workers,
+                list_params=lp,
+                max_pages=max_pages,
+            )
+            self._maybe_warn_empty_project_namespace_list(
+                list(rows),
+                traverse=True,
+                namespace_arg=namespace,
+            )
+            return rows
+
         rows = self._ops.list(ns, lp, max_pages)
         self._maybe_warn_empty_project_namespace_list(
             list(rows),
@@ -451,10 +557,12 @@ class ListableFacade[T: BaseModel]:
         max_workers: int,
         list_params: ListParameters | None,
         max_pages: int | None,
-        parent: Any,
-        **kwargs: Any,
     ) -> list[T] | list[dict[str, Any]]:
         """Fetch namespaces with traverse, then query each in parallel; merge.
+
+        Per-namespace queries go through ``_ops.list`` (not ``list()``) so
+        agent-rule guards already applied on the user-facing call are not
+        re-evaluated with ``traverse=False``.
 
         Raises:
             ConcurrentNamespaceQueryError: One or more namespace queries failed.
@@ -489,18 +597,8 @@ class ListableFacade[T: BaseModel]:
         if namespace not in namespace_names:
             namespace_names.insert(0, namespace)
 
-        # Phase 2: Build query function for each namespace
         def query_namespace(ns: str) -> list[T] | list[dict[str, Any]]:
-            # Query without traverse - each namespace independently
-            return self.list(
-                traverse=False,
-                concurrent=False,
-                namespace=ns,
-                list_params=list_params,
-                max_pages=max_pages,
-                parent=parent,
-                **kwargs,
-            )
+            return self._ops.list(ns, list_params, max_pages)
 
         # Phase 3: Execute concurrently and merge
         merged = execute_across_namespaces(
@@ -604,6 +702,18 @@ class ListableFacade[T: BaseModel]:
                 resolve_namespace_for_resource(parent, self._default_namespace)
             )
         ns = self._ns(namespace)
+        self._raise_list_agent_rule_errors(
+            ns=ns,
+            traverse=traverse,
+            parent=parent,
+            filter=filter,
+            page_size=page_size,
+            max_pages=max_pages,
+            sort_by=sort_by,
+            count=count,
+            list_params=list_params,
+            kwargs=kwargs,
+        )
         lp = self._effective_list_parameters(
             traverse=traverse,
             list_params=list_params,

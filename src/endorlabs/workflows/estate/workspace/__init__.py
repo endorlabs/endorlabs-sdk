@@ -12,15 +12,16 @@ from endorlabs.workflows.estate.workspace.collect_manifest import (
     validate_workspace_collect,
 )
 from endorlabs.workflows.estate.workspace.paths import (
+    collect_manifest_path,
     data_dir,
     ensure_workspace_layout,
     ir_dir,
     ir_path,
     namespace_slug,
     resolve_workspace_root,
+    tenant_day_suffix,
     viz_dir,
     viz_path,
-    workspace_date_suffix,
     workspace_dir_for,
 )
 
@@ -38,13 +39,9 @@ __all__ = [
     "reset_manifest_for_overwrite",
     "resolve_workspace_root",
     "save_collect_manifest",
+    "tenant_day_suffix",
     "validate_workspace_collect",
     "viz_dir",
     "viz_path",
-    "workspace_date_suffix",
     "workspace_dir_for",
 ]
-
-from endorlabs.workflows.estate.workspace.paths import (
-    collect_manifest_path,
-)

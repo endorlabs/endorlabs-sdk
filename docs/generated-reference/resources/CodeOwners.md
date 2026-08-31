@@ -18,6 +18,19 @@ Code ownership assignments for a project.
 | `update` | yes |
 | `delete` | yes |
 
+## User-space access
+
+Customer tenant semantics (distinct from raw OpenAPI and SDK exposure).
+Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
+
+| Operation | Customer user-space | SDK exposed |
+|-----------|---------------------|-------------|
+| `list` | yes | yes |
+| `get` | yes | yes |
+| `create` | yes | yes |
+| `update` | yes | yes |
+| `delete` | yes | yes |
+
 ## Create
 
 - **Mode:** `both`

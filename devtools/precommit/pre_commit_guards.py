@@ -18,7 +18,7 @@ from pathlib import Path, PurePosixPath
 from git_staged import diff_added_lines, staged_added_lines, staged_paths
 
 BLOCKED_STAGED_PATHS = frozenset({".env"})
-BLOCKED_STAGED_PREFIXES = (".endorlabs-context/",)
+BLOCKED_STAGED_PREFIXES = (".endorlabs/",)
 
 CHANGELOG_PATH = "docs/changelog.md"
 CHANGELOG_POLICY = "agent-knowledge/rules/endor-changelog.md"
@@ -33,7 +33,7 @@ _TOOLS_PREFIX = "src/endorlabs/tools/"
 _UTILS_PREFIX = "src/endorlabs/utils/"
 _SRC_PREFIX = "src/endorlabs/"
 _CONTEXT_PATHS_MODULE = "src/endorlabs/context/paths.py"
-_CONTEXT_ROOT_LITERAL = ".endorlabs-context"
+_CONTEXT_ROOT_LITERAL = ".endorlabs"
 
 # Known intentional exceptions (path → allowed import prefixes).
 _LAYER_ALLOWLIST: dict[str, frozenset[str]] = {
@@ -482,7 +482,7 @@ def check_blocked_staged_paths() -> int:
         "error: refuse to commit gitignored runtime paths:\n"
         + "\n".join(f"  - {path}" for path in blocked)
         + "\n\nUnstage them (e.g. git restore --staged <path>). "
-        "Keep secrets and session output in .env / .endorlabs-context/ only.",
+        "Keep secrets and session output in .env / .endorlabs/ only.",
         file=sys.stderr,
     )
     return 1
@@ -1007,6 +1007,9 @@ def is_portable_namespace_value(value: str) -> bool:
     token = value.strip()
     if not token or token == "all":
         return True
+    # Prose / descriptions (e.g. resource_descriptions.json "Namespace" entry).
+    if any(ch.isspace() for ch in token):
+        return True
     if is_allowed_namespace_token(token):
         return True
     lower = token.lower()
@@ -1171,12 +1174,12 @@ def check_external_pii_urls(
 
 
 def check_context_root_literals(*, paths: list[str] | None = None) -> int:
-    """Fail on hard-coded ``.endorlabs-context`` path constants outside paths.py.
+    """Fail on hard-coded ``.endorlabs`` path constants outside paths.py.
 
-    Catches ``Path(".endorlabs-context")``, default-arg strings, and similar AST
+    Catches ``Path(".endorlabs")``, default-arg strings, and similar AST
     string constants. Prose that only *mentions* the directory inside a longer
     string is allowed. Use ``DEFAULT_CONTEXT_DIR``, ``default_context_dir()``,
-    ``default_runs_dir()``, or ``workspace_dir_for()`` instead.
+    ``task_activity_dir()``, or ``flat_task_dir()`` instead.
     """
     candidates = paths if paths is not None else staged_paths()
     violations: list[str] = []
@@ -1197,11 +1200,11 @@ def check_context_root_literals(*, paths: list[str] | None = None) -> int:
     if not violations:
         return 0
     print(
-        "error: hard-coded .endorlabs-context path constant(s):\n"
+        "error: hard-coded .endorlabs path constant(s):\n"
         + "\n".join(f"  - {item}" for item in violations)
         + "\n\nImport from endorlabs.context.paths "
-        "(DEFAULT_CONTEXT_DIR, default_context_dir, default_runs_dir, "
-        "workspace_dir_for). Only context/paths.py may define the literal.",
+        "(DEFAULT_CONTEXT_DIR, default_context_dir, task_activity_dir, "
+        "flat_task_dir). Only context/paths.py may define the literal.",
         file=sys.stderr,
     )
     return 1

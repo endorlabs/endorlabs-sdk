@@ -9,7 +9,7 @@ from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.tabular import TabularExport
 
 _SEV = ("all", "critical", "high", "medium", "low")
-_REACH = ("all", "reachable", "prf")
+_REACH = ("any", "all", "reachable", "prf", "unreachable_function")
 
 
 def _sca_report(cube: dict[str, Any]) -> dict[str, Any]:
@@ -503,9 +503,11 @@ def patches_unit_rows(cube: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
-def _packet_wide_exports(cube: dict[str, Any], out: Path) -> list[Path]:
+def _packet_wide_exports(
+    cube: dict[str, Any], out: Path, *, include_sast: bool = True
+) -> list[Path]:
     """CSV exports for the onboarding, sprawl, and burndown cube slices."""
-    return [
+    written = [
         _write_export(
             out,
             "onboarding-weekly.csv",
@@ -589,38 +591,43 @@ def _packet_wide_exports(cube: dict[str, Any], out: Path) -> list[Path]:
                 "gap_trend",
             ],
         ),
-        _write_export(
-            out,
-            "code-path-gap-differentials.csv",
-            code_path_gap_rows(cube),
-            [
-                "category",
-                "path",
-                "severity",
-                "facet",
-                "gap_start",
-                "gap_end",
-                "gap_delta",
-                "gap_trend",
-            ],
-        ),
-        _write_export(
-            out,
-            "code-tag-gap-differentials.csv",
-            code_tag_gap_rows(cube),
-            [
-                "category",
-                "tag",
-                "path",
-                "severity",
-                "facet",
-                "project_count",
-                "gap_start",
-                "gap_end",
-                "gap_delta",
-                "gap_trend",
-            ],
-        ),
+    ]
+    if include_sast:
+        written += [
+            _write_export(
+                out,
+                "code-path-gap-differentials.csv",
+                code_path_gap_rows(cube),
+                [
+                    "category",
+                    "path",
+                    "severity",
+                    "facet",
+                    "gap_start",
+                    "gap_end",
+                    "gap_delta",
+                    "gap_trend",
+                ],
+            ),
+            _write_export(
+                out,
+                "code-tag-gap-differentials.csv",
+                code_tag_gap_rows(cube),
+                [
+                    "category",
+                    "tag",
+                    "path",
+                    "severity",
+                    "facet",
+                    "project_count",
+                    "gap_start",
+                    "gap_end",
+                    "gap_delta",
+                    "gap_trend",
+                ],
+            ),
+        ]
+    written += [
         _write_export(
             out,
             "throughput-by-tag.csv",
@@ -641,6 +648,7 @@ def _packet_wide_exports(cube: dict[str, Any], out: Path) -> list[Path]:
             ["package", "version_count"],
         ),
     ]
+    return written
 
 
 def write_packet_raw_exports(
@@ -648,6 +656,8 @@ def write_packet_raw_exports(
     data_dir: str | Path,
     *,
     patches_only: bool = False,
+    include_sast: bool = True,
+    include_patches: bool = True,
 ) -> list[Path]:
     """Write spreadsheet-friendly CSV exports derived from *cube* under *data_dir*.
 
@@ -656,71 +666,76 @@ def write_packet_raw_exports(
     """
     out = Path(data_dir)
     out.mkdir(parents=True, exist_ok=True)
-    written: list[Path] = [] if patches_only else _packet_wide_exports(cube, out)
-    written += [
-        _write_export(
-            out,
-            "patches-top-families.csv",
-            patches_family_rows(cube),
-            [
-                "rank",
-                "family",
-                "findings",
-                "available_findings",
-                "to_request_findings",
-                "critical",
-                "high",
-                "projects",
-                "versions",
-                "risk",
-            ],
-        ),
-        _write_export(
-            out,
-            "patches-versions.csv",
-            patches_version_rows(cube),
-            [
-                "family",
-                "version",
-                "available",
-                "to_request",
-                "findings",
-                "critical",
-                "high",
-                "projects",
-                "risk",
-                "risk_available",
-                "reachable_function",
-                "potentially_reachable_function",
-                "unreachable_function",
-                "reachable_dependency",
-                "potentially_reachable_dependency",
-                "unreachable_dependency",
-                "reachable",
-                "potentially_reachable",
-                "unreachable",
-            ],
-        ),
-        _write_export(
-            out,
-            "patches-units-ranked.csv",
-            patches_unit_rows(cube),
-            [
-                "rank",
-                "package_version",
-                "family",
-                "version",
-                "available",
-                "to_request",
-                "findings",
-                "critical",
-                "high",
-                "projects",
-                "risk",
-                "risk_available",
-            ],
-        ),
-    ]
+    written: list[Path] = (
+        []
+        if patches_only
+        else _packet_wide_exports(cube, out, include_sast=include_sast)
+    )
+    if include_patches:
+        written += [
+            _write_export(
+                out,
+                "patches-top-families.csv",
+                patches_family_rows(cube),
+                [
+                    "rank",
+                    "family",
+                    "findings",
+                    "available_findings",
+                    "to_request_findings",
+                    "critical",
+                    "high",
+                    "projects",
+                    "versions",
+                    "risk",
+                ],
+            ),
+            _write_export(
+                out,
+                "patches-versions.csv",
+                patches_version_rows(cube),
+                [
+                    "family",
+                    "version",
+                    "available",
+                    "to_request",
+                    "findings",
+                    "critical",
+                    "high",
+                    "projects",
+                    "risk",
+                    "risk_available",
+                    "reachable_function",
+                    "potentially_reachable_function",
+                    "unreachable_function",
+                    "reachable_dependency",
+                    "potentially_reachable_dependency",
+                    "unreachable_dependency",
+                    "reachable",
+                    "potentially_reachable",
+                    "unreachable",
+                ],
+            ),
+            _write_export(
+                out,
+                "patches-units-ranked.csv",
+                patches_unit_rows(cube),
+                [
+                    "rank",
+                    "package_version",
+                    "family",
+                    "version",
+                    "available",
+                    "to_request",
+                    "findings",
+                    "critical",
+                    "high",
+                    "projects",
+                    "risk",
+                    "risk_available",
+                ],
+            ),
+        ]
     title = (
         "Endor Patches report — raw exports"
         if patches_only
@@ -742,20 +757,28 @@ def write_packet_raw_exports(
             "tag-catalog.csv                  Project.meta.tags catalog + series status",
             "path-gap-differentials.csv       SCA path × severity × reach gap deltas",
             "tag-gap-differentials.csv        SCA tag × path × severity × reach gap deltas",
-            "code-path-gap-differentials.csv  Code findings path × category × facet gaps",
-            "code-tag-gap-differentials.csv   Code findings tag × category × facet gaps",
+        ]
+        if include_sast:
+            manifest_lines += [
+                "code-path-gap-differentials.csv  Code findings path × category × facet gaps",
+                "code-tag-gap-differentials.csv   Code findings tag × category × facet gaps",
+            ]
+        manifest_lines += [
             "throughput-by-tag.csv            Main/CI scan throughput by tag",
             "version-sprawl-top-packages.csv  Top packages by distinct version count",
         ]
-    manifest_lines += [
-        "patches-top-families.csv         Endor Patches top families by Available risk",
-        "patches-versions.csv             Endor Patches family × version heat-map rows",
-        "patches-units-ranked.csv         Endor Patches package@version units",
-        "",
-        "Note: patches-versions.csv 'reachable' is RF-only (not RF|PRF).",
-        "Use reachable_function / potentially_reachable_function.",
-        "",
-    ]
+    if include_patches:
+        manifest_lines += [
+            "patches-top-families.csv         Endor Patches top families by Available risk",
+            "patches-versions.csv             Endor Patches family × version heat-map rows",
+            "patches-units-ranked.csv         Endor Patches package@version units",
+            "",
+            "Note: patches-versions.csv 'reachable' is RF-only (not RF|PRF).",
+            "Use reachable_function / potentially_reachable_function.",
+            "",
+        ]
+    else:
+        manifest_lines += ["", ""]
     manifest = out / "EXPORTS.txt"
     safe_write_text(out, manifest, "\n".join(manifest_lines))
     written.append(manifest)

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -13,9 +12,9 @@ from endorlabs.client_surface import Client
 from endorlabs.workflows.wire_access import dict_str, nested_str
 
 from .common import (
-    default_troubleshooting_output_dir,
     object_to_dict,
     parallel_collect_for_projects,
+    resolve_troubleshooting_output_dir,
     root_tenant,
     scan_result_metrics,
     write_json,
@@ -61,7 +60,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Parallel workers when fetching multiple projects. Default: 8",
     )
     _ = parser.add_argument(
-        "--output-dir", default=default_troubleshooting_output_dir()
+        "--output-dir",
+        default=None,
+        help=(
+            "Directory for generated artifacts (default: "
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/)."
+        ),
     )
     _ = parser.add_argument("--timestamped", action="store_true")
     return parser
@@ -72,7 +76,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     ns = args.namespace or args.tenant
     client = Client(tenant=ns)
     root = root_tenant(ns)
-    output_dir = Path(args.output_dir)
+    output_dir = resolve_troubleshooting_output_dir(
+        args.tenant or args.namespace, args.output_dir
+    )
     effective_limit = args.scan_window or args.limit
 
     traverse = "." not in ns

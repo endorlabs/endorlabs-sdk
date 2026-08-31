@@ -44,8 +44,8 @@ def test_extract_vector_store_query_spec_fields() -> None:
     assert "matches" in result["create_convenience_read_only_spec_fields"]
 
 
-def test_extract_nested_spec_request_skips() -> None:
-    """Nested spec.request bodies are not flat-promoted."""
+def test_extract_nested_spec_request_flattens_request_fields() -> None:
+    """Nested spec.request fields are promoted as flat create convenience kwargs."""
     definitions = {
         "Body": {
             "type": "object",
@@ -70,4 +70,4 @@ def test_extract_nested_spec_request_skips() -> None:
     }
     result = extract_create_convenience_fields(definitions, {"Body": definitions["Body"]})
     assert result["convenience_skip_reason"] == "nested_spec_request"
-    assert result["create_convenience_spec_fields"] == []
+    assert result["create_convenience_spec_fields"] == ["vector_store_uuid"]

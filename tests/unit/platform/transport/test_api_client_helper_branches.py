@@ -79,3 +79,26 @@ def test_extract_next_page_id_fallbacks(
 ) -> None:
     client = _client_for_helpers()
     assert client._extract_next_page_id(payload) == expected
+
+
+def test_redact_log_data_scrubs_repr_json_and_url_token() -> None:
+    """_redact_log_data covers dict-repr, JSON, and token= query shapes."""
+    client = _client_for_helpers()
+    repr_blob = "{'secret': 's3cret-value', 'ok': 1}"
+    json_blob = '{"api_key": "key-value", "n": 2}'
+    url_blob = "callback=/oauth?token=eyJhbGciOiJIUzI1NiJ9.payload&x=1"
+    assert "s3cret-value" not in client._redact_log_data(repr_blob)
+    assert "key-value" not in client._redact_log_data(json_blob)
+    redacted_url = client._redact_log_data(url_blob)
+    assert "eyJhbGciOiJIUzI1NiJ9.payload" not in redacted_url
+    assert "token=***REDACTED***" in redacted_url
+    assert client._redact_log_data(None) == "None"
+
+
+def test_redact_log_data_scrubs_password_and_refresh_token() -> None:
+    client = _client_for_helpers()
+    blob = "{'password': 'hunter2', 'refresh_token': 'rt-abc'}"
+    out = client._redact_log_data(blob)
+    assert "hunter2" not in out
+    assert "rt-abc" not in out
+    assert "REDACTED" in out

@@ -30,7 +30,7 @@ endorctl api list -r Finding -n <namespace> --traverse
 endorctl api get -r Project -n <namespace> --uuid <uuid>
 ```
 
-OpenAPI (after `init()`): `.endorlabs-context/platform/openapi/openapiv2.swagger.json`.
+OpenAPI (after `init()`): `.endorlabs/_cache/openapi.json`.
 
 ---
 

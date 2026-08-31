@@ -4,7 +4,7 @@ Process and checklists for contributors and AI agents extending the **generated*
 
 Agent skills: [endor-implement-sdk-resource](../../agent-knowledge/skills/endor-implement-sdk-resource/), [endor-model-sync-drift](../../agent-knowledge/skills/endor-model-sync-drift/), [endor-troubleshoot-sdk](../../agent-knowledge/skills/endor-troubleshoot-sdk/).
 
-- [repository-layout.md](repository-layout.md) — Tracked vs gitignored regions, `.endorlabs-context/`, workflows vs skills.
+- [repository-layout.md](repository-layout.md) — Tracked vs gitignored regions, `.endorlabs/`, workflows vs skills.
 - [architecture.md](architecture.md) — Layers, registry, facade; consumer vs generated models; **Query composition**; regen, overlay, `resources/` deltas.
 - [release-publishing.md](release-publishing.md) — Version tags, hatch-vcs, OIDC PyPI/TestPyPI release CI.
 - PR template: [`.github/pull_request_template.md`](../../.github/pull_request_template.md) — changelog intake block; policy in [agent-knowledge/rules/endor-changelog.md](../../agent-knowledge/rules/endor-changelog.md).

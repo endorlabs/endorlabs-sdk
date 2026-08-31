@@ -1,0 +1,123 @@
+name: Model Sync Bot
+
+# Refresh committed OpenAPI / model-sync ship surface when platform API drifts.
+# - repository_dispatch from platform monorepo (event: platform-openapi-published)
+# - schedule fallback (every 6h) when dispatch is missed
+# - workflow_dispatch for manual replay
+#
+# Opens or updates a bot PR to main; does not bump SDK semver or cut a release.
+
+on:
+  repository_dispatch:
+    types: [platform-openapi-published]
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  PYTHON_VERSION: "3.13"
+  UV_VERSION: "0.9.3"
+
+jobs:
+  model-sync-pr:
+    name: Regenerate and open PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          uv-version: ${{ env.UV_VERSION }}
+
+      - name: Skip when ship surface is current
+        id: drift
+        run: |
+          set -euo pipefail
+          if uv run python devtools/codegen/model_sync.py --verify-upstream-only; then
+            echo "drift=false" >> "$GITHUB_OUTPUT"
+            echo "Committed ship surface matches live OpenAPI."
+          else
+            echo "drift=true" >> "$GITHUB_OUTPUT"
+            echo "Upstream OpenAPI differs from committed provenance."
+          fi
+
+      - name: Regenerate ship surface
+        if: steps.drift.outputs.drift == 'true'
+        run: |
+          set -euo pipefail
+          uv run python devtools/codegen/model_sync.py \
+            --fetch-spec --generate-stubs --generate-reference-docs
+          uv run python devtools/codegen/generate_route_contract.py
+          uv run python devtools/codegen/generate_filter_enum_reference.py
+          uv run python devtools/codegen/sync_agent_knowledge.py
+          uv run python devtools/ship/verify_ship_artifacts.py --skip-upstream
+
+      - name: Read provenance header
+        if: steps.drift.outputs.drift == 'true'
+        id: provenance
+        run: |
+          set -euo pipefail
+          mapfile -t PROV < <(uv run python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+          text = Path("src/endorlabs/generated/registry_contract.py").read_text(encoding="utf-8")
+          match = re.search(r"# model_sync_provenance: (\{.*\})", text)
+          if not match:
+              raise SystemExit("missing model_sync_provenance")
+          data = json.loads(match.group(1))
+          print(data["endorctl_version"])
+          print(data["spec_sha256"])
+          PY
+          )
+          echo "endorctl_version=${PROV[0]}" >> "$GITHUB_OUTPUT"
+          echo "spec_sha256=${PROV[1]}" >> "$GITHUB_OUTPUT"
+
+      - name: Create model-sync pull request
+        if: steps.drift.outputs.drift == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SPEC_SHA: ${{ steps.provenance.outputs.spec_sha256 }}
+          ENDORCTL_VERSION: ${{ steps.provenance.outputs.endorctl_version }}
+        run: |
+          set -euo pipefail
+          BRANCH="chore/model-sync-${SPEC_SHA:0:12}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${BRANCH}"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No file changes after regeneration; skipping PR."
+            exit 0
+          fi
+          git commit -m "chore(model-sync): refresh OpenAPI ship surface (${ENDORCTL_VERSION})"
+          git push --force-with-lease origin "${BRANCH}"
+          BODY="Automated model-sync refresh from live OpenAPI.
+
+          - endorctl watermark: \`${ENDORCTL_VERSION}\`
+          - spec SHA-256: \`${SPEC_SHA}\`
+
+          Does **not** bump \`[project].version\` or cut a release. Review facade/overlay follow-ups if \`resource_count\` changed.
+
+          Trigger: \`${{ github.event_name }}\`"
+          EXISTING=$(gh pr list --head "${BRANCH}" --json number --jq '.[0].number // empty')
+          if [ -n "${EXISTING}" ]; then
+            gh pr edit "${EXISTING}" --body "${BODY}"
+            echo "Updated PR #${EXISTING}"
+          else
+            gh pr create \
+              --base main \
+              --head "${BRANCH}" \
+              --title "chore(model-sync): refresh OpenAPI (${ENDORCTL_VERSION})" \
+              --body "${BODY}"
+          fi

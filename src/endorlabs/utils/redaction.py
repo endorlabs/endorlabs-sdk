@@ -37,11 +37,20 @@ from typing import override
 # ---------------------------------------------------------------------------
 # Sensitive key names to scrub
 # ---------------------------------------------------------------------------
-REDACTED_KEYS: list[str] = ["authorization", "secret", "token", "key"]
+REDACTED_KEYS: list[str] = [
+    "authorization",
+    "secret",
+    "token",
+    "key",
+    "password",
+    "api_key",
+    "refresh_token",
+]
 """Header / payload keys whose values must never appear in logs.
 
 Covers the ``Authorization`` header, the ``secret`` and ``key`` fields in the
-API-key auth payload, and the ``token`` field in auth responses.
+API-key auth payload, the ``token`` field in auth responses, plus common
+alternate credential field names (``password``, ``api_key``, ``refresh_token``).
 """
 
 # ---------------------------------------------------------------------------

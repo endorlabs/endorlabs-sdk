@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from endorlabs.context.paths import workspace_dir_for
+from endorlabs.context.paths import task_activity_dir
+from endorlabs.core.exceptions import OutputShapeRoutingError
 from endorlabs.filters import main_context_filter
 from endorlabs.tools.list_bounds import (
     count_for_progress,
@@ -57,6 +58,7 @@ from endorlabs.workflows.query_collect import collect_project_findings_via_query
 
 if TYPE_CHECKING:
     from endorlabs import Client
+    from endorlabs.query.routing import OutputShape
 
 LOGGER = get_resource_logger(__name__)
 
@@ -82,7 +84,7 @@ def _resolve_workspace(
 
             return resolve_workspace_root(path)
         return path
-    return workspace_dir_for(namespace, date_suffix=date_suffix)
+    return task_activity_dir(namespace, "estate", date_suffix=date_suffix)
 
 
 def _project_shards(
@@ -363,8 +365,21 @@ def collect_workspace(
     overwrite: bool = False,
     preflight: bool = False,
     validate_counts: bool = False,
+    output_shape: OutputShape | None = None,
 ) -> CollectResult:
-    """Collect all estate resources into a workspace directory."""
+    """Collect all estate resources into a workspace directory.
+
+    ``output_shape`` must classify the pull (rule endor-output-shape-routing).
+    Bulk IR collect corresponds to :attr:`OutputShape.FINDING_ROWS`.
+    """
+    if output_shape is None:
+        raise OutputShapeRoutingError(
+            "Estate pull without OutputShape classification. Call "
+            "discover_topology + recommend(OutputShape.…), then pass "
+            "output_shape= (e.g. OutputShape.FINDING_ROWS for bulk row export) "
+            "before collect_workspace / endor-estate pull "
+            "(endor-output-shape-routing)."
+        )
     workspace_root = _resolve_workspace(
         namespace=namespace,
         workspace=workspace,

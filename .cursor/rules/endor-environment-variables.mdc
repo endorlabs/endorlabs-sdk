@@ -3,7 +3,7 @@ description: Do not invent ENDOR_* env vars; cite Endor Labs docs before encodin
 globs:
   - src/endorlabs/**
   - **/*.py
-  - **/.endorlabs-context/**
+  - **/.endorlabs/**
   - agent-knowledge/**
   - docs/**
   - devtools/**

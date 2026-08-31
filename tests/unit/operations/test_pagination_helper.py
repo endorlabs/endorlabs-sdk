@@ -5,10 +5,29 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from endorlabs.operations.pagination import PageCursor, iter_paginated_pages
+import pytest
+
+from endorlabs.core.exceptions import ValidationError
+from endorlabs.operations.pagination import (
+    SORTED_PAGE_ID_REMEDIATION,
+    PageCursor,
+    iter_paginated_pages,
+    raise_if_page_id_with_sort,
+)
 
 if TYPE_CHECKING:
     from _pytest.logging import LogCaptureFixture
+
+
+def test_raise_if_page_id_with_sort_noop_without_sort() -> None:
+    raise_if_page_id_with_sort({"list_parameters.filter": "meta.name==x"})
+
+
+def test_raise_if_page_id_with_sort_rejects_sort_path() -> None:
+    with pytest.raises(ValidationError, match=SORTED_PAGE_ID_REMEDIATION):
+        raise_if_page_id_with_sort(
+            {"list_parameters.sort.path": "meta.create_time"},
+        )
 
 
 def test_iter_paginated_pages_yields_all_pages() -> None:

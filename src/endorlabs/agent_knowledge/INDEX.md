@@ -2,7 +2,7 @@
 
 Shipped with `endorlabs` inside the wheel. **`endorlabs.init()` is optional** — use
 `agent_knowledge_index_path()` to read this file from site-packages, or materialize under
-`.endorlabs-context/sdk/` when a cwd-relative tree is needed.
+`.endorlabs/_cache/sdk/` when a cwd-relative tree is needed.
 
 ## First steps (agents and humans)
 
@@ -14,15 +14,18 @@ print(endorlabs.discover())
 # Or: python -m endorlabs.examples.agent_bootstrap --dry-run
 
 d = endorlabs.discover()
-# Read every path in d.bootstrap_paths; read d.stub for list() kwargs and accessors.
+# Read every path in d.bootstrap_paths.
+# Prefer print(client.Finding.describe()) for live list() kwargs / routes
+# (cheaper than reading the stub); stub remains at d.stub for IDE typing.
 
 # 1. Auth — live API
 client = endorlabs.Client(tenant="your-tenant")  # or ENDOR_NAMESPACE
 print(client.whoami())  # None → check .env / single auth mode
+print(client.Finding.describe())  # resource-specific identity kwargs + routes
 
 # 2. Workflows — call graph, scan RCA, project bundles (not on dir(client))
 status = endorlabs.init(include_openapi=False)
-# Read .endorlabs-context/sdk/skills/<id>/SKILL.md
+# Read .endorlabs/_cache/sdk/skills/<id>/SKILL.md
 ```
 
 ## Agents — step zero (required)
@@ -30,7 +33,7 @@ status = endorlabs.init(include_openapi=False)
 Before `endorlabs.Client()` or live API calls:
 
 1. `print(endorlabs.discover())` or `python -m endorlabs.examples.agent_bootstrap --dry-run` — then **read every path** in `bootstrap_paths`.
-2. Read `discover().stub` (`client_surface.pyi`) for `list()` kwargs and relationship accessors.
+2. Prefer `print(client.<Kind>.describe())` for resource-specific `list()` identity kwargs and route accessors (no network). Read `discover().stub` only when you need IDE/static typing — not as the primary kwargs source.
 3. **Auth check:** `Client().whoami()` — do not use `Namespace.list()` as an auth proxy.
 4. **Workflows** (call graph, project bundle, scan RCA): `endorlabs.init()` → read `skills/<id>/SKILL.md` (start: **endor-fetch-and-search-call-graph**, **endor-retrieve-scan-results**)
 
@@ -41,11 +44,13 @@ Consumer entrypoint: **`AGENTS.md`** (points here). Copy **`templates/consumer-A
 
 | Trap | Correct pattern |
 |------|-----------------|
+| Stub as kwargs source | Prefer `print(client.Finding.describe())` — live identity kwargs + routes; stub is for typing |
 | `F()` positional | `list(filter=F("spec.level") == "…", traverse=True)` — never `list(F(...) == …, traverse=True)` |
 | `F.field` attribute | Use `F("spec.field")` — dotted paths are strings, not attributes on `F` |
 | `list_by_*` / `list_for_context` | `list[T]` | Same as `.list()` — project/scan-plane edges |
 | `to_*` | `RouteResult` | Stitch — `.value` / `.single`; check `.edge_used`, `.warnings` |
 | `limit` on `.list()` | Use `page_size=` or `limit=` (alias for `page_size`; same as `list_by_project(limit=)`) |
+| Sorted list + `max_pages>1` | Platform rejects `page_id` with sort — use `limit=`/`page_size` + `max_pages=1`, or drop `sort_by` ([list-parameters](contracts/list-parameters.md)) |
 | Finding text field | `spec.summary`, not `spec.description` |
 | `Metric.list_by_project` | Does not exist — use `Metric.list(...)` with filters |
 | `QueryVulnerability.list` | Query resources are create/query only, not listable CRUD |
@@ -78,7 +83,7 @@ paths = endorlabs.agent_knowledge_bootstrap_paths()  # INDEX + bootstrap rules
 import endorlabs
 
 status = endorlabs.init(include_openapi=False)
-# Read: status.agent_knowledge_index_path  →  .endorlabs-context/sdk/INDEX.md
+# Read: status.agent_knowledge_index_path  →  .endorlabs/_cache/sdk/INDEX.md
 ```
 
 **Full bootstrap** (agent knowledge + platform OpenAPI):
@@ -137,18 +142,36 @@ looks wrong, **triangulate** SDK vs `endorctl` vs `contracts/` — skill
    CLI → library → `Client` → session script (see `rules/endor-workflow-composition.md`).
 8. **Portable examples:** Use placeholders in docs, skills, **unit fixtures**, and CLI/docstring
    examples; never commit customer estate identifiers (`rules/endor-portable-examples.md`).
+9. **QueryMalware / QueryVulnerability:** Create-only catalog facades (`scope=oss`). There is no
+   `.list()` — use `.create(...)`. Do not import `endorlabs.query` for these kinds; that module is
+   the graph-join `client.Query` plane. Hits often appear under `response.list.objects`.
+10. **Tenant malware exposure:** Prefer `MalwareExposure` / `MalwareExposureQuery` (customer
+    namespace) over `Malware.list` on `oss` for blast-radius asks. Use `QueryMalware` only for
+    coordinate identity on the catalog plane.
+
+## SDK ↔ product ontology (glossary)
+
+| Product / UI phrase | SDK / CLI | Notes |
+|---------------------|-----------|-------|
+| Package Firewall logs | `--source package-firewall-logs` → `PackageFirewallLog` | Wire path `package-firewall-logs` |
+| Policy Violations (Agent Governance) | `--source policy-violations` → `AgentHookEvent` | Wire path stays `agent-hook-events` (x-internal; no facade yet) |
+| Findings | `client.Finding` | Current findings |
+| Findings history / burndown | `FindingLog` | Time-series / create-delete trends — not `Finding` |
+| Login / SSO auth logs | `AuthenticationLog` | Not `AuditLog` (API audit trail) |
+| Malware catalog | `client.Malware` / `QueryMalware` (`scope=oss`) | Coordinate identity |
+| Malware exposure (tenant) | `MalwareExposure` / `MalwareExposureQuery` | Customer blast radius |
 
 ## Bootstrap (load for Endor SDK work)
 
-Harnesses should prepend `agent_knowledge_bootstrap_paths()` (or read these rules first). In Cursor, `endor-namespace-scoping` and `endor-list-query-performance` are **always-on**; other bootstrap `endor-*.mdc` rules attach when path **globs** match (`src/endorlabs/**`, Python, `.endorlabs-context/`, etc.).
+Harnesses should prepend `agent_knowledge_bootstrap_paths()` (or read these rules first). In Cursor, `endor-namespace-scoping` and `endor-list-query-performance` are **always-on**; other bootstrap `endor-*.mdc` rules attach when path **globs** match (`src/endorlabs/**`, Python, `.endorlabs/`, etc.).
 
 | Rule | Summary |
 |------|---------|
 | `endor-namespace-scoping` | Resolve Project; pass `namespace=project.namespace` on project-scoped lists |
-| `endor-workspace-layout` | Artifacts under `workspace/projects/`, `workspace/runs/<run-bucket>/`, or `workspace/inventory/` |
+| `endor-workspace-layout` | Artifacts under `tasks/<slug>-<YYYY-MM-DD>/`, `reports/`, or flat `tasks/<activity>/` |
 | `endor-workflow-composition` | CLI → library → Client → session script; artifact-first |
 | `endor-list-query-performance` | Do not set `page_size` unless asked |
-| `endor-local-context` | Check gitignored `.endorlabs-context/` paths explicitly |
+| `endor-local-context` | Check gitignored `.endorlabs/` paths explicitly |
 | `endor-portable-examples` | Placeholders only across tracked surfaces (fixtures, docs, skills); no tenant/email/UUID literals |
 
 See `MANIFEST.json` → `bootstrap.rule_ids` and `bootstrap.contract_ids` for the machine-readable lists.
@@ -166,7 +189,7 @@ For SDK/API validation playbooks, load **`skills/endor-troubleshoot-sdk/SKILL.md
 
 - **Skills** (`skills/<id>/SKILL.md`) are agent **playbooks** — read the file, follow steps.
 - **Workflow CLIs** (`endor-*`, `python -m endorlabs.workflows…`) are what you **run**; discover names via `print(endorlabs.discover())` → `entry_points` or `MANIFEST.json` → `workflows[]`.
-- Materialize playbooks: `endorlabs.init()` → `.endorlabs-context/sdk/skills/`; optional `init(sync_skills="cursor")`.
+- Materialize playbooks: `endorlabs.init()` → `.endorlabs/_cache/sdk/skills/`; optional `init(sync_skills="cursor")`.
 
 ## Progressive disclosure
 
@@ -178,11 +201,11 @@ For SDK/API validation playbooks, load **`skills/endor-troubleshoot-sdk/SKILL.md
 
 | Bucket | Use |
 |--------|-----|
-| `workspace/projects/` | Project bundles (`<slug>_<timestamp>/`), per-uuid `reachability_context.json` |
-| `workspace/runs/<run-bucket>/` | CSV, JSON, RCA, reports — **run bucket** is a fixed string per skill (see `rules/endor-workspace-layout.md`) |
-| `workspace/inventory/` | Namespace inventories (e.g. SemgrepRule metadata) |
+| `tasks/<slug>-<YYYY-MM-DD>/projects/` | Project bundles (`<slug>_<timestamp>/`), per-uuid `reachability_context.json` |
+| `reports/<subcommand>/` or `tasks/<slug>-<YYYY-MM-DD>/<activity>/` | CSV, JSON, RCA, reports — see `rules/endor-workspace-layout.md` |
+| `tasks/inventory/` | Namespace inventories (e.g. SemgrepRule metadata) |
 
-Do not use repo-root `.tmp/`. Gitignore `.endorlabs-context/` in consumer projects.
+Do not use repo-root `.tmp/`. Gitignore `.endorlabs/` in consumer projects.
 
 ## Read order
 
@@ -191,8 +214,8 @@ Do not use repo-root `.tmp/`. Gitignore `.endorlabs-context/` in consumer projec
 3. **`rules/*.md`** — harness bootstrap (always load)
 4. **`contracts/*.md`** — normative SDK semantics on demand
 5. **`skills/*/SKILL.md`** — task playbooks
-6. `../platform/openapi/` — OpenAPI after `init(include_openapi=True)`; product docs via Docs MCP (`https://docs.endorlabs.com/mcp`)
-7. `../workspace/` — your run outputs
+6. `.endorlabs/_cache/openapi.json` — OpenAPI after `init(include_openapi=True)`; product docs via Docs MCP (`https://docs.endorlabs.com/mcp`)
+7. `.endorlabs/reports/` and `.endorlabs/tasks/` — your run outputs
 
 ## Task routing (common intents)
 

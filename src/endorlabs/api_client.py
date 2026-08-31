@@ -27,7 +27,11 @@ from .core.exceptions import (
     map_status_code_to_exception,
 )
 from .core.types import ErrorResponse
-from .operations.pagination import PageCursor, iter_paginated_pages
+from .operations.pagination import (
+    PageCursor,
+    iter_paginated_pages,
+    raise_if_page_id_with_sort,
+)
 from .utils.redaction import (
     JSON_REDACTION_REPLACEMENT,
     RedactingFilter,
@@ -40,6 +44,9 @@ from .utils.redaction import (
 # Pre-compiled redaction patterns for _redact_log_data (avoid re.compile per call)
 _REPR_REDACT_RE: re.Pattern[str] = re.compile(redaction_pattern, re.IGNORECASE)
 _JSON_REDACT_RE: re.Pattern[str] = re.compile(json_redaction_pattern, re.IGNORECASE)
+_URL_TOKEN_REDACT_RE: re.Pattern[str] = re.compile(
+    url_token_redaction_pattern, re.IGNORECASE
+)
 
 DEFAULT_API_BASE_URL = "https://api.endorlabs.com"
 
@@ -466,6 +473,8 @@ class APIClient:
         # Apply both single-quote (Python repr) and double-quote (JSON) patterns
         data_str = _REPR_REDACT_RE.sub(r"'\1': '***REDACTED***'", data_str)
         data_str = _JSON_REDACT_RE.sub(JSON_REDACTION_REPLACEMENT, data_str)
+        # Defense in depth: scrub token= query params embedded in logged bodies
+        data_str = _URL_TOKEN_REDACT_RE.sub(url_token_redaction_replacement, data_str)
         return data_str
 
     def _truncate_for_logging(self, text: str, max_length: int = 500) -> str:
@@ -1343,6 +1352,9 @@ class APIClient:
         when present (API-supported cursor); otherwise uses next_page_token.
         Handles Endor Labs pagination format with list.objects and list.response.
 
+        Raises ``ValidationError`` before a follow-up ``page_id`` request when
+        sort params are still present (platform rejects that combination).
+
         Args:
             url: Endpoint URL (relative or absolute)
             params: Query parameters (will be updated with page_token/page_id)
@@ -1363,6 +1375,7 @@ class APIClient:
             page_params = dict(request_params)
             if cursor is not None:
                 if cursor.page_id is not None:
+                    raise_if_page_id_with_sort(page_params)
                     page_params["list_parameters.page_id"] = cursor.page_id
                     page_params.pop("list_parameters.page_token", None)
                 elif cursor.page_token is not None:

@@ -1,8 +1,8 @@
 {
-  "canonical_entity_count": 41,
-  "facade_contract_resource_count": 41,
+  "canonical_entity_count": 45,
+  "facade_contract_resource_count": 45,
   "registry_contract_path": "src/endorlabs/generated/registry_contract.py",
-  "resource_count": 41,
+  "resource_count": 45,
   "resources": [
     {
       "attr_name": "APIKey",
@@ -30,8 +30,8 @@
       "resource_name": "audit-logs",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
-        "delete": true,
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
         "update": false
@@ -150,7 +150,7 @@
       "resource_name": "findings",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
+        "create": false,
         "delete": true,
         "get": true,
         "list": true,
@@ -170,8 +170,8 @@
       "resource_name": "finding-logs",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
-        "delete": true,
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
         "update": false
@@ -250,8 +250,8 @@
       "resource_name": "linter-results",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
-        "delete": true,
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
         "update": false
@@ -285,16 +285,56 @@
       }
     },
     {
+      "attr_name": "MalwareExposure",
+      "parent_kind": null,
+      "resource_name": "malware-exposure",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "MalwareExposureQuery",
+      "parent_kind": null,
+      "resource_name": "queries/malware-exposure",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      }
+    },
+    {
       "attr_name": "Metric",
       "parent_kind": null,
       "resource_name": "metrics",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
-        "delete": true,
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
-        "update": true
+        "update": false
       },
       "supported_ops_spec": {
         "create": true,
@@ -405,12 +445,32 @@
       }
     },
     {
+      "attr_name": "PackageManager",
+      "parent_kind": null,
+      "resource_name": "package-managers",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
       "attr_name": "PackageVersion",
       "parent_kind": null,
       "resource_name": "package-versions",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
+        "create": false,
         "delete": true,
         "get": true,
         "list": true,
@@ -570,8 +630,8 @@
       "resource_name": "repositories",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
-        "delete": true,
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
         "update": true
@@ -590,8 +650,8 @@
       "resource_name": "repository-versions",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
-        "delete": true,
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
         "update": true
@@ -670,7 +730,7 @@
       "resource_name": "scan-results",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": true,
+        "create": false,
         "delete": true,
         "get": true,
         "list": true,
@@ -732,6 +792,26 @@
       "supported_ops_sdk": {
         "create": true,
         "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "SystemConfig",
+      "parent_kind": null,
+      "resource_name": "system-config",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
         "get": true,
         "list": true,
         "update": true

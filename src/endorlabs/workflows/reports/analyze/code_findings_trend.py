@@ -54,14 +54,24 @@ def build_code_findings_burndown_report(
     lookback: int = CHART_DEFAULT_LOOKBACK,
     min_projects: int = 1,
     max_workers: int = DEFAULT_BURNDOWN_WORKERS,
+    categories: list[str] | tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
-    """Build SAST / AI-SAST / Secrets FindingLog series under path + tag grain."""
+    """Build SAST / AI-SAST / Secrets FindingLog series under path + tag grain.
+
+    *categories* defaults to all code categories; pass a license-filtered
+    subset to skip unentitled FindingLog matrices.
+    """
+    selected = list(categories) if categories is not None else list(CODE_CATEGORIES)
+    unknown = [k for k in selected if k not in CODE_CATEGORIES]
+    if unknown:
+        raise ValueError(f"unknown code burndown categories: {unknown}")
+
     by_category: dict[str, Any] = {}
     shared_meta: dict[str, Any] | None = None
     period_caption = ""
     week_categories: list[str] = []
 
-    for key in CODE_CATEGORIES:
+    for key in selected:
         block = build_category_burndown_block(
             client,
             tenant=tenant,
@@ -96,7 +106,7 @@ def build_code_findings_burndown_report(
         "lookback": lookback,
         "interval": "week",
         "periodCaption": period_caption,
-        "categories": list(CODE_CATEGORIES),
+        "categories": selected,
         "byCategory": by_category,
         "tagSeriesMeta": shared_meta
         or {

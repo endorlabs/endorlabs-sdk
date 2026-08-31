@@ -7,9 +7,8 @@ import logging
 
 from endorlabs.context.paths import (
     DEFAULT_CONTEXT_DIR,
-    default_context_dir,
     project_workspace_dir,
-    workflow_projects_root,
+    task_activity_dir,
 )
 from endorlabs.workflows.reachability.context import (
     ReachabilityContextRequest,
@@ -19,14 +18,15 @@ from endorlabs.workflows.reachability.context import (
 
 def default_reachability_output_dir(
     *,
+    namespace: str,
     finding_uuid: str = "",
     pv_uuid: str = "",
 ) -> str:
-    """``workspace/projects/<uuid>/`` when subject is known."""
+    """``tasks/<slug>-<date>/projects/<uuid>/`` when subject is known."""
     subject = (finding_uuid or pv_uuid or "").strip()
     if subject:
-        return str(project_workspace_dir(default_context_dir(), subject))
-    return str(workflow_projects_root())
+        return str(project_workspace_dir(subject, namespace=namespace))
+    return str(task_activity_dir(namespace, "projects"))
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -38,12 +38,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     )
     parser.add_argument(
-        "--tenant", required=True, help="Tenant used for authentication."
+        "-n",
+        "--tenant",
+        required=True,
+        help="Tenant used for authentication.",
     )
     parser.add_argument(
         "--namespace",
-        required=True,
-        help="Namespace for finding or package-version lookup.",
+        default="",
+        help="Namespace for finding or package-version lookup (default: --tenant).",
     )
     parser.add_argument("--finding-uuid", default="", help="Finding UUID to analyze.")
     parser.add_argument("--pv-uuid", default="", help="Importer package-version UUID.")
@@ -52,7 +55,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=None,
         help=(
             "Output directory (default: "
-            f"{DEFAULT_CONTEXT_DIR}/workspace/projects/<finding-or-pv-uuid>/)."
+            f"{DEFAULT_CONTEXT_DIR}/tasks/<slug>-<YYYY-MM-DD>/projects/<uuid>/)."
         ),
     )
     parser.add_argument(
@@ -94,13 +97,15 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     if bool(args.finding_uuid) == bool(args.pv_uuid):
         raise SystemExit("Provide exactly one of --finding-uuid or --pv-uuid.")
+    namespace = (args.namespace or args.tenant).strip()
     output_dir = args.output_dir or default_reachability_output_dir(
+        namespace=namespace,
         finding_uuid=args.finding_uuid,
         pv_uuid=args.pv_uuid,
     )
     req = ReachabilityContextRequest(
         tenant=args.tenant,
-        namespace=args.namespace,
+        namespace=namespace,
         output_dir=output_dir,
         finding_uuid=args.finding_uuid or None,
         pv_uuid=args.pv_uuid or None,

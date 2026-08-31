@@ -3,14 +3,14 @@ description: Write unit tests for behavior and contracts, not copy or hasattr sm
 globs:
   - src/endorlabs/**
   - **/*.py
-  - **/.endorlabs-context/**
+  - **/.endorlabs/**
   - agent-knowledge/**
   - docs/**
   - devtools/**
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-unit-tests.md
-x-endor-source-sha256: 44f09fefebaa05434783a47ac0498cf6cb56e39101dc8e59667c04e24ba75b2c
+x-endor-source-sha256: a5bff58887a0a38cc729eb832163287cbdc00bbc3139d9815ae8412adc1e2afd
 ---
 
 # Unit tests (maintainer)
@@ -71,14 +71,14 @@ guard map: rule **endor-maintainer-tooling**.
 
 | Guard / hook | What it does for tests and fixtures |
 | ------------ | ----------------------------------- |
-| **blocked-paths** | Refuses staging `.env` or anything under `.endorlabs-context/` (session dumps, live OpenAPI, workspace artifacts). Put secrets and tenant dumps only in gitignored paths. |
+| **blocked-paths** | Refuses staging `.env` or anything under `.endorlabs/` (session dumps, live OpenAPI, workspace artifacts). Put secrets and tenant dumps only in gitignored paths. |
 | **gitleaks** + **detect-private-key** | Scans staged content for secrets and private keys. Unit fixtures must use fake tokens (`"test-token"`), never pasted credentials. |
 | **portable-examples** | Fails on high-confidence **estate literals** in staged checked-in paths (customer GitHub URLs, dotted tenant paths). Use `example-tenant`, `example-tenant.child`, `https://github.com/org/repo`. |
 | **external-pii-urls** | Fails on non-placeholder **emails**, non-Endor **URLs**, and estate `-n` / `--namespace` / `--tenant` tokens on *added* lines. Allowed emails: `@example.*`, `@endorlabs.com`, `@endor.ai`. |
 | **shipped-namespace-flags** | Full-tree scan of `src/endorlabs/**`: non-placeholder `-n` values cannot ship in the wheel (authoring/tests still covered by staged `external-pii-urls`). |
 | **security-content-diff** (CI) | Same portable / PII / `-n` checks on the PR diff so a skipped local hook does not land on `main`. |
 | **layer-imports** / **bounds-shim** | Block forbidden cross-layer imports and removed `estate.collect.bounds` shims in `src/` and `tests/`. |
-| **context-root-literals** | Block hard-coded `.endorlabs-context/...` path constants in SDK / skill scripts — use path helpers. |
+| **context-root-literals** | Block hard-coded `.endorlabs/...` path constants in SDK / skill scripts — use path helpers. |
 | **run-selected-tests** | Change-aware unit pytest: maps staged paths to buckets (or full suite for `pyproject.toml` / generated / unknown code). Docs-only → skip. **CI still runs the full unit suite** with coverage. |
 | **consumer-wire-fixtures-verify** | When model fixtures or `resources/` change, verifies consumer wire fixtures stay aligned. |
 | **ship-artifacts-verify** / pre-push upstream | Regen + drift for generated surfaces; do not hand-edit `generated/` to “fix” a test. |

@@ -47,6 +47,56 @@ def assert_bounded_log_rows(rows: list[object]) -> None:
     assert len(rows) <= TEST_LOG_LIST_MAX_ROWS
 
 
+@pytest.fixture(autouse=True)
+def _auto_traverse_project_scoped_lists_at_tenant_root(  # pyright: ignore[reportUnusedFunction]
+    monkeypatch,
+):
+    """CI may set ``ENDOR_NAMESPACE`` to the tenant root.
+
+    Project-scoped kinds raise ``NamespaceScopingError`` without ``traverse`` /
+    child ``namespace`` / ``parent``. For integration only, inject
+    ``traverse=True`` so every call site need not repeat that adaptation.
+    Production SDK behavior is unchanged.
+    """
+    import inspect
+
+    from endorlabs.facade.base import ListableFacade
+
+    original_list = ListableFacade.list
+
+    def list_auto_traverse(self, *args, **kwargs):
+        # Capture before bind/apply_defaults so we can tell explicit concurrent=
+        # from the signature default (True).
+        user_set_concurrent = "concurrent" in kwargs
+        bound = inspect.signature(original_list).bind(self, *args, **kwargs)
+        bound.apply_defaults()
+        arguments = dict(bound.arguments)
+        arguments.pop("self", None)
+        # Flatten the signature's **kwargs catch-all (else it becomes list kwarg
+        # name "kwargs" and fails validation).
+        extra = arguments.pop("kwargs", None)
+        if isinstance(extra, dict):
+            arguments.update(extra)
+        if (
+            "project-namespace-list" in getattr(self, "_workflow_flags", ())
+            and not arguments.get("traverse")
+            and arguments.get("parent") is None
+        ):
+            ns = (
+                arguments.get("namespace")
+                or getattr(self, "_default_namespace", "")
+                or ""
+            )
+            if "." not in ns:
+                arguments["traverse"] = True
+                # Keep max_pages as a flat page budget (not one page per child).
+                if not user_set_concurrent:
+                    arguments["concurrent"] = False
+        return original_list(self, **arguments)
+
+    monkeypatch.setattr(ListableFacade, "list", list_auto_traverse)
+
+
 # ---------------------------------------------------------------------------
 # Credential helpers
 # ---------------------------------------------------------------------------

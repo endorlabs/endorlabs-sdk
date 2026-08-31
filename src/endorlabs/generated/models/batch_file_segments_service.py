@@ -230,6 +230,10 @@ class V1IndexData(BaseModel):
 
 
 class V1Language(StrEnum):
+    """
+    - LANGUAGE_GOSU: Gosu, a JVM language used by Guidewire applications.
+    """
+
     LANGUAGE_UNSPECIFIED = 'LANGUAGE_UNSPECIFIED'
     LANGUAGE_GO = 'LANGUAGE_GO'
     LANGUAGE_JAVA = 'LANGUAGE_JAVA'
@@ -248,6 +252,7 @@ class V1Language(StrEnum):
     LANGUAGE_CPP = 'LANGUAGE_CPP'
     LANGUAGE_SWIFTURL = 'LANGUAGE_SWIFTURL'
     LANGUAGE_CONAN = 'LANGUAGE_CONAN'
+    LANGUAGE_GOSU = 'LANGUAGE_GOSU'
 
 
 class V1Meta(BaseModel):

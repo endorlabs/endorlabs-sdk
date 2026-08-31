@@ -143,7 +143,7 @@ Output uses top-level `matching_findings` (full finding objects), not `spec.resu
 - OpenAPI: `PolicyValidationService_CreatePolicyValidation` → `POST /v1/namespaces/{tenant_meta.namespace}/policy/validate` (`x-internal: true`)
 - Product docs (validate policy CLI): Docs MCP → search “validate policy” / `developers-api/cli/commands/validate/policy` ([Docs MCP setup](https://docs.endorlabs.com/introduction/docs-mcp-server))
 - Implementation: `src/endorlabs/workflows/policies/validate.py`
-- Fixture probe (creates templated policy in `ENDOR_NAMESPACE`): place under `.endorlabs-context/workspace/runs/scratch/policy_validate_probe.py` (see [workspace-layout](../../rules/endor-workspace-layout.md))
+- Fixture probe (creates templated policy in `ENDOR_NAMESPACE`): place under `.endorlabs/tasks/scratch/policy_validate_probe.py` (see [workspace-layout](../../rules/endor-workspace-layout.md))
 
 Run validate:
 

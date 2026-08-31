@@ -22,6 +22,8 @@ Monorepo-backed variables for SDK, `endor-auth`, and `endorctl` day-to-day use:
 
 **SSO tenant precedence** (refresh + mid-session reauth): `endor-auth refresh -n` → `ENDOR_NAMESPACE` (shell, then `.env`) → `ENDOR_NAMESPACE` in endorctl `config.yaml` (via `ENDOR_CONFIG_PATH`).
 
+**SSO vs workflow namespace:** `endor-auth refresh -n example-tenant.child` uses root segment `example-tenant` for SSO only. Workflow CLIs (`endor-reports -n example-tenant.child`, `endor-estate pull -n example-tenant.child`, …) use the **full** namespace path for API scope and output directory slugs (`example_tenant_child-YYYY-MM-DD`).
+
 **Single auth mode:** never set `ENDOR_TOKEN` and both API key env vars (same rule as endorctl). No `ENDOR_AUTH_MODE` env — unset one credential set or pass `auth_method=` to `Client(...)` in code.
 
 **Do not use for ongoing SDK sessions:** `ENDOR_AUTH_TENANT`, `ENDOR_AUTH_MODE`, `ENDOR_AUTH_METHOD`, `ENDOR_BROWSER`, `ENDOR_AUTH_INTERACTIVE`, `ENDOR_AUTH_PERSIST_TOKEN`, `ENDOR_ADMIN_TOKEN`.
@@ -128,7 +130,7 @@ Use top-level `endorlabs` exception types (`NotFoundError`, `UnauthorizedError`,
 
 Preferred path after `init(include_openapi=True)`:
 
-`.endorlabs-context/platform/openapi/openapiv2.swagger.json`
+`.endorlabs/_cache/openapi.json`
 
 Product docs: Docs MCP (`https://docs.endorlabs.com/mcp`) —
 [setup](https://docs.endorlabs.com/introduction/docs-mcp-server).

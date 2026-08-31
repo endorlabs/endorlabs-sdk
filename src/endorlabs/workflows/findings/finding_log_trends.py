@@ -23,8 +23,8 @@ if TYPE_CHECKING:
     from endorlabs import Client
 
 FINDING_CRITERIA = (
-    "All severities (Critical-Low) · main context · reach selections "
-    "(default RF+PRF; also RF / PRF / RD / PRD / RD+PRD / unreachable); "
+    "All severities (Critical-Low) · main context · function-reach selections "
+    "(default any reachability; also RF+PRF / RF / PRF / unreachable function); "
     "UI severity thresholds (Critical+ / High+ / Medium+ / All)"
 )
 
@@ -288,27 +288,19 @@ REACHABLE_FUNCTION_CLAUSE = "spec.finding_tags contains FINDING_TAGS_REACHABLE_F
 PRF_FUNCTION_CLAUSE = (
     "spec.finding_tags contains FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION"
 )
-REACHABLE_DEPENDENCY_CLAUSE = (
-    "spec.finding_tags contains FINDING_TAGS_REACHABLE_DEPENDENCY"
-)
-PRD_CLAUSE = "spec.finding_tags contains FINDING_TAGS_POTENTIALLY_REACHABLE_DEPENDENCY"
 UNREACHABLE_FUNCTION_CLAUSE = (
     "spec.finding_tags contains FINDING_TAGS_UNREACHABLE_FUNCTION"
 )
-UNREACHABLE_DEPENDENCY_CLAUSE = (
-    "spec.finding_tags contains FINDING_TAGS_UNREACHABLE_DEPENDENCY"
-)
-# Base pull cells (Crit/High/Med/Low x each). Rollups such as ``all`` (RF+PRF),
-# ``dependency_reach`` (RD+PRD), and ``unreachable`` are derived in
-# ``expand_severity_reach_matrix``. RF implies a reachable dependency in the
-# product model; RD is still selectable for dependency-only prioritization.
+# Base pull cells (Crit/High/Med/Low x each). ``any`` is unfiltered (no reach
+# tag clause). ``all`` (RF+PRF) is derived in ``expand_severity_reach_matrix``.
+# Dependency-axis tags (RD/PRD/UD) are omitted: function reach implies a
+# reachable dependency in the product model, so RD-only options duplicate the
+# function facet for prioritization and inflate FindingLog pull cost.
 BASE_REACH_KEYS: tuple[str, ...] = (
+    "any",
     "reachable",
     "prf",
-    "reachable_dependency",
-    "prd",
     "unreachable_function",
-    "unreachable_dependency",
 )
 EXACT_SEVERITY_LEVELS: tuple[tuple[str, str], ...] = (
     ("critical", "CRITICAL"),
@@ -320,12 +312,10 @@ UNSPLIT_SEVERITY_LEVELS: tuple[str, ...] = tuple(
     level for _, level in EXACT_SEVERITY_LEVELS
 )
 _REACH_CLAUSES: tuple[tuple[str, str], ...] = (
+    ("any", ""),
     ("reachable", REACHABLE_FUNCTION_CLAUSE),
     ("prf", PRF_FUNCTION_CLAUSE),
-    ("reachable_dependency", REACHABLE_DEPENDENCY_CLAUSE),
-    ("prd", PRD_CLAUSE),
     ("unreachable_function", UNREACHABLE_FUNCTION_CLAUSE),
-    ("unreachable_dependency", UNREACHABLE_DEPENDENCY_CLAUSE),
 )
 SEVERITY_REACH_CELLS: tuple[tuple[str, str, str, str], ...] = tuple(
     (sev, reach, level, clause)
@@ -434,12 +424,13 @@ def expand_severity_reach_matrix(
     categories: list[str],
     period_caption: str,
 ) -> dict[str, dict[str, dict[str, Any]]]:
-    """Fill severity/reach rollups from Crit/High/Med/Low x base reach cells.
+    """Fill severity/reach rollups from Crit/High/Med/Low x function-reach cells.
 
-    Per-severity ``all`` remain the RF+PRF union (function-level actionable
-    default). ``dependency_reach`` sums RD+PRD. ``unreachable`` sums
-    unreachable function + dependency. Top-level ``all`` sums all four exact
-    severity rows. Missing base cells become zeros.
+    Per-severity ``any`` is the unfiltered FindingLog pull (no reach tag).
+    ``all`` is the RF+PRF union (function-level actionable). Dependency-axis
+    facets are not modeled here (RF implies RD in the product model).
+    Top-level ``all`` severity sums all four exact severity rows. Missing base
+    cells become zeros.
     """
 
     def combine(parts: list[dict[str, Any]]) -> dict[str, Any]:
@@ -455,35 +446,25 @@ def expand_severity_reach_matrix(
         return empty_series_cell(categories, period_caption)
 
     def sev_row(sev: str) -> dict[str, dict[str, Any]]:
+        any_reach = cell(sev, "any")
         reachable = cell(sev, "reachable")
         prf = cell(sev, "prf")
-        rd = cell(sev, "reachable_dependency")
-        prd = cell(sev, "prd")
         uf = cell(sev, "unreachable_function")
-        ud = cell(sev, "unreachable_dependency")
         return {
+            "any": any_reach,
             "all": combine([reachable, prf]),
             "reachable": reachable,
             "prf": prf,
-            "reachable_dependency": rd,
-            "prd": prd,
-            "dependency_reach": combine([rd, prd]),
             "unreachable_function": uf,
-            "unreachable_dependency": ud,
-            "unreachable": combine([uf, ud]),
         }
 
     exact = {sev: sev_row(sev) for sev, _level in EXACT_SEVERITY_LEVELS}
     reach_keys = (
+        "any",
         "all",
         "reachable",
         "prf",
-        "reachable_dependency",
-        "prd",
-        "dependency_reach",
         "unreachable_function",
-        "unreachable_dependency",
-        "unreachable",
     )
     return {
         "all": {
@@ -766,8 +747,8 @@ def query_severity_facet_matrix(
 
     *expand*:
     - ``"severity"`` — sum Crit+High+Med+Low per facet (SAST / Secrets / AI-SAST).
-    - ``"reach"`` — SCA reach rollups (``all`` = RF+PRF; ``unreachable`` =
-      function+dependency). *facet_keys* is unused for the expand step.
+    - ``"reach"`` — SCA function-reach rollups (``any`` = unfiltered; ``all`` =
+      RF+PRF). *facet_keys* is unused for the expand step.
     """
     if categories is None or period_caption is None:
         _seed_sev, _seed_facet, seed_level, seed_clause = cells[0]

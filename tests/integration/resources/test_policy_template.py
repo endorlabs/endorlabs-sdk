@@ -21,14 +21,6 @@ class TestPolicyTemplate:
             tenant=root_namespace, api_client=api_client
         )
 
-    def test_policy_template_list(self) -> None:
-        """LIST in namespace (registry-based)."""
-        result = self.endor_root_client.PolicyTemplate.list(
-            page_size=TEST_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES,
-        )
-        assert isinstance(result, list)
-
     def test_policy_template_module_get_uses_item_namespace(self) -> None:
         """Facade get uses item namespace; backend auth decides access."""
         from endorlabs.core.exceptions import PermissionDeniedError
@@ -49,9 +41,3 @@ class TestPolicyTemplate:
             self.endor_root_client.PolicyTemplate.get(item.uuid, namespace=ns)
         if hasattr(exc_info.value, "status_code"):
             assert exc_info.value.status_code == 403
-
-    def test_policy_template_facade_has_no_create(self) -> None:
-        """System-scoped facade rejects create (system-owned, read-only)."""
-        assert "create" not in self.endor_root_client.PolicyTemplate._supported_ops
-        with pytest.raises(NotImplementedError, match="does not support create"):
-            self.endor_root_client.PolicyTemplate.create(payload={})

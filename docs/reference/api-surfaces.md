@@ -8,10 +8,10 @@ Consumer-facing SDK entry points and where to find canonical inventories.
 | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `endorlabs.Client`                      | Default typed API access                                                                                                                                    |
 | `endorlabs.APIClient`                   | Raw HTTP transport                                                                                                                                          |
-| `endorlabs.init()` / `endor-context`    | Copy agent knowledge to `.endorlabs-context/sdk/`; opt-in OpenAPI — see [AGENTS.md](../../AGENTS.md). Product docs: Docs MCP. |
+| `endorlabs.init()` / `endor-context`    | Copy agent knowledge to `.endorlabs/_cache/sdk/`; opt-in OpenAPI — see [AGENTS.md](../../AGENTS.md). Product docs: Docs MCP. |
 | `endorlabs.workflows` + console scripts | Tenant workflows — inventory in shipped `MANIFEST.json` (`workflows`, `workflows/entries.json`) and `[project.scripts]` in [pyproject.toml](../../pyproject.toml) |
 
-Agent knowledge naming: authoring `agent-knowledge/` → shipped `src/endorlabs/agent_knowledge/` → runtime `.endorlabs-context/sdk/`. Details: [AGENTS.md — Agent knowledge naming](../../AGENTS.md#agent-knowledge-naming) · [repository-layout.md](../contributing/repository-layout.md).
+Agent knowledge naming: authoring `agent-knowledge/` → shipped `src/endorlabs/agent_knowledge/` → runtime `.endorlabs/_cache/sdk/`. Details: [AGENTS.md — Agent knowledge naming](../../AGENTS.md#agent-knowledge-naming) · [repository-layout.md](../contributing/repository-layout.md).
 
 ## Custom facades
 

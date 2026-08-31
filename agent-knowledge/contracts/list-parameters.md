@@ -45,6 +45,17 @@ Common list params are flat kwargs on `client.<ResourceKind>.list(...)`. Use
 - **sort_by**, **desc**
 - **traverse:** tenant-wide discovery (`list_parameters.traverse=true`)
 
+**`page_id` and sort are mutually exclusive.** The platform rejects follow-up
+list requests that send `list_parameters.page_id` together with
+`list_parameters.sort.*` (HTTP 400: "page id cannot be provided with sort
+method"). The SDK raises `ValidationError` before that call when
+pagination would advance a sorted list via `page_id`.
+
+For **N newest rows**, keep sort and stay on one page: `max_pages=1` with
+`limit=` / `page_size=N` (e.g. `ScanResult.list_by_project(project, limit=N)`).
+Do **not** raise `max_pages` above 1 while `sort_by` is set. To paginate a full
+set, omit sort and order client-side if needed.
+
 **Performance:** Do not set **`page_size`** unless explicitly requested. Prefer
 defaults, selective **`filter`**, and **`max_pages`** caps. See bootstrap contract
 `rules/endor-list-query-performance.md`.

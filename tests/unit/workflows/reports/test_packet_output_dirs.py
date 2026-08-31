@@ -8,20 +8,21 @@ from endorlabs.workflows.reports.export.html.render import (
 )
 
 
-def test_default_packet_output_dir_appends_mmddyy() -> None:
-    path = default_packet_output_dir("example-tenant", date_suffix="082126")
-    assert path.name == "example-tenant-executive-packet-082126"
-    assert path.parent.name == "executive-report-packet"
+def test_default_packet_output_dir_uses_yyyy_mm_dd() -> None:
+    path = default_packet_output_dir("example-tenant", date_suffix="2026-08-28")
+    assert path.name == "example-tenant-2026-08-28"
+    assert path.parent.name == "reports"
 
 
-def test_default_patches_report_dir_appends_mmddyy() -> None:
-    path = default_patches_report_dir("example-tenant", date_suffix="082126")
-    assert path.name == "example-tenant-082126"
-    assert path.parent.name == "patches-reports"
+def test_default_patches_report_dir_uses_yyyy_mm_dd() -> None:
+    path = default_patches_report_dir("example-tenant", date_suffix="2026-08-28")
+    assert path.name == "example-tenant-2026-08-28"
+    assert path.parent.name == "patches"
+    assert path.parent.parent.name == "reports"
 
 
 def test_default_packet_output_dir_today_suffix_shape() -> None:
+    from endorlabs.context.paths import tenant_day_suffix
+
     path = default_packet_output_dir("example-tenant")
-    assert path.name.startswith("example-tenant-executive-packet-")
-    suffix = path.name.rsplit("-", 1)[-1]
-    assert len(suffix) == 6 and suffix.isdigit()
+    assert path.name == f"example-tenant-{tenant_day_suffix()}"

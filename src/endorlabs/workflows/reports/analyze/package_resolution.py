@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.context.paths import default_runs_dir, sanitize_path_segment
+from endorlabs.context.paths import default_reports_subdir, sanitize_path_segment
 from endorlabs.filters import pv_main_context_filter
 
 RUN_BUCKET = "package-resolution"
@@ -429,7 +429,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--output",
         type=Path,
         default=None,
-        help="CSV output path (default: workspace/runs/package-resolution/...).",
+        help=(
+            f"CSV output path (default: "
+            f"{default_reports_subdir(RUN_BUCKET).as_posix()}/...)."
+        ),
     )
     parser.add_argument(
         "--max-workers",
@@ -489,13 +492,19 @@ def build_summary(
     }
 
 
+def default_package_resolution_csv_path(tenant: str) -> Path:
+    """Default CSV path under ``reports/package-resolution/<tenant>/``."""
+    safe = sanitize_path_segment(tenant)
+    return default_reports_subdir(RUN_BUCKET) / safe / "package-resolution.csv"
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the package-resolution report CLI; return a process exit code."""
     args = parse_args(argv)
     output = args.output
     if output is None:
         safe = sanitize_path_segment(args.tenant)
-        output = default_runs_dir(RUN_BUCKET) / f"{safe}-package-resolution.csv"
+        output = default_reports_subdir(RUN_BUCKET) / safe / "package-resolution.csv"
 
     client = endorlabs.Client(tenant=args.tenant, timeout=float(args.timeout))
     try:

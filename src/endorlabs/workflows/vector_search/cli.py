@@ -24,7 +24,12 @@ LOGGER = get_resource_logger(__name__)
 def parse_vector_query_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse ``endor-vector-query`` arguments."""
     p = argparse.ArgumentParser(description="List or query tenant vector stores.")
-    p.add_argument("--tenant", required=True, help="Client tenant (auth context).")
+    p.add_argument(
+        "-n",
+        "--tenant",
+        required=True,
+        help="Client tenant (auth context).",
+    )
     p.add_argument(
         "--namespace",
         default="",

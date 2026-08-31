@@ -13,7 +13,7 @@ on:
         required: true
         type: string
       ref:
-        description: "Git ref to build from"
+        description: "Git ref to build from (main, v* tag, or full 40-char SHA)"
         required: false
         default: main
         type: string
@@ -29,8 +29,6 @@ permissions:
 env:
   PYTHON_VERSION: "3.13"
   UV_VERSION: "0.9.3"
-  UV_INDEX_ENDOR_FIREWALL_USERNAME: ${{ secrets.UV_INDEX_ENDOR_FIREWALL_USERNAME }}
-  UV_INDEX_ENDOR_FIREWALL_PASSWORD: ${{ secrets.UV_INDEX_ENDOR_FIREWALL_PASSWORD }}
 
 jobs:
   build:
@@ -40,6 +38,27 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       publish: ${{ steps.version.outputs.publish }}
     steps:
+      - name: Validate checkout ref
+        env:
+          REF: ${{ inputs.ref }}
+        run: |
+          set -euo pipefail
+          # Allow main, version tags (v1.2.3 / 1.2.3), or full 40-char lowercase SHA.
+          if [[ "$REF" == "main" ]]; then
+            echo "Checkout ref OK: main"
+            exit 0
+          fi
+          if [[ "$REF" =~ ^v?[0-9]+(\.[0-9]+)*((a|b|rc)[0-9]+)?(\.post[0-9]+)?(\.dev[0-9]+)?$ ]]; then
+            echo "Checkout ref OK: version tag/name $REF"
+            exit 0
+          fi
+          if [[ "$REF" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Checkout ref OK: full SHA"
+            exit 0
+          fi
+          echo "::error::Invalid inputs.ref '$REF'. Allowed: main, a version tag (vX.Y.Z), or a full 40-char lowercase commit SHA."
+          exit 1
+
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:

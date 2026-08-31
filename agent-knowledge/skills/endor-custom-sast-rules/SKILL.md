@@ -10,7 +10,7 @@ endorlabs:
     workflow_id: semgrep-inventory
     cli: endor-semgrep-inventory
     module: endorlabs.workflows.semgrep.inventory
-    default_output: .endorlabs-context/workspace/inventory/semgrep_rule_metadata_inventory.json
+    default_output: .endorlabs/tasks/inventory/semgrep_rule_metadata_inventory.json
     agent_visible: true
 ---
 
@@ -31,7 +31,7 @@ inventory (`endor-semgrep-inventory`).
 
 ## 1. Author rule YAML
 
-1. Start from a reference rule — `.endorlabs-context/semgrep-rules/`, [semgrep/semgrep-rules](https://github.com/semgrep/semgrep-rules), or an existing tenant **`SemgrepRule`**.
+1. Start from a reference rule — `.endorlabs/semgrep-rules/`, [org/semgrep-rules](https://github.com/org/semgrep-rules), or an existing tenant **`SemgrepRule`**.
 2. Required top-level keys: `id`, `languages`, `severity`, `message`. Add Endor metadata (`endor-category`, `endor-tags`, `endor-targets`) when importing to the platform.
 3. Use `|` (literal block) for multi-line patterns — not `>-` (folded).
 4. Scope with `paths.include` / `paths.exclude` when needed.

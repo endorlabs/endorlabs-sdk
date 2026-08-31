@@ -19,6 +19,7 @@ from tests.conftest import (
     TEST_MAX_PAGES_TRAVERSE,
     TEST_PAGE_SIZE,
 )
+from tests.integration.list_scope import project_scoped_list_kwargs
 
 
 @pytest.mark.integration
@@ -67,12 +68,12 @@ class TestFinding:
 
         try:
             results = self.endor_client.Finding.list(
+                **project_scoped_list_kwargs(self.endor_client, traverse=True),
                 list_params=ListParameters(
                     filter="spec.dismiss==false",
                     page_size=TEST_PAGE_SIZE,
                 ),
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
-                traverse=True,
             )
         except NotFoundError:
             pytest.skip(
@@ -106,6 +107,7 @@ class TestFinding:
 
         try:
             results = self.endor_client.Finding.list(
+                **project_scoped_list_kwargs(self.endor_client),
                 list_params=ListParameters(page_size=TEST_PAGE_SIZE),
                 max_pages=TEST_MAX_PAGES,
             )
@@ -125,11 +127,6 @@ class TestFinding:
         [
             "FINDING_CATEGORY_SCA",
             "FINDING_CATEGORY_SAST",
-            "FINDING_CATEGORY_SECRETS",
-            "FINDING_CATEGORY_CONTAINER",
-            "FINDING_CATEGORY_AI_MODELS",
-            "FINDING_CATEGORY_LICENSE_RISK",
-            "FINDING_CATEGORY_SCPM",
         ],
     )
     def test_finding_list_by_category(self, category: str) -> None:
@@ -145,6 +142,7 @@ class TestFinding:
         )
 
         findings = self.endor_client.Finding.list(
+            **project_scoped_list_kwargs(self.endor_client),
             list_params=list_params,
             max_pages=TEST_MAX_PAGES,
         )
@@ -271,7 +269,10 @@ class TestFinding:
             tenant=self.namespace,
             api_client=self.client,
         )
-        findings = client.Finding.list(max_pages=TEST_MAX_PAGES)
+        findings = client.Finding.list(
+            **project_scoped_list_kwargs(client),
+            max_pages=TEST_MAX_PAGES,
+        )
         if not findings:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = findings[0]

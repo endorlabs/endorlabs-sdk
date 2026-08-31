@@ -17,6 +17,7 @@ def test_build_report_packet_continues_after_sca_failure() -> None:
                 "namespace": "example-tenant",
                 "tags": [],
                 "create_time": "2026-01-01T00:00:00Z",
+                "is_sbom": False,
             }
         ],
         "tagCatalog": [],
@@ -71,6 +72,15 @@ def test_build_report_packet_continues_after_sca_failure() -> None:
             "endorlabs.workflows.reports.bundles.executive_packet.collect_patches_report",
             return_value={"families": [], "patch_units": []},
         ) as patches_mock,
+        patch(
+            "endorlabs.workflows.reports.bundles.executive_packet.fetch_license_feature_types",
+            return_value={
+                "ENDOR_LICENSE_FEATURE_TYPE_SAST",
+                "ENDOR_LICENSE_FEATURE_TYPE_AI_SAST",
+                "ENDOR_LICENSE_FEATURE_TYPE_SECRETS",
+                "ENDOR_LICENSE_FEATURE_TYPE_ENDOR_PATCHING",
+            },
+        ),
     ):
         cube = build_report_packet(
             client,
@@ -94,3 +104,4 @@ def test_build_report_packet_continues_after_sca_failure() -> None:
     assert "shards" in kwargs
     assert kwargs["shards"]
     assert kwargs["shards"][0].project_uuid == "proj-1"
+    assert "leaf_namespaces" in kwargs

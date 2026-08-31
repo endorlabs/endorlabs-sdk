@@ -20,6 +20,9 @@ uv run pre-commit install
 uv run pre-commit install --hook-type pre-push
 ```
 
+`uv sync` resolves dependencies from **public PyPI** — no Package Firewall index or
+repository secrets are required for contributor setup or CI.
+
 Alternatively: `uv venv` then `uv pip install -e .` and install dev dependencies from [pyproject.toml](pyproject.toml) (e.g. `uv sync --group dev` or equivalent for your uv version).
 
 If `uv sync` fails on version metadata, see [docs/contributing/release-publishing.md](docs/contributing/release-publishing.md) and run `uv run python devtools/ship/check_project_version.py`.
@@ -33,7 +36,7 @@ Human checklist (automation: [.pre-commit-config.yaml](.pre-commit-config.yaml);
 - [ ] **Hooks installed** — `uv run pre-commit install` and `uv run pre-commit install --hook-type pre-push` (see [Setup](#setup)).
 - [ ] **Agent-knowledge** — after `agent-knowledge/` edits: `uv run python devtools/codegen/sync_agent_knowledge.py` and commit `src/endorlabs/agent_knowledge/`.
 - [ ] **Docs freshness** — grep changed paths for stale layout or CLI strings (`workspace/sessions/`, removed `devtools/` scripts, wrong flags such as `endor-auth refresh --sso` vs `--method sso`). Align docstrings, argparse `help=`, and comments with current code (see shipped rule `endor-workspace-layout`, [docs-skillbase-consistency](.cursor/rules/docs-skillbase-consistency.mdc)).
-- [ ] **No secrets or customer data** — never commit `.env`, tokens, API keys, or customer estate identifiers (tenants, production UUIDs, registered repo URLs, emails) in **any** tracked path: unit fixtures, docstrings, CLI examples, skills, docs. Use placeholders (`example-tenant`, `user@example.com` / `user@endor.ai`). Integration tests: real tenant via **env** only. Pre-commit **blocks** staged `.env` / `.endorlabs-context/`, runs **gitleaks**, and **fails** on emails / non-Endor URLs / estate `-n` flags / estate literals; see rule `endor-portable-examples`.
+- [ ] **No secrets or customer data** — never commit `.env`, tokens, API keys, or customer estate identifiers (tenants, production UUIDs, registered repo URLs, emails) in **any** tracked path: unit fixtures, docstrings, CLI examples, skills, docs. Use placeholders (`example-tenant`, `user@example.com` / `user@endor.ai`). Integration tests: real tenant via **env** only. Pre-commit **blocks** staged `.env` / `.endorlabs/`, runs **gitleaks**, and **fails** on emails / non-Endor URLs / estate `-n` flags / estate literals; see rule `endor-portable-examples`.
 - [ ] **Changelog** — user-visible changes: one bullet under `docs/changelog.md` → **Unreleased** (policy: [agent-knowledge/rules/endor-changelog.md](agent-knowledge/rules/endor-changelog.md)). Pre-commit prints a **reminder** when user-facing paths are staged without `docs/changelog.md`.
 - [ ] **Pre-commit passes** — `uv run pre-commit run --all-files` (or let the commit hook run: ruff, pyright, unit pytest, ship-artifacts verify when applicable). New guards: rule [`endor-maintainer-tooling`](agent-knowledge/rules/endor-maintainer-tooling.md). New/changed tests: rule [`endor-unit-tests`](agent-knowledge/rules/endor-unit-tests.md).
 
@@ -189,21 +192,22 @@ uv sync --extra analytics
 import endorlabs
 status = endorlabs.init(include_openapi=True)
 # Writes:
-#   .endorlabs-context/context.json
-#   .endorlabs-context/sdk/              (shipped agent knowledge; no auth)
-#   .endorlabs-context/platform/openapi/  (optional download)
-#   .endorlabs-context/workspace/        (workflow outputs: projects/, runs/<run-bucket>/, inventory/)
+#   .endorlabs/_cache/context.json
+#   .endorlabs/_cache/sdk/              (shipped agent knowledge; no auth)
+#   .endorlabs/_cache/openapi.json       (optional download)
+#   .endorlabs/reports/                  (endor-reports deliverables)
+#   .endorlabs/tasks/                    (workflow session outputs)
 # Product docs: Docs MCP
 ```
 
 Options: `include_openapi=True/False`, `include_agent_knowledge=True/False`, `force=True`, `sync_skills="none|cursor|claude|both"`.
 
-Consumer projects should add `.endorlabs-context/` to `.gitignore` (OpenAPI + local run artifacts).
+Consumer projects should add `.endorlabs/` to `.gitignore` (OpenAPI + local run artifacts).
 
 The local pre-commit hook also refreshes these maintainer-only artifacts automatically:
 
 - changes under `agent-knowledge/skills/` require `devtools/codegen/sync_agent_knowledge.py` (CI/pre-push `--verify` drift gate)
-- `sync_skills` mirrors `.endorlabs-context/sdk/skills/`, not repo `agent-knowledge/skills/` (pip-safe)
+- `sync_skills` mirrors `.endorlabs/_cache/sdk/skills/`, not repo `agent-knowledge/skills/` (pip-safe)
 - changes under `src/endorlabs/context/` refresh the existing SDK bootstrap tree (OpenAPI when auth is available)
 
 See [AGENTS.md](AGENTS.md#bootstrap) for agent bootstrap. Full repo region map: [docs/contributing/repository-layout.md](docs/contributing/repository-layout.md).

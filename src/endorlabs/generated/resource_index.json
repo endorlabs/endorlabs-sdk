@@ -18,8 +18,6 @@
       "resource_name": "audit-logs",
       "scope": "tenant",
       "supported_ops": [
-        "create",
-        "delete",
         "get",
         "list"
       ]
@@ -88,7 +86,6 @@
       "resource_name": "findings",
       "scope": "tenant",
       "supported_ops": [
-        "create",
         "delete",
         "get",
         "list",
@@ -101,8 +98,6 @@
       "resource_name": "finding-logs",
       "scope": "tenant",
       "supported_ops": [
-        "create",
-        "delete",
         "get",
         "list"
       ]
@@ -149,8 +144,6 @@
       "resource_name": "linter-results",
       "scope": "tenant",
       "supported_ops": [
-        "create",
-        "delete",
         "get",
         "list"
       ]
@@ -166,16 +159,32 @@
       ]
     },
     {
+      "attr_name": "MalwareExposure",
+      "doc_path": "docs/generated-reference/resources/MalwareExposure.md",
+      "resource_name": "malware-exposure",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "MalwareExposureQuery",
+      "doc_path": "docs/generated-reference/resources/MalwareExposureQuery.md",
+      "resource_name": "queries/malware-exposure",
+      "scope": "tenant",
+      "supported_ops": [
+        "create"
+      ]
+    },
+    {
       "attr_name": "Metric",
       "doc_path": "docs/generated-reference/resources/Metric.md",
       "resource_name": "metrics",
       "scope": "tenant",
       "supported_ops": [
-        "create",
-        "delete",
         "get",
-        "list",
-        "update"
+        "list"
       ]
     },
     {
@@ -241,12 +250,24 @@
       ]
     },
     {
+      "attr_name": "PackageManager",
+      "doc_path": "docs/generated-reference/resources/PackageManager.md",
+      "resource_name": "package-managers",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
       "attr_name": "PackageVersion",
       "doc_path": "docs/generated-reference/resources/PackageVersion.md",
       "resource_name": "package-versions",
       "scope": "tenant",
       "supported_ops": [
-        "create",
         "delete",
         "get",
         "list",
@@ -331,8 +352,6 @@
       "resource_name": "repositories",
       "scope": "tenant",
       "supported_ops": [
-        "create",
-        "delete",
         "get",
         "list",
         "update"
@@ -344,8 +363,6 @@
       "resource_name": "repository-versions",
       "scope": "tenant",
       "supported_ops": [
-        "create",
-        "delete",
         "get",
         "list",
         "update"
@@ -389,7 +406,6 @@
       "resource_name": "scan-results",
       "scope": "tenant",
       "supported_ops": [
-        "create",
         "delete",
         "get",
         "list",
@@ -426,6 +442,17 @@
       "supported_ops": [
         "create",
         "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "SystemConfig",
+      "doc_path": "docs/generated-reference/resources/SystemConfig.md",
+      "resource_name": "system-config",
+      "scope": "tenant",
+      "supported_ops": [
         "get",
         "list",
         "update"

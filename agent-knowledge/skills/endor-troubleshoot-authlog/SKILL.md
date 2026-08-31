@@ -14,7 +14,7 @@ Systematic workflow for **Endor-side** evidence: what the platform recorded at l
 
   `uv run --env-file .env python ...` (browser refresh: `uv run endor-auth refresh --method sso -n <tenant>`).
 - **Auth setup:** [endor-auth-setup](../endor-auth-setup/SKILL.md) — `uv run endor-auth check --tenant <tenant>`.
-- **Local context (optional):** API spec at `.endorlabs-context/platform/openapi/openapiv2.swagger.json`;
+- **Local context (optional):** API spec at `.endorlabs/_cache/openapi.json`;
   resource models in `src/endorlabs/resources/authentication_log.py`,
   `authorization_policy.py`
 - **Permissions:** token must be able to list `AuthenticationLog` and
@@ -30,7 +30,7 @@ Systematic workflow for **Endor-side** evidence: what the platform recorded at l
 3. Applies **narrow filters** on auth logs (SSO URI slices, target email/group,
    failed or no-tenant rows) before drawing conclusions — see interpretation notes.
 4. Optionally writes **investigation export** JSON under
-   `.endorlabs-context/workspace/runs/troubleshoot-authlog/`.
+   `.endorlabs/tasks/troubleshoot-authlog/`.
 
 ## Library layers
 
@@ -82,7 +82,7 @@ policies = client.AuthorizationPolicy.list(traverse=True, max_pages=2)
 client.close()
 ```
 
-For structured exports, write JSON under `.endorlabs-context/workspace/runs/troubleshoot-authlog/`
+For structured exports, write JSON under `.endorlabs/tasks/troubleshoot-authlog/`
 (see [workspace-layout](../../rules/endor-workspace-layout.md)).
 
 SSO claim-to-namespace mapping: [endor-sso-integration-validation-troubleshooting](../endor-sso-integration-validation-troubleshooting/SKILL.md)

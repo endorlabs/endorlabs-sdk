@@ -224,3 +224,29 @@ def test_fetch_parent_package_versions_groups_by_namespace() -> None:
     kwargs = client.PackageVersion.list_iter.call_args.kwargs
     assert kwargs["namespace"] == "tenant.child"
     assert kwargs["traverse"] is False
+
+
+def test_fetch_parent_package_versions_traverse_at_tenant_root() -> None:
+    client = MagicMock()
+    client.PackageVersion.list_iter.return_value = [
+        {"uuid": "pv-1", "spec": {"resolution_errors": {}}}
+    ]
+    findings = [
+        {
+            "meta": {"parent_uuid": "pv-1"},
+            "tenant_meta": {"namespace": "tenant"},
+        }
+    ]
+
+    pvs = fetch_parent_package_versions(
+        client,
+        "tenant",
+        findings,
+        {"pv-1"},
+        pv_filter="context.type==CONTEXT_TYPE_MAIN",
+    )
+
+    assert pvs["pv-1"]["uuid"] == "pv-1"
+    kwargs = client.PackageVersion.list_iter.call_args.kwargs
+    assert kwargs["namespace"] == "tenant"
+    assert kwargs["traverse"] is True

@@ -1,4 +1,9 @@
-"""Integration tests for live call-graph path search."""
+"""Integration tests for live call-graph path search.
+
+Layer: **workflow wiring** — library resolves a project, hydrates call-graph
+PackageVersions, and runs multi-hop path search on live artifacts. Marked
+``long`` due to large PV pagination and decode work.
+"""
 
 from __future__ import annotations
 
@@ -19,6 +24,7 @@ from tests.conftest import CANONICAL_SDK_REPO_URL
 
 
 @pytest.mark.integration
+@pytest.mark.long
 class TestCallgraphPath:
     """Validate path search against a real tenant project when available."""
 

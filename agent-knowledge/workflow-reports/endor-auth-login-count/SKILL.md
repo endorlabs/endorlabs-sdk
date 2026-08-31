@@ -36,7 +36,7 @@ the last **N days** (default **90**), aggregated by **identity** derived from
   `uv run endor-context --sync-skills cursor` — see [README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/README.md#agent-bootstrap-discover-vs-init)
   and [agent-knowledge/README.md](../../INDEX.md). Runtime skill path:
   `agent-knowledge/workflow-reports/endor-auth-login-count/`.
-- **Outputs:** write under `.endorlabs-context/workspace/runs/auth-login-count/`
+- **Outputs:** write under `.endorlabs/reports/login-count/`
   (see [workspace-layout](../../rules/endor-workspace-layout.md)).
 
 ## Scope
@@ -88,7 +88,7 @@ uv run --env-file .env endor-reports login-count -n <tenant> --days 90
 |------|---------|---------|
 | **`--tenant`** | *(required)* | Tenant namespace for `Client(tenant=…)` and list `namespace=` |
 | **`--days`** | `90` | Lookback window in days (`meta.create_time>=date(…)` filter) |
-| **`--output`** | `workspace/runs/auth-login-count/login-count-<tenant>-<days>d.csv` | CSV path |
+| **`--output`** | `reports/auth-login-count/login-count-<tenant>-<days>d.csv` | CSV path |
 | **`--json-summary`** | unset | Optional JSON summary path (adds `csv` key with output path) |
 | **`--max-pages`** | unset | Cap `list` / `list_groups` pagination depth |
 | **`--platform-wide`** | off | Set `traverse=True` (fan out child namespaces). Default: tenant list path only |
@@ -96,7 +96,7 @@ uv run --env-file .env endor-reports login-count -n <tenant> --days 90
 | **`--include-api-key`** | off | Drop interactive URI filter; include `/v1/auth/api-key` events |
 | **`--list-rows`** | off | Client-side aggregation from full `list` rows instead of `list_groups` |
 
-Default output: `.endorlabs-context/workspace/runs/auth-login-count/login-count-<tenant>-<days>d.csv`
+Default output: `.endorlabs/reports/login-count/login-count-<tenant>-<days>d.csv`
 
 ## endorctl parity
 

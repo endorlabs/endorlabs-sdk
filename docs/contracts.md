@@ -39,7 +39,7 @@ This document is the in-repo source of truth for shared SDK semantics.
 
 ## OpenAPI / spec
 
-- Local (preferred): `.endorlabs-context/platform/openapi/openapiv2.swagger.json`.
+- Local (preferred): `.endorlabs/_cache/openapi.json`.
 - List endpoints use `v1/namespaces/{tenant_meta.namespace}/{resource_name}`.
 - Update (PATCH) uses collection URL; UUID and payload are in request body.
 
@@ -73,7 +73,9 @@ This document is the in-repo source of truth for shared SDK semantics.
 
 ## Namespace scoping (resource-scoped operations)
 
-**OSS catalog plane:** `Vulnerability`, `Malware`, `QueryVulnerability`, and `QueryMalware` facades use registry `scope="oss"`. List/get and catalog query creates always hit `/v1/namespaces/oss/…` regardless of `Client(tenant=…)`. Prefer `spec.package_version_names` with Endor ecosystem coordinates (for example `pypi://requests@2.31.0`) per product docs; see [Malware detection](https://docs.endorlabs.com/scan/malware) and the Query* API reference pages.
+**OSS catalog plane:** `Vulnerability`, `Malware`, `QueryVulnerability`, and `QueryMalware` facades use registry `scope="oss"`. List/get and catalog query creates always hit `/v1/namespaces/oss/…` regardless of `Client(tenant=…)`. OpenAPI paths for these kinds are parameterized (`{tenant_meta.namespace}`); the SDK forces literal `oss` via `devtools/codegen/model_sync_profiles/resource_scope_overrides.json`. Prefer `spec.package_version_names` with Endor ecosystem coordinates (for example `pypi://requests@2.31.0`) per product docs; see [Malware detection](https://docs.endorlabs.com/scan/malware) and the Query* API reference pages.
+
+**Tenant malware preference:** For customer blast radius / exposure / blocks, prefer **`MalwareExposure`** / **`MalwareExposureQuery`**, Finding malware category, and **`PackageFirewallLog`** under the customer namespace. Keep `QueryMalware` / `Malware` for **catalog identity** only until the platform retires catalog-at-`oss`.
 
 When you have a resource instance (for example from `list(traverse=True)`), pass the resource object to `get`, `update`, or `delete` so namespace is resolved from the resource and cross-namespace 404s are avoided.
 

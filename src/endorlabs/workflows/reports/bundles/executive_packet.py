@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -14,6 +15,13 @@ from endorlabs.workflows.reports.analyze.code_findings_trend import (
 from endorlabs.workflows.reports.analyze.findings_trend import (
     build_sca_burndown_report,
 )
+from endorlabs.workflows.reports.analyze.license_entitlements import (
+    SKIP_REASON_NOT_ENTITLED,
+    SKIP_REASON_OPT_IN,
+    entitled_code_categories,
+    fetch_license_feature_types,
+    has_endor_patching,
+)
 from endorlabs.workflows.reports.analyze.patches import (
     collect_patches_report,
     empty_patches_report,
@@ -21,6 +29,7 @@ from endorlabs.workflows.reports.analyze.patches import (
 from endorlabs.workflows.reports.analyze.projects import (
     build_onboarding_report,
     discover_projects,
+    non_sbom_leaf_namespaces,
 )
 from endorlabs.workflows.reports.analyze.sprawl import (
     build_version_sprawl_report,
@@ -134,6 +143,19 @@ def _run_slice[T](
         return empty
 
 
+def _invoke_slice[T](
+    name: str, empty: T, fn: Callable[[], T]
+) -> tuple[str, T, dict[str, Any]]:
+    """Worker-safe slice invoke; caller merges *reports_meta* on the main thread."""
+    try:
+        return name, fn(), {"status": "ok"}
+    except Exception as exc:
+        err = type(exc).__name__
+        logger.warning("%s", f"{_WF}.{name}.failed error_type={err}")
+        milestone(_WF, f"{name}.failed", error_type=err)
+        return name, empty, {"status": "failed", "error_type": err}
+
+
 def build_report_packet(
     client: Client,
     namespace: str,
@@ -146,7 +168,7 @@ def build_report_packet(
     include_findings_burndown: bool = True,
     include_sca_burndown: bool | None = None,
     include_code_findings_burndown: bool = True,
-    include_patches: bool = True,
+    include_patches: bool = False,
     patches_only: bool = False,
     patches_workers: int | None = None,
 ) -> dict[str, Any]:
@@ -156,12 +178,20 @@ def build_report_packet(
 
     ``include_findings_burndown`` is a compat alias for ``include_sca_burndown``.
 
-    When *patches_only* is true, skip onboarding/sprawl/burndown pulls and build
+    Endor Patches is **opt-in** (``include_patches=False`` by default). When
+    *patches_only* is true, skip onboarding/sprawl/burndown pulls and build
     only ``reports.patches`` (campaign batch path).
+
+    SAST / AI-SAST / Secrets and Endor Patches slices are also gated by
+    ``EndorLicense`` feature entitlements when the license list succeeds:
+    unentitled slices are skipped (``reportsMeta.*.reason=not_entitled``) and
+    omitted from the HTML packet. When the license probe fails or returns no
+    rows, requested slices still run (fail open).
 
     Each report slice is isolated: a timeout in SCA (etc.) still yields a cube
     with other slices filled and ``dataGaps`` / ``reportsMeta`` recording the
-    failure. Discover failure remains fatal.
+    failure. Discover failure remains fatal. After discover, enabled slices
+    run concurrently (bounded pool).
 
     Progress: INFO milestones via :mod:`endorlabs.workflows.reports.logging`
     (configure a StreamHandler in the CLI to surface them on stdout).
@@ -172,19 +202,78 @@ def build_report_packet(
     patch_workers = int(patches_workers if patches_workers is not None else max_workers)
     wall0 = time.perf_counter()
     reports_meta: dict[str, Any] = {}
+    license_features = fetch_license_feature_types(client, namespace)
+    code_categories: list[str] | None = None
+    if license_features is not None:
+        code_categories = entitled_code_categories(license_features)
+    run_code = bool(include_code_findings_burndown and not patches_only)
+    run_patches = bool(include_patches or patches_only)
+    if license_features is not None:
+        if run_code and not code_categories:
+            run_code = False
+            milestone(_WF, "code_burndown.skipped", reason=SKIP_REASON_NOT_ENTITLED)
+            reports_meta["codeFindingsBurndown"] = {
+                "status": "skipped",
+                "reason": SKIP_REASON_NOT_ENTITLED,
+            }
+        if run_patches and not has_endor_patching(license_features):
+            run_patches = False
+            milestone(_WF, "patches.skipped", reason=SKIP_REASON_NOT_ENTITLED)
+            reports_meta["patches"] = {
+                "status": "skipped",
+                "reason": SKIP_REASON_NOT_ENTITLED,
+            }
+
     milestone(
         _WF,
         "start",
         patches_only=int(patches_only),
         sprawl=int(include_version_sprawl and not patches_only),
         sca=int(include_sca_burndown and not patches_only),
-        code=int(include_code_findings_burndown and not patches_only),
-        patches=int(include_patches or patches_only),
+        code=int(run_code),
+        patches=int(run_patches),
         lookback=lookback,
         workers=max_workers,
+        license_features=0 if license_features is None else len(license_features),
     )
 
     if patches_only:
+        if not run_patches:
+            empty_sca = _empty_sca_burndown(
+                lookback=lookback,
+                min_projects=min_projects,
+                max_workers=max_workers,
+                tag_catalog=[],
+            )
+            empty_code = _empty_code_findings(
+                lookback=lookback,
+                min_projects=min_projects,
+                max_workers=max_workers,
+                tag_catalog=[],
+            )
+            milestone(_WF, "done", mode="patches_only", elapsed_s=_elapsed_s(wall0))
+            return {
+                "schema": REPORT_PACKET_SCHEMA,
+                "tenant": namespace,
+                "pulledAt": datetime.now(UTC).isoformat(),
+                "pathOptions": ["all", namespace],
+                "leafNamespaces": [namespace],
+                "tagCatalog": [],
+                "tagSeriesMeta": empty_sca.get("tagSeriesMeta"),
+                "reportsMeta": reports_meta,
+                "dataGaps": [],
+                "reports": {
+                    "onboarding": {
+                        "projects": [],
+                        "projectCount": 0,
+                        "cadence": {},
+                    },
+                    "versionSprawl": _empty_sprawl(),
+                    "scaBurndown": empty_sca,
+                    "codeFindingsBurndown": empty_code,
+                    "patches": empty_patches_report(),
+                },
+            }
         t0 = time.perf_counter()
         milestone(_WF, "patches.start", mode="patches_only", workers=patch_workers)
         patches = _run_slice(
@@ -274,6 +363,20 @@ def build_report_packet(
         if p.get("uuid")
     ]
 
+    empty_sca = _empty_sca_burndown(
+        lookback=lookback,
+        min_projects=min_projects,
+        max_workers=max_workers,
+        tag_catalog=tag_catalog,
+    )
+    empty_code = _empty_code_findings(
+        lookback=lookback,
+        min_projects=min_projects,
+        max_workers=max_workers,
+        tag_catalog=tag_catalog,
+    )
+    java_leaves = non_sbom_leaf_namespaces(projects, fallback=namespace)
+
     def _cadence() -> dict[str, Any]:
         from endorlabs.workflows.reports.analyze.onboarding_cadence import (
             collect_onboarding_cadence,
@@ -291,7 +394,136 @@ def build_report_packet(
         milestone(_WF, "cadence.done", elapsed_s=_elapsed_s(t_cadence))
         return cadence
 
-    onboarding["cadence"] = _run_slice("cadence", reports_meta, {}, _cadence)
+    def _sprawl() -> dict[str, Any]:
+        t_sp = time.perf_counter()
+        milestone(_WF, "sprawl.start", leaves=len(leaves))
+        leaf_pairs = collect_leaf_pairs(client, leaves)
+        built = build_version_sprawl_report(
+            leaf_pairs=leaf_pairs,
+            path_options=path_options,
+            projects=projects,
+            tag_catalog=tag_catalog,
+        )
+        milestone(
+            _WF,
+            "sprawl.done",
+            ecosystems=len(built.get("ecosystems") or []),
+            elapsed_s=_elapsed_s(t_sp),
+        )
+        return built
+
+    def _sca() -> dict[str, Any]:
+        t_sca = time.perf_counter()
+        milestone(
+            _WF,
+            "sca_burndown.start",
+            lookback=lookback,
+            workers=max_workers,
+            leaves=len(leaves),
+        )
+        built = build_sca_burndown_report(
+            client,
+            tenant=namespace,
+            projects=projects,
+            leaf_namespaces=leaves,
+            path_options=path_options,
+            tag_catalog=tag_catalog,
+            lookback=lookback,
+            min_projects=min_projects,
+            max_workers=max_workers,
+        )
+        meta = built.get("tagSeriesMeta") or {}
+        milestone(
+            _WF,
+            "sca_burndown.done",
+            tags_ready=int(meta.get("seriesReadyCount") or 0),
+            elapsed_s=_elapsed_s(t_sca),
+        )
+        return built
+
+    def _code() -> dict[str, Any]:
+        t_code = time.perf_counter()
+        milestone(
+            _WF,
+            "code_burndown.start",
+            lookback=lookback,
+            workers=max_workers,
+            leaves=len(leaves),
+        )
+        built = build_code_findings_burndown_report(
+            client,
+            tenant=namespace,
+            projects=projects,
+            leaf_namespaces=leaves,
+            path_options=path_options,
+            tag_catalog=tag_catalog,
+            lookback=lookback,
+            min_projects=min_projects,
+            max_workers=max_workers,
+            categories=code_categories,
+        )
+        meta = built.get("tagSeriesMeta") or {}
+        milestone(
+            _WF,
+            "code_burndown.done",
+            tags_ready=int(meta.get("seriesReadyCount") or 0),
+            elapsed_s=_elapsed_s(t_code),
+        )
+        return built
+
+    def _patches() -> dict[str, Any]:
+        t_p = time.perf_counter()
+        milestone(_WF, "patches.start", workers=patch_workers)
+        built = collect_patches_report(
+            client,
+            namespace,
+            max_workers=max(1, min(patch_workers, 16)),
+            shards=project_shards,
+            leaf_namespaces=java_leaves,
+        )
+        milestone(_WF, "patches.done", elapsed_s=_elapsed_s(t_p))
+        return built
+
+    jobs: list[tuple[str, dict[str, Any], Callable[[], dict[str, Any]]]] = [
+        ("cadence", {}, _cadence),
+    ]
+    if include_version_sprawl and leaves:
+        jobs.append(("versionSprawl", _empty_sprawl(), _sprawl))
+    else:
+        milestone(_WF, "sprawl.skipped")
+        reports_meta["versionSprawl"] = {"status": "skipped"}
+    if include_sca_burndown and leaves:
+        jobs.append(("scaBurndown", empty_sca, _sca))
+    else:
+        milestone(_WF, "sca_burndown.skipped")
+        reports_meta["scaBurndown"] = {"status": "skipped"}
+    if run_code and leaves:
+        jobs.append(("codeFindingsBurndown", empty_code, _code))
+    elif "codeFindingsBurndown" not in reports_meta:
+        milestone(_WF, "code_burndown.skipped")
+        reports_meta["codeFindingsBurndown"] = {"status": "skipped"}
+    if run_patches:
+        jobs.append(("patches", empty_patches_report(), _patches))
+    elif "patches" not in reports_meta:
+        milestone(_WF, "patches.skipped", reason=SKIP_REASON_OPT_IN)
+        reports_meta["patches"] = {"status": "skipped", "reason": SKIP_REASON_OPT_IN}
+
+    results: dict[str, Any] = {}
+    workers = max(1, min(len(jobs), 5))
+    milestone(_WF, "slices.parallel.start", jobs=len(jobs), workers=workers)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futs = {
+            pool.submit(_invoke_slice, name, empty, fn): name
+            for name, empty, fn in jobs
+        }
+        for fut in as_completed(futs):
+            name, value, meta = fut.result()
+            reports_meta[name] = meta
+            results[name] = value
+
+    onboarding["cadence"] = results.get("cadence") or {}
+    if reports_meta.get("cadence", {}).get("status") == "ok":
+        reports_meta["cadence"] = {"status": "ok"}
     milestone(
         _WF,
         "onboarding.done",
@@ -299,152 +531,10 @@ def build_report_packet(
         elapsed_s=_elapsed_s(t0),
     )
 
-    version_sprawl = _empty_sprawl()
-    if include_version_sprawl and leaves:
-
-        def _sprawl() -> dict[str, Any]:
-            t_sp = time.perf_counter()
-            milestone(_WF, "sprawl.start", leaves=len(leaves))
-            leaf_pairs = collect_leaf_pairs(client, leaves)
-            built = build_version_sprawl_report(
-                leaf_pairs=leaf_pairs,
-                path_options=path_options,
-                projects=projects,
-                tag_catalog=tag_catalog,
-            )
-            milestone(
-                _WF,
-                "sprawl.done",
-                ecosystems=len(built.get("ecosystems") or []),
-                elapsed_s=_elapsed_s(t_sp),
-            )
-            return built
-
-        version_sprawl = _run_slice(
-            "versionSprawl", reports_meta, _empty_sprawl(), _sprawl
-        )
-    else:
-        milestone(_WF, "sprawl.skipped")
-        reports_meta["versionSprawl"] = {"status": "skipped"}
-
-    sca = _empty_sca_burndown(
-        lookback=lookback,
-        min_projects=min_projects,
-        max_workers=max_workers,
-        tag_catalog=tag_catalog,
-    )
-    if include_sca_burndown and leaves:
-
-        def _sca() -> dict[str, Any]:
-            t_sca = time.perf_counter()
-            milestone(
-                _WF,
-                "sca_burndown.start",
-                lookback=lookback,
-                workers=max_workers,
-                leaves=len(leaves),
-            )
-            built = build_sca_burndown_report(
-                client,
-                tenant=namespace,
-                projects=projects,
-                leaf_namespaces=leaves,
-                path_options=path_options,
-                tag_catalog=tag_catalog,
-                lookback=lookback,
-                min_projects=min_projects,
-                max_workers=max_workers,
-            )
-            meta = built.get("tagSeriesMeta") or {}
-            milestone(
-                _WF,
-                "sca_burndown.done",
-                tags_ready=int(meta.get("seriesReadyCount") or 0),
-                elapsed_s=_elapsed_s(t_sca),
-            )
-            return built
-
-        sca = _run_slice(
-            "scaBurndown",
-            reports_meta,
-            sca,
-            _sca,
-        )
-    else:
-        milestone(_WF, "sca_burndown.skipped")
-        reports_meta["scaBurndown"] = {"status": "skipped"}
-
-    code = _empty_code_findings(
-        lookback=lookback,
-        min_projects=min_projects,
-        max_workers=max_workers,
-        tag_catalog=tag_catalog,
-    )
-    if include_code_findings_burndown and leaves:
-
-        def _code() -> dict[str, Any]:
-            t_code = time.perf_counter()
-            milestone(
-                _WF,
-                "code_burndown.start",
-                lookback=lookback,
-                workers=max_workers,
-                leaves=len(leaves),
-            )
-            built = build_code_findings_burndown_report(
-                client,
-                tenant=namespace,
-                projects=projects,
-                leaf_namespaces=leaves,
-                path_options=path_options,
-                tag_catalog=tag_catalog,
-                lookback=lookback,
-                min_projects=min_projects,
-                max_workers=max_workers,
-            )
-            meta = built.get("tagSeriesMeta") or {}
-            milestone(
-                _WF,
-                "code_burndown.done",
-                tags_ready=int(meta.get("seriesReadyCount") or 0),
-                elapsed_s=_elapsed_s(t_code),
-            )
-            return built
-
-        code = _run_slice(
-            "codeFindingsBurndown",
-            reports_meta,
-            code,
-            _code,
-        )
-    else:
-        milestone(_WF, "code_burndown.skipped")
-        reports_meta["codeFindingsBurndown"] = {"status": "skipped"}
-
-    patches = empty_patches_report()
-    if include_patches:
-
-        def _patches() -> dict[str, Any]:
-            t_p = time.perf_counter()
-            milestone(_WF, "patches.start", workers=patch_workers)
-            built = collect_patches_report(
-                client,
-                namespace,
-                max_workers=max(1, min(patch_workers, 16)),
-                shards=project_shards,
-            )
-            milestone(_WF, "patches.done", elapsed_s=_elapsed_s(t_p))
-            return built
-
-        patches = _run_slice(
-            "patches",
-            reports_meta,
-            empty_patches_report(),
-            _patches,
-        )
-    else:
-        milestone(_WF, "patches.skipped")
-        reports_meta["patches"] = {"status": "skipped"}
+    version_sprawl = results.get("versionSprawl") or _empty_sprawl()
+    sca = results.get("scaBurndown") or empty_sca
+    code = results.get("codeFindingsBurndown") or empty_code
+    patches = results.get("patches") or empty_patches_report()
 
     data_gaps = [
         key for key, meta in reports_meta.items() if meta.get("status") == "failed"

@@ -263,9 +263,10 @@ def _fetch_pv_batch(
         return []
     quoted = ", ".join(f'"{uuid}"' for uuid in uuids)
     filt = f"{pv_filter} and uuid in [{quoted}]"
+    effective_traverse = traverse or "." not in namespace.strip().rstrip(".")
     rows = client.PackageVersion.list_iter(
         namespace=namespace,
-        traverse=traverse,
+        traverse=effective_traverse,
         filter=filt,
         mask=PV_HYDRATION_MASK,
         page_size=100,

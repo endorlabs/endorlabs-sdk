@@ -600,6 +600,15 @@ def _validate_descriptions_and_model_sync() -> None:
             + ", ".join(sorted(op_mismatches))
         )
 
+    from endorlabs.registry_overlay import merge_generated_contract_with_overlay
+    from resource_user_space import validate_overlay_alignment
+
+    merged = merge_generated_contract_with_overlay(
+        list(contract_resources.values())
+    )
+    registry_names = {entry.attr_name for entry in RESOURCE_REGISTRY}
+    validate_overlay_alignment(merged, registry_attr_names=registry_names)
+
 
 def _build_class_docstring(
     entry: ResourceEntry, contract_row: dict[str, Any]

@@ -22,9 +22,9 @@ status = endorlabs.init(include_openapi=True)  # writes sdk/ + optional OpenAPI
 
 This creates:
 
-- `.endorlabs-context/sdk/` — shipped agent knowledge (INDEX, rules, skills, contracts)
-- `.endorlabs-context/platform/openapi/openapiv2.swagger.json` — API spec (when requested)
-- `.endorlabs-context/context.json` — init manifest
+- `.endorlabs/_cache/sdk/` — shipped agent knowledge (INDEX, rules, skills, contracts)
+- `.endorlabs/_cache/openapi.json` — API spec (when requested)
+- `.endorlabs/_cache/context.json` — init manifest
 
 Options: `include_openapi=True/False`, `include_agent_knowledge=True/False`, `force=True`. See [AGENTS.md](../../AGENTS.md#bootstrap) and [CONTRIBUTORS.md](../../CONTRIBUTORS.md#optional-sdk-bootstrap-and-openapi).
 
@@ -32,7 +32,7 @@ Options: `include_openapi=True/False`, `include_agent_knowledge=True/False`, `fo
 
 The model sync workflow:
 
-1. **Download OpenAPI spec** — CI/local use `.endorlabs-context/platform/openapi/openapiv2.swagger.json`.
+1. **Download OpenAPI spec** — CI/local use `.endorlabs/_cache/openapi.json`.
 2. **Run canonical generator** — Generate deterministic custom-mapped Pydantic model modules and mapping metadata.
 3. **Run sync checks** — Validate eligibility (`x-internal` + exception allowlist), mapping determinism, and generated artifact freshness.
 4. **Refresh runtime generated package** — Mirror generated model shards to `src/endorlabs/generated/models/` and refresh runtime registry contract.
@@ -86,13 +86,13 @@ uv run python devtools/codegen/sync_agent_knowledge.py
 
 ## Local Use
 
-**Option A — SDK bootstrap + OpenAPI:** Write agent knowledge and OpenAPI into `.endorlabs-context/`, then run model sync (see [SDK bootstrap and OpenAPI](#sdk-bootstrap-and-openapi-optional-for-ide-use) above).
+**Option A — SDK bootstrap + OpenAPI:** Write agent knowledge and OpenAPI into `.endorlabs/`, then run model sync (see [SDK bootstrap and OpenAPI](#sdk-bootstrap-and-openapi-optional-for-ide-use) above).
 
 **Option B — Spec only:** Download just the OpenAPI spec, then run model sync:
 
 ```python
 from endorlabs.context import sync_openapi
-sync_openapi()  # downloads to .endorlabs-context/platform/openapi/openapiv2.swagger.json
+sync_openapi()  # downloads to .endorlabs/_cache/openapi.json
 ```
 
 Then run model sync (credentials in `.env`; see [README.md](../../README.md#configuration)):

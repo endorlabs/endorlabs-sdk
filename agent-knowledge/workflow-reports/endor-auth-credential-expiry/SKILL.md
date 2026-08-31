@@ -31,7 +31,7 @@ flagging keys that are **expired** or **expiring within N days** (default **30**
 - **Bootstrap (agents):** workflow library code ships in the wheel (`endorlabs.workflows.auth`).
   To materialize this playbook on disk, run `endorlabs.init()` or
   `uv run endor-context --sync-skills cursor` — see [README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/README.md#agent-bootstrap-discover-vs-init).
-- **Outputs:** write under `.endorlabs-context/workspace/runs/auth-credential-expiry/`
+- **Outputs:** write under `.endorlabs/reports/auth-credential-expiry/`
   (see [workspace-layout](../../rules/endor-workspace-layout.md)).
 
 ## Scope
@@ -84,13 +84,13 @@ uv run --env-file .env endor-reports credential-expiry -n <tenant> \
 |------|---------|---------|
 | **`--tenant`** | *(required)* | Tenant namespace for `Client(tenant=…)` and list `namespace=` |
 | **`--within-days`** | `30` | Flag keys expiring within this many days |
-| **`--output`** | `workspace/runs/auth-credential-expiry/credential-expiry-<tenant>-<days>d.csv` | CSV path |
+| **`--output`** | `reports/auth-credential-expiry/credential-expiry-<tenant>-<days>d.csv` | CSV path |
 | **`--json-summary`** | unset | Optional JSON summary path (adds `csv` key with output path) |
 | **`--max-pages`** | unset | Cap `APIKey.list` pagination depth |
 | **`--platform-wide`** | off | Set `traverse=True` (fan out child namespaces). Default: tenant list path only |
 | **`--include-healthy`** | off | Include keys that are not expired or expiring soon |
 
-Default output: `.endorlabs-context/workspace/runs/auth-credential-expiry/credential-expiry-<tenant>-<days>d.csv`
+Default output: `.endorlabs/reports/auth-credential-expiry/credential-expiry-<tenant>-<days>d.csv`
 
 Exit code **1** when at least one key is **expired** (useful for scheduled checks).
 

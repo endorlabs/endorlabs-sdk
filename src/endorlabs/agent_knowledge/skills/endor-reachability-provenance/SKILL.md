@@ -24,7 +24,10 @@ Use this skill to triage findings where reachability signals conflict, especiall
 
 ## What "oss namespace" is used for
 
-**API path rule:** List and resolve OSS-plane resources under the literal namespace **`oss`**. Do not use `<tenant>.oss`, `<customer>.oss`, or a child namespace under the customer root; `scope="oss"` on the client separates this plane from customer namespace paths.
+**API path rule:** List and resolve OSS-plane **catalog** resources under the
+literal namespace **`oss`**. Do not use `<tenant>.oss`, `<customer>.oss`, or a
+child namespace under the customer root; `scope="oss"` on the client separates
+this plane from customer namespace paths.
 
 Use the `oss` namespace as the canonical vulnerability provenance source for:
 
@@ -33,6 +36,10 @@ Use the `oss` namespace as the canonical vulnerability provenance source for:
 - `affected_callpath_uris` and `affected_filepaths`
 - alias consistency checks across CVE/GHSA IDs
 - source attribution fields (for example `SOURCE_OSV`, `SOURCE_ENDOR`)
+
+For **tenant malware blast radius / exposure**, prefer **`MalwareExposure`** /
+**`MalwareExposureQuery`** under the customer namespace — not `Malware.list` on
+`oss`. Keep `oss` for catalog stitching as above.
 
 Do not infer function-level provenance from advisory prose alone when structured `affected_callpath_uris` are available in `oss`.
 
@@ -55,7 +62,7 @@ Practical implication: a finding can be `REACHABLE_FUNCTION` even when a direct 
 ## Workflow
 
 0. Build unified context artifact (default path)
-   - Run `uv run endor-reachability-context --tenant <tenant> --namespace <namespace> --finding-uuid <finding_uuid>` (default output: `workspace/projects/<finding-uuid>/reachability_context.json`).
+   - Run `uv run endor-reachability-context --tenant <tenant> --namespace <namespace> --finding-uuid <finding_uuid>` (default output: `tasks/<slug>-<YYYY-MM-DD>/projects/<finding-uuid>/reachability_context.json`).
    - Use `--pv-uuid` for direct PV analysis.
    - Treat `reachability_context.json` as the canonical triage bundle (customer graph plane, `oss` graph plane, stitching summary, warnings). `--max-pages` defaults to **0 (unlimited)**; check `list_bounds` and `warnings` when call-graph lists may be capped.
    - Bundle requirement (deterministic): include decoded call graphs from both planes:

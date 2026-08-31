@@ -30,7 +30,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import endorlabs
-from endorlabs.context.paths import default_runs_dir
+from endorlabs.context.paths import (
+    task_activity_dir,
+)
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.estate.analyze.cardinality.tabular import (
@@ -717,8 +719,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "Output CSV path for version-cardinality rollup "
             "(default: "
-            f"{default_runs_dir('version-cardinality').as_posix()}/"
-            "version_cardinality_<slug>.csv)."
+            ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/estate/version_cardinality_<slug>.csv)."
         ),
     )
     parser.add_argument(
@@ -809,7 +810,8 @@ def main(argv: list[str] | None = None) -> int:
 
         slug = namespace_slug(args.namespace)
         output_path = (
-            default_runs_dir("version-cardinality") / f"version_cardinality_{slug}.csv"
+            task_activity_dir(args.namespace, "estate")
+            / f"version_cardinality_{slug}.csv"
         )
     request_timeout = _resolve_request_timeout(args.request_timeout)
     remediation: RemediationComparisonResult | None = None

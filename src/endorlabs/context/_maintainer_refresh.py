@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Literal
 
 import endorlabs
-from endorlabs.context.paths import DEFAULT_CONTEXT_DIR
+from endorlabs.context.paths import DEFAULT_CONTEXT_DIR, sdk_dir
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.repo_paths import normalize_repo_paths
 
@@ -92,8 +92,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             if sync_target is None:
                 logger.info("Skill sync skipped; no runtime host mirror is configured.")
             else:
-                if CONTEXT_DIR.exists() and (CONTEXT_DIR / "sdk" / "skills").is_dir():
-                    source_dir = CONTEXT_DIR / "sdk" / "skills"
+                skills_path = sdk_dir(CONTEXT_DIR) / "skills"
+                if CONTEXT_DIR.exists() and skills_path.is_dir():
+                    source_dir = skills_path
                     repo_root = REPO_ROOT
                 else:
                     source_dir = AGENT_KNOWLEDGE_SKILLS

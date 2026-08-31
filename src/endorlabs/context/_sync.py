@@ -22,7 +22,6 @@ from ._project_context import warn_agent_defer_gitignore_to_user
 from .models import InitStatus
 from .paths import (
     DEFAULT_CONTEXT_DIR,
-    SDK_DIRNAME,
     context_json_path,
     platform_openapi_path,
     sdk_dir,
@@ -98,7 +97,7 @@ def _render_claude_md_template(
 
 {skill_table}
 
-For detailed skill playbooks, see `.endorlabs-context/sdk/skills/<id>/SKILL.md`
+For detailed skill playbooks, see `.endorlabs/_cache/sdk/skills/<id>/SKILL.md`
 or call `endorlabs.agent_knowledge_index_path()`.
 
 ## Quick Reference
@@ -169,7 +168,7 @@ def _sync_claude_context(
         command_content = (
             f"# {skill['name']}\n\n"
             f"{skill['description']}\n\n"
-            f"See: .endorlabs-context/sdk/skills/{skill['id']}/SKILL.md"
+            f"See: .endorlabs/_cache/sdk/skills/{skill['id']}/SKILL.md"
         )
         _ = safe_write_text(repo_root, command_path, command_content)
 
@@ -325,7 +324,7 @@ def sync_agent_skills(
 
 def _resolve_skill_source_root(repo_root_path: Path) -> Path:
     """Resolve skill mirror source from materialized sdk/skills or wheel bundle."""
-    materialized = repo_root_path / DEFAULT_CONTEXT_DIR / SDK_DIRNAME / "skills"
+    materialized = sdk_dir(repo_root_path / DEFAULT_CONTEXT_DIR) / "skills"
     if materialized.is_dir():
         return materialized
     from endorlabs.agent_knowledge import agent_knowledge_dir
@@ -400,7 +399,7 @@ def sync_openapi(
 
     Args:
         output_path: Path to save the OpenAPI spec file (default:
-            ``.endorlabs-context/platform/openapi/openapiv2.swagger.json``).
+            ``.endorlabs/_cache/openapi.json``).
         force: Force re-download even if file exists.
         client: Optional APIClient instance. If not provided, one is created
             (requires ENDOR_API_CREDENTIALS_KEY/SECRET or ENDOR_TOKEN env vars).
@@ -459,15 +458,15 @@ def init(
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
 
-    By default, ``init()`` materializes agent knowledge under ``sdk/``. Pass explicit
-    flags to download OpenAPI under ``platform/`` and/or mirror skills into IDE
+    By default, ``init()`` materializes agent knowledge under ``_cache/sdk/``. Pass
+    explicit flags to download OpenAPI under ``_cache/`` and/or mirror skills into IDE
     discovery directories. Product docs use the Docs MCP server
     (``https://docs.endorlabs.com/mcp``), not a local scrape.
 
     Args:
-        output_dir: Directory to save context files (default: .endorlabs-context).
+        output_dir: Directory to save context files (default: .endorlabs).
         include_openapi: Download OpenAPI spec (default: False).
-        include_agent_knowledge: Copy agent knowledge to sdk/ (default: True).
+        include_agent_knowledge: Copy agent knowledge to _cache/sdk/ (default: True).
         force: Force re-download / refresh even if files exist (default: False).
         sync_skills: Mirror skills into runtime dirs
             (``none``, ``cursor``, ``claude``, or ``both``; default ``none``).
@@ -486,7 +485,7 @@ def init(
         >>> import endorlabs
         >>> status = endorlabs.init()
         >>> print(status.agent_knowledge_path)
-        .endorlabs-context/sdk
+        .endorlabs/_cache/sdk
 
     """
     import importlib.metadata

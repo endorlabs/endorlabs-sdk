@@ -1,6 +1,6 @@
 """Shipped agent knowledge (rules, contracts, skills, workflow index).
 
-Materialized to ``.endorlabs-context/sdk/`` by :func:`endorlabs.init`.
+Materialized to ``.endorlabs/_cache/sdk/`` by :func:`endorlabs.init`.
 """
 
 from __future__ import annotations
