@@ -17,13 +17,23 @@ def _load():
     return mod
 
 
-def test_development_state_keeps_unreleased_bullets() -> None:
+def test_cut_state_has_version_section_and_empty_unreleased() -> None:
+    """After a release cut, Unreleased has no bullets and ## X.Y.Z exists."""
     mod = _load()
+    version = mod.read_pyproject_version(root=_ROOT)
+    assert version is not None
+    assert mod._changelog_has_section(version, root=_ROOT)
+    assert mod._unreleased_has_bullets(root=_ROOT) is False
     assert mod._changelog_has_section("0.7.0", root=_ROOT)
-    assert mod._unreleased_has_bullets(root=_ROOT) is True
-    assert mod._changelog_has_section("0.8.0", root=_ROOT) is False
 
 
-def test_run_check_fails_while_unreleased_has_bullets() -> None:
+def test_run_check_passes_for_cut_version() -> None:
     mod = _load()
-    assert mod.run_check(expect="0.7.0", skip_upstream=True, root=_ROOT) == 1
+    version = mod.read_pyproject_version(root=_ROOT)
+    assert version is not None
+    assert mod.run_check(expect=version, skip_upstream=True, root=_ROOT) == 0
+
+
+def test_run_check_fails_on_expect_mismatch() -> None:
+    mod = _load()
+    assert mod.run_check(expect="9.9.9", skip_upstream=True, root=_ROOT) == 1
