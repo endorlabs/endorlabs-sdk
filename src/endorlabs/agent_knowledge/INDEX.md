@@ -50,6 +50,7 @@ Consumer entrypoint: **`AGENTS.md`** (points here). Copy **`templates/consumer-A
 | `list_by_*` / `list_for_context` | `list[T]` | Same as `.list()` — project/scan-plane edges |
 | `to_*` | `RouteResult` | Stitch — `.value` / `.single`; check `.edge_used`, `.warnings` |
 | `limit` on `.list()` | Use `page_size=` or `limit=` (alias for `page_size`; same as `list_by_project(limit=)`) |
+| Sorted list + `max_pages>1` | Platform rejects `page_id` with sort — use `limit=`/`page_size` + `max_pages=1`, or drop `sort_by` ([list-parameters](contracts/list-parameters.md)) |
 | Finding text field | `spec.summary`, not `spec.description` |
 | `Metric.list_by_project` | Does not exist — use `Metric.list(...)` with filters |
 | `QueryVulnerability.list` | Query resources are create/query only, not listable CRUD |

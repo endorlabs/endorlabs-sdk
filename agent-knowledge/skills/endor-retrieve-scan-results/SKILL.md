@@ -62,7 +62,9 @@ scan_result = client.ScanResult.list_by_project(project, limit=1)
 latest_scan = scan_result[0] if scan_result else None
 ```
 
-Or pass explicit list kwargs (date window, `max_pages`, `list_params`) without the workflow preset defaults.
+For a **multi-scan window** (N newest), use `limit=N` (maps to `page_size`; default `max_pages=1` + newest-first sort). Do **not** raise `max_pages` while the sort preset remains — the platform rejects `page_id` with sort ([list-parameters](../../contracts/list-parameters.md)).
+
+Optional list kwargs (`from_date` / `to_date`, `list_params`, filters) still apply; override `sort_by` only when you intentionally paginate without server-side sort.
 
 ### Step 3: Get Findings (no traverse)
 

@@ -66,6 +66,12 @@ client.Namespace.update(ns.uuid, payload=updated_payload, update_mask="meta.desc
 client.Namespace.update(ns, meta_description="new description")
 ```
 
+### `page id cannot be provided with sort method` (400)
+
+**Symptom:** `ValidationError` on `list` / `list_by_project` when `sort_by` is set and pagination advances past page 1 (`next_page_id` → `page_id`). `ScanResult.list_by_project` injects newest-first sort by default — raising `max_pages` above 1 keeps that sort.
+
+**Fix:** Keep sort with `max_pages=1` and a larger `limit` / `page_size` for N newest rows, or drop `sort_by` and paginate then order client-side. See [list-parameters](../../contracts/list-parameters.md).
+
 ### List field mask (dict rows) vs partial **model** responses
 
 **Masked list (non-empty `mask`):** dict wire rows — use `isinstance(row, dict)` or omit `mask` for models.

@@ -75,7 +75,7 @@ Regenerate: `uv run python devtools/codegen/generate_route_contract.py`.
 
 **When to use:** Prefer generated accessors over hand-built `spec.project_uuid==…` or `context.scan_uuid==…` filters when the edge exists in the contract. Return-type semantics and stitch `RouteResult` protocol: [resource-discovery contract](../../agent-knowledge/contracts/resource-discovery.md).
 
-`ScanResult.list_by_project` adds a workflow preset (newest-first, default `max_pages=1`, optional `limit` → `page_size`, client-side `status_filter`). For the latest scan: `ScanResult.list_by_project(project, limit=1)[0]`.
+`ScanResult.list_by_project` adds a workflow preset (newest-first, default `max_pages=1`, optional `limit` → `page_size`, client-side `status_filter`). For the latest scan: `ScanResult.list_by_project(project, limit=1)[0]`. For N newest scans use `limit=N` — do not raise `max_pages` with the default sort (sorted `page_id` follow-ups are rejected; see [list-parameters](../../agent-knowledge/contracts/list-parameters.md)).
 
 For manual scan-plane composition:
 

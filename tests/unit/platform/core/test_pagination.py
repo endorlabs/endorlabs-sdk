@@ -11,11 +11,14 @@ client.get patched (no network).
 
 from unittest.mock import Mock, patch
 
+import pytest
 from pydantic import BaseModel, Field
 
 from endorlabs.api_client import APIClient
+from endorlabs.core.exceptions import ValidationError
 from endorlabs.core.types import ListParameters
 from endorlabs.operations import BaseResourceOperations
+from endorlabs.operations.pagination import SORTED_PAGE_ID_REMEDIATION
 from tests.conftest import TEST_MAX_PAGES, TEST_PAGE_SIZE
 
 
@@ -233,6 +236,34 @@ class TestGetAllPageIdPagination:
             second_call_params = mock_get.call_args_list[1].kwargs.get("params", {})
             assert second_call_params.get("list_parameters.page_id") == "cursor-xyz"
             assert "list_parameters.page_token" not in second_call_params
+        finally:
+            client.close()
+
+    def test_get_all_rejects_page_id_followup_when_sort_present(self) -> None:
+        """Sorted list + next_page_id must not issue a page_id follow-up."""
+        client = APIClient(auth_method="api-key", key="fake", secret="fake")
+        try:
+            page1 = {
+                "list": {
+                    "objects": [{"uuid": "a"}],
+                    "response": {"next_page_id": "cursor-sorted"},
+                }
+            }
+            with patch.object(client, "get") as mock_get:
+                mock_get.return_value = Mock(json=Mock(return_value=page1))
+                with pytest.raises(ValidationError, match=SORTED_PAGE_ID_REMEDIATION):
+                    list(
+                        client.get_all(
+                            "/v1/namespaces/ns/items",
+                            params={
+                                "list_parameters.sort.path": "meta.create_time",
+                                "list_parameters.sort.order": "SORT_ENTRY_ORDER_DESC",
+                            },
+                        )
+                    )
+            assert mock_get.call_count == 1
+            first_params = mock_get.call_args_list[0].kwargs.get("params", {})
+            assert "list_parameters.page_id" not in first_params
         finally:
             client.close()
 

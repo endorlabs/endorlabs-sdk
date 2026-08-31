@@ -27,7 +27,11 @@ from .core.exceptions import (
     map_status_code_to_exception,
 )
 from .core.types import ErrorResponse
-from .operations.pagination import PageCursor, iter_paginated_pages
+from .operations.pagination import (
+    PageCursor,
+    iter_paginated_pages,
+    raise_if_page_id_with_sort,
+)
 from .utils.redaction import (
     JSON_REDACTION_REPLACEMENT,
     RedactingFilter,
@@ -1343,6 +1347,9 @@ class APIClient:
         when present (API-supported cursor); otherwise uses next_page_token.
         Handles Endor Labs pagination format with list.objects and list.response.
 
+        Raises ``ValidationError`` before a follow-up ``page_id`` request when
+        sort params are still present (platform rejects that combination).
+
         Args:
             url: Endpoint URL (relative or absolute)
             params: Query parameters (will be updated with page_token/page_id)
@@ -1363,6 +1370,7 @@ class APIClient:
             page_params = dict(request_params)
             if cursor is not None:
                 if cursor.page_id is not None:
+                    raise_if_page_id_with_sort(page_params)
                     page_params["list_parameters.page_id"] = cursor.page_id
                     page_params.pop("list_parameters.page_token", None)
                 elif cursor.page_token is not None:

@@ -863,6 +863,9 @@ class BaseResourceOperations[T: BaseModel]:
                 break
             request_params = dict(params)
             if page_id:
+                from .pagination import raise_if_page_id_with_sort
+
+                raise_if_page_id_with_sort(request_params)
                 request_params["list_parameters.page_id"] = page_id
             response = self.client.get(url, params=request_params)
             data_raw = response.json()

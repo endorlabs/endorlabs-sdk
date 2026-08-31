@@ -11,7 +11,7 @@ Agent skill (on-demand): [endor-retrieve-scan-results](../../agent-knowledge/ski
 ## Default workflow (one project)
 
 1. **Resolve Project** — `client.Project.search_by_name(query, …)` or `Project.get(uuid)` when UUID is known.
-2. **Scan results** — `client.ScanResult.list_by_project(project, max_pages=1, sort_by="meta.create_time", desc=True)` or `ScanResult.list(parent=project, sort_by="meta.create_time", desc=True, max_pages=1)`.
+2. **Scan results** — `client.ScanResult.list_by_project(project, limit=1)` (newest-first, `max_pages=1`) or explicit `sort_by="meta.create_time", desc=True, max_pages=1`. For N newest scans use `limit=N`, not `max_pages>1` with sort (platform rejects sorted `page_id` cursors — [list-parameters](../../agent-knowledge/contracts/list-parameters.md)).
 3. **Findings** — `client.Finding.list_by_project(project, max_pages=…)` or `Finding.list_for_context(scan, max_pages=…)`. **Do not** use `traverse=True` here — wrong namespace causes empty rows, not errors ([contracts.md](../contracts.md) — project-scoped lists).
 
 Generated list accessors return **`list[T]`** like `.list()`. Stitch accessors (`to_dependency_metadata`) return **`RouteResult`**. See [facade-helpers.md](facade-helpers.md) and [resource-routes.md](../generated-reference/resource-routes.md).

@@ -12,6 +12,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- **List pagination:** `get_all` / grouped page iterators raise `ValidationError` before a follow-up `page_id` request when sort params are still set (platform rejects sorted `page_id` cursors). Prefer `limit`/`page_size` with `max_pages=1` for N newest rows.
 - **Generated resource reference:** per-resource pages include `## User-space access` (customer semantics vs SDK exposure); `resources.md` Limitations column is driven by `model_sync_profiles/resource_user_space.json` for all registry resources.
 - **`client.SystemConfig`:** facade exposes **list, get, update** only — create/delete remain on the API but are not SDK user-space (onboard-seeded singleton).
 - **`endor-reports` CLI ergonomics:** `-n` may appear before or after subcommands; `ENDOR_NAMESPACE` fallback; new `list` subcommand; grouped `--help` epilog. Several workflow CLIs add `-n` as alias for `--tenant`; reachability defaults `--namespace` to `--tenant`.
