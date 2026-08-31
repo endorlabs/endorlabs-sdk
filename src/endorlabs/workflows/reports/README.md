@@ -49,8 +49,8 @@ Default build writes a browser-ready HTML set under
 | `01-onboarding.html` | Project registration + MAIN/CI scan cadence + tag/project ranks |
 | `02-version-sprawl.html` | Dependency version sprawl |
 | `03-sca-burndown.html` | SCA FindingLog burndown |
-| `04-sast-burndown.html` | OpenGrep / AI-SAST / Secrets FindingLog burndown |
-| `05-endor-patches.html` | Endor Patches impact (opt-in: `--patches` or `patches` subcommand) |
+| `04-sast-burndown.html` | OpenGrep / AI-SAST / Secrets FindingLog burndown (license-gated) |
+| `05-endor-patches.html` | Endor Patches impact (opt-in `--patches` + license-gated) |
 
 Default full packet **omits** Patches (Finding list pull — slow on large
 estates). Pass `--patches` to include, or `endor-reports patches -n <tenant>`

@@ -15,6 +15,13 @@ from endorlabs.workflows.reports.analyze.code_findings_trend import (
 from endorlabs.workflows.reports.analyze.findings_trend import (
     build_sca_burndown_report,
 )
+from endorlabs.workflows.reports.analyze.license_entitlements import (
+    SKIP_REASON_NOT_ENTITLED,
+    SKIP_REASON_OPT_IN,
+    entitled_code_categories,
+    fetch_license_feature_types,
+    has_endor_patching,
+)
 from endorlabs.workflows.reports.analyze.patches import (
     collect_patches_report,
     empty_patches_report,
@@ -175,6 +182,12 @@ def build_report_packet(
     *patches_only* is true, skip onboarding/sprawl/burndown pulls and build
     only ``reports.patches`` (campaign batch path).
 
+    SAST / AI-SAST / Secrets and Endor Patches slices are also gated by
+    ``EndorLicense`` feature entitlements when the license list succeeds:
+    unentitled slices are skipped (``reportsMeta.*.reason=not_entitled``) and
+    omitted from the HTML packet. When the license probe fails or returns no
+    rows, requested slices still run (fail open).
+
     Each report slice is isolated: a timeout in SCA (etc.) still yields a cube
     with other slices filled and ``dataGaps`` / ``reportsMeta`` recording the
     failure. Discover failure remains fatal. After discover, enabled slices
@@ -189,19 +202,78 @@ def build_report_packet(
     patch_workers = int(patches_workers if patches_workers is not None else max_workers)
     wall0 = time.perf_counter()
     reports_meta: dict[str, Any] = {}
+    license_features = fetch_license_feature_types(client, namespace)
+    code_categories: list[str] | None = None
+    if license_features is not None:
+        code_categories = entitled_code_categories(license_features)
+    run_code = bool(include_code_findings_burndown and not patches_only)
+    run_patches = bool(include_patches or patches_only)
+    if license_features is not None:
+        if run_code and not code_categories:
+            run_code = False
+            milestone(_WF, "code_burndown.skipped", reason=SKIP_REASON_NOT_ENTITLED)
+            reports_meta["codeFindingsBurndown"] = {
+                "status": "skipped",
+                "reason": SKIP_REASON_NOT_ENTITLED,
+            }
+        if run_patches and not has_endor_patching(license_features):
+            run_patches = False
+            milestone(_WF, "patches.skipped", reason=SKIP_REASON_NOT_ENTITLED)
+            reports_meta["patches"] = {
+                "status": "skipped",
+                "reason": SKIP_REASON_NOT_ENTITLED,
+            }
+
     milestone(
         _WF,
         "start",
         patches_only=int(patches_only),
         sprawl=int(include_version_sprawl and not patches_only),
         sca=int(include_sca_burndown and not patches_only),
-        code=int(include_code_findings_burndown and not patches_only),
-        patches=int(include_patches or patches_only),
+        code=int(run_code),
+        patches=int(run_patches),
         lookback=lookback,
         workers=max_workers,
+        license_features=0 if license_features is None else len(license_features),
     )
 
     if patches_only:
+        if not run_patches:
+            empty_sca = _empty_sca_burndown(
+                lookback=lookback,
+                min_projects=min_projects,
+                max_workers=max_workers,
+                tag_catalog=[],
+            )
+            empty_code = _empty_code_findings(
+                lookback=lookback,
+                min_projects=min_projects,
+                max_workers=max_workers,
+                tag_catalog=[],
+            )
+            milestone(_WF, "done", mode="patches_only", elapsed_s=_elapsed_s(wall0))
+            return {
+                "schema": REPORT_PACKET_SCHEMA,
+                "tenant": namespace,
+                "pulledAt": datetime.now(UTC).isoformat(),
+                "pathOptions": ["all", namespace],
+                "leafNamespaces": [namespace],
+                "tagCatalog": [],
+                "tagSeriesMeta": empty_sca.get("tagSeriesMeta"),
+                "reportsMeta": reports_meta,
+                "dataGaps": [],
+                "reports": {
+                    "onboarding": {
+                        "projects": [],
+                        "projectCount": 0,
+                        "cadence": {},
+                    },
+                    "versionSprawl": _empty_sprawl(),
+                    "scaBurndown": empty_sca,
+                    "codeFindingsBurndown": empty_code,
+                    "patches": empty_patches_report(),
+                },
+            }
         t0 = time.perf_counter()
         milestone(_WF, "patches.start", mode="patches_only", workers=patch_workers)
         patches = _run_slice(
@@ -388,6 +460,7 @@ def build_report_packet(
             lookback=lookback,
             min_projects=min_projects,
             max_workers=max_workers,
+            categories=code_categories,
         )
         meta = built.get("tagSeriesMeta") or {}
         milestone(
@@ -424,16 +497,16 @@ def build_report_packet(
     else:
         milestone(_WF, "sca_burndown.skipped")
         reports_meta["scaBurndown"] = {"status": "skipped"}
-    if include_code_findings_burndown and leaves:
+    if run_code and leaves:
         jobs.append(("codeFindingsBurndown", empty_code, _code))
-    else:
+    elif "codeFindingsBurndown" not in reports_meta:
         milestone(_WF, "code_burndown.skipped")
         reports_meta["codeFindingsBurndown"] = {"status": "skipped"}
-    if include_patches:
+    if run_patches:
         jobs.append(("patches", empty_patches_report(), _patches))
-    else:
-        milestone(_WF, "patches.skipped")
-        reports_meta["patches"] = {"status": "skipped"}
+    elif "patches" not in reports_meta:
+        milestone(_WF, "patches.skipped", reason=SKIP_REASON_OPT_IN)
+        reports_meta["patches"] = {"status": "skipped", "reason": SKIP_REASON_OPT_IN}
 
     results: dict[str, Any] = {}
     workers = max(1, min(len(jobs), 5))

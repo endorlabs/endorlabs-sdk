@@ -2,8 +2,8 @@
 
 Each spec drives the same ``build_category_burndown_block`` path: base filter,
 severity×facet cells, path/tag redistribute. SCA uses ``expand="reach"`` so
-``all`` stays RF+PRF, ``dependency_reach`` is RD+PRD, and ``unreachable`` is
-derived.
+``any`` is unfiltered and ``all`` stays RF+PRF. Dependency-axis reach tags are
+omitted (function reach implies dependency reach in the product model).
 
 Code findings: OpenGrep vs AI-SAST share TP/FP triage facets; Secrets uses
 valid/invalid only (no TP/FP).
@@ -41,18 +41,14 @@ CODE_CATEGORIES: tuple[str, ...] = (
     CATEGORY_SECRETS,
 )
 
-# Selection-based SCA reach options. ``all`` = RF+PRF (function actionable);
-# ``dependency_reach`` = RD+PRD. RF is stronger than RD in the product model.
+# SCA function-reach options. ``any`` = no reach tag filter (default);
+# ``all`` = RF+PRF. Dependency-axis options omitted (RF implies RD).
 SCA_FACET_KEYS: tuple[str, ...] = (
+    "any",
     "all",
     "reachable",
     "prf",
-    "reachable_dependency",
-    "prd",
-    "dependency_reach",
-    "unreachable",
     "unreachable_function",
-    "unreachable_dependency",
 )
 # Shared triage facets for OpenGrep and AI-SAST (not Secrets).
 TRIAGE_FACET_KEYS: tuple[str, ...] = ("all", "true_positive", "false_positive")

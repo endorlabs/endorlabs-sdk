@@ -12,18 +12,35 @@ def tokens_css() -> str:
     return (root / "tokens.css").read_text(encoding="utf-8")
 
 
-def nav(active: str) -> str:
-    """Packet page navigation strip; *active* is one of on/vs/sca/sast/pat."""
+def nav(
+    active: str,
+    *,
+    include_sast: bool = True,
+    include_patches: bool = True,
+) -> str:
+    """Packet page navigation strip; *active* is one of on/vs/sca/sast/pat.
+
+    Omit SAST / Endor Patches links when those slices were not pulled
+    (license entitlement or opt-in skip).
+    """
 
     def cls(key: str) -> str:
         return ' class="active"' if key == active else ""
 
+    sast = (
+        f'\n  <a{cls("sast")} href="04-sast-burndown.html">SAST burndown</a>'
+        if include_sast
+        else ""
+    )
+    patches = (
+        f'\n  <a{cls("pat")} href="05-endor-patches.html">Endor Patches</a>'
+        if include_patches
+        else ""
+    )
     return f"""<div class="nav">
   <a{cls("on")} href="01-onboarding.html">Onboarding</a>
   <a{cls("vs")} href="02-version-sprawl.html">Version sprawl</a>
-  <a{cls("sca")} href="03-sca-burndown.html">SCA burndown</a>
-  <a{cls("sast")} href="04-sast-burndown.html">SAST burndown</a>
-  <a{cls("pat")} href="05-endor-patches.html">Endor Patches</a>
+  <a{cls("sca")} href="03-sca-burndown.html">SCA burndown</a>{sast}{patches}
 </div>"""
 
 

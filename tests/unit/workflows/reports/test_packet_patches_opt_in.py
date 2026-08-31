@@ -105,11 +105,16 @@ def test_build_report_packet_skips_patches_by_default() -> None:
         patch(
             "endorlabs.workflows.reports.bundles.executive_packet.collect_patches_report",
         ) as patches_mock,
+        patch(
+            "endorlabs.workflows.reports.bundles.executive_packet.fetch_license_feature_types",
+            return_value=None,
+        ),
     ):
         cube = build_report_packet(client, "example-tenant")
 
     patches_mock.assert_not_called()
     assert (cube.get("reportsMeta") or {}).get("patches", {}).get("status") == "skipped"
+    assert (cube.get("reportsMeta") or {}).get("patches", {}).get("reason") == "opt_in"
 
 
 def test_packet_cli_patches_flag_present() -> None:

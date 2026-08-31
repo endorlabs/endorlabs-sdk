@@ -33,6 +33,12 @@ render; also `ENDOR_LOG_LEVEL`), `--skip-version-sprawl`,
 exports — pages 01–04 are omitted rather than rendered from slices the run never
 collected. Full packet omits Patches unless `--patches` is set.
 
+SAST / AI-SAST / Secrets and Endor Patches are also gated by tenant
+`EndorLicense` feature entitlements when the license list succeeds: unentitled
+slices are skipped (`reportsMeta.*.reason=not_entitled`) and omitted from the
+HTML packet (nav + page + related CSVs). A failed or empty license probe fails
+open and still runs the requested slices.
+
 Slice failures (for example FindingLog read timeouts on SCA burndown) no longer
 abort the whole packet: other pages still write under the output dir, the cube
 records `dataGaps` / `reportsMeta`, and the CLI exits `1` so operators notice.
@@ -48,8 +54,8 @@ Default directory:
 | `01-onboarding.html` | Project registration + MAIN/CI scan cadence + tag/project ranks |
 | `02-version-sprawl.html` | Dependency version sprawl |
 | `03-sca-burndown.html` | SCA FindingLog burndown |
-| `04-sast-burndown.html` | OpenGrep / AI-SAST / Secrets FindingLog burndown |
-| `05-endor-patches.html` | Endor Patches impact (only with `--patches` or `--patches-only`) |
+| `04-sast-burndown.html` | OpenGrep / AI-SAST / Secrets FindingLog burndown (omitted if unentitled) |
+| `05-endor-patches.html` | Endor Patches impact (only with `--patches` / entitlement) |
 | `data/packet.cube.json` | Portable cube (`endor.report_packet.v0`) |
 | `data/*.csv` | Raw exports (see `data/EXPORTS.txt`) |
 

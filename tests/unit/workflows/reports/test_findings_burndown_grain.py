@@ -36,15 +36,11 @@ def _matrix(
         sev: {
             reach: dict(cell)
             for reach in (
+                "any",
                 "all",
                 "reachable",
                 "prf",
-                "reachable_dependency",
-                "prd",
-                "dependency_reach",
-                "unreachable",
                 "unreachable_function",
-                "unreachable_dependency",
             )
         }
         for sev in ("all", "critical", "high", "medium", "low")

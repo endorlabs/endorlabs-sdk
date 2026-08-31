@@ -70,7 +70,12 @@ table.data tr.family-row.active td { outline:1px solid var(--endor-accent);backg
 """
 
 
-def render_patches_html(cube: dict[str, Any]) -> str:
+def render_patches_html(
+    cube: dict[str, Any],
+    *,
+    include_sast: bool = True,
+    include_patches: bool = True,
+) -> str:
     """Return the complete interactive Endor Patches HTML page."""
     patches = (cube.get("reports") or {}).get("patches") or {}
     tenant = cube.get("tenant") or ""
@@ -96,7 +101,11 @@ def render_patches_html(cube: dict[str, Any]) -> str:
             purpose=purpose,
             tenant=tenant,
             pulled_at=pulled,
-            nav_html=chrome.nav("pat"),
+            nav_html=chrome.nav(
+                "pat",
+                include_sast=include_sast,
+                include_patches=include_patches,
+            ),
             meta_extra="Scope: Critical + High · not dismissed · main context · any reach",
         )
     }
