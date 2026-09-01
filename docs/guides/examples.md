@@ -29,7 +29,8 @@ Interactive browser login is **opt-in**. Documented methods: **`sso`** (requires
 `auth_tenant=` / `ENDOR_NAMESPACE`), **`google`**, **`github`**, **`gitlab`**,
 and **`email`** (requires `--email` / `auth_email=`). If a valid `ENDOR_TOKEN`
 is already set, it is used and no browser opens. Bare `Client()` without
-credentials raises `ValidationError` and does not open a browser.
+credentials does not open a browser; auth is checked on the first API call
+(`whoami`, `list`, …). `client.<Kind>.describe()` works before auth.
 
 ```bash
 uv run endor-auth refresh --method sso -n <tenant>
@@ -138,7 +139,7 @@ See [consumer-ux-list-update.md](consumer-ux-list-update.md).
 ## 6. Scan troubleshooting — logs and diffs
 
 When scan results look wrong or regressed, use the troubleshooting workflow (writes
-artifacts under `.endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting-scans/`):
+artifacts under `.endorlabs/tasks/<slug>-<YYYY-MM-DD>/troubleshooting/`):
 
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results \
@@ -206,7 +207,8 @@ For a browser handoff covering onboarding growth, scan/PR cadence, version spraw
 and FindingLog burndown:
 
 ```bash
-uv run --env-file .env endor-reports packet -n <tenant>
+uv run --env-file .env endor-reports build -n <tenant>
+# Or: uv run --env-file .env endor-reports -n <tenant>
 ```
 
 See [executive-report-packet.md](executive-report-packet.md). Agents: skill

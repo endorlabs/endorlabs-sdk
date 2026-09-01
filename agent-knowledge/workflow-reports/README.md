@@ -17,7 +17,7 @@ invoked via **`endor-reports <subcommand>`** (see
 | `endor-ci-endorctl-version-audit` | `ci-endorctl` | `reports.analyze.ci_endorctl_audit` |
 | `endor-duplicate-projects` | `duplicates` | `reports.analyze.duplicate_projects` |
 | `endor-chart-new-vs-resolved-findings` | `findings-trend` | `reports.analyze.findings_chart_analysis` |
-| `endor-executive-report-packet` | `packet` / `parity` | `reports.bundles.executive_packet` |
+| `endor-executive-report-packet` | `build` (default `-n`) / `parity` | `reports.bundles.executive_packet` |
 | `endor-potentially-reachable-analysis` | `prf-analysis` | `reports.analyze.prf_report_analysis` |
 | `endor-package-resolution-report` | `package-resolution` | `reports.analyze.package_resolution` + `reports.export.html.package_resolution` |
 

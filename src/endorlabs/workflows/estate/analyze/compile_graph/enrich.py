@@ -178,7 +178,7 @@ def enrich_graph(
             for p in (node.get("published_packages") or [])
             if p.get("package_name")
         }
-        node["primary_ecosystem"] = sorted(ecosystems)[0] if ecosystems else None
+        node["primary_ecosystem"] = min(ecosystems) if ecosystems else None
         pkg_names = {
             str(p.get("package_name"))
             for p in (node.get("published_packages") or [])

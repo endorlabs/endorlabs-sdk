@@ -910,6 +910,153 @@ def check_agent_knowledge_sync(*, paths: list[str] | None = None) -> int:
     return 0
 
 
+_STALE_DEVTOOLS_PATTERNS = (
+    re.compile(r"devtools/model_sync\.py"),
+    re.compile(r"devtools/generate_route_contract\.py"),
+    re.compile(r"devtools/generate_client_stub\.py"),
+    re.compile(r"devtools/verify_ship_artifacts\.py"),
+)
+_DOC_PATH_PREFIXES = ("docs/", "agent-knowledge/")
+_AGENT_KNOWLEDGE_VERIFY_PREFIXES = (
+    "agent-knowledge/",
+    "src/endorlabs/agent_knowledge/",
+    ".cursor/rules/",
+    "pyproject.toml",
+)
+
+
+def check_stale_devtools_paths(*, paths: list[str] | None = None) -> int:
+    """Block pre-codegen devtools paths in staged docs and agent-knowledge."""
+    candidates = paths if paths is not None else staged_paths()
+    hits: list[str] = []
+    for path in candidates:
+        normalized = _normalize_path(path)
+        if normalized != "README.md" and not any(
+            normalized.startswith(prefix) for prefix in ("docs/", "agent-knowledge/")
+        ):
+            continue
+        if normalized.startswith("docs/generated-reference/"):
+            continue
+        try:
+            text = (_REPO_ROOT / path).read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for line_no, line in enumerate(text.splitlines(), start=1):
+            for pattern in _STALE_DEVTOOLS_PATTERNS:
+                if pattern.search(line) and "devtools/codegen/" not in line:
+                    hits.append(f"{path}:{line_no}: {pattern.pattern}")
+    if not hits:
+        return 0
+    print(
+        "error: stale devtools paths (use devtools/codegen/ or devtools/ship/):\n"
+        + "\n".join(f"  - {item}" for item in hits[:20]),
+        file=sys.stderr,
+    )
+    return 1
+
+
+def check_readme_pypi_links(*, paths: list[str] | None = None) -> int:
+    """Require GitHub absolute URLs for repo-only README targets (PyPI long desc)."""
+    candidates = paths if paths is not None else staged_paths()
+    if "README.md" not in {_normalize_path(p) for p in candidates}:
+        return 0
+    readme = _REPO_ROOT / "README.md"
+    if not readme.is_file():
+        return 0
+    text = readme.read_text(encoding="utf-8")
+    hits: list[str] = []
+    if 'srcset="docs/' in text:
+        hits.append(
+            "README.md: image srcset uses relative docs/assets/ "
+            "(use GitHub raw URLs)"
+        )
+    for match in re.finditer(r"\]\(([^)]+)\)", text):
+        target = match.group(1).strip()
+        if target.startswith("#"):
+            continue
+        repo_prefixes = (
+            "docs/",
+            "src/",
+            "agent-knowledge/",
+            "devtools/",
+            "CONTRIBUTORS.md",
+        )
+        if target.startswith(repo_prefixes):
+            if "github.com/endorlabs/endorlabs-sdk" not in target:
+                hits.append(f"README.md: relative repo link {target!r}")
+    if not hits:
+        return 0
+    print(
+        "error: README.md has PyPI-breaking relative links:\n"
+        + "\n".join(f"  - {item}" for item in hits[:20]),
+        file=sys.stderr,
+    )
+    return 1
+
+
+def check_agent_knowledge_verify(*, paths: list[str] | None = None) -> int:
+    """Fail when shipped agent-knowledge bundle drifts from authoring."""
+    candidates = paths if paths is not None else staged_paths()
+    if not any(
+        _normalize_path(path).startswith(prefix)
+        or _normalize_path(path) == prefix.rstrip("/")
+        for path in candidates
+        for prefix in _AGENT_KNOWLEDGE_VERIFY_PREFIXES
+    ):
+        return 0
+    cmd = [
+        sys.executable,
+        str(_REPO_ROOT / "devtools" / "codegen" / "sync_agent_knowledge.py"),
+        "--verify",
+    ]
+    result = subprocess.run(cmd, check=False, cwd=_REPO_ROOT)  # noqa: S603
+    if result.returncode == 0:
+        return 0
+    print(
+        "agent-knowledge verify failed — run: "
+        "uv run python devtools/codegen/sync_agent_knowledge.py",
+        file=sys.stderr,
+    )
+    return result.returncode
+
+
+_PACKAGING_SENSITIVE_PREFIXES = (
+    "src/endorlabs/workflows/estate/",
+    "src/endorlabs/agent_knowledge/",
+    "pyproject.toml",
+)
+
+
+def check_wheel_packaging_invariants(*, paths: list[str] | None = None) -> int:
+    """Fail when estate/agent_knowledge packaging invariants are broken on disk."""
+    candidates = paths if paths is not None else staged_paths()
+    if not any(
+        _normalize_path(path).startswith(prefix)
+        or _normalize_path(path) == prefix.rstrip("/")
+        for path in candidates
+        for prefix in _PACKAGING_SENSITIVE_PREFIXES
+    ):
+        return 0
+    ship_dir = str(_REPO_ROOT / "devtools" / "ship")
+    if ship_dir not in sys.path:
+        sys.path.insert(0, ship_dir)
+    from verify_wheel_contents import verify_source_packaging_invariants
+
+    errors = verify_source_packaging_invariants()
+    if not errors:
+        return 0
+    print("wheel packaging invariants failed:", file=sys.stderr)
+    for msg in errors[:20]:
+        print(f"  - {msg}", file=sys.stderr)
+    if len(errors) > 20:
+        print(f"  ... and {len(errors) - 20} more", file=sys.stderr)
+    print(
+        "\nRun: uv build && uv run python devtools/ship/verify_wheel_contents.py",
+        file=sys.stderr,
+    )
+    return 1
+
+
 def _is_context_root_scan_path(path: str) -> bool:
     """Python under src/endorlabs or agent-knowledge skill scripts (not paths.py)."""
     normalized = _normalize_path(path)
@@ -1394,7 +1541,9 @@ def main(argv: list[str] | None = None) -> int:
         "usage: pre_commit_guards.py "
         "{blocked-paths|changelog-reminder|layer-imports|bounds-shim|"
         "deprecated-api-strings|accessor-nudge|portable-examples|"
-        "agent-knowledge-sync|context-root-literals|external-pii-urls|"
+        "agent-knowledge-sync|agent-knowledge-verify|stale-devtools-paths|"
+        "readme-pypi-links|wheel-packaging-invariants|context-root-literals|"
+        "external-pii-urls|"
         "shipped-namespace-flags|security-content-diff <base> [head]|"
         "select-tests|run-selected-tests}"
     )
@@ -1419,6 +1568,14 @@ def main(argv: list[str] | None = None) -> int:
         return check_portable_examples()
     if command == "agent-knowledge-sync":
         return check_agent_knowledge_sync()
+    if command == "agent-knowledge-verify":
+        return check_agent_knowledge_verify()
+    if command == "stale-devtools-paths":
+        return check_stale_devtools_paths()
+    if command == "readme-pypi-links":
+        return check_readme_pypi_links()
+    if command == "wheel-packaging-invariants":
+        return check_wheel_packaging_invariants()
     if command == "context-root-literals":
         return check_context_root_literals()
     if command == "external-pii-urls":

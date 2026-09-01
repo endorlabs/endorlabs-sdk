@@ -87,7 +87,7 @@ workflows:
     cli: endor-reports
     module: endorlabs.workflows.reports.cli
     skill: endor-workflow-reports
-    default_output: user-supplied CSV path
+    default_output: .endorlabs/reports/auth-policies/
     agent_visible: false
     composition: library_api
     library_entrypoints:

@@ -293,20 +293,6 @@ class APIClient:
             self.secret = secret or os.getenv("ENDOR_API_CREDENTIALS_SECRET")
             self._auth_type = "api-key"
 
-            if not self.key or not self.secret:
-                error_msg = (
-                    "API credentials not found. Please provide credentials via:\n"
-                    "  - Environment variable: ENDOR_TOKEN (bearer token)\n"
-                    "  - Constructor: APIClient(key=..., secret=...)\n"
-                    "  - Environment variables: ENDOR_API_CREDENTIALS_KEY and "
-                    "ENDOR_API_CREDENTIALS_SECRET\n"
-                    "  - Or use browser authentication: "
-                    "APIClient(auth_method='browser-auth') or "
-                    "APIClient(auth_method='sso', auth_tenant='...')"
-                )
-                self.logger.error(error_msg)
-                raise ValidationError(error_msg)
-
         # Store browser auth parameters
         self._browser_name = os.getenv("ENDOR_BROWSER")
 
@@ -361,15 +347,36 @@ class APIClient:
         )
         self.logger_len = 25
 
-        # Authenticate and set initial headers
-        # Use token property to ensure fresh token with expiration tracking
-        _ = self.token
-        if self._token:
-            with self._session_lock:
-                self._request_headers["Authorization"] = f"Bearer {self._token}"
-                self.default_headers = dict(self._request_headers)
+        # Authenticate when credentials are already configured; defer otherwise so
+        # ``Client()`` can call ``client.<Kind>.describe()`` before auth.
+        if self._has_configured_credentials():
+            _ = self.token
         else:
             self.default_headers = self._headers_copy()
+
+    def _missing_credentials_message(self) -> str:
+        return (
+            "API credentials not found. Please provide credentials via:\n"
+            "  - Environment variable: ENDOR_TOKEN (bearer token)\n"
+            "  - Constructor: APIClient(key=..., secret=...)\n"
+            "  - Environment variables: ENDOR_API_CREDENTIALS_KEY and "
+            "ENDOR_API_CREDENTIALS_SECRET\n"
+            "  - Or use browser authentication: "
+            "APIClient(auth_method='browser-auth') or "
+            "APIClient(auth_method='sso', auth_tenant='...')"
+        )
+
+    def _has_configured_credentials(self) -> bool:
+        """True when auth can run without opening a browser or prompting."""
+        if self._auth_type == "browser":
+            return bool(self._provided_token and self._provided_token != "browser")
+        return bool(self.key and self.secret)
+
+    def _require_configured_credentials(self) -> None:
+        if not self._has_configured_credentials():
+            error_msg = self._missing_credentials_message()
+            self.logger.error(error_msg)
+            raise ValidationError(error_msg)
 
     def close(self) -> None:
         """Close the underlying HTTP client and release connections."""
@@ -1430,6 +1437,8 @@ class APIClient:
     def _ensure_fresh_token(self) -> None:
         """Refresh API-key sessions; bearer sessions warn then fail closed."""
         if self._token is None:
+            if self._auth_type == "api-key" and not self._has_configured_credentials():
+                self._require_configured_credentials()
             _ = self.authenticate()
             return
 
@@ -1609,6 +1618,8 @@ class APIClient:
 
     def _authenticate_api_key(self) -> str | None:
         """Authenticate using API key and secret."""
+        if not self.key or not self.secret:
+            self._require_configured_credentials()
         assert self.client is not None, "APIClient is closed"
         payload = {"key": self.key, "secret": self.secret}
         last_error: Exception | None = None

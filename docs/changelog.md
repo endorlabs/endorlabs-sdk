@@ -14,6 +14,28 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Breaking
 
+## 0.7.2
+
+### Added
+
+- Doc freshness guards (`agent-knowledge-verify`, `stale-devtools-paths`, `readme-pypi-links`) and extended `sync_agent_knowledge.py --verify` / `verify_wheel_contents` source checks.
+- `Client()` without credentials supports `client.<Kind>.describe()` (deferred auth); API calls still require credentials before first request.
+- Wheel packaging gate `verify_wheel_contents.py` and `__init__.py` package roots for `workflows.estate.analyze` / `export` subpackages.
+
+### Changed
+
+- Agent knowledge INDEX Day-0 trap table (two-column rows), task routing for report CLIs via **endor-workflow-reports**, and consumer AGENTS/template alignment with deferred-auth `describe()` and workspace layout.
+- `APIClient` defers credential validation until the first API call when no credentials are configured; `client.<Kind>.describe()` works on a bare `Client(tenant=…)`.
+- README PyPI long description uses absolute GitHub URLs; version compatibility table lists **0.7.1**.
+- Maintainer docs: corrected devtools paths (`devtools/codegen/`), `endor-reports build`, `troubleshooting/` output segment, estate `workspace_dir_for` import.
+
+### Fixed
+
+- Pre-commit and sync verify guardrails: `MANIFEST.sdk_version` parity, shipped bundle link lint, Day-0 trap table shape, blocking `agent-knowledge-verify`, README PyPI link and stale devtools path checks.
+- PyPI wheel omitted `agent_knowledge` subtree paths and hollow `estate/analyze` imports (sdist force-include + runtime bundle validation).
+
+### Breaking
+
 ## 0.7.1
 
 ### Breaking
@@ -159,7 +181,7 @@ Auth hardening, Query collect pagination, credential/AuthorizationPolicy audit s
 - Query docs: correct `list_parameters` support matrix; nested join mask and `count_dm` vs `list_groups` traps. Guide: [guides/query-recipes.md](guides/query-recipes.md).
 - Write `.env` bearer tokens with owner-only file permissions (`0o600`) during auth refresh workflows.
 - Structural transport fixes: per-attempt header build from live session state (401 reauth retries send refreshed bearer token), `threading.RLock` on token refresh, localized HTTP 429 `Retry-After` sleep (delta or HTTP-date, capped at 60s).
-- Network retries: `ConnectError` always retried; `TimeoutException` / other `RequestError` retried only for idempotent methods unless `retry_non_idempotent=True` or `ENDOR_RETRY_NON_IDEMPOTENT=1`. Documented in [docs/contracts.md](docs/contracts.md#concurrency-and-transport-retries).
+- Network retries: `ConnectError` always retried; `TimeoutException` / other `RequestError` retried only for idempotent methods unless `retry_non_idempotent=True` or `ENDOR_RETRY_NON_IDEMPOTENT=1`. Documented in [contracts.md](contracts.md#concurrency-and-transport-retries).
 - Stop setting `ENDOR_API` in the process environment from `APIClient` construction; read the default locally instead.
 - Cap call graph zstd decompression at 256 MiB to guard against decompression bombs from workspace artifacts.
 - Skip integration CI on fork pull requests when repository secrets are unavailable (avoids false-red CI for external contributors).

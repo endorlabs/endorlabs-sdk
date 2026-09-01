@@ -233,7 +233,7 @@ def primary_identity(identifiers: list[str]) -> str:
         if "@" in value:
             emails.append(value.lower())
     if emails:
-        return sorted(emails)[0]
+        return min(emails)
 
     for prefix in ("email=", "user=", "id="):
         for item in identifiers:

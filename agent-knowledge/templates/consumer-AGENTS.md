@@ -14,11 +14,12 @@ print(endorlabs.discover())
 # Or: python -m endorlabs.examples.agent_bootstrap --dry-run
 
 d = endorlabs.discover()
-# Read d.index (INDEX.md) and every path in d.bootstrap_paths; read d.stub.
+# Read d.index (INDEX.md) and every path in d.bootstrap_paths.
+client = endorlabs.Client(tenant="your-tenant")
+print(client.Finding.describe())  # no credentials required
 
 # 1. Auth
 # uv run endor-auth check --tenant your-tenant
-client = endorlabs.Client(tenant="your-tenant")  # or ENDOR_NAMESPACE
 print(client.whoami())  # not Namespace.list()
 
 # 2. Workflows — skills not on dir(client)
@@ -44,9 +45,10 @@ See INDEX.md for the full table. Most common:
 
 Write artifacts under `.endorlabs/` (gitignore this tree):
 
-- `projects/` — project bundles and per-uuid reachability JSON
-- `runs/<run-bucket>/` — CSV, JSON, RCA (run bucket is fixed per skill; see INDEX)
-- `inventory/` — namespace inventories
+- `tasks/<slug>-<YYYY-MM-DD>/projects/` — project bundles and per-uuid reachability JSON
+- `tasks/<slug>-<YYYY-MM-DD>/<activity>/` — CSV, JSON, RCA (activity segment per skill; see INDEX)
+- `reports/<subcommand>/` — report CSV/HTML outputs
+- `tasks/inventory/` — namespace inventories (no tenant-day bucket)
 
 ## MCP (optional)
 

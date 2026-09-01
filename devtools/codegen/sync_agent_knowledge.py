@@ -42,6 +42,7 @@ from devtools.codegen.agent_knowledge_catalog import (
     build_workflow_catalog,
     collect_skill_catalog_rows,
     iter_skill_dirs,
+    lint_shipped_agent_knowledge_links,
     list_skill_refs,
     load_supplemental_workflows,
     normalize_skill_for_bundle,
@@ -51,8 +52,10 @@ from devtools.codegen.agent_knowledge_catalog import (
     render_contract_md,
     rewrite_paths,
     validate_contract,
+    validate_day0_trap_table,
     validate_rule,
     validate_workflow_cli_entries,
+    verify_manifest_sdk_version,
 )
 
 AGENT_ROOT = REPO_ROOT / AGENT_DIRNAME
@@ -109,6 +112,17 @@ MANIFEST_SCHEMA_VERSION = 2
 
 
 def _read_sdk_version() -> str:
+    try:
+        import tomllib
+
+        data = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
+        project = data.get("project")
+        if isinstance(project, dict):
+            version = project.get("version")
+            if isinstance(version, str) and version.strip():
+                return version.strip()
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
     try:
         sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -682,9 +696,22 @@ def sync_bundle(*, bundle_root: Path | None = None) -> dict[str, Any]:
             json.dumps(manifest, indent=2, sort_keys=True).encode("utf-8") + b"\n"
         )
 
-        if not MANIFEST_PATH.is_file() or _normalize_manifest_bytes(
-            MANIFEST_PATH.read_bytes()
-        ) != _normalize_manifest_bytes(new_manifest_bytes):
+        existing_sdk_version: str | None = None
+        if MANIFEST_PATH.is_file():
+            try:
+                existing_payload = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+                raw_version = existing_payload.get("sdk_version")
+                if isinstance(raw_version, str):
+                    existing_sdk_version = raw_version
+            except json.JSONDecodeError:
+                existing_sdk_version = None
+
+        manifest_content_changed = not MANIFEST_PATH.is_file() or (
+            _normalize_manifest_bytes(MANIFEST_PATH.read_bytes())
+            != _normalize_manifest_bytes(new_manifest_bytes)
+        )
+        manifest_metadata_changed = existing_sdk_version != manifest.get("sdk_version")
+        if manifest_content_changed or manifest_metadata_changed:
             MANIFEST_PATH.write_bytes(new_manifest_bytes)
 
         write_workflows_index(manifest)
@@ -828,6 +855,26 @@ def verify_bundle() -> int:
 
     if snapshot_workflows != regen_workflows:
         errors.append("agent_knowledge/workflows drift")
+
+    sdk_err = verify_manifest_sdk_version(MANIFEST_PATH, pyproject_path=PYPROJECT)
+    if sdk_err is not None:
+        errors.append(sdk_err)
+
+    trap_errors = validate_day0_trap_table(
+        (BUNDLE_ROOT / "INDEX.md").read_text(encoding="utf-8"),
+        source="src/endorlabs/agent_knowledge/INDEX.md",
+    )
+    errors.extend(trap_errors)
+
+    link_errors = lint_shipped_agent_knowledge_links(BUNDLE_ROOT)
+    errors.extend(link_errors)
+
+    try:
+        from endorlabs.agent_knowledge import validate_agent_knowledge_tree
+
+        validate_agent_knowledge_tree(BUNDLE_ROOT)
+    except Exception as exc:
+        errors.append(f"agent knowledge tree invalid: {exc}")
 
     if errors:
         for msg in errors:

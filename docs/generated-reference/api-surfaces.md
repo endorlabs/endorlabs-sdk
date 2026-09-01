@@ -19,6 +19,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `EndorAPIError`
 - `EndorRuleError`
 - `F`
+- `FacadeDescription`
 - `FilterExpression`
 - `ListParameters`
 - `ListQueryPerformanceError`

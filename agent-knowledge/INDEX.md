@@ -15,13 +15,13 @@ print(endorlabs.discover())
 
 d = endorlabs.discover()
 # Read every path in d.bootstrap_paths.
-# Prefer print(client.Finding.describe()) for live list() kwargs / routes
-# (cheaper than reading the stub); stub remains at d.stub for IDE typing.
 
-# 1. Auth — live API
-client = endorlabs.Client(tenant="your-tenant")  # or ENDOR_NAMESPACE
+# 0b. Resource kwargs / routes — no credentials (deferred auth on Client)
+client = endorlabs.Client(tenant="your-tenant")
+print(client.Finding.describe())  # stub is for IDE typing only
+
+# 1. Auth — live API (whoami / list / get)
 print(client.whoami())  # None → check .env / single auth mode
-print(client.Finding.describe())  # resource-specific identity kwargs + routes
 
 # 2. Workflows — call graph, scan RCA, project bundles (not on dir(client))
 status = endorlabs.init(include_openapi=False)
@@ -33,7 +33,7 @@ status = endorlabs.init(include_openapi=False)
 Before `endorlabs.Client()` or live API calls:
 
 1. `print(endorlabs.discover())` or `python -m endorlabs.examples.agent_bootstrap --dry-run` — then **read every path** in `bootstrap_paths`.
-2. Prefer `print(client.<Kind>.describe())` for resource-specific `list()` identity kwargs and route accessors (no network). Read `discover().stub` only when you need IDE/static typing — not as the primary kwargs source.
+2. Prefer `print(client.<Kind>.describe())` for resource-specific `list()` identity kwargs and route accessors (no network). `Client()` without credentials is enough — auth runs on first API call, not on describe. Read `discover().stub` only when you need IDE/static typing — not as the primary kwargs source.
 3. **Auth check:** `Client().whoami()` — do not use `Namespace.list()` as an auth proxy.
 4. **Workflows** (call graph, project bundle, scan RCA): `endorlabs.init()` → read `skills/<id>/SKILL.md` (start: **endor-fetch-and-search-call-graph**, **endor-retrieve-scan-results**)
 
@@ -47,8 +47,8 @@ Consumer entrypoint: **`AGENTS.md`** (points here). Copy **`templates/consumer-A
 | Stub as kwargs source | Prefer `print(client.Finding.describe())` — live identity kwargs + routes; stub is for typing |
 | `F()` positional | `list(filter=F("spec.level") == "…", traverse=True)` — never `list(F(...) == …, traverse=True)` |
 | `F.field` attribute | Use `F("spec.field")` — dotted paths are strings, not attributes on `F` |
-| `list_by_*` / `list_for_context` | `list[T]` | Same as `.list()` — project/scan-plane edges |
-| `to_*` | `RouteResult` | Stitch — `.value` / `.single`; check `.edge_used`, `.warnings` |
+| `list_by_*` / `list_for_context` expecting wrong return type | `list[T]` — same as `.list()`; project/scan-plane edges |
+| `to_*` expecting wrong return type | `RouteResult` — stitch; `.value` / `.single`; check `.edge_used`, `.warnings` |
 | `limit` on `.list()` | Use `page_size=` or `limit=` (alias for `page_size`; same as `list_by_project(limit=)`) |
 | Sorted list + `max_pages>1` | Platform rejects `page_id` with sort — use `limit=`/`page_size` + `max_pages=1`, or drop `sort_by` ([list-parameters](contracts/list-parameters.md)) |
 | Finding text field | `spec.summary`, not `spec.description` |
@@ -59,7 +59,7 @@ Consumer entrypoint: **`AGENTS.md`** (points here). Copy **`templates/consumer-A
 | Call graph: `fetch()` only | Use `CallGraphData.decode()` for searchable callables/edges; `fetch()` is raw envelope |
 | `call_graph_available=true` | Flag ≠ stored data — use `resolve_package_version_with_callgraph()` |
 | Call graph helpers | Not on `client` — `endorlabs.workflows.callgraph` + skill **endor-fetch-and-search-call-graph** |
-| `print(discover())` repr dump | Use `print(discover())` or `agent_bootstrap --dry-run` — `SdkDiscovery` has a readable `__str__` |
+| `repr(discover())` / dataclass repr | Use `print(discover())` or `agent_bootstrap --dry-run` — `SdkDiscovery` has a readable `__str__` |
 | Auth via `Namespace.list()` | Use `Client().whoami()` after credentials are set |
 | Filter enum literals | Examples in [reference/filter-enum-snippets.md](reference/filter-enum-snippets.md) |
 
@@ -229,9 +229,9 @@ Do not use repo-root `.tmp/`. Gitignore `.endorlabs/` in consumer projects.
 | Policy validation | `endor-validate-policy` |
 | SDK/API errors | `endor-troubleshoot-sdk` |
 | Login / SSO troubleshooting | `endor-troubleshoot-authlog` |
-| Login activity CSV | `endor-auth-login-count` |
-| Duplicate projects audit | `endor-duplicate-projects` |
-| CLI vs Cloud classification | `endor-cli-vs-cloud-projects` |
+| Login activity CSV | `endor-workflow-reports` → `endor-reports login-count -n <tenant>` |
+| Duplicate projects audit | `endor-workflow-reports` → `endor-reports duplicates -n <tenant>` |
+| CLI vs Cloud classification | `endor-workflow-reports` → `endor-reports cli-vs-cloud -n <tenant>` |
 
 Full catalog: `MANIFEST.json` → `skills[]`.
 

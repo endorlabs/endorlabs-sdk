@@ -47,7 +47,7 @@ Route estate-scale asks with [`query/routing.py`](../../src/endorlabs/query/rout
 
 For large **project-scoped** resources (`DependencyMetadata`, `Finding`, `ScanResult`, grouped DM shards), one namespace-wide `list()` can return the same rows but force a long sequential pagination chain. Prefer **discover shard keys** (usually `Project` rows in the target namespace) → **parallel `list()` per shard** with a selective filter (`spec.importer_data.project_uuid==…`, `spec.project_uuid==…`) and **`namespace=project.namespace`**. Prefer generated accessors (`Finding.list_by_project`, `ScanResult.list_by_project`) when the route exists.
 
-Use `ThreadPoolExecutor` / `--max-workers` (typical 8–16), `facade.count()` or `count_for_progress()` per shard for progress denominators, and spike with [`estate/collect/benchmark.py`](../../src/endorlabs/workflows/estate/collect/benchmark.py) before changing defaults. Do **not** assume namespace-wide list is faster — benchmark when row counts are high. Still prefer **one** `traverse=True` list when the resource is not naturally project-sharded or row counts are small.
+Use `ThreadPoolExecutor` / `--max-workers` (typical 8–16), `facade.count()` or `count_for_progress()` per shard for progress denominators, and benchmark locally before changing defaults. Do **not** assume namespace-wide list is faster — benchmark when row counts are high. Still prefer **one** `traverse=True` list when the resource is not naturally project-sharded or row counts are small.
 
 ### SDK helper (`endorlabs.tools.list_sharding`)
 

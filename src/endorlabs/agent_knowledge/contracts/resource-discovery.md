@@ -15,7 +15,7 @@ Normative guidance for finding resources before relationship accessors (`list_by
 
 | API | Returns | When |
 | --- | ------- | ---- |
-| `describe()` | `FacadeDescription` (`print` for text) | Live list kwargs, identity `**kwargs`, routes — **no network**; prefer over reading the stub |
+| `client.<Kind>.describe()` | `FacadeDescription` (`print` for text) | Live list kwargs, identity `**kwargs`, routes — **no network**; `Client()` without credentials is enough (auth on first API call) |
 | `search_by_*(query, …)` | `list[T]` or `list[dict]` with `mask=` | Fuzzy human/LLM input; always bounded |
 | `list(**kwargs)` | Same as today | Custom MQL, grouping, masked rows |
 | `get(uuid)` | Single model | Known UUID |

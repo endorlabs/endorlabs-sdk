@@ -57,7 +57,7 @@ Edit `agent-knowledge/` → `uv run python devtools/codegen/sync_agent_knowledge
 | `_cache/sdk/` | Copy of shipped agent knowledge (`rules/`, `skills/`, `contracts/`, `INDEX.md`, `MANIFEST.json`) |
 | `_cache/openapi.json` | Downloaded OpenAPI when synced |
 | `reports/` | Workflow CSV/HTML/report outputs (`endor-reports` default deliverables) |
-| `tasks/<slug>-<YYYY-MM-DD>/<activity>/` | Session work — estate pull/analyze (`estate/`), troubleshooting (`troubleshooting-scans/`), project bundles (`projects/`), log exports (`logs/`), scratch (`scratch/`) |
+| `tasks/<slug>-<YYYY-MM-DD>/<activity>/` | Session work — estate pull/analyze (`estate/`), troubleshooting (`troubleshooting/`), project bundles (`projects/`), log exports (`logs/`), scratch (`scratch/`) |
 
 Path helpers: `endorlabs.context.paths`.
 

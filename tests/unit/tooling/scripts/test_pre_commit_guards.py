@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+
+import pytest  # noqa: TC002
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 _DEVTOOLS = _REPO_ROOT / "devtools" / "precommit"
@@ -14,6 +16,7 @@ if str(_DEVTOOLS) not in sys.path:
 from pre_commit_guards import (  # noqa: E402
     check_accessor_nudge,
     check_agent_knowledge_sync,
+    check_agent_knowledge_verify,
     check_blocked_staged_paths,
     check_bounds_shim,
     check_changelog_reminder,
@@ -22,7 +25,10 @@ from pre_commit_guards import (  # noqa: E402
     check_external_pii_urls,
     check_layer_imports,
     check_portable_examples,
+    check_readme_pypi_links,
     check_shipped_namespace_flags,
+    check_stale_devtools_paths,
+    check_wheel_packaging_invariants,
     cmd_select_tests,
     is_allowed_email,
     is_allowed_namespace_token,
@@ -284,6 +290,19 @@ def test_check_agent_knowledge_sync_silent_when_shipped(
         == 0
     )
     assert capsys.readouterr().err == ""
+
+
+def test_check_wheel_packaging_invariants_skips_unrelated_paths() -> None:
+    assert check_wheel_packaging_invariants(paths=["docs/changelog.md"]) == 0
+
+
+def test_check_wheel_packaging_invariants_runs_on_estate_paths() -> None:
+    assert (
+        check_wheel_packaging_invariants(
+            paths=["src/endorlabs/workflows/estate/analyze/workspace.py"],
+        )
+        == 0
+    )
 
 
 def test_check_context_root_literals_blocks(tmp_path: Path, monkeypatch) -> None:
@@ -642,3 +661,42 @@ def test_cmd_select_tests_silent_on_docs_only(capsys) -> None:
     assert cmd_select_tests(paths=["docs/guides/examples.md"]) == 0
     out = capsys.readouterr().out
     assert out == ""
+
+
+def test_check_stale_devtools_paths_flags_model_sync(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import pre_commit_guards as guards
+
+    monkeypatch.setattr(guards, "_REPO_ROOT", tmp_path)
+    doc = tmp_path / "docs" / "foo.md"
+    doc.parent.mkdir(parents=True)
+    doc.write_text("Run devtools/model_sync.py\n", encoding="utf-8")
+    assert check_stale_devtools_paths(paths=["docs/foo.md"]) == 1
+
+
+def test_check_stale_devtools_paths_allows_codegen_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import pre_commit_guards as guards
+
+    monkeypatch.setattr(guards, "_REPO_ROOT", tmp_path)
+    doc = tmp_path / "docs" / "foo.md"
+    doc.parent.mkdir(parents=True)
+    doc.write_text("Run devtools/codegen/model_sync.py\n", encoding="utf-8")
+    assert check_stale_devtools_paths(paths=["docs/foo.md"]) == 0
+
+
+@patch("pre_commit_guards.subprocess.run")
+def test_check_agent_knowledge_verify_runs_sync(mock_run: MagicMock) -> None:
+    mock_run.return_value.returncode = 0
+    assert (
+        check_agent_knowledge_verify(
+            paths=["agent-knowledge/INDEX.md"],
+        )
+        == 0
+    )
+
+
+def test_check_readme_pypi_links_ok_when_github_urls() -> None:
+    assert check_readme_pypi_links(paths=["README.md"]) == 0

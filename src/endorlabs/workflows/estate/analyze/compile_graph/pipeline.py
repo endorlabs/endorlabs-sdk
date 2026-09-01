@@ -133,7 +133,7 @@ def build_union_nodes(
             }
         )
         names = [str(m.get("name") or m.get("uuid", "")) for m in members]
-        canonical_name = sorted(names)[0]
+        canonical_name = min(names)
         member_types = {
             str(
                 m.get("registration_type")

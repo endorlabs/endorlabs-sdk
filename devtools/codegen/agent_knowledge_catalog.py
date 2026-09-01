@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import tomllib
 from dataclasses import dataclass
@@ -479,3 +480,95 @@ def collect_skill_catalog_rows(
             continue
         catalog_rows.append((parsed.skill_id, catalog))
     return parsed_skills, catalog_rows, errors
+
+
+_SHIPPED_REPO_ONLY_LINK_RE = re.compile(
+    r"\]\((?:\.\./)*(docs/[^)]+|devtools/[^)]+|src/[^)]+|agent-knowledge/[^)]+|CONTRIBUTORS\.md)\)"
+)
+_DAY0_TRAPS_HEADER = "## Day-0 traps"
+
+
+def lint_shipped_agent_knowledge_links(bundle_root: Path) -> list[str]:
+    """Fail on repo-only markdown link targets in the shipped wheel bundle."""
+    errors: list[str] = []
+    if not bundle_root.is_dir():
+        return [f"bundle root missing: {bundle_root}"]
+    for path in sorted(bundle_root.rglob("*.md")):
+        rel = path.relative_to(bundle_root).as_posix()
+        text = path.read_text(encoding="utf-8")
+        for match in _SHIPPED_REPO_ONLY_LINK_RE.finditer(text):
+            errors.append(
+                f"{rel}: repo-only link target {match.group(0)!r} "
+                "(use wheel-relative paths or GitHub blob URLs)"
+            )
+    return errors
+
+
+def validate_day0_trap_table(index_text: str, *, source: str = "INDEX.md") -> list[str]:
+    """Ensure Day-0 trap rows are two-column markdown tables."""
+    errors: list[str] = []
+    if _DAY0_TRAPS_HEADER not in index_text:
+        errors.append(f"{source}: missing {_DAY0_TRAPS_HEADER!r} section")
+        return errors
+    section = index_text.split(_DAY0_TRAPS_HEADER, 1)[1]
+    # Stop at next level-2 heading.
+    if "\n## " in section:
+        section = section.split("\n## ", 1)[0]
+    data_rows = 0
+    for line in section.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if not cells or all(set(cell) <= {"-"} for cell in cells):
+            continue
+        if len(cells) != 2:
+            errors.append(
+                f"{source}: trap table row must have 2 columns, "
+                f"got {len(cells)}: {stripped!r}"
+            )
+        else:
+            data_rows += 1
+    if data_rows < 10:
+        errors.append(
+            f"{source}: expected at least 10 Day-0 trap rows, found {data_rows}"
+        )
+    return errors
+
+
+def read_pyproject_version(pyproject_path: Path) -> str | None:
+    """Return [project].version from pyproject.toml."""
+    if not pyproject_path.is_file():
+        return None
+    data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+    project = data.get("project")
+    if not isinstance(project, dict):
+        return None
+    version = project.get("version")
+    if isinstance(version, str) and version.strip():
+        return version.strip()
+    return None
+
+
+def verify_manifest_sdk_version(
+    manifest_path: Path,
+    *,
+    pyproject_path: Path,
+) -> str | None:
+    """Return an error message when MANIFEST sdk_version != pyproject version."""
+    expected = read_pyproject_version(pyproject_path)
+    if expected is None:
+        return "pyproject.toml missing [project].version"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return f"MANIFEST.json invalid JSON: {exc}"
+    actual = manifest.get("sdk_version")
+    if not isinstance(actual, str) or not actual.strip():
+        return "MANIFEST.json missing sdk_version"
+    if actual.strip() != expected:
+        return (
+            f"MANIFEST sdk_version {actual.strip()!r} != pyproject version "
+            f"{expected!r} (run devtools/codegen/sync_agent_knowledge.py)"
+        )
+    return None

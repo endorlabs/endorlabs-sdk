@@ -45,7 +45,7 @@ flowchart TD
    - Enforces supported operations from registry metadata; unsupported methods raise `NotImplementedError`.
 
 4. **Registry adapter** — generated-contract + overlay source of truth for `Client`
-   - Runtime contract is generated at `src/endorlabs/generated/registry_contract.py` by `devtools/model_sync.py`.
+   - Runtime contract is generated at `src/endorlabs/generated/registry_contract.py` by `devtools/codegen/model_sync.py`.
    - `registry.py` adapts generated contract rows into `ResourceEntry(...)` objects, applies explicit overrides from `registry_overlay.py`, and appends narrowly scoped experimental facades when needed.
    - Prefer model-sync inputs plus the minimal overlay. Use experimental facades only as explicit, lightweight stopgaps instead of hand-authoring a large registry table.
 
@@ -60,7 +60,7 @@ flowchart TD
 
 New API resources are **modeled by model sync**, not hand-added to `Client` one at a time. The default workflow:
 
-1. **Regenerate** — `uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs` (see [docs-drift-workflow.md](docs-drift-workflow.md)).
+1. **Regenerate** — `uv run python devtools/codegen/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs` (see [docs-drift-workflow.md](docs-drift-workflow.md)).
 2. **Verify contract** — Resource appears in `src/endorlabs/generated/registry_contract.py`; facade is attached at runtime from the registry adapter (no entry in `Client.__init__`).
 3. **Validate API shape** — [api-validation.md](api-validation.md) (OpenAPI + optional endorctl list/get).
 4. **Diverge only when needed** — [registry_overlay.py](../../src/endorlabs/registry_overlay.py) for scope, ops, or metadata the generator cannot express; keep overrides minimal.

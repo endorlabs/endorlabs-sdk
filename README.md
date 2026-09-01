@@ -3,16 +3,16 @@
 <p align="center">
   <a href="https://www.endorlabs.com/">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/endor-labs-wordmark-dark.png">
-      <source media="(prefers-color-scheme: light)" srcset="docs/assets/endor-labs-wordmark-light.png">
-      <img src="docs/assets/endor-labs-wordmark-light.png" alt="Endor Labs" width="360">
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/endorlabs/endorlabs-sdk/raw/main/docs/assets/endor-labs-wordmark-dark.png">
+      <source media="(prefers-color-scheme: light)" srcset="https://github.com/endorlabs/endorlabs-sdk/raw/main/docs/assets/endor-labs-wordmark-light.png">
+      <img src="https://github.com/endorlabs/endorlabs-sdk/raw/main/docs/assets/endor-labs-wordmark-light.png" alt="Endor Labs" width="360">
     </picture>
   </a>
 </p>
 
 <p align="center">
   <a href="https://www.endorlabs.com/platform">
-    <img src="docs/assets/endor-auri-platform.webp" alt="AURI by Endor Labs — agentic application security platform (CLI, API, MCP, Skills, Web UI)" width="720">
+    <img src="https://github.com/endorlabs/endorlabs-sdk/raw/main/docs/assets/endor-auri-platform.webp" alt="AURI by Endor Labs — agentic application security platform (CLI, API, MCP, Skills, Web UI)" width="720">
   </a>
 </p>
 
@@ -24,23 +24,24 @@
 
 [Python CI](https://github.com/endorlabs/endorlabs-sdk/actions/workflows/ci-pr-main.yml)
 
-Type-safe, resource-oriented Python client for the Endor Labs REST API. List, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and [the rest of the registry-backed resource set](docs/generated-reference/resources.md)) with consistent patterns for filtering, pagination, namespace traversal, and IDE-friendly typed facades.
+Type-safe, resource-oriented Python client for the Endor Labs REST API. List, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and [the rest of the registry-backed resource set](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/generated-reference/resources.md)) with consistent patterns for filtering, pagination, namespace traversal, and IDE-friendly typed facades.
 
-**API stability:** Core SDK surfaces (`endorlabs.Client`, resource facades, `F()` filters) are semver-stable. The [`endorlabs.workflows`](src/endorlabs/workflows/) package holds operational CLIs and estate analytics helpers that may evolve faster than core facades — pin versions in production automation if you depend on workflow modules directly.
+**API stability:** Core SDK surfaces (`endorlabs.Client`, resource facades, `F()` filters) are semver-stable. The [`endorlabs.workflows`](https://github.com/endorlabs/endorlabs-sdk/blob/main/src/endorlabs/workflows/) package holds operational CLIs and estate analytics helpers that may evolve faster than core facades — pin versions in production automation if you depend on workflow modules directly.
 
-- **Python:** 3.12+ (CI gates run on 3.13 — see [CONTRIBUTORS.md](CONTRIBUTORS.md))
+- **Python:** 3.12+ (CI gates run on 3.13 — see [CONTRIBUTORS.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/CONTRIBUTORS.md))
 - **API spec:** [OpenAPI (Swagger)](https://api.endorlabs.com/download/openapiv2.swagger.json)
 
 ### Version compatibility
 
-The SDK wheel version (`endorlabs`) is **independent** of [endorctl](https://docs.endorlabs.com/endorctl/) semver. Each release documents the OpenAPI watermark it was built and tested against (see `docs/changelog.md` and the provenance header in `src/endorlabs/generated/registry_contract.py`).
+The SDK wheel version (`endorlabs`) is **independent** of [endorctl](https://docs.endorlabs.com/endorctl/) semver. Each release documents the OpenAPI watermark it was built and tested against (see [changelog](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md) and the provenance header in `src/endorlabs/generated/registry_contract.py`).
 
 | PyPI `endorlabs` | OpenAPI watermark (endorctl) | Notes |
 | ---------------- | ---------------------------- | ----- |
-| **0.7.0** (latest) | 1.7.1080 | [changelog](docs/changelog.md#070) |
+| **0.7.2** (latest) | 1.7.1133 | [changelog](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md#072) |
+| **0.7.1** | 1.7.1133 | [changelog](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md#071) |
 | `main` (unreleased) | 1.7.1133 | Integration branch; targets **0.8.0** — not on PyPI yet |
 
-Refresh model-sync before publishing when live API has moved: `uv run python devtools/codegen/model_sync.py --verify-upstream-only`. Automated bot PRs: [`.github/workflows/model-sync-dispatch.yml`](.github/workflows/model-sync-dispatch.yml).
+Refresh model-sync before publishing when live API has moved: `uv run python devtools/codegen/model_sync.py --verify-upstream-only`. Automated bot PRs: [model-sync-dispatch workflow](https://github.com/endorlabs/endorlabs-sdk/blob/main/.github/workflows/model-sync-dispatch.yml).
 
 ## Start here
 
@@ -49,10 +50,10 @@ Refresh model-sync before publishing when live API has moved: `uv run python dev
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | **Use the SDK** (API scripts, CI)                   | [Installation](#installation) → [Quick start](#quick-start) — **no `init()` required**         |
 | **Bootstrap an AI agent** (API + skills)            | [Agent bootstrap](#agent-bootstrap-discover-vs-init) — `discover()` then `init()` for workflows |
-| **Try the SDK on a real tenant**                    | [docs/guides/examples.md](docs/guides/examples.md) · [Try it with skills](#try-it-with-skills) |
-| **Tenant executive HTML reports**                   | `endor-reports packet` — [guide](docs/guides/executive-report-packet.md) · [reports README](src/endorlabs/workflows/reports/README.md) |
-| **SDK contracts and deep reference**                | [docs/README.md](docs/README.md)                                                               |
-| **Contribute to this repo**                         | [CONTRIBUTORS.md](CONTRIBUTORS.md)                                                             |
+| **Try the SDK on a real tenant**                    | [docs/guides/examples.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/examples.md) · [Try it with skills](#try-it-with-skills) |
+| **Tenant executive HTML reports**                   | `endor-reports build` (or bare `-n`) — [guide](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/executive-report-packet.md) · [reports README](https://github.com/endorlabs/endorlabs-sdk/blob/main/src/endorlabs/workflows/reports/README.md) |
+| **SDK contracts and deep reference**                | [docs/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/README.md)                                                               |
+| **Contribute to this repo**                         | [CONTRIBUTORS.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/CONTRIBUTORS.md)                                                             |
 
 
 ## Installation
@@ -85,14 +86,14 @@ Source repo: [`endorlabs/endorlabs-sdk`](https://github.com/endorlabs/endorlabs-
 
 | Extra       | Install                                  | Enables                                                                                                      |
 | ----------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `analytics` | `pip install 'endorlabs[analytics]'`    | DataFrame / Parquet export and estate graph metrics — see [docs/estate/README.md](docs/estate/README.md) |
+| `analytics` | `pip install 'endorlabs[analytics]'`    | DataFrame / Parquet export and estate graph metrics — see [docs/estate/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/estate/README.md) |
 
 
 CSV export from `workflows.estate.analyze.cardinality.tabular` works without extras. In this repo: `uv sync --extra analytics`. Product docs: [Docs MCP](https://docs.endorlabs.com/introduction/docs-mcp-server) (or [llms.txt](https://docs.endorlabs.com/llms.txt) without MCP).
 
 ## Quick start
 
-**SDK-only** — examples below do not call `endorlabs.init()`. For agent bootstrap, see [AGENTS.md](AGENTS.md).
+**SDK-only** — examples below do not call `endorlabs.init()`. For agent bootstrap, see [AGENTS.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/AGENTS.md).
 
 **Credentials:** Set env vars per [Configuration](#configuration) (API key for CI). For local or agent sessions, probe with `uv run endor-auth check` or use skill **endor-auth-setup** (shipped after `init()`).
 
@@ -119,11 +120,11 @@ if projects:
 
 **List field masks:** a non-empty `mask=` on `list()` returns `list[dict]` wire JSON rows, not
 full Pydantic models. Omit `mask` when you need typed resources end-to-end. See
-[docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md).
+[docs/guides/consumer-ux-list-update.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/consumer-ux-list-update.md).
 
 **Large estate lists:** for project-scoped resources at scale, use
-[`endorlabs.tools.list_sharding`](src/endorlabs/tools/list_sharding.py) or the `endor-estate`
-workflow CLI (see [docs/contributing/list-query-performance.md](docs/contributing/list-query-performance.md)).
+[`endorlabs.tools.list_sharding`](https://github.com/endorlabs/endorlabs-sdk/blob/main/src/endorlabs/tools/list_sharding.py) or the `endor-estate`
+workflow CLI (see [docs/contributing/list-query-performance.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contributing/list-query-performance.md)).
 
 ### Requesting a scan and waiting for results
 
@@ -147,11 +148,11 @@ latest_scan = scans[0] if scans else None
 findings = client.Finding.list_for_context(latest_scan, max_pages=1) if latest_scan else None
 ```
 
-**Relationship accessors:** `list_by_project` / `list_for_context` return **`list[T]`** like `.list()`. Stitch accessors (`to_dependency_metadata`, …) return **`RouteResult`** — use `.value` / `.single` and inspect `.edge_used` / `.warnings`. Prefer list accessors over hand-built filters when the edge exists in the contract. Catalog: [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md) · guide: [docs/guides/facade-helpers.md](docs/guides/facade-helpers.md).
+**Relationship accessors:** `list_by_project` / `list_for_context` return **`list[T]`** like `.list()`. Stitch accessors (`to_dependency_metadata`, …) return **`RouteResult`** — use `.value` / `.single` and inspect `.edge_used` / `.warnings`. Prefer list accessors over hand-built filters when the edge exists in the contract. Catalog: [docs/generated-reference/resource-routes.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/generated-reference/resource-routes.md) · guide: [docs/guides/facade-helpers.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/facade-helpers.md).
 
 **Pagination on `.list()`:** `limit=N` is an alias for `page_size=N` (same idea as `list_by_project(..., limit=N)`). Use `max_pages` to cap fetch depth.
 
-More patterns (filters, `F()`, masks, namespace scoping): [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md), [docs/guides/retrieving-scan-results.md](docs/guides/retrieving-scan-results.md).
+More patterns (filters, `F()`, masks, namespace scoping): [docs/guides/consumer-ux-list-update.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/consumer-ux-list-update.md), [docs/guides/retrieving-scan-results.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/retrieving-scan-results.md).
 
 ### Transport-only `APIClient`
 
@@ -183,7 +184,7 @@ The SDK uses **environment variables** only (no config file loading). Precedence
 | `ENDOR_CREATE_TIMEOUT`         | Optional: override timeout for `create()` POST requests     |
 
 
-Canonical naming is `tenant.namespace.child`; do not use UUIDs in namespace paths. Full semantics: [docs/contracts.md](docs/contracts.md).
+Canonical naming is `tenant.namespace.child`; do not use UUIDs in namespace paths. Full semantics: [docs/contracts.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contracts.md).
 
 Example `.env` for local runs — use **one** credential mode (not both):
 
@@ -204,7 +205,7 @@ ENDOR_LOG_LEVEL=INFO
 
 If both token and API key variables are set, the SDK prefers the token; **MCP and endorctl** typically fail with conflicting auth.
 
-Bearer sessions are **in-memory only**: load `ENDOR_TOKEN` once (or `token=` on `Client`), get a one-time stderr warning within 30 minutes of expiry, then fail closed on expiry/401 with an `endor-auth refresh` hint. Cross-session: `uv run endor-auth refresh` only — `Client` never writes secrets to disk or `os.environ`. Contract: [agent-knowledge/contracts/errors-and-auth.md](agent-knowledge/contracts/errors-and-auth.md).
+Bearer sessions are **in-memory only**: load `ENDOR_TOKEN` once (or `token=` on `Client`), get a one-time stderr warning within 30 minutes of expiry, then fail closed on expiry/401 with an `endor-auth refresh` hint. Cross-session: `uv run endor-auth refresh` only — `Client` never writes secrets to disk or `os.environ`. Contract: [agent-knowledge/contracts/errors-and-auth.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/agent-knowledge/contracts/errors-and-auth.md).
 
 ### Agent bootstrap: `discover()` vs `init()`
 
@@ -222,19 +223,19 @@ Runnable probe (paths only): `python -m endorlabs.examples.agent_bootstrap --dry
 
 Before `Client()`, run `print(endorlabs.discover())` (or `agent_bootstrap --dry-run`) and read every path in `bootstrap_paths`. Before **workflow** tasks (call graph, project bundle, scan RCA), run `endorlabs.init()` and open the relevant skill under `.endorlabs/_cache/sdk/skills/`.
 
-Browser auth, SSO setup, and skill walkthroughs: [docs/guides/examples.md](docs/guides/examples.md). Credential probe and refresh: `uv run endor-auth check` / `endor-auth refresh` (skill **endor-auth-setup**).
+Browser auth, SSO setup, and skill walkthroughs: [docs/guides/examples.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/examples.md). Credential probe and refresh: `uv run endor-auth check` / `endor-auth refresh` (skill **endor-auth-setup**).
 
 ## Try it with skills
 
-Guided tenant sessions use shipped agent skills — start with [docs/guides/examples.md](docs/guides/examples.md). Wheel entry: `print(endorlabs.discover())` or `agent_bootstrap --dry-run`; materialize with `init()` to `.endorlabs/_cache/sdk/`.
+Guided tenant sessions use shipped agent skills — start with [docs/guides/examples.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/examples.md). Wheel entry: `print(endorlabs.discover())` or `agent_bootstrap --dry-run`; materialize with `init()` to `.endorlabs/_cache/sdk/`.
 
 ## Further reading
 
-- **SDK docs:** [docs/README.md](docs/README.md) — contracts, guides, generated reference, errors
-- **API surfaces:** [docs/reference/api-surfaces.md](docs/reference/api-surfaces.md)
-- **Architecture (contributors):** [docs/contributing/architecture.md](docs/contributing/architecture.md)
-- **Agents:** `discover().agents_guide` (shipped wheel) or repo [AGENTS.md](AGENTS.md) for contributors
-- **Contribute:** [CONTRIBUTORS.md](CONTRIBUTORS.md) · [devtools/README.md](devtools/README.md)
+- **SDK docs:** [docs/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/README.md) — contracts, guides, generated reference, errors
+- **API surfaces:** [docs/reference/api-surfaces.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/reference/api-surfaces.md)
+- **Architecture (contributors):** [docs/contributing/architecture.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/contributing/architecture.md)
+- **Agents:** `discover().agents_guide` (shipped wheel) or repo [AGENTS.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/AGENTS.md) for contributors
+- **Contribute:** [CONTRIBUTORS.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/CONTRIBUTORS.md) · [devtools/README.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/devtools/README.md)
 
 ## License
 

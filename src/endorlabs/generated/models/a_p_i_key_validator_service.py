@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Dict
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
@@ -102,7 +102,9 @@ class GoogleprotobufAny(BaseModel):
     model_config = ConfigDict(
         extra='allow',
     )
-    __pydantic_extra__: dict[str, Any]
+    __annotations__ = {
+        '__pydantic_extra__': Dict[str, Any],
+    }
     field_type: str | None = Field(None, alias='@type')
     """
     A URL/resource name that uniquely identifies the type of the serialized
@@ -228,7 +230,9 @@ class Detail(BaseModel):
     model_config = ConfigDict(
         extra='allow',
     )
-    __pydantic_extra__: dict[str, Any]
+    __annotations__ = {
+        '__pydantic_extra__': Dict[str, Any],
+    }
     field_type: str | None = Field(None, alias='@type')
     """
     A URL/resource name that uniquely identifies the type of the serialized

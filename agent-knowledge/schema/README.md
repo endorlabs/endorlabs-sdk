@@ -21,6 +21,8 @@ agent-knowledge/
 
 Run `uv run python devtools/codegen/sync_agent_knowledge.py` after edits. CI `--verify` enforces drift (`tests/unit/platform/context/test_agent_knowledge_drift.py`).
 
+**Reference docs:** `reference/filter-enum-snippets.md` and `reference/resource-routes.md` are **codegen outputs** copied from `docs/generated-reference/` at sync time — they exist under `src/endorlabs/agent_knowledge/reference/` after sync, not in the authoring tree. Contract links to `../reference/*` resolve only post-sync.
+
 **Schema files:** [`skill.schema.json`](skill.schema.json), [`rule.schema.json`](rule.schema.json), [`contract.schema.json`](contract.schema.json), [`workflows.schema.json`](workflows.schema.json), [`changelog-intake.schema.json`](changelog-intake.schema.json) (optional PR intake fields; reference only).
 
 Unit tests for the shipped bundle should assert **structure** (unique ids, on-disk paths, bootstrap consistency)—not exact skill or workflow counts. Counts change whenever skills are added, removed, or demoted to workflow-only rows.

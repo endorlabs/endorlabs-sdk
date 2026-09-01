@@ -113,6 +113,42 @@ repos:
         always_run: true
         files: ^agent-knowledge/
 
+      - id: pre-commit-guards-agent-knowledge-verify
+        name: agent-knowledge bundle verify (authoring vs shipped drift)
+        entry: uv
+        args: [run, python, devtools/precommit/pre_commit_guards.py, agent-knowledge-verify]
+        language: system
+        pass_filenames: false
+        always_run: true
+        files: ^(agent-knowledge/|src/endorlabs/agent_knowledge/|\.cursor/rules/.*\.mdc$|pyproject\.toml)
+
+      - id: pre-commit-guards-stale-devtools-paths
+        name: block stale devtools paths in docs and agent-knowledge
+        entry: uv
+        args: [run, python, devtools/precommit/pre_commit_guards.py, stale-devtools-paths]
+        language: system
+        pass_filenames: false
+        always_run: true
+        files: ^(docs/.*\.md|README\.md|agent-knowledge/.*\.md)$
+
+      - id: pre-commit-guards-readme-pypi-links
+        name: README PyPI-safe absolute GitHub links
+        entry: uv
+        args: [run, python, devtools/precommit/pre_commit_guards.py, readme-pypi-links]
+        language: system
+        pass_filenames: false
+        always_run: true
+        files: ^README\.md$
+
+      - id: pre-commit-guards-wheel-packaging-invariants
+        name: wheel packaging invariants (estate + agent_knowledge)
+        entry: uv
+        args: [run, python, devtools/precommit/pre_commit_guards.py, wheel-packaging-invariants]
+        language: system
+        pass_filenames: false
+        always_run: true
+        files: ^(src/endorlabs/workflows/estate/|src/endorlabs/agent_knowledge/|pyproject\.toml)
+
       - id: pre-commit-guards-context-root-literals
         name: block hard-coded .endorlabs-context path constants
         entry: uv
