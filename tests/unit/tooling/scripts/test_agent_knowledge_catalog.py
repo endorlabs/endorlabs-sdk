@@ -8,14 +8,17 @@ import pytest
 
 from devtools.codegen.agent_knowledge_catalog import (
     build_workflow_catalog,
+    lint_shipped_agent_knowledge_links,
     list_skill_refs,
     load_supplemental_workflows,
     normalize_skill_for_bundle,
     parse_skill_md,
     portable_frontmatter,
     rewrite_paths,
+    validate_day0_trap_table,
     validate_skill,
     validate_workflow_cli_entries,
+    verify_manifest_sdk_version,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -175,3 +178,44 @@ def test_shipped_skills_have_no_endorlabs_extension() -> None:
     for skill_md in bundle_skills.glob("*/SKILL.md"):
         parsed = parse_skill_md(skill_md)
         assert "endorlabs" not in parsed.frontmatter, skill_md
+
+
+def test_validate_day0_trap_table_rejects_three_column_row() -> None:
+    text = (
+        "## Day-0 traps\n\n"
+        "| Trap | Correct pattern |\n"
+        "|------|-----------------|\n"
+        "| bad | a | b |\n"
+    )
+    errors = validate_day0_trap_table(text)
+    assert any("2 columns" in err for err in errors)
+
+
+def test_validate_day0_trap_table_accepts_shipped_index() -> None:
+    index = (
+        REPO_ROOT / "src" / "endorlabs" / "agent_knowledge" / "INDEX.md"
+    ).read_text(encoding="utf-8")
+    assert validate_day0_trap_table(index) == []
+
+
+def test_lint_shipped_agent_knowledge_links_flags_docs_targets(tmp_path: Path) -> None:
+    bundle = tmp_path / "bundle"
+    (bundle / "rules").mkdir(parents=True)
+    (bundle / "rules" / "demo.md").write_text(
+        "See [contracts](docs/contracts.md).\n",
+        encoding="utf-8",
+    )
+    errors = lint_shipped_agent_knowledge_links(bundle)
+    assert errors
+    assert "docs/" in errors[0]
+
+
+def test_verify_manifest_sdk_version_matches_pyproject() -> None:
+    manifest_path = (
+        REPO_ROOT / "src" / "endorlabs" / "agent_knowledge" / "MANIFEST.json"
+    )
+    err = verify_manifest_sdk_version(
+        manifest_path,
+        pyproject_path=PYPROJECT,
+    )
+    assert err is None

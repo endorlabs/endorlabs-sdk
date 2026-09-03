@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from endorlabs.core.filter import F
 from endorlabs.filters.main_context import MAIN_CONTEXT_CLAUSE, MAIN_CONTEXT_TYPE
 
 VULNERABILITY_CATEGORY = (
@@ -145,12 +146,10 @@ def finding_log_time_window_filter(
 
 def estate_findings_filter() -> str:
     """Main-context SCA + vulnerability finding filter for estate collect."""
-    import endorlabs
-
-    category = endorlabs.F("spec.finding_categories").contains(
-        FINDING_CATEGORY_SCA
-    ) | endorlabs.F("spec.finding_categories").contains(FINDING_CATEGORY_VULNERABILITY)
-    return str((endorlabs.F("context.type") == MAIN_CONTEXT_TYPE) & category)
+    category = F("spec.finding_categories").contains(FINDING_CATEGORY_SCA) | F(
+        "spec.finding_categories"
+    ).contains(FINDING_CATEGORY_VULNERABILITY)
+    return str((F("context.type") == MAIN_CONTEXT_TYPE) & category)
 
 
 def _iso_z(dt: datetime) -> str:

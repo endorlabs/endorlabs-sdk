@@ -79,6 +79,7 @@ from .resources import (
 if TYPE_CHECKING:
     from .context.models import InitStatus
     from .discovery import SdkDiscovery
+    from .facade.description import FacadeDescription
 
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as pkg_version
@@ -137,6 +138,7 @@ def discover() -> SdkDiscovery:
 
 # Re-export for type checkers and ``from endorlabs import SdkDiscovery``.
 from .discovery import SdkDiscovery  # noqa: E402
+from .facade.description import FacadeDescription  # noqa: E402
 
 
 def init(
@@ -211,6 +213,7 @@ __all__ = [
     "EndorAPIError",
     "EndorRuleError",
     "F",
+    "FacadeDescription",
     "FilterExpression",
     "ListParameters",
     "ListQueryPerformanceError",

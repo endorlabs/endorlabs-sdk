@@ -69,5 +69,5 @@ runs:
     - name: Smoke test built wheel
       shell: bash
       run: >-
-        uv run python devtools/ship/smoke_test_wheel.py
+        uv run python devtools/ship/verify_wheel_contents.py
         --expect-version "${{ inputs.version }}"

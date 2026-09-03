@@ -34,7 +34,7 @@ PyPI versions are immutable. Release CI asserts `[project].version` equals the w
 
 | Requirement | Status in `pyproject.toml` |
 |-------------|---------------------------|
-| `[build-system]` pinned backend (PEP 518/517) | `hatchling==1.30.1` |
+| `[build-system]` pinned backend (PEP 518/517) | `hatchling==1.32.0` |
 | `[project]` name, description, readme, requires-python, authors (PEP 621) | Present |
 | `[project].version` static PEP 440 string | Present (committed) |
 | Dependencies as PEP 508 strings | Present (compatible ranges for runtime deps; CI exercises lowest-direct and highest resolutions) |
@@ -109,9 +109,10 @@ uv run python devtools/ship/check_project_version.py
 # Release simulation (version must already be committed on the branch you build)
 uv run python devtools/ship/check_project_version.py --expect 0.6.0
 uv run python devtools/ship/verify_ship_artifacts.py --fetch-spec --verify-changelog 0.6.0
+uv run python devtools/codegen/sync_agent_knowledge.py --verify
 uv build
 uv run twine check dist/*
-uv run python devtools/ship/smoke_test_wheel.py --expect-version 0.6.0
+uv run python devtools/ship/verify_wheel_contents.py --expect-version 0.6.0
 ```
 
 ## CI workflows
@@ -205,7 +206,7 @@ Pre-release candidates (`X.Y.Zrc1`, `X.Y.Zb1`) use **Release TestPyPI Publish** 
 
 ## Automated model-sync PRs
 
-When live OpenAPI drifts from committed provenance, [`.github/workflows/model-sync-dispatch.yml`](../.github/workflows/model-sync-dispatch.yml) opens a **`chore(model-sync-…)`** PR to `main`:
+When live OpenAPI drifts from committed provenance, [`.github/workflows/model-sync-dispatch.yml`](../../.github/workflows/model-sync-dispatch.yml) opens a **`chore(model-sync-…)`** PR to `main`:
 
 - **Trigger:** `repository_dispatch` (`platform-openapi-published`), cron every 6h, or `workflow_dispatch`.
 - **Scope:** generated ship surface only — no SDK semver bump.
@@ -265,8 +266,11 @@ Before publishing `X.Y.Z`:
 1. Open [`docs/changelog.md`](../changelog.md) **Unreleased** — collapse model-sync-only work into one **Changed** footnote or omit.
 2. Rename **Unreleased** → **`## X.Y.Z`**; leave fresh empty **Unreleased** subsection headers.
 3. Set **`[project].version = "X.Y.Z"`** in `pyproject.toml` (same PR as the changelog cut).
-4. Grep removed CLI/API names; durable docs describe **current** behavior only (upgraders read the changelog).
-5. Merge to **`main`** before running the release workflow (`ref: main`).
+4. Run **`uv run python devtools/codegen/sync_agent_knowledge.py`** so `MANIFEST.json` `sdk_version` matches the TOML bump (pre-commit **`agent-knowledge-verify`** enforces drift).
+5. Grep removed CLI/API names; durable docs describe **current** behavior only (upgraders read the changelog).
+6. Merge to **`main`** before running the release workflow (`ref: main`).
+
+After merge, **`release-build-gate`** runs `verify_wheel_contents.py` (estate import chain, MANIFEST path parity, installed smoke) in addition to `smoke_test_wheel.py`.
 
 **CI note:** `.github/workflows/ci-pr-main.yml` ignores `docs/**`. A changelog-only PR does not run
 **Branch Protection CI Gate** unless you also change a non-ignored path (for example bumping
@@ -279,5 +283,5 @@ Intake while merging PRs: [`.github/pull_request_template.md`](../../.github/pul
 - Version config: `pyproject.toml` → `[project].version` (static)
 - Build backend: `pyproject.toml` → `[tool.hatch.build.targets.*]`
 - Release CI: `.github/workflows/release-tag-publish.yml` (production), `.github/workflows/release-testpypi.yml` (staging), `.github/workflows/release-pypi.yml` (dry-run builds only unless a second PyPI publisher is registered)
-- Local helpers: `devtools/ship/check_project_version.py`, `devtools/ship/smoke_test_wheel.py`, `devtools/ship/smoke_test_published_install.py`
+- Local helpers: `devtools/ship/check_project_version.py`, `devtools/ship/verify_wheel_contents.py`, `devtools/ship/smoke_test_wheel.py`, `devtools/ship/smoke_test_published_install.py`
 - Release gate: `.github/actions/release-build-gate/action.yml`

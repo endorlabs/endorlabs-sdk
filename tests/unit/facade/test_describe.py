@@ -5,8 +5,11 @@ from __future__ import annotations
 import inspect
 from unittest.mock import Mock
 
+import pytest
+
 import endorlabs
 from endorlabs.api_client import APIClient
+from endorlabs.core.exceptions import ValidationError
 from endorlabs.facade.description import list_params_from_signature
 from endorlabs.registry import RESOURCE_REGISTRY
 
@@ -56,3 +59,28 @@ def test_oss_facade_not_namespace_scoped() -> None:
     desc = client.Vulnerability.describe()
     assert desc.scope == "oss"
     assert desc.namespace_scoped is False
+
+
+@pytest.fixture
+def clear_auth_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    for var in (
+        "ENDOR_TOKEN",
+        "ENDOR_API_CREDENTIALS_KEY",
+        "ENDOR_API_CREDENTIALS_SECRET",
+        "ENDOR_NAMESPACE",
+    ):
+        monkeypatch.delenv(var, raising=False)
+
+
+def test_client_describe_without_credentials(clear_auth_env: None) -> None:
+    """Client() without credentials is enough for describe() (deferred auth)."""
+    client = endorlabs.Client(tenant="example-tenant")
+    desc = client.Finding.describe()
+    assert desc.attr_name == "Finding"
+    assert "list_by_project" in desc.route_methods
+
+
+def test_client_api_without_credentials_raises(clear_auth_env: None) -> None:
+    client = endorlabs.Client(tenant="example-tenant")
+    with pytest.raises(ValidationError, match="ENDOR_TOKEN"):
+        client.whoami()

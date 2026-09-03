@@ -82,7 +82,9 @@ class ListableFacade[T: BaseModel]:
     def describe(self) -> FacadeDescription:
         """Return a live, no-network description of this facade.
 
-        Prefer ``print(client.Finding.describe())`` over reading the stub for
+        Does not perform network I/O. ``Client()`` without credentials is
+        sufficient — auth is required only for ``list()`` / ``get()`` and other
+        API calls. Prefer ``print(client.Finding.describe())`` over the stub for
         resource-specific ``list()`` identity kwargs and route accessors.
         """
         from ..generated.route_contract import ROUTE_CONTRACT

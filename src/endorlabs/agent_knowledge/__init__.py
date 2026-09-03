@@ -44,9 +44,84 @@ def agent_knowledge_manifest() -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def agent_knowledge_rule_ids() -> list[str]:
-    """Return bootstrap rule ids from the shipped manifest."""
-    manifest: dict[str, Any] = agent_knowledge_manifest()
+def _append_bootstrap_manifest_paths(
+    paths: list[Path],
+    *,
+    bundle_root: Path,
+    entries_raw: object,
+    allowed_ids: set[str],
+    id_key: str,
+) -> None:
+    if not isinstance(entries_raw, list):
+        return
+    for entry_raw in cast("list[object]", entries_raw):
+        if not isinstance(entry_raw, dict):
+            continue
+        entry = cast("dict[str, Any]", entry_raw)
+        entry_id = entry.get(id_key)
+        rel_path = entry.get("path")
+        if (
+            not isinstance(entry_id, str)
+            or entry_id not in allowed_ids
+            or not isinstance(rel_path, str)
+        ):
+            continue
+        paths.append(bundle_root / rel_path)
+
+
+def agent_knowledge_bootstrap_paths(
+    *,
+    bundle: Path | None = None,
+    validate: bool = False,
+) -> list[Path]:
+    """Return INDEX.md plus bootstrap rule and contract paths for harness injection."""
+    bundle_root = bundle or agent_knowledge_dir()
+    paths: list[Path] = [bundle_root / _INDEX_FILENAME]
+    manifest_path = bundle_root / _MANIFEST_FILENAME
+    if not manifest_path.is_file():
+        if validate:
+            raise ValidationError(
+                f"Agent knowledge manifest not found: {manifest_path}"
+            )
+        return paths
+    manifest: dict[str, Any] = json.loads(manifest_path.read_text(encoding="utf-8"))
+    _append_bootstrap_manifest_paths(
+        paths,
+        bundle_root=bundle_root,
+        entries_raw=manifest.get("rules"),
+        allowed_ids=set(_bootstrap_rule_ids_from_manifest(manifest)),
+        id_key="id",
+    )
+    _append_bootstrap_manifest_paths(
+        paths,
+        bundle_root=bundle_root,
+        entries_raw=manifest.get("contracts"),
+        allowed_ids=set(_bootstrap_contract_ids_from_manifest(manifest)),
+        id_key="id",
+    )
+    if validate:
+        missing = _missing_bootstrap_path_labels(bundle_root, paths)
+        if missing:
+            raise ValidationError(
+                "Shipped agent knowledge bundle is incomplete "
+                f"(missing {len(missing)} bootstrap path(s)): "
+                + ", ".join(missing[:8])
+                + ("..." if len(missing) > 8 else "")
+                + ". Reinstall endorlabs or run endorlabs.init(force=True)."
+            )
+    return paths
+
+
+def _missing_bootstrap_path_labels(
+    bundle_root: Path,
+    paths: list[Path],
+) -> list[str]:
+    return [
+        path.relative_to(bundle_root).as_posix() for path in paths if not path.is_file()
+    ]
+
+
+def _bootstrap_rule_ids_from_manifest(manifest: dict[str, Any]) -> list[str]:
     bootstrap_obj = manifest.get("bootstrap")
     if not isinstance(bootstrap_obj, dict):
         return []
@@ -59,9 +134,7 @@ def agent_knowledge_rule_ids() -> list[str]:
     ]
 
 
-def agent_knowledge_contract_ids() -> list[str]:
-    """Return bootstrap contract ids from the shipped manifest."""
-    manifest: dict[str, Any] = agent_knowledge_manifest()
+def _bootstrap_contract_ids_from_manifest(manifest: dict[str, Any]) -> list[str]:
     bootstrap_obj = manifest.get("bootstrap")
     if not isinstance(bootstrap_obj, dict):
         return []
@@ -74,44 +147,45 @@ def agent_knowledge_contract_ids() -> list[str]:
     ]
 
 
-def agent_knowledge_bootstrap_paths() -> list[Path]:
-    """Return INDEX.md plus bootstrap rule and contract paths for harness injection."""
-    bundle = agent_knowledge_dir()
-    paths: list[Path] = [agent_knowledge_index_path()]
-    manifest: dict[str, Any] = agent_knowledge_manifest()
-    rules_raw = manifest.get("rules")
-    if isinstance(rules_raw, list):
-        bootstrap_rule_ids = set(agent_knowledge_rule_ids())
-        for entry_raw in cast("list[object]", rules_raw):
+def validate_agent_knowledge_tree(bundle: Path | None = None) -> None:
+    """Raise when bootstrap or manifest catalog paths are missing on disk."""
+    bundle_root = bundle or agent_knowledge_dir()
+    _ = agent_knowledge_bootstrap_paths(bundle=bundle_root, validate=True)
+    manifest: dict[str, Any] = json.loads(
+        (bundle_root / _MANIFEST_FILENAME).read_text(encoding="utf-8")
+    )
+    missing_catalog: list[str] = []
+    for key in ("skills", "rules", "contracts"):
+        entries = manifest.get(key)
+        if not isinstance(entries, list):
+            continue
+        for entry_raw in cast("list[object]", entries):
             if not isinstance(entry_raw, dict):
                 continue
             entry = cast("dict[str, Any]", entry_raw)
-            rule_id = entry.get("id")
             rel_path = entry.get("path")
-            if (
-                not isinstance(rule_id, str)
-                or rule_id not in bootstrap_rule_ids
-                or not isinstance(rel_path, str)
-            ):
+            if not isinstance(rel_path, str):
                 continue
-            paths.append(bundle / rel_path)
-    contracts_raw = manifest.get("contracts")
-    if isinstance(contracts_raw, list):
-        bootstrap_contract_ids = set(agent_knowledge_contract_ids())
-        for entry_raw in cast("list[object]", contracts_raw):
-            if not isinstance(entry_raw, dict):
-                continue
-            entry = cast("dict[str, Any]", entry_raw)
-            contract_id = entry.get("id")
-            rel_path = entry.get("path")
-            if (
-                not isinstance(contract_id, str)
-                or contract_id not in bootstrap_contract_ids
-                or not isinstance(rel_path, str)
-            ):
-                continue
-            paths.append(bundle / rel_path)
-    return paths
+            if not (bundle_root / rel_path).is_file():
+                missing_catalog.append(rel_path)
+    if missing_catalog:
+        raise ValidationError(
+            "Shipped agent knowledge bundle is incomplete "
+            f"(missing {len(missing_catalog)} MANIFEST path(s)): "
+            + ", ".join(missing_catalog[:8])
+            + ("..." if len(missing_catalog) > 8 else "")
+            + ". Reinstall endorlabs or run endorlabs.init(force=True)."
+        )
+
+
+def agent_knowledge_rule_ids() -> list[str]:
+    """Return bootstrap rule ids from the shipped manifest."""
+    return _bootstrap_rule_ids_from_manifest(agent_knowledge_manifest())
+
+
+def agent_knowledge_contract_ids() -> list[str]:
+    """Return bootstrap contract ids from the shipped manifest."""
+    return _bootstrap_contract_ids_from_manifest(agent_knowledge_manifest())
 
 
 __all__ = [
@@ -122,4 +196,5 @@ __all__ = [
     "agent_knowledge_manifest",
     "agent_knowledge_manifest_path",
     "agent_knowledge_rule_ids",
+    "validate_agent_knowledge_tree",
 ]

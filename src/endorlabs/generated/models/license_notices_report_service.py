@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Any
+from typing import Any, Dict
 
 from pydantic import AwareDatetime, Base64Str, BaseModel, ConfigDict, Field
 
@@ -159,7 +159,9 @@ class GoogleprotobufAny(BaseModel):
     model_config = ConfigDict(
         extra='allow',
     )
-    __pydantic_extra__: dict[str, Any]
+    __annotations__ = {
+        '__pydantic_extra__': Dict[str, Any],
+    }
     field_type: str | None = Field(None, alias='@type')
     """
     A URL/resource name that uniquely identifies the type of the serialized

@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-08-28T17:54:14.263959+00:00",
+  "generated_at": "2026-09-01T14:22:52.088651+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -149,7 +149,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.7.0",
+  "sdk_version": "0.7.2",
   "skills": [
     {
       "description": "Use when probing, verifying, or refreshing Endor Labs SDK credentials before API\nworkflows\u2014env-key scan, Client whoami check, endorctl detection, and interactive\nbrowser token refresh into .env. Step zero for any tenant session. Not for SSO\npolicy mapping or AuthenticationLog RCA.\n",
@@ -352,7 +352,7 @@
       "agent_visible": false,
       "cli": "endor-reports",
       "composition": "library_api",
-      "default_output": "user-supplied CSV path",
+      "default_output": ".endorlabs/reports/auth-policies/",
       "id": "auth-policy-audit",
       "library_entrypoints": [
         "endorlabs.workflows.reports.analyze.auth_policies_audit",

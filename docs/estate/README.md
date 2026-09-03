@@ -12,7 +12,7 @@ endor-estate summarize → stdout / JSON summary
 
 Workspace root: `.endorlabs/tasks/<namespace-slug>-<YYYY-MM-DD>/estate/`
 
-See [workspace.md](workspace.md), [risk-cardinality.md](risk-cardinality.md), [compile-graph.md](compile-graph.md), [remediation.md](remediation.md), and [patch-fix-report.md](patch-fix-report.md). Upgrading from legacy CLI names: [changelog.md](../changelog.md) (**Unreleased → Breaking**).
+See [workspace.md](workspace.md), [risk-cardinality.md](risk-cardinality.md), [compile-graph.md](compile-graph.md), [remediation.md](remediation.md), and [patch-fix-report.md](patch-fix-report.md). Upgrading from legacy CLI names: [changelog.md](../changelog.md) (**0.7.1 → Breaking**).
 
 **Agents:** `endor-estate` namespace bulk pull/analyze is a maintainer/human workflow (`agent_visible: false` in `MANIFEST.json`). Do not run `endor-estate pull` unless the user explicitly requests namespace-wide bulk collect.
 
@@ -32,10 +32,10 @@ uv run endor-estate summarize --namespace example-tenant.child --workspace .endo
 
 ```python
 import endorlabs
-from endorlabs.context.paths import workspace_dir_for
 from endorlabs.workflows.estate import (
     analyze_workspace,
     collect_workspace,
+    workspace_dir_for,
 )
 
 client = endorlabs.Client(tenant="tenant")

@@ -121,7 +121,7 @@ def _rollup_patch_fix_rows(
     rows: list[dict[str, Any]] = []
     for (package_name, current_version), bucket in sorted(groups.items()):
         patch_versions: set[str] = bucket["patch_versions"]
-        patch_version = sorted(patch_versions)[0] if patch_versions else ""
+        patch_version = min(patch_versions) if patch_versions else ""
         rows.append(
             {
                 "namespace": namespace,

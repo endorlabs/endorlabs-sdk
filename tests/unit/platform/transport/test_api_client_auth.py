@@ -293,6 +293,7 @@ class TestBrowserAuthentication:
 
         with _patch_httpx_client(get_return=_auth_get_response()):
             client = APIClient(auth_method="browser")
+            _ = client.token
 
         assert client.auth_method == "browser-auth"
         assert client._auth_tenant is None
@@ -310,6 +311,7 @@ class TestBrowserAuthentication:
 
         with _patch_httpx_client(get_return=_auth_get_response()):
             client = APIClient(auth_method="browser-auth")
+            _ = client.token
 
         assert client._auth_type == "browser"
         assert client._token == "browser-token-123"
@@ -325,6 +327,7 @@ class TestBrowserAuthentication:
 
         with _patch_httpx_client(get_return=_auth_get_response()):
             client = APIClient(auth_method="sso", auth_tenant="auri")
+            _ = client.token
 
         assert client.auth_method == "sso"
         assert client._auth_type == "browser"
@@ -603,6 +606,7 @@ class TestAuthenticationBackwardCompatibility:
 
         with _patch_httpx_client(get_return=_auth_get_response()):
             client = APIClient(auth_method="azureadv2")
+            _ = client.token
 
         assert client.auth_method == "azureadv2"
         mock_get_token.assert_called_once()
@@ -730,5 +734,6 @@ class TestDualAuthEnv:
         os.environ, {"ENDOR_TOKEN": "", "ENDOR_API_CREDENTIALS_KEY": ""}, clear=True
     )
     def test_missing_credentials_mentions_endor_token(self) -> None:
+        client = APIClient()
         with pytest.raises(ValidationError, match="ENDOR_TOKEN"):
-            APIClient()
+            client.get("v1/namespaces/example-tenant/projects")

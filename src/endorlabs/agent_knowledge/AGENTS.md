@@ -10,7 +10,8 @@
 import endorlabs
 
 d = endorlabs.discover()
-# Read INDEX.md + every path in d.bootstrap_paths; read d.stub for list() / accessor kwargs.
+# Read INDEX.md + every path in d.bootstrap_paths.
+# print(client.Finding.describe()) works before auth (deferred credential check).
 # Same map: print(d)  or  python -m endorlabs.examples.agent_bootstrap --dry-run
 ```
 
@@ -30,5 +31,5 @@ Do not grep the SDK source tree as primary discovery. Use wheel paths from `disc
 | Path | Use when |
 |------|----------|
 | **IDE** (Pyright) | Type checking — `discover().stub` |
-| **Runtime agent** | `print(discover())` → read `bootstrap_paths` + stub |
+| **Runtime agent** | `print(discover())` → read `bootstrap_paths`; `client.<Kind>.describe()` before auth |
 | **MCP-only** | Narrow reads; fix single auth mode first — not a substitute for SDK traverse |

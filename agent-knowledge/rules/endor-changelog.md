@@ -38,7 +38,7 @@ summary: >-
 | Removed resource, stricter validation, facade break | **Breaking** |
 | Payload tolerance / validation fixes callers saw | **Changed** |
 
-Detail stays in [`docs/contributing/docs-drift-workflow.md`](../docs/contributing/docs-drift-workflow.md) and `docs/generated-reference/` — do not replay every regen PR.
+Detail stays in [`docs/contributing/docs-drift-workflow.md`](../../docs/contributing/docs-drift-workflow.md) and `docs/generated-reference/` — do not replay every regen PR.
 
 ### Skills / workflows
 

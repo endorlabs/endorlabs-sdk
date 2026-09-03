@@ -88,9 +88,13 @@ def _format_discovery(d: SdkDiscovery) -> str:
     return "\n".join(lines)
 
 
-def discover() -> SdkDiscovery:
+def discover(*, validate: bool = True) -> SdkDiscovery:
     """Return paths for agent bootstrap (read before ``Client()``)."""
     bundle = agent_knowledge_dir()
+    if validate:
+        from endorlabs.agent_knowledge import validate_agent_knowledge_tree
+
+        validate_agent_knowledge_tree(bundle)
     routes = bundle / "reference" / "resource-routes.md"
     client_surface = import_module("endorlabs.client_surface")
     module_file = client_surface.__file__

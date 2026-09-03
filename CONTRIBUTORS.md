@@ -35,7 +35,7 @@ Human checklist (automation: [.pre-commit-config.yaml](.pre-commit-config.yaml);
 
 - [ ] **Hooks installed** — `uv run pre-commit install` and `uv run pre-commit install --hook-type pre-push` (see [Setup](#setup)).
 - [ ] **Agent-knowledge** — after `agent-knowledge/` edits: `uv run python devtools/codegen/sync_agent_knowledge.py` and commit `src/endorlabs/agent_knowledge/`.
-- [ ] **Docs freshness** — grep changed paths for stale layout or CLI strings (`workspace/sessions/`, removed `devtools/` scripts, wrong flags such as `endor-auth refresh --sso` vs `--method sso`). Align docstrings, argparse `help=`, and comments with current code (see shipped rule `endor-workspace-layout`, [docs-skillbase-consistency](.cursor/rules/docs-skillbase-consistency.mdc)).
+- [ ] **Docs freshness** — grep changed paths for stale layout or CLI strings (`.endorlabs-context/`, `workspace/sessions/`, removed `devtools/` scripts, wrong flags such as `endor-auth refresh --sso` vs `--method sso`). Prefer `.endorlabs/tasks/<slug>-<date>/<activity>/` per `endor-workspace-layout`. Align docstrings, argparse `help=`, and comments with current code (see shipped rule `endor-workspace-layout`, [docs-skillbase-consistency](.cursor/rules/docs-skillbase-consistency.mdc)).
 - [ ] **No secrets or customer data** — never commit `.env`, tokens, API keys, or customer estate identifiers (tenants, production UUIDs, registered repo URLs, emails) in **any** tracked path: unit fixtures, docstrings, CLI examples, skills, docs. Use placeholders (`example-tenant`, `user@example.com` / `user@endor.ai`). Integration tests: real tenant via **env** only. Pre-commit **blocks** staged `.env` / `.endorlabs/`, runs **gitleaks**, and **fails** on emails / non-Endor URLs / estate `-n` flags / estate literals; see rule `endor-portable-examples`.
 - [ ] **Changelog** — user-visible changes: one bullet under `docs/changelog.md` → **Unreleased** (policy: [agent-knowledge/rules/endor-changelog.md](agent-knowledge/rules/endor-changelog.md)). Pre-commit prints a **reminder** when user-facing paths are staged without `docs/changelog.md`.
 - [ ] **Pre-commit passes** — `uv run pre-commit run --all-files` (or let the commit hook run: ruff, pyright, unit pytest, ship-artifacts verify when applicable). New guards: rule [`endor-maintainer-tooling`](agent-knowledge/rules/endor-maintainer-tooling.md). New/changed tests: rule [`endor-unit-tests`](agent-knowledge/rules/endor-unit-tests.md).
@@ -55,7 +55,7 @@ The SDK uses environment variables only (no config file loading). When extending
 Set these for local development:
 
 - **Required:** `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`
-- **Optional:** `ENDOR_API` (defaults to `https://api.endorlabs.com`), `ENDOR_NAMESPACE` (tenant namespace for operations), `ENDOR_LOG_LEVEL`, `ENDOR_MAX_RETRIES`
+- **Optional:** `ENDOR_API` (defaults to `https://api.endorlabs.com`), `ENDOR_NAMESPACE` (tenant namespace for operations), `ENDOR_LOG_LEVEL`, `ENDOR_MAX_RETRIES`, `ENDOR_REQUEST_TIMEOUT`, `ENDOR_API_TIMEOUT`, `ENDOR_CREATE_TIMEOUT`, `ENDOR_TOKEN` (bearer — alternative to key/secret)
 
 Create a `.env` file in the repo root (gitignored) or export in your shell. Example:
 

@@ -352,6 +352,9 @@ def materialize_agent_knowledge(
     if dest.exists():
         shutil.rmtree(dest)
     _ = shutil.copytree(source, dest)
+    from endorlabs.agent_knowledge import validate_agent_knowledge_tree
+
+    validate_agent_knowledge_tree(dest)
     logger.info("Materialized agent knowledge to %s", dest)
     return dest
 
