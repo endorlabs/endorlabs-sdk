@@ -2,12 +2,12 @@
 
 Auto-generated from `RESOURCE_REGISTRY`, builder return types,
 and payload models.
-Model sync contract: `src/endorlabs/generated/registry_contract.py` (45 resources, 45 canonical entities).
+Model sync contract: `src/endorlabs/generated/registry_contract.py` (46 resources, 46 canonical entities).
 
 ## Model-sync coverage snapshot
 
-- facade contract resources: `45`
-- canonical entities (union): `45`
+- facade contract resources: `46`
+- canonical entities (union): `46`
 
 ## Create payload/builders
 
@@ -22,6 +22,7 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (45 resource
 | EndorLicense | no | N/A | N/A | N/A | N/A |
 | Finding | no | build_create_payload | CreateFindingPayload | context, meta, spec | none |
 | FindingLog | no | build_create_payload | CreateFindingLogPayload | context, meta, spec | none |
+| HuggingFaceOrganization | no | build_create_payload | CreateHuggingFaceOrganizationPayload | meta, spec | none |
 | IdentityProvider | no | build_create_payload | CreateIdentityProviderPayload | meta, spec | none |
 | Installation | yes | build_create_payload | CreateInstallationPayload | meta, spec | none |
 | Invitation | yes | build_create_payload | CreateInvitationPayload | meta, spec | none |
@@ -72,6 +73,7 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (45 resource
 | EndorLicense | no | meta.description, meta.tags |
 | Finding | yes | context.tags, meta.tags, spec.dismiss, spec.finding_tags, spec.remediation |
 | FindingLog | no | meta.description, meta.tags |
+| HuggingFaceOrganization | no | meta.description, meta.tags |
 | IdentityProvider | no | — |
 | Installation | yes | meta.description, meta.name, meta.tags, spec |
 | Invitation | yes | meta.description, meta.tags |
@@ -122,6 +124,7 @@ Model sync contract: `src/endorlabs/generated/registry_contract.py` (45 resource
 | EndorLicense | — |
 | Finding | name->meta.name |
 | FindingLog | — |
+| HuggingFaceOrganization | name->meta.name |
 | IdentityProvider | — |
 | Installation | name->meta.name |
 | Invitation | name->meta.name |

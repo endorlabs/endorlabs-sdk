@@ -383,6 +383,38 @@ class V1PackageFirewallAction(StrEnum):
     PACKAGE_FIREWALL_ACTION_CURATED = 'PACKAGE_FIREWALL_ACTION_CURATED'
 
 
+class V1PackageFirewallCheckFailureCause(StrEnum):
+    """
+    PackageFirewallCheckFailureCause identifies why a policy decision was unavailable.
+
+     - PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_UNSPECIFIED: No safe failure cause was recorded.
+     - PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_POLICY_DATASTORE_UNAVAILABLE: Firewall configuration could not be read from the policy datastore.
+     - PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_MALWARE_DATA_UNAVAILABLE: Malware status could not be read for the requested package version.
+     - PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_POLICY_EVALUATION_ERROR: A configured policy check could not complete its evaluation or query.
+     - PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_UPSTREAM_METADATA_UNAVAILABLE: Supporting upstream package metadata could not be fetched or transformed.
+     - PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_UPSTREAM_METADATA_NOT_FOUND: Supporting upstream package metadata did not contain the requested package or version.
+    """
+
+    PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_UNSPECIFIED = (
+        'PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_UNSPECIFIED'
+    )
+    PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_POLICY_DATASTORE_UNAVAILABLE = (
+        'PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_POLICY_DATASTORE_UNAVAILABLE'
+    )
+    PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_MALWARE_DATA_UNAVAILABLE = (
+        'PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_MALWARE_DATA_UNAVAILABLE'
+    )
+    PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_POLICY_EVALUATION_ERROR = (
+        'PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_POLICY_EVALUATION_ERROR'
+    )
+    PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_UPSTREAM_METADATA_UNAVAILABLE = (
+        'PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_UPSTREAM_METADATA_UNAVAILABLE'
+    )
+    PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_UPSTREAM_METADATA_NOT_FOUND = (
+        'PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_UPSTREAM_METADATA_NOT_FOUND'
+    )
+
+
 class V1PackageFirewallReason(StrEnum):
     """
     PackageFirewallReason represents the check that triggered the firewall event.
@@ -393,6 +425,7 @@ class V1PackageFirewallReason(StrEnum):
      - PACKAGE_FIREWALL_REASON_CVSS_SEVERITY_DETECTED: The requested package version has a CVSS vulnerability meeting or exceeding the configured severity threshold.
      - PACKAGE_FIREWALL_REASON_VERSIONS_CURATED: One or more versions were removed from the package metadata response as part of package curation.
     See PackageFirewallLog.Spec.filtered_versions for per-version detail.
+     - PACKAGE_FIREWALL_REASON_POLICY_NOT_EVALUATED: The configured policy could not produce a decision for the package request.
     """
 
     PACKAGE_FIREWALL_REASON_UNSPECIFIED = 'PACKAGE_FIREWALL_REASON_UNSPECIFIED'
@@ -408,6 +441,9 @@ class V1PackageFirewallReason(StrEnum):
     )
     PACKAGE_FIREWALL_REASON_VERSIONS_CURATED = (
         'PACKAGE_FIREWALL_REASON_VERSIONS_CURATED'
+    )
+    PACKAGE_FIREWALL_REASON_POLICY_NOT_EVALUATED = (
+        'PACKAGE_FIREWALL_REASON_POLICY_NOT_EVALUATED'
     )
 
 
@@ -466,6 +502,12 @@ class PackageFirewallLogFilteredVersion(BaseModel):
     """
     UUID of detected malware (populated when reason = MALWARE_DETECTED).
     """
+    min_age_hours: int | None = None
+    """
+    Configured minimum age threshold in hours, snapshotted from PackageFirewallConfig.min_age_hours
+    at suppression time (populated when reason = MIN_AGE_NOT_MET). Combine with the parent Spec's
+    action_at and this version's package_age_hours to derive when the version becomes eligible.
+    """
     package_age_hours: int | None = None
     """
     Age of package in hours at suppression time (populated when reason = MIN_AGE_NOT_MET).
@@ -502,6 +544,12 @@ class FilteredVersion(BaseModel):
     malware_uuid: str | None = None
     """
     UUID of detected malware (populated when reason = MALWARE_DETECTED).
+    """
+    min_age_hours: int | None = None
+    """
+    Configured minimum age threshold in hours, snapshotted from PackageFirewallConfig.min_age_hours
+    at suppression time (populated when reason = MIN_AGE_NOT_MET). Combine with the parent Spec's
+    action_at and this version's package_age_hours to derive when the version becomes eligible.
     """
     package_age_hours: int | None = None
     """
@@ -542,11 +590,22 @@ class V1PackageFirewallLogSpec(BaseModel):
     """
     Deprecated: use action_at instead.
     """
+    configured_fail_closed: bool | None = None
+    """
+    Configured failure behavior at evaluation time (populated only when reason is POLICY_NOT_EVALUATED).
+    """
     cvss_severity_level: SpecCVSSSeverityLevel | None = (
         'CVSS_SEVERITY_LEVEL_UNSPECIFIED'
     )
     """
     CVSS severity level of the detected vulnerability (populated only when reason is CVSS_SEVERITY_DETECTED).
+    """
+    cvss_severity_threshold: SpecCVSSSeverityLevel | None = (
+        'CVSS_SEVERITY_LEVEL_UNSPECIFIED'
+    )
+    """
+    Configured minimum CVSS severity threshold, snapshotted from PackageFirewallConfig.cvss_severity_threshold
+    at evaluation time (populated only when reason is CVSS_SEVERITY_DETECTED).
     """
     cvss_vuln_uuid: str | None = None
     """
@@ -555,6 +614,12 @@ class V1PackageFirewallLogSpec(BaseModel):
     ecosystem: V1Ecosystem
     """
     Ecosystem of the blocked package (npm, pypi, etc.).
+    """
+    failure_cause: V1PackageFirewallCheckFailureCause | None = (
+        'PACKAGE_FIREWALL_CHECK_FAILURE_CAUSE_UNSPECIFIED'
+    )
+    """
+    Customer-safe cause of the unavailable decision (populated only when reason is POLICY_NOT_EVALUATED).
     """
     filtered_versions: list[FilteredVersion] | None = None
     """
@@ -565,6 +630,12 @@ class V1PackageFirewallLogSpec(BaseModel):
     malware_uuid: str | None = None
     """
     UUID of detected malware (populated only when reason is MALWARE_DETECTED).
+    """
+    min_age_hours: int | None = None
+    """
+    Configured minimum age threshold in hours, snapshotted from PackageFirewallConfig.min_age_hours
+    at evaluation time (populated only when reason is MIN_AGE_NOT_MET). Combine with action_at and
+    package_age_hours to derive when the package becomes eligible.
     """
     package_age_hours: int | None = None
     """
@@ -597,6 +668,11 @@ class V1PackageFirewallLogSpec(BaseModel):
     request_uri: str | None = None
     """
     URI of the request that was blocked.
+    """
+    restricted_license: str | None = None
+    """
+    Configured restricted license string that matched and caused this event, snapshotted from
+    PackageFirewallConfig.restricted_licenses at evaluation time (populated only when reason is RESTRICTED_LICENSE).
     """
     user: str | None = None
     """

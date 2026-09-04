@@ -1,7 +1,7 @@
 # Resources (SDK API Surface)
 
 Auto-generated from `src/endorlabs/registry.py` and OpenAPI spec.
-Model sync contract: `src/endorlabs/generated/registry_contract.py` (45 resources, 45 canonical entities).
+Model sync contract: `src/endorlabs/generated/registry_contract.py` (46 resources, 46 canonical entities).
 Each operation column is `sdk/spec` where spec is derived from OpenAPI
 collection and item paths.
 
@@ -23,8 +23,8 @@ gates (`IsCallerEndorAccount`) are additional field/route restrictions.
 
 ## Model-sync coverage snapshot
 
-- facade contract resources: `45`
-- canonical entities (union): `45`
+- facade contract resources: `46`
+- canonical entities (union): `46`
 
 | Resource | List (sdk/spec) | Get (sdk/spec) | Create (sdk/spec) | Update (sdk/spec) | Delete (sdk/spec) | Scope | Parent | Limitations |
 |----------|------------------|----------------|-------------------|-------------------|-------------------|-------|--------|-------------|
@@ -37,6 +37,7 @@ gates (`IsCallerEndorAccount`) are additional field/route restrictions.
 | EndorLicense | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Tenant-context read-only resource |
 | Finding | yes/yes | yes/yes | no/yes | yes/no | yes/yes | tenant | — | Scan-generated |
 | FindingLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Finding state history log |
+| HuggingFaceOrganization | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | HF org inventory after Installation sync; configure via Installation |
 | IdentityProvider | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | SSO identity provider configuration |
 | Installation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Platform-managed |
 | Invitation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | User invitations |

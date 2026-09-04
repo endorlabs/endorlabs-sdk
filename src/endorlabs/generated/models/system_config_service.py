@@ -630,6 +630,7 @@ class V1PackageFirewallReason(StrEnum):
      - PACKAGE_FIREWALL_REASON_CVSS_SEVERITY_DETECTED: The requested package version has a CVSS vulnerability meeting or exceeding the configured severity threshold.
      - PACKAGE_FIREWALL_REASON_VERSIONS_CURATED: One or more versions were removed from the package metadata response as part of package curation.
     See PackageFirewallLog.Spec.filtered_versions for per-version detail.
+     - PACKAGE_FIREWALL_REASON_POLICY_NOT_EVALUATED: The configured policy could not produce a decision for the package request.
     """
 
     PACKAGE_FIREWALL_REASON_UNSPECIFIED = 'PACKAGE_FIREWALL_REASON_UNSPECIFIED'
@@ -645,6 +646,9 @@ class V1PackageFirewallReason(StrEnum):
     )
     PACKAGE_FIREWALL_REASON_VERSIONS_CURATED = (
         'PACKAGE_FIREWALL_REASON_VERSIONS_CURATED'
+    )
+    PACKAGE_FIREWALL_REASON_POLICY_NOT_EVALUATED = (
+        'PACKAGE_FIREWALL_REASON_POLICY_NOT_EVALUATED'
     )
 
 
@@ -866,6 +870,10 @@ class SystemConfigPackageFirewallConfig(BaseModel):
     exceptions: list[Exception] | None = None
     """
     Exception rules. If any exception matches the request, all checks are skipped.
+    """
+    fail_closed: bool | None = None
+    """
+    Whether to fail closed when a firewall decision cannot be reached.
     """
     malware_action: V1PackageFirewallAction | None = (
         'PACKAGE_FIREWALL_ACTION_UNSPECIFIED'

@@ -160,6 +160,11 @@ FINDING_LOG_SPEC_REQUIRED = (
 FINDING_LOG_META_FIELDS = ()
 FINDING_LOG_PAYLOAD_TOP_LEVEL_FIELDS = ("context", "meta", "tenant_meta")
 
+HUGGING_FACE_ORGANIZATION_SPEC_FIELDS = ("organization_name", "url", "model_names")
+HUGGING_FACE_ORGANIZATION_SPEC_REQUIRED = ()
+HUGGING_FACE_ORGANIZATION_META_FIELDS = ()
+HUGGING_FACE_ORGANIZATION_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
+
 IDENTITY_PROVIDER_SPEC_FIELDS = ("oidc_provider", "saml_provider")
 IDENTITY_PROVIDER_SPEC_REQUIRED = ()
 IDENTITY_PROVIDER_META_FIELDS = ()
@@ -312,6 +317,11 @@ PACKAGE_FIREWALL_LOG_SPEC_FIELDS = (
     "api_key_name",
     "user",
     "filtered_versions",
+    "min_age_hours",
+    "cvss_severity_threshold",
+    "restricted_license",
+    "configured_fail_closed",
+    "failure_cause",
 )
 PACKAGE_FIREWALL_LOG_SPEC_REQUIRED = ("ecosystem", "package_name")
 PACKAGE_FIREWALL_LOG_META_FIELDS = ()

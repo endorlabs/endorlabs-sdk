@@ -8,6 +8,8 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- `client.HuggingFaceOrganization` (list/get) — tenant inventory of connected Hugging Face orgs/models. Configure via `Installation` (`huggingface_config`) / `endorctl sync-org --platform-source=huggingface`.
+
 ### Changed
 
 ### Fixed

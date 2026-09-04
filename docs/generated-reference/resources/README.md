@@ -13,6 +13,7 @@ One page per SDK facade resource (`client.<AttrName>`).
 | `EndorLicense` | `endor-licenses` | `tenant` | get, list | [EndorLicense.md](EndorLicense.md) |
 | `Finding` | `findings` | `tenant` | delete, get, list, update | [Finding.md](Finding.md) |
 | `FindingLog` | `finding-logs` | `tenant` | get, list | [FindingLog.md](FindingLog.md) |
+| `HuggingFaceOrganization` | `hugging-face-organizations` | `tenant` | get, list | [HuggingFaceOrganization.md](HuggingFaceOrganization.md) |
 | `IdentityProvider` | `identity-providers` | `tenant` | get, list | [IdentityProvider.md](IdentityProvider.md) |
 | `Installation` | `installations` | `tenant` | create, delete, get, list, update | [Installation.md](Installation.md) |
 | `Invitation` | `invitations` | `tenant` | create, delete, get, list, update | [Invitation.md](Invitation.md) |

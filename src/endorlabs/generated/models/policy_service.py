@@ -385,6 +385,9 @@ class V1FindingTags(StrEnum):
      - FINDING_TAGS_AI: This finding was generated using AI.
      - FINDING_TAGS_IGNORED: Finding has been ignored via the ignore file.
      - FINDING_TAGS_SEGMENT_MATCH: Finding applies to a dependency discovered via segment-matching.
+     - FINDING_TAGS_REACHABLE_BY_INCLUSION: The vulnerability is assumed reachable because the package is included;
+    no call path to a vulnerable function exists.
+     - FINDING_TAGS_POTENTIALLY_VALID_SECRET: Finding applies to a secret that has not been validated.
     """
 
     FINDING_TAGS_UNSPECIFIED = 'FINDING_TAGS_UNSPECIFIED'
@@ -429,6 +432,8 @@ class V1FindingTags(StrEnum):
     FINDING_TAGS_AI = 'FINDING_TAGS_AI'
     FINDING_TAGS_IGNORED = 'FINDING_TAGS_IGNORED'
     FINDING_TAGS_SEGMENT_MATCH = 'FINDING_TAGS_SEGMENT_MATCH'
+    FINDING_TAGS_REACHABLE_BY_INCLUSION = 'FINDING_TAGS_REACHABLE_BY_INCLUSION'
+    FINDING_TAGS_POTENTIALLY_VALID_SECRET = 'FINDING_TAGS_POTENTIALLY_VALID_SECRET'
 
 
 class V1GroupAggregationValueResponse(BaseModel):

@@ -1,8 +1,8 @@
 {
-  "canonical_entity_count": 45,
-  "facade_contract_resource_count": 45,
+  "canonical_entity_count": 46,
+  "facade_contract_resource_count": 46,
   "registry_contract_path": "src/endorlabs/generated/registry_contract.py",
-  "resource_count": 45,
+  "resource_count": 46,
   "resources": [
     {
       "attr_name": "APIKey",
@@ -168,6 +168,26 @@
       "attr_name": "FindingLog",
       "parent_kind": null,
       "resource_name": "finding-logs",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "HuggingFaceOrganization",
+      "parent_kind": null,
+      "resource_name": "hugging-face-organizations",
       "scope": "tenant",
       "supported_ops_sdk": {
         "create": false,

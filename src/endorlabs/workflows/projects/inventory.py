@@ -55,6 +55,18 @@ def installation_display_name(installation: dict[str, Any] | None) -> str:
     return meta_name or login
 
 
+def is_huggingface_installation(installation: dict[str, Any] | None) -> bool:
+    """True when *installation* is a Hugging Face org connector (dict list row)."""
+    if not installation:
+        return False
+    spec = nested_dict(installation, "spec")
+    platform = dict_str(spec, "platform_type") or dict_str(spec, "platform_source")
+    if platform == "PLATFORM_SOURCE_HUGGING_FACE":
+        return True
+    hf = nested_dict(spec, "huggingface_config")
+    return bool(dict_str(hf, "host_url"))
+
+
 def fetch_installation_lookup(
     client: Client,
     *,
