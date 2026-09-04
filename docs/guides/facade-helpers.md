@@ -111,6 +111,7 @@ for row in client.Project.list_iter(traverse=True, mask="meta.name,spec.git.exte
 ```
 
 Installation lookup: `endorlabs.workflows.projects.inventory.fetch_installation_lookup`.
+Hugging Face connector rows: `is_huggingface_installation` in the same module; inventory after sync via `client.HuggingFaceOrganization` (list/get). Configure with `Installation.create(..., huggingface_config={...})`.
 
 Per-**scan** CLI vs cloud execution uses `ScanResult.spec.environment.config.RunBySystem` (see product KB) — not the same as project registration above.
 

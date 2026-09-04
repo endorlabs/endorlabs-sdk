@@ -8,6 +8,7 @@ from .inventory import (
     build_installation_lookup,
     fetch_installation_lookup,
     installation_display_name,
+    is_huggingface_installation,
 )
 
 __all__ = [
@@ -16,5 +17,6 @@ __all__ = [
     "duplicate_project_decision",
     "fetch_installation_lookup",
     "installation_display_name",
+    "is_huggingface_installation",
     "resolve_project_candidate",
 ]

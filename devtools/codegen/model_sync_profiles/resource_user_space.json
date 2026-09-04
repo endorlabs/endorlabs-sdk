@@ -91,6 +91,20 @@
       "delete": "not-supported"
     }
   },
+  "HuggingFaceOrganization": {
+    "limitations_short": "HF org inventory after Installation sync; configure via Installation",
+    "customer_ops": {
+      "list": "read-only",
+      "get": "read-only",
+      "create": "platform-managed",
+      "update": "not-supported",
+      "delete": "platform-managed"
+    },
+    "sdk_ops": [
+      "get",
+      "list"
+    ]
+  },
   "IdentityProvider": {
     "limitations_short": "SSO identity provider configuration",
     "customer_ops": {

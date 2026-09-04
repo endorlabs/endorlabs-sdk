@@ -60,7 +60,7 @@ class V1AgentActivity(BaseModel):
 class V1AgentCall(BaseModel):
     """
     AgentCall is one captured call in an agent's recent history — a tenant-safe
-    projection of AgentAuditEvent.
+    projection of AgentAuditLog.
     """
 
     decision: str | None = None
@@ -185,7 +185,7 @@ class V1ListAgentActivityResponse(BaseModel):
 class Call(BaseModel):
     """
     AgentCall is one captured call in an agent's recent history — a tenant-safe
-    projection of AgentAuditEvent.
+    projection of AgentAuditLog.
     """
 
     decision: str | None = None

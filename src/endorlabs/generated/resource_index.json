@@ -103,6 +103,16 @@
       ]
     },
     {
+      "attr_name": "HuggingFaceOrganization",
+      "doc_path": "docs/generated-reference/resources/HuggingFaceOrganization.md",
+      "resource_name": "hugging-face-organizations",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ]
+    },
+    {
       "attr_name": "IdentityProvider",
       "doc_path": "docs/generated-reference/resources/IdentityProvider.md",
       "resource_name": "identity-providers",
