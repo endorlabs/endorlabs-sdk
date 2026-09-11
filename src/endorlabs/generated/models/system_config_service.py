@@ -867,6 +867,24 @@ class SystemConfigPackageFirewallConfig(BaseModel):
     The CVSS version used to evaluate this threshold is determined by AnalyticsConfig.cvss_version.
     Must be UNSPECIFIED, HIGH, or CRITICAL.
     """
+    ecosystem_package_manager_uuid: dict[str, str] | None = None
+    """
+    UUID of the PackageManager whose artifact repository serves an ecosystem, keyed by the name of
+    the Ecosystem enum value, for example "ECOSYSTEM_NPM". A named ecosystem is served from that
+    repository instead of its public registry.
+
+    An ecosystem absent from the map keeps its public registry, so an empty map preserves current
+    behavior and an ecosystem can be adopted on its own.
+
+    One UUID per ecosystem: a request resolves to exactly one repository, and there is no fallback
+    to a second one or to the public registry.
+
+    The referenced PackageManager must live in the same namespace as this config, and its
+    AuthProvider.package_manager_type must match the ecosystem its key names, so an "ECOSYSTEM_NPM"
+    key cannot point at a Maven repository. The rules below constrain the shape of the value only.
+    Whether the UUID names a PackageManager at all, and one of the right kind, is checked against
+    the referenced object.
+    """
     exceptions: list[Exception] | None = None
     """
     Exception rules. If any exception matches the request, all checks are skipped.

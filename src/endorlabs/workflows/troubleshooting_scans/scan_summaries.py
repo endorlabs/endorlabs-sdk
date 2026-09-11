@@ -187,6 +187,9 @@ def extract_scan_mode(scan_result: dict[str, Any]) -> dict[str, Any]:
     disable_private_package_analysis = _as_bool(
         scan_cfg.get("DisablePrivatePackageAnalysis")
     )
+    use_scan_profile = _as_bool(scan_cfg.get("UseScanProfile"))
+    python_virtual_env = dict_str(scan_cfg, "PythonVirtualEnv") or None
+    python_global_site_packages = _as_bool(scan_cfg.get("PythonGlobalSitePackages"))
     flags: list[str] = []
     flag_values: tuple[tuple[bool | None, str], ...] = (
         (quick_scan, "--quick-scan"),
@@ -202,6 +205,8 @@ def extract_scan_mode(scan_result: dict[str, Any]) -> dict[str, Any]:
     if path and path != ".":
         flags.append(f"--path={path}")
     flags.extend(f"--exclude-path={item}" for item in exclude_path)
+    if python_virtual_env:
+        flags.append(f"--python-virtual-env={python_virtual_env}")
     result: dict[str, Any] = {
         "command": dict_str(config, "Command") or None,
         "run_by_system": run_by_system,
@@ -212,6 +217,9 @@ def extract_scan_mode(scan_result: dict[str, Any]) -> dict[str, Any]:
         "bypass_host_check": bypass_host_check,
         "verbose": verbose,
         "disable_private_package_analysis": disable_private_package_analysis,
+        "use_scan_profile": use_scan_profile,
+        "python_virtual_env": python_virtual_env,
+        "python_global_site_packages": python_global_site_packages,
         "enables": _as_str_list(scan_cfg.get("Enables")),
         "path": path,
         "exclude_path": exclude_path,

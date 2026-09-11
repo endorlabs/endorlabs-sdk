@@ -323,54 +323,6 @@ class ModelAliase(BaseModel):
     """
 
 
-class V1AIProviderKeySpec(BaseModel):
-    api_key: str | None = None
-    """
-    Credential used to call the provider: an API key for OpenAI-family and
-    Gemini providers, or an express-mode API key for Vertex AI. Stored in
-    the platform secret manager (secure annotation); read APIs return the
-    redacted placeholder rather than the stored value.
-    """
-    api_version: str | None = None
-    """
-    Azure OpenAI api-version query parameter to use. Defaults to the
-    platform's version when unset; only meaningful for
-    PROVIDER_AZURE_OPENAI.
-    """
-    disabled: bool | None = None
-    """
-    Pauses routing through this credential without deleting it.
-    """
-    endpoint: str | None = None
-    """
-    Entry point requests are sent to. Required for PROVIDER_AZURE_OPENAI
-    (the Azure resource endpoint, e.g. https://<resource>.openai.azure.com),
-    optional for PROVIDER_OPENAI (defaults to the OpenAI platform; set it
-    to target an OpenAI-compatible gateway), optional for
-    PROVIDER_VERTEX_AI (defaults to the global endpoint; set a regional
-    endpoint, e.g. https://us-central1-aiplatform.googleapis.com, to pin a
-    region) and unused for PROVIDER_GEMINI. Stored in the platform secret
-    manager and redacted in read APIs.
-    """
-    model_aliases: list[ModelAliase] | None = None
-    """
-    Models the credential can serve and the names the customer's provider
-    serves them under. Each listed model may be served by only one of the
-    tenant's keys for the provider, and together the provider's keys must
-    cover the models the platform requires. Leave empty to make this key
-    the provider's single catch-all, serving every model under its own
-    name; keys listing a model explicitly take precedence over the
-    catch-all.
-    """
-    provider: SpecProvider
-    """
-    Provider this credential authenticates with. Immutable after creation.
-    A tenant may register several keys for the same provider — e.g. one
-    entry point per model family — as long as each model is served by at
-    most one of them.
-    """
-
-
 class V1CountResponse(BaseModel):
     """
     Response to a list count request.
@@ -380,6 +332,26 @@ class V1CountResponse(BaseModel):
     """
     Number of objects matching the given list parameters.
     """
+
+
+class V1EmbeddingModel(StrEnum):
+    """
+    EmbeddingModel is the model of the embedding provider.
+    """
+
+    EMBEDDING_MODEL_UNSPECIFIED = 'EMBEDDING_MODEL_UNSPECIFIED'
+    EMBEDDING_MODEL_OPENAI_TEXT_EMBEDDING_ADA_002 = (
+        'EMBEDDING_MODEL_OPENAI_TEXT_EMBEDDING_ADA_002'
+    )
+    EMBEDDING_MODEL_OPENAI_TEXT_EMBEDDING_3_SMALL = (
+        'EMBEDDING_MODEL_OPENAI_TEXT_EMBEDDING_3_SMALL'
+    )
+    EMBEDDING_MODEL_GOOGLE_TEXT_EMBEDDING_LARGE = (
+        'EMBEDDING_MODEL_GOOGLE_TEXT_EMBEDDING_LARGE'
+    )
+    EMBEDDING_MODEL_OPENAI_TEXT_EMBEDDING_3_LARGE = (
+        'EMBEDDING_MODEL_OPENAI_TEXT_EMBEDDING_3_LARGE'
+    )
 
 
 class V1GroupAggregationValueResponse(BaseModel):
@@ -544,6 +516,192 @@ class V1UpdateRequest(BaseModel):
     """
 
 
+class GroupResponseGroupData(BaseModel):
+    """
+    Information about objects matching the given key.
+    """
+
+    aggregation_count: V1CountResponse | None = None
+    """
+    Number of objects in group.
+    This field is always set.
+    """
+    aggregation_uuids: list[str] | None = None
+    """
+    List of UUIDs of the objects in the group.
+    Only populated if show_aggregation_uuids is set.
+    """
+    aggregation_value: V1GroupAggregationValueResponse | None = None
+    """
+    Value of the aggregation operation as calculated by the query.
+    """
+    unique_counts: dict[str, V1CountResponse] | None = None
+    """
+    Map of counts for the given unique_count_paths fields.
+    Only populated if unique_count_paths is set.
+    """
+    unique_values: dict[str, list[dict[str, Any]]] | None = None
+    """
+    Map of values for the given unique_value_paths fields.
+    Only populated if unique_value_paths is set.
+    """
+
+
+class SpecEmbeddingModelAlias(BaseModel):
+    """
+    EmbeddingModelAlias maps a platform embedding model to the name the
+    customer's provider serves it under. Embedding models live in their own
+    enum and never appear in ModelAlias, so they need their own list.
+    """
+
+    alias: str | None = None
+    """
+    Name the customer's provider serves the model under, e.g. an Azure
+    OpenAI deployment name. Defaults to the model's own name when unset.
+    """
+    model: V1EmbeddingModel
+    """
+    The platform embedding model being aliased.
+    """
+
+
+class EmbeddingModelAliase(BaseModel):
+    """
+    EmbeddingModelAlias maps a platform embedding model to the name the
+    customer's provider serves it under. Embedding models live in their own
+    enum and never appear in ModelAlias, so they need their own list.
+    """
+
+    alias: str | None = None
+    """
+    Name the customer's provider serves the model under, e.g. an Azure
+    OpenAI deployment name. Defaults to the model's own name when unset.
+    """
+    model: V1EmbeddingModel
+    """
+    The platform embedding model being aliased.
+    """
+
+
+class V1AIProviderKeySpec(BaseModel):
+    api_key: str | None = None
+    """
+    Credential used to call the provider: an API key for OpenAI-family and
+    Gemini providers, or an express-mode API key for Vertex AI. Stored in
+    the platform secret manager (secure annotation); read APIs return the
+    redacted placeholder rather than the stored value.
+    """
+    api_version: str | None = None
+    """
+    Azure OpenAI api-version query parameter to use. Defaults to the
+    platform's version when unset; only meaningful for
+    PROVIDER_AZURE_OPENAI.
+    """
+    disabled: bool | None = None
+    """
+    Pauses routing through this credential without deleting it.
+    """
+    embedding_model_aliases: list[EmbeddingModelAliase] | None = None
+    """
+    Embedding models the credential serves and the names the customer's
+    provider serves them under. Azure OpenAI takes the deployment name from
+    the request body's model field, so a customer whose deployment is not
+    named after the model must list it here or the request reaches a path
+    that does not exist. Leave empty to make this key the provider's
+    embedding catch-all, serving every embedding model under its own name;
+    keys listing a model explicitly take precedence over the catch-all.
+    Two enabled keys of one provider that both leave this empty are two
+    catch-alls, whatever their model_aliases. The write does not check for
+    this, but neither serves any embedding request, and a request no other
+    key serves fails, until one of them lists its embedding models here.
+    """
+    endpoint: str | None = None
+    """
+    Entry point requests are sent to. Required for PROVIDER_AZURE_OPENAI
+    (the Azure resource endpoint, e.g. https://<resource>.openai.azure.com),
+    optional for PROVIDER_OPENAI (defaults to the OpenAI platform; set it
+    to target an OpenAI-compatible gateway), optional for
+    PROVIDER_VERTEX_AI (defaults to the global endpoint; set a regional
+    endpoint, e.g. https://us-central1-aiplatform.googleapis.com, to pin a
+    region) and unused for PROVIDER_GEMINI. Stored in the platform secret
+    manager and redacted in read APIs.
+    """
+    model_aliases: list[ModelAliase] | None = None
+    """
+    Models the credential can serve and the names the customer's provider
+    serves them under. Each listed model may be served by only one of the
+    tenant's keys for the provider, and together the provider's keys must
+    cover the models the platform requires. Leave empty to make this key
+    the provider's single catch-all, serving every model under its own
+    name; keys listing a model explicitly take precedence over the
+    catch-all. Scoping a key here does not scope its embeddings: it
+    still counts as the provider's embedding catch-all until
+    embedding_model_aliases is set.
+    """
+    provider: SpecProvider
+    """
+    Provider this credential authenticates with. Immutable after creation.
+    A tenant may register several keys for the same provider — e.g. one
+    entry point per model family — as long as each model is served by at
+    most one of them.
+    """
+
+
+class V1GroupResponse(BaseModel):
+    """
+    Response to a list group request.
+    """
+
+    groups: dict[str, GroupResponseGroupData] | None = None
+    """
+    Map indexed by values of the fields specified in aggregation_paths,
+    for example, {"[{"key":"meta.kind","value":"Project"}]": {
+    "aggregation_count": { "count": 1649 } } }.
+    """
+
+
+class Object1(BaseModel):
+    """
+    AIProviderKey stores a customer-provided (bring-your-own-key) LLM
+    credential and entry point for a specific AI provider. When one is
+    configured and enabled, the platform routes the tenant's AI requests
+    through the customer's own provider account instead of Endor-managed
+    credentials.
+    """
+
+    meta: V1Meta
+    """
+    Metadata required for all objects.
+    """
+    spec: V1AIProviderKeySpec | None = None
+    """
+    AIProviderKey specifications.
+    """
+    tenant_meta: V1TenantMeta
+    """
+    The tenant metadata restricts access to a specific tenant.
+    """
+    uuid: str | None = None
+    """
+    The UUID of the AI provider key.
+    """
+
+
+class V1ListAIProviderKeysResponseList(BaseModel):
+    """
+    List of AI provider keys.
+    """
+
+    objects: list[Object1] | None = None
+    """
+    List of AI provider keys.
+    """
+    response: V1ListResponse | None = None
+    """
+    List response metadata.
+    """
+
+
 class AIProviderKeyServiceCreateAIProviderKeyBody(BaseModel):
     """
     AIProviderKey stores a customer-provided (bring-your-own-key) LLM
@@ -613,37 +771,6 @@ class AIProviderKeyServiceUpdateAIProviderKeyBody(BaseModel):
     """
 
 
-class GroupResponseGroupData(BaseModel):
-    """
-    Information about objects matching the given key.
-    """
-
-    aggregation_count: V1CountResponse | None = None
-    """
-    Number of objects in group.
-    This field is always set.
-    """
-    aggregation_uuids: list[str] | None = None
-    """
-    List of UUIDs of the objects in the group.
-    Only populated if show_aggregation_uuids is set.
-    """
-    aggregation_value: V1GroupAggregationValueResponse | None = None
-    """
-    Value of the aggregation operation as calculated by the query.
-    """
-    unique_counts: dict[str, V1CountResponse] | None = None
-    """
-    Map of counts for the given unique_count_paths fields.
-    Only populated if unique_count_paths is set.
-    """
-    unique_values: dict[str, list[dict[str, Any]]] | None = None
-    """
-    Map of values for the given unique_value_paths fields.
-    Only populated if unique_value_paths is set.
-    """
-
-
 class V1AIProviderKey(BaseModel):
     """
     AIProviderKey stores a customer-provided (bring-your-own-key) LLM
@@ -668,61 +795,6 @@ class V1AIProviderKey(BaseModel):
     uuid: str | None = None
     """
     The UUID of the AI provider key.
-    """
-
-
-class V1GroupResponse(BaseModel):
-    """
-    Response to a list group request.
-    """
-
-    groups: dict[str, GroupResponseGroupData] | None = None
-    """
-    Map indexed by values of the fields specified in aggregation_paths,
-    for example, {"[{"key":"meta.kind","value":"Project"}]": {
-    "aggregation_count": { "count": 1649 } } }.
-    """
-
-
-class Object1(BaseModel):
-    """
-    AIProviderKey stores a customer-provided (bring-your-own-key) LLM
-    credential and entry point for a specific AI provider. When one is
-    configured and enabled, the platform routes the tenant's AI requests
-    through the customer's own provider account instead of Endor-managed
-    credentials.
-    """
-
-    meta: V1Meta
-    """
-    Metadata required for all objects.
-    """
-    spec: V1AIProviderKeySpec | None = None
-    """
-    AIProviderKey specifications.
-    """
-    tenant_meta: V1TenantMeta
-    """
-    The tenant metadata restricts access to a specific tenant.
-    """
-    uuid: str | None = None
-    """
-    The UUID of the AI provider key.
-    """
-
-
-class V1ListAIProviderKeysResponseList(BaseModel):
-    """
-    List of AI provider keys.
-    """
-
-    objects: list[Object1] | None = None
-    """
-    List of AI provider keys.
-    """
-    response: V1ListResponse | None = None
-    """
-    List response metadata.
     """
 
 

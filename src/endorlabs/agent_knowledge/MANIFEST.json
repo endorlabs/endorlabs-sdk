@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-09-01T14:22:52.088651+00:00",
+  "generated_at": "2026-09-04T18:18:53.727354+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -281,7 +281,7 @@
       ]
     },
     {
-      "description": "Use when doing scan pipeline RCA: resolve a project (including app scan-history\nURLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs\nfor errors, diff aggregate metrics, and probe PackageVersion resolution_errors.\nSummaries include scan_mode (CLI vs Cloud Scan, --quick-scan, local cache flags).\nNot for individual Finding rows or policy validation\u2014hand off to sibling skills\nwhen deeper analysis is needed.\n",
+      "description": "Use when doing scan pipeline RCA: resolve a project (including app scan-history\nURLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs\nfor errors, diff aggregate metrics, and probe PackageVersion resolution_errors.\nSummaries include scan_mode (CLI vs Cloud Scan, --quick-scan, local cache flags,\nUseScanProfile, PythonVirtualEnv). Always resolve Project scan/toolchain profile\nrefs on first fetch. Not for individual Finding rows or policy validation\u2014hand\noff to sibling skills when deeper analysis is needed.\n",
       "id": "endor-troubleshooting-scans",
       "name": "endor-troubleshooting-scans",
       "path": "skills/endor-troubleshooting-scans/SKILL.md",
