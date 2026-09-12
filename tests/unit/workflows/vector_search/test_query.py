@@ -39,6 +39,27 @@ def test_query_vector_store_with_metadata_filter() -> None:
     client.VectorStoreQuery.create.assert_called_once()
 
 
+def test_probe_store_indexed_for_project_uses_matches() -> None:
+    """Wire VectorStoreQuery returns spec.matches, not documents."""
+    client = MagicMock()
+    store = SimpleNamespace(
+        uuid="vs1", namespace="ns", meta=SimpleNamespace(name="function_summary")
+    )
+    client.VectorStoreQuery.create.return_value = SimpleNamespace(
+        spec=SimpleNamespace(
+            matches=[
+                {"data": "fn", "metadata": {"repo": "https://github.com/org/repo.git"}}
+            ],
+            documents=None,
+        )
+    )
+    result = probe_store_indexed_for_project(
+        client, store, "https://github.com/org/repo.git"
+    )
+    assert result["indexed"] is True
+    assert result["sample_hits"] == 1
+
+
 def test_probe_store_indexed_for_project_query_failure() -> None:
     client = MagicMock()
     store = SimpleNamespace(

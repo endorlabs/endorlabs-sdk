@@ -137,7 +137,12 @@ def run_vector_query_main(argv: list[str] | None = None) -> int:
             metadata_filter=metadata_filter,
         )
         spec = getattr(result, "spec", None)
-        documents = getattr(spec, "documents", None) if spec else None
+        # Prefer wire field matches; keep documents as fallback for older payloads.
+        documents = None
+        if spec is not None:
+            documents = getattr(spec, "matches", None)
+            if documents is None:
+                documents = getattr(spec, "documents", None)
         payload = {
             "store_uuid": store.uuid,
             "query": args.query,
