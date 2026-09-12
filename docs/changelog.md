@@ -10,7 +10,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 - `client.HuggingFaceOrganization` (list/get) — tenant inventory of connected Hugging Face orgs/models. Configure via `Installation` (`huggingface_config`) / `endorctl sync-org --platform-source=huggingface`.
 - Troubleshooting scan summaries expose `use_scan_profile`, `python_virtual_env`, and `python_global_site_packages` on `scan_mode` (with reconstructed `--python-virtual-env` flags).
-- Docs: portable Rego exception examples under `docs/guides/examples/` — `via-shared-lib-exception` (direct shared-lib parent walk) and `finding-age-exception` (discovery age).
+- Docs: portable Rego exception examples under `docs/guides/examples/` — `via-shared-lib-exception` (`graph.reachable` on `dependency_graph`) and `finding-age-exception` (discovery age).
 
 ### Changed
 
