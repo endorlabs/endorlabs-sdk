@@ -102,6 +102,17 @@ workflows:
     composition: library_api
     library_entrypoints:
       - endorlabs.workflows.reports.analyze.cli_vs_cloud
+  - id: config-presence
+    cli: endor-config-presence
+    module: endorlabs.workflows.platform.cli
+    skill: endor-workflow-reports
+    default_output: .endorlabs/tasks/<slug>-<YYYY-MM-DD>/onboarding_config_presence/
+    agent_visible: false
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.platform.config_presence.run_config_presence
+      - endorlabs.workflows.platform.config_presence.probe_tenant_presence
+      - endorlabs.workflows.platform.config_presence.probe_project_presence
   - id: ci-endorctl-version-audit
     cli: endor-reports
     module: endorlabs.workflows.reports.cli

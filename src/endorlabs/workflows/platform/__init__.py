@@ -2,6 +2,13 @@
 
 from __future__ import annotations
 
+from .config_presence import (
+    CheckResult,
+    ConfigPresenceResult,
+    probe_project_presence,
+    probe_tenant_presence,
+    run_config_presence,
+)
 from .platform_setup import (
     AuthorizationPolicyResult,
     InstallationResult,
@@ -15,6 +22,8 @@ from .platform_setup import (
 
 __all__ = [
     "AuthorizationPolicyResult",
+    "CheckResult",
+    "ConfigPresenceResult",
     "InstallationResult",
     "NamespaceResult",
     "ScanProfileResult",
@@ -22,4 +31,7 @@ __all__ = [
     "create_child_namespace",
     "create_github_installation",
     "create_scan_profile_with_defaults",
+    "probe_project_presence",
+    "probe_tenant_presence",
+    "run_config_presence",
 ]

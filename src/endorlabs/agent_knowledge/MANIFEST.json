@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-09-04T18:18:53.727354+00:00",
+  "generated_at": "2026-09-12T18:43:10.097179+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -426,6 +426,20 @@
         "endorlabs.workflows.reports.analyze.cli_vs_cloud"
       ],
       "module": "endorlabs.workflows.reports.cli",
+      "skill": "endor-workflow-reports"
+    },
+    {
+      "agent_visible": false,
+      "cli": "endor-config-presence",
+      "composition": "library_api",
+      "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/onboarding_config_presence/",
+      "id": "config-presence",
+      "library_entrypoints": [
+        "endorlabs.workflows.platform.config_presence.run_config_presence",
+        "endorlabs.workflows.platform.config_presence.probe_tenant_presence",
+        "endorlabs.workflows.platform.config_presence.probe_project_presence"
+      ],
+      "module": "endorlabs.workflows.platform.cli",
       "skill": "endor-workflow-reports"
     },
     {

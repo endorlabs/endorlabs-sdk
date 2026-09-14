@@ -14,6 +14,7 @@ invoked via **`endor-reports <subcommand>`** (see
 | `endor-auth-credential-expiry` | `credential-expiry` | `reports.analyze.auth_credential_expiry` |
 | `endor-audit-authorization-policies` | `auth-policies` | `reports.analyze.auth_policies_audit` |
 | `endor-cli-vs-cloud-projects` | `cli-vs-cloud` | `reports.analyze.cli_vs_cloud` |
+| `endor-config-presence` | *(CLI)* `endor-config-presence` | `platform.config_presence` |
 | `endor-ci-endorctl-version-audit` | `ci-endorctl` | `reports.analyze.ci_endorctl_audit` |
 | `endor-duplicate-projects` | `duplicates` | `reports.analyze.duplicate_projects` |
 | `endor-chart-new-vs-resolved-findings` | `findings-trend` | `reports.analyze.findings_chart_analysis` |

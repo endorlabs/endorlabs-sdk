@@ -232,6 +232,7 @@ Do not use repo-root `.tmp/`. Gitignore `.endorlabs/` in consumer projects.
 | Login activity CSV | `endor-workflow-reports` → `endor-reports login-count -n <tenant>` |
 | Duplicate projects audit | `endor-workflow-reports` → `endor-reports duplicates -n <tenant>` |
 | CLI vs Cloud classification | `endor-workflow-reports` → `endor-reports cli-vs-cloud -n <tenant>` |
+| Onboarding config presence | `endor-workflow-reports` → `endor-config-presence -n <tenant> [--project <uuid>]` |
 
 Full catalog: `MANIFEST.json` → `skills[]`.
 

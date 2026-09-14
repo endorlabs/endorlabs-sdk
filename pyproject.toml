@@ -65,6 +65,7 @@ endor-vector-query = "endorlabs.workflows.vector_search.cli:main"
 endor-reachability-context = "endorlabs.workflows.reachability.cli:main"
 endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
 endor-auth = "endorlabs.workflows.auth.cli:main"
+endor-config-presence = "endorlabs.workflows.platform.cli:main"
 endor-reports = "endorlabs.workflows.reports.cli:main"
 endor-log-export = "endorlabs.workflows.log_export.cli:main"
 
@@ -341,6 +342,8 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 "src/endorlabs/workflows/estate/analyze/graph_metrics/analytics.py" = ["D103", "E501"]
 "src/endorlabs/workflows/estate/analyze/compile_graph/enrich.py" = ["D103", "C901", "PLW2901", "E501"]
 "src/endorlabs/workflows/troubleshooting_scans/summarize_scan_triage.py" = ["C901"]  # markdown builder
+"src/endorlabs/workflows/platform/config_presence.py" = ["C901", "E501", "PERF401"]
+"src/endorlabs/workflows/platform/cli.py" = ["E501", "T201"]
 # Skill-maintained CLI scripts (authoring tree; mirrored into agent_knowledge bundle).
 "agent-knowledge/skills/**/scripts/*.py" = [
     "ERA001",  # section divider comments
