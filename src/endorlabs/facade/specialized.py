@@ -404,6 +404,98 @@ class CallGraphDataFacade:
         )
 
 
+class AgentTelemetryFacade:
+    """Agents Hub / Agent Kit API call metering (``agent-telemetry``).
+
+    Distinct from Coding Agent Governance Policy Violations
+    (``AgentHookEvent`` / ``endor-log-export --source policy-violations``).
+    Call rows are a tenant-safe projection and do not include request filters.
+    """
+
+    def __init__(self, client: APIClient, default_namespace: str | None) -> None:
+        super().__init__()
+        self._client = client
+        self._default_namespace = default_namespace
+
+    def activity(
+        self,
+        *,
+        namespace: str | None = None,
+        window_days: int | None = None,
+    ) -> Any:
+        """Return per-agent usage summary for the look-back window."""
+        from ..resources.agent_telemetry import list_agent_activity
+
+        return list_agent_activity(
+            self._client,
+            namespace=namespace,
+            default_namespace=self._default_namespace,
+            window_days=window_days,
+        )
+
+    def calls(
+        self,
+        agent_id: str,
+        *,
+        namespace: str | None = None,
+        page_size: int | None = None,
+        page_token: str | None = None,
+        decision: str | None = None,
+        operation: str | None = None,
+    ) -> Any:
+        """Return one page of recent calls for ``agent_id`` (newest first)."""
+        from ..resources.agent_telemetry import list_agent_calls_page
+
+        return list_agent_calls_page(
+            self._client,
+            agent_id,
+            namespace=namespace,
+            default_namespace=self._default_namespace,
+            page_size=page_size,
+            page_token=page_token,
+            decision=decision,
+            operation=operation,
+        )
+
+    def iter_calls(
+        self,
+        agent_id: str,
+        *,
+        namespace: str | None = None,
+        page_size: int = 100,
+        decision: str | None = None,
+        operation: str | None = None,
+        max_pages: int | None = None,
+    ) -> Any:
+        """Yield call rows across cursor pages until exhausted or ``max_pages``.
+
+        The platform intentionally omits an exact total; history depth is capped.
+        """
+        from ..resources.agent_telemetry import list_agent_calls_page
+
+        token: str | None = None
+        pages = 0
+        while True:
+            if max_pages is not None and pages >= max_pages:
+                break
+            page = list_agent_calls_page(
+                self._client,
+                agent_id,
+                namespace=namespace,
+                default_namespace=self._default_namespace,
+                page_size=page_size,
+                page_token=token,
+                decision=decision,
+                operation=operation,
+            )
+            pages += 1
+            batch = page.calls or []
+            yield from batch
+            token = page.next_page_token or None
+            if not token or not batch:
+                break
+
+
 class QueryFacade:
     """Kind-agnostic Query graph join facade.
 

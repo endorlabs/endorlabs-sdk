@@ -10,8 +10,10 @@ from unittest.mock import MagicMock, patch
 
 from endorlabs.core.exceptions import NotFoundError
 from endorlabs.workflows.platform.config_presence import (
+    LICENSE_BUCKET_DEFAULT,
     CheckResult,
     ConfigPresenceResult,
+    aggregate_by_license,
     probe_project_presence,
     probe_tenant_presence,
     run_config_presence,
@@ -20,6 +22,7 @@ from endorlabs.workflows.projects.inventory import REGISTRATION_SOURCE_CLI
 from endorlabs.workflows.reports.analyze.license_entitlements import (
     FEATURE_AI_SAST,
     FEATURE_ENDOR_PATCHING,
+    FEATURE_PACKAGE_FIREWALL,
     FEATURE_SAST,
     FEATURE_SCA,
     FEATURE_SECRETS,
@@ -47,6 +50,7 @@ def _all_license_features() -> Any:
         FEATURE_AI_SAST,
         FEATURE_SECRETS,
         FEATURE_ENDOR_PATCHING,
+        FEATURE_PACKAGE_FIREWALL,
     )
 
 
@@ -142,6 +146,83 @@ def test_probe_tenant_custom_policy_and_semgrep_filters() -> None:
     ), semgrep_kwargs
     assert by_id["tenant.has_custom_policy"].present is True
     assert by_id["tenant.has_custom_semgrep_rule"].present is True
+
+
+def test_checks_aggregate_by_license_bucket() -> None:
+    client = MagicMock()
+    _stub_tenant_counts(client)
+    # SCA-only: feature buckets still probed; entitled=false for SAST/PFW
+    client.EndorLicense.list.return_value = [_license_row(FEATURE_SCA)]
+
+    result = run_config_presence(client, "example-tenant")
+    payload = result.to_dict()
+    by_license = payload["by_license"]
+    assert LICENSE_BUCKET_DEFAULT in by_license
+    assert by_license[LICENSE_BUCKET_DEFAULT]["entitled"] is True
+    default_ids = {c["id"] for c in by_license[LICENSE_BUCKET_DEFAULT]["checks"]}
+    assert "tenant.has_installation" in default_ids
+    assert "tenant.has_custom_policy" in default_ids
+    assert "tenant.has_authorization_policy" in default_ids
+    assert "tenant.has_identity_provider" in default_ids
+    assert "tenant.has_custom_semgrep_rule" not in default_ids
+
+    sast = by_license[FEATURE_SAST]
+    assert sast["entitled"] is False
+    sast_ids = {c["id"] for c in sast["checks"]}
+    assert "tenant.license_entitles_sast" in sast_ids
+    assert "tenant.has_custom_semgrep_rule" in sast_ids
+    # Always probed (not gated)
+    client.SemgrepRule.count.assert_called()
+    client.SystemConfig.list.assert_called()
+
+    pfw = by_license[FEATURE_PACKAGE_FIREWALL]
+    assert pfw["entitled"] is False
+    assert any(
+        c["id"] == "tenant.has_system_config_package_firewall" for c in pfw["checks"]
+    )
+    assert payload["active_features"] == [FEATURE_SCA]
+
+
+def test_project_ai_sast_bucket_and_default() -> None:
+    client = MagicMock()
+    client.Project.is_sbom.return_value = False
+    client.Project.is_app.return_value = True
+    client.Project.is_cli.return_value = False
+    client.ScanProfile.get.return_value = SimpleNamespace(
+        spec=SimpleNamespace(
+            enable_ai_sast_scan=True,
+            enable_automated_pr_scans=True,
+            model_dump=_dump(
+                {
+                    "enable_ai_sast_scan": True,
+                    "enable_automated_pr_scans": True,
+                }
+            ),
+        )
+    )
+    client.ScanResult.count.side_effect = [1, 0]
+    client.ScanResult.list_by_project.return_value = [
+        {"spec": {"environment": {"config": {"RunBySystem": True}}}}
+    ]
+    client.Finding.count.return_value = 2
+    client.RepositoryVersion.list.return_value = []
+    client.VectorStore.list.return_value = []
+
+    checks = probe_project_presence(client, _project(app=True), tenant="example-tenant")
+    by_id = {c.id: c for c in checks}
+    assert (
+        by_id["project.scan_profile_enable_ai_sast"].license_bucket == FEATURE_AI_SAST
+    )
+    assert by_id["project.has_ai_sast_finding"].license_bucket == FEATURE_AI_SAST
+    assert by_id["project.is_app"].license_bucket == LICENSE_BUCKET_DEFAULT
+    assert by_id["project.has_main_full_scan"].license_bucket == LICENSE_BUCKET_DEFAULT
+    client.Finding.count.assert_called()
+    grouped = aggregate_by_license(checks, {FEATURE_SCA})
+    assert grouped[FEATURE_AI_SAST]["entitled"] is False
+    assert any(
+        c["id"] == "project.has_ai_sast_finding"
+        for c in grouped[FEATURE_AI_SAST]["checks"]
+    )
 
 
 def test_probe_tenant_presence_counts() -> None:

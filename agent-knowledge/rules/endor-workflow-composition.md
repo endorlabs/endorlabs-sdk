@@ -48,6 +48,8 @@ Generic entrypoints (no estate literals):
 - `client.Project.search_by_name()` — bounded project discovery by repo URL substring or partial UUID
 - `client.CallGraphData.decode()` — searchable callables/edges (`CallGraphDecoded`)
 - `client.CallGraphData.fetch()` — raw envelope only (workflows use this internally; agents prefer `decode` + skills)
+- `client.AgentTelemetry.activity()` / `.calls()` / `.iter_calls()` — Agents Hub / Agent Kit API call metering (not Policy Violations)
+- `endorlabs.workflows.logs.collect_calls_for_principal` — AgentTelemetry rows filtered by caller-supplied `on_behalf_of` substring
 - `client.ScanResult.get_logs()` — scan log lines (ScanLogRequest wire API)
 - `client.Finding.list_by_project()` / `list_for_context()` — generated relationship accessors
 - `client.ScanResult.list_by_project()` — scan results for a project

@@ -154,12 +154,15 @@ looks wrong, **triangulate** SDK vs `endorctl` vs `contracts/` — skill
 | Product / UI phrase | SDK / CLI | Notes |
 |---------------------|-----------|-------|
 | Package Firewall logs | `--source package-firewall-logs` → `PackageFirewallLog` | Wire path `package-firewall-logs` |
-| Policy Violations (Agent Governance) | `--source policy-violations` → `AgentHookEvent` | Wire path stays `agent-hook-events` (x-internal; no facade yet) |
+| Package Firewall (VS Code extensions) | `PackageFirewallLog` + `spec.ecosystem=="ECOSYSTEM_VSCODE"` | Same facade; filter example: `endor-log-export -n <tenant> --source package-firewall-logs --filter 'spec.ecosystem=="ECOSYSTEM_VSCODE"'` |
+| Policy Violations (Agent Governance) | `--source policy-violations` → `AgentHookEvent` | Wire path stays `agent-hook-events` (x-internal; no facade yet). **Not** Agents Hub Agent Kit call logs. |
+| Agents Hub / Agent Kit API call log | `client.AgentTelemetry.activity` / `.calls` / `.iter_calls` | Backend API usage metering (`agent-telemetry`); tenant-safe projection — no request filters in rows |
+| Threat Center (Discovery) | `MalwareExposure` / `MalwareExposureQuery` | UI synonym for tenant malware blast-radius; catalog identity still OSS `Malware` / `QueryMalware` |
 | Findings | `client.Finding` | Current findings |
 | Findings history / burndown | `FindingLog` | Time-series / create-delete trends — not `Finding` |
 | Login / SSO auth logs | `AuthenticationLog` | Not `AuditLog` (API audit trail) |
 | Malware catalog | `client.Malware` / `QueryMalware` (`scope=oss`) | Coordinate identity |
-| Malware exposure (tenant) | `MalwareExposure` / `MalwareExposureQuery` | Customer blast radius |
+| Malware exposure (tenant) | `MalwareExposure` / `MalwareExposureQuery` | Customer blast radius (Threat Center) |
 
 ## Bootstrap (load for Endor SDK work)
 
@@ -232,7 +235,7 @@ Do not use repo-root `.tmp/`. Gitignore `.endorlabs/` in consumer projects.
 | Login activity CSV | `endor-workflow-reports` → `endor-reports login-count -n <tenant>` |
 | Duplicate projects audit | `endor-workflow-reports` → `endor-reports duplicates -n <tenant>` |
 | CLI vs Cloud classification | `endor-workflow-reports` → `endor-reports cli-vs-cloud -n <tenant>` |
-| Onboarding config presence | `endor-workflow-reports` → `endor-config-presence -n <tenant> [--project <uuid>]` |
+| Onboarding config presence | `endor-config-presence` → `endor-config-presence -n <tenant> [--project <uuid>]` |
 
 Full catalog: `MANIFEST.json` → `skills[]`.
 

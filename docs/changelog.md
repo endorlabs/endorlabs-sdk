@@ -11,11 +11,14 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - `client.HuggingFaceOrganization` (list/get) — tenant inventory of connected Hugging Face orgs/models. Configure via `Installation` (`huggingface_config`) / `endorctl sync-org --platform-source=huggingface`.
 - Troubleshooting scan summaries expose `use_scan_profile`, `python_virtual_env`, and `python_global_site_packages` on `scan_mode` (with reconstructed `--python-virtual-env` flags).
 - Docs: portable Rego exception examples under `docs/guides/examples/` — `via-shared-lib-exception` (`graph.reachable` on `dependency_graph`) and `finding-age-exception` (discovery age).
-- `endor-config-presence` / `endorlabs.workflows.platform.config_presence` — read-only onboarding config presence matrix (boolean + guided checks; tenant and optional project grain).
+- `endor-config-presence` / `endorlabs.workflows.platform.config_presence` — read-only onboarding config presence matrix (boolean + guided checks; tenant and optional project grain). Shipped as standalone skill **endor-config-presence** (not under the workflow-reports router).
+- `client.AgentTelemetry` — custom facade for Agents Hub / Agent Kit API call metering (`activity`, `calls`, `iter_calls`). Distinct from Coding Agent Governance `AgentHookEvent` (still x-internal / raw via `endor-log-export --source policy-violations`).
+- `endorlabs.workflows.logs.collect_calls_for_principal` — parameterized AgentTelemetry pull filtered by `on_behalf_of` substring (placeholders only in docs/tests).
 
 ### Changed
 
 - Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1149).
+- Agent-knowledge ontology: Threat Center → `MalwareExposure` / `MalwareExposureQuery`; Package Firewall VS Code extensions → `PackageFirewallLog` + `ECOSYSTEM_VSCODE` filter; Agents Hub Agent Kit call log ≠ Policy Violations.
 
 ### Fixed
 

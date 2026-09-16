@@ -11,6 +11,7 @@ from .core.filter import FilterExpression
 from .core.types import ListParameters
 from .core.whoami import WhoamiResult
 from .facade import (
+    AgentTelemetryFacade,
     CallGraphDataFacade,
     ListableFacade,
     QueryFacade,
@@ -2140,7 +2141,7 @@ class Client:
     Repository, RepositoryVersion, SavedQuery, ScanLogRequest, ScanProfile,
     ScanResult, ScanWorkflow, ScanWorkflowResult, SemgrepRule, SystemConfig,
     VectorStore, VectorStoreQuery, VersionUpgrade, Vulnerability
-    Custom: CallGraphData, Query
+    Custom: CallGraphData, AgentTelemetry, Query
     """
 
     APIKey: _APIKeyFacade
@@ -2189,6 +2190,7 @@ class Client:
     VersionUpgrade: _VersionUpgradeFacade
     Vulnerability: _VulnerabilityFacade
     CallGraphData: CallGraphDataFacade
+    AgentTelemetry: AgentTelemetryFacade
     Query: QueryFacade
 
     _client: APIClient | None

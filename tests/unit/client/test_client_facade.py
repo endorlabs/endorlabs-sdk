@@ -17,7 +17,7 @@ import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
 from endorlabs.core.exceptions import NotFoundError, ValidationError
-from endorlabs.facade import CallGraphDataFacade, QueryFacade
+from endorlabs.facade import AgentTelemetryFacade, CallGraphDataFacade, QueryFacade
 from tests.conftest import (
     TEST_MAX_PAGES,
     TEST_NAMESPACE_DEFAULT,
@@ -564,6 +564,7 @@ def test_client_call_graph_data_facade_present(
     client = client_with_mock_transport
     assert hasattr(client, "CallGraphData")
     assert isinstance(client.CallGraphData, CallGraphDataFacade)
+    assert isinstance(client.AgentTelemetry, AgentTelemetryFacade)
 
 
 def test_client_query_facade_present(

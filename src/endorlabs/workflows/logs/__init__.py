@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from .agent_telemetry import (
+    PrincipalCallCollectResult,
+    collect_calls_for_principal,
+)
 from .density import (
     LogDensityProbeResult,
     NamespaceDensity,
@@ -35,7 +39,9 @@ __all__ = [
     "LogDensityProbeResult",
     "LogSource",
     "NamespaceDensity",
+    "PrincipalCallCollectResult",
     "buckets_to_counts",
+    "collect_calls_for_principal",
     "count_log_events",
     "format_mql_date",
     "group_bucket_count",

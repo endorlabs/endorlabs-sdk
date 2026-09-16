@@ -40,6 +40,7 @@ Do not use this skill for:
 - Scan failure or metrics RCA → [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md)
 - SDK/API errors or model drift → [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md)
 - PolicyValidation or exception policy matching → [endor-validate-policy](../endor-validate-policy/SKILL.md)
+- Onboarding config presence / readiness matrix → [endor-config-presence](../endor-config-presence/SKILL.md)
 
 ## When to recommend the executive HTML build
 
@@ -75,7 +76,6 @@ Run `uv run endor-reports list` (or `list --json`) for the full subcommand picke
 | API key / credential expiry audit | `endor-reports credential-expiry -n <tenant>` | `.endorlabs/reports/auth-credential-expiry/` |
 | AuthorizationPolicy claim / namespace form audit | `endor-reports auth-policies -n <tenant>` | `.endorlabs/reports/auth-policies/` |
 | CLI-scanned vs Cloud-integrated project classification | `endor-reports cli-vs-cloud -n <tenant>` | `.endorlabs/reports/cli-vs-cloud/` |
-| Onboarding config presence (boolean / guided matrix) | `endor-config-presence -n <tenant> [--project <uuid>]` | `.endorlabs/tasks/<slug>-<YYYY-MM-DD>/onboarding_config_presence/` |
 | CI `endorctl` version inventory across latest CLI scans | `endor-reports ci-endorctl -n <tenant>` | `.endorlabs/reports/ci-endorctl/` |
 | Duplicate project registrations across namespaces | `endor-reports duplicates -n <tenant>` | `.endorlabs/reports/duplicates/` |
 | New vs resolved findings trend chart | `endor-reports findings-trend -n <tenant>` | `.endorlabs/reports/findings-trend/` |

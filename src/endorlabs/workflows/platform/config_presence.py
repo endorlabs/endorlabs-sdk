@@ -1,6 +1,10 @@
 """Read-side onboarding config-presence probes (boolean / guided matrix).
 
 Complements ``platform_setup`` create helpers. Does not mutate tenant state.
+
+Checks always run. Results aggregate into license buckets: ``default`` (auth,
+SSO, policies, install/profile/scan cadence, and any unmapped id) plus
+feature-specific buckets aligned with monorepo ``EndorLicenseFeatureType``.
 """
 
 from __future__ import annotations
@@ -23,6 +27,7 @@ from endorlabs.workflows.projects.inventory import (
 from endorlabs.workflows.reports.analyze.license_entitlements import (
     FEATURE_AI_SAST,
     FEATURE_ENDOR_PATCHING,
+    FEATURE_PACKAGE_FIREWALL,
     FEATURE_SAST,
     FEATURE_SCA,
     FEATURE_SECRETS,
@@ -49,6 +54,33 @@ CUSTOM_POLICY_FILTER = (
     'meta.created_by!="apiserver@endor.ai@x509" and meta.created_by!="Endor Labs"'
 )
 
+# Bucket key for checks that apply regardless of product license (auth, SSO,
+# policies, install, profiles, scan cadence, …) and any id not listed below.
+LICENSE_BUCKET_DEFAULT = "default"
+
+# Explicit like-by-like map: entitlement row + related product config share a
+# feature bucket. Monorepo: SastEnable / rule-set-imports → SAST; AISastEnable →
+# AI_SAST; firewall / SystemConfig.package_firewall → PACKAGE_FIREWALL.
+CHECK_LICENSE_BUCKET: dict[str, str] = {
+    "tenant.license_entitles_sca": FEATURE_SCA,
+    "tenant.license_entitles_sast": FEATURE_SAST,
+    "tenant.has_custom_semgrep_rule": FEATURE_SAST,
+    "tenant.license_entitles_ai_sast": FEATURE_AI_SAST,
+    "project.scan_profile_enable_ai_sast": FEATURE_AI_SAST,
+    "project.has_ai_sast_finding": FEATURE_AI_SAST,
+    "guided.aisast_repo_version_status": FEATURE_AI_SAST,
+    "guided.vector_store_indexed": FEATURE_AI_SAST,
+    "tenant.license_entitles_secrets": FEATURE_SECRETS,
+    "tenant.license_entitles_patches": FEATURE_ENDOR_PATCHING,
+    "tenant.license_entitles_package_firewall": FEATURE_PACKAGE_FIREWALL,
+    "tenant.has_system_config_package_firewall": FEATURE_PACKAGE_FIREWALL,
+}
+
+
+def license_bucket_for(check_id: str) -> str:
+    """Return the license bucket for *check_id* (default when unmapped)."""
+    return CHECK_LICENSE_BUCKET.get(check_id, LICENSE_BUCKET_DEFAULT)
+
 
 def _empty_dict() -> dict[str, Any]:
     return {}
@@ -68,10 +100,54 @@ class CheckResult:
     status: str = "pass"
     evidence: dict[str, Any] = field(default_factory=_empty_dict)
     hint: str = ""
+    license_bucket: str = LICENSE_BUCKET_DEFAULT
 
 
 def _empty_checks() -> list[CheckResult]:
     return []
+
+
+def _serialize_check(c: CheckResult) -> dict[str, Any]:
+    return {
+        "id": c.id,
+        "tier": c.tier,
+        "present": c.present,
+        "status": c.status,
+        "evidence": c.evidence,
+        "hint": c.hint,
+        "license_bucket": c.license_bucket,
+    }
+
+
+def aggregate_by_license(
+    checks: list[CheckResult],
+    features: set[str] | None,
+) -> dict[str, Any]:
+    """Group checks into ``default`` + feature buckets with entitlement flags."""
+    grouped: dict[str, list[CheckResult]] = {}
+    for c in checks:
+        bucket = c.license_bucket or license_bucket_for(c.id)
+        grouped.setdefault(bucket, []).append(c)
+
+    # Always emit default first for stable consumers.
+    ordered_keys = [
+        LICENSE_BUCKET_DEFAULT,
+        *sorted(k for k in grouped if k != LICENSE_BUCKET_DEFAULT),
+    ]
+    out: dict[str, Any] = {}
+    for key in ordered_keys:
+        rows = grouped.get(key, [])
+        if key == LICENSE_BUCKET_DEFAULT:
+            entitled: bool | None = True
+        elif features is None:
+            entitled = None
+        else:
+            entitled = key in features
+        out[key] = {
+            "entitled": entitled,
+            "checks": [_serialize_check(c) for c in rows],
+        }
+    return out
 
 
 @dataclass
@@ -84,9 +160,13 @@ class ConfigPresenceResult(WorkflowResult):
     checks: list[CheckResult] = field(default_factory=_empty_checks)
     deferred: list[str] = field(default_factory=_empty_str_list)
     generated_at: str = ""
+    active_features: list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize for JSON artifacts."""
+        feature_set = (
+            set(self.active_features) if self.active_features is not None else None
+        )
         return {
             "status": self.status,
             "message": self.message,
@@ -95,17 +175,11 @@ class ConfigPresenceResult(WorkflowResult):
             "project_uuid": self.project_uuid,
             "project_namespace": self.project_namespace,
             "generated_at": self.generated_at,
-            "checks": [
-                {
-                    "id": c.id,
-                    "tier": c.tier,
-                    "present": c.present,
-                    "status": c.status,
-                    "evidence": c.evidence,
-                    "hint": c.hint,
-                }
-                for c in self.checks
-            ],
+            "active_features": (
+                list(self.active_features) if self.active_features is not None else None
+            ),
+            "checks": [_serialize_check(c) for c in self.checks],
+            "by_license": aggregate_by_license(self.checks, feature_set),
             "deferred": list(self.deferred),
         }
 
@@ -154,6 +228,7 @@ def _bool_check(
     hint: str = "",
     error: str | None = None,
 ) -> CheckResult:
+    bucket = license_bucket_for(check_id)
     if error:
         return CheckResult(
             id=check_id,
@@ -162,6 +237,7 @@ def _bool_check(
             status="error",
             evidence=evidence or {"error": error},
             hint=hint,
+            license_bucket=bucket,
         )
     return CheckResult(
         id=check_id,
@@ -170,6 +246,7 @@ def _bool_check(
         status="pass" if present else "fail",
         evidence=evidence or {},
         hint=hint,
+        license_bucket=bucket,
     )
 
 
@@ -188,6 +265,7 @@ def _guided(
         status=status,
         evidence=evidence or {},
         hint=hint,
+        license_bucket=license_bucket_for(check_id),
     )
 
 
@@ -206,9 +284,18 @@ _DEFERRED_IDS = [
 def probe_tenant_presence(
     client: Client,
     tenant: str,
+    *,
+    features: set[str] | None = None,
 ) -> list[CheckResult]:
-    """Tier A (+ selected Tier B) checks at tenant root namespace."""
+    """Tier A (+ selected Tier B) checks at tenant root namespace.
+
+    All product-config rows are always probed. Callers aggregate via
+    ``aggregate_by_license`` / ``ConfigPresenceResult.to_dict()``. Pass
+    *features* from ``fetch_license_feature_types`` when already loaded.
+    """
     checks: list[CheckResult] = []
+    if features is None:
+        features = fetch_license_feature_types(client, tenant)
 
     for kind, check_id in (
         ("Installation", "tenant.has_installation"),
@@ -227,47 +314,88 @@ def probe_tenant_presence(
             )
         )
 
-    # Custom Policy / SemgrepRule only — exclude platform / 3rd-party out-of-box rows.
-    custom_specs: list[tuple[str, str, str, dict[str, Any]]] = [
-        (
-            "Policy",
+    feat_map = {
+        "tenant.license_entitles_sca": FEATURE_SCA,
+        "tenant.license_entitles_sast": FEATURE_SAST,
+        "tenant.license_entitles_ai_sast": FEATURE_AI_SAST,
+        "tenant.license_entitles_secrets": FEATURE_SECRETS,
+        "tenant.license_entitles_patches": FEATURE_ENDOR_PATCHING,
+        "tenant.license_entitles_package_firewall": FEATURE_PACKAGE_FIREWALL,
+    }
+    for check_id, feat in feat_map.items():
+        if features is None:
+            checks.append(
+                _bool_check(
+                    check_id,
+                    present=None,
+                    evidence={"features": None},
+                    error="EndorLicense list empty or failed",
+                )
+            )
+        else:
+            checks.append(
+                _bool_check(
+                    check_id,
+                    present=feat in features,
+                    evidence={"feature": feat, "active_features": sorted(features)},
+                )
+            )
+
+    # Custom Policy — default bucket (Finding / Exception / Action surface).
+    count, err = _safe_count(
+        client,
+        "Policy",
+        namespace=tenant,
+        traverse=True,
+        filter=CUSTOM_POLICY_FILTER,
+    )
+    checks.append(
+        _bool_check(
             "tenant.has_custom_policy",
-            CUSTOM_POLICY_FILTER,
-            {
+            present=(count or 0) > 0 if count is not None else None,
+            evidence={
+                "count": count,
+                "filter": CUSTOM_POLICY_FILTER,
                 "excludes_created_by": sorted(PLATFORM_POLICY_CREATED_BY),
                 "note": (
                     "Policy has no spec.defined_by; custom ≈ not platform-seeded "
                     "meta.created_by."
                 ),
             },
-        ),
-        (
-            "SemgrepRule",
+            error=err,
+            hint=(
+                "Ask SE whether tenant-authored policies are in scope."
+                if count == 0
+                else ""
+            ),
+        )
+    )
+
+    # Custom SemgrepRule — SAST bucket (always probed).
+    count, err = _safe_count(
+        client,
+        "SemgrepRule",
+        namespace=tenant,
+        traverse=True,
+        filter=CUSTOM_SEMGREP_RULE_FILTER,
+    )
+    checks.append(
+        _bool_check(
             "tenant.has_custom_semgrep_rule",
-            CUSTOM_SEMGREP_RULE_FILTER,
-            {
+            present=(count or 0) > 0 if count is not None else None,
+            evidence={
+                "count": count,
+                "filter": CUSTOM_SEMGREP_RULE_FILTER,
                 "excludes_defined_by": sorted(PLATFORM_SEMGREP_DEFINED_BY),
             },
-        ),
-    ]
-    for kind, check_id, filt, extra in custom_specs:
-        count, err = _safe_count(
-            client, kind, namespace=tenant, traverse=True, filter=filt
+            error=err,
+            hint=(
+                "Ask SE whether tenant-authored Semgrep rules are in scope."
+                if count == 0
+                else ""
+            ),
         )
-        evidence: dict[str, Any] = {"count": count, "filter": filt, **extra}
-        checks.append(
-            _bool_check(
-                check_id,
-                present=(count or 0) > 0 if count is not None else None,
-                evidence=evidence,
-                error=err,
-                hint=(
-                    "Ask SE whether tenant-authored policies/rules are in scope."
-                    if count == 0
-                    else ""
-                ),
-            )
-        )
+    )
 
     # Child namespaces: list under tenant without counting the root itself.
     try:
@@ -321,34 +449,7 @@ def probe_tenant_presence(
             )
         )
 
-    features = fetch_license_feature_types(client, tenant)
-    feat_map = {
-        "tenant.license_entitles_sca": FEATURE_SCA,
-        "tenant.license_entitles_sast": FEATURE_SAST,
-        "tenant.license_entitles_ai_sast": FEATURE_AI_SAST,
-        "tenant.license_entitles_secrets": FEATURE_SECRETS,
-        "tenant.license_entitles_patches": FEATURE_ENDOR_PATCHING,
-    }
-    for check_id, feat in feat_map.items():
-        if features is None:
-            checks.append(
-                _bool_check(
-                    check_id,
-                    present=None,
-                    evidence={"features": None},
-                    error="EndorLicense list empty or failed",
-                )
-            )
-        else:
-            checks.append(
-                _bool_check(
-                    check_id,
-                    present=feat in features,
-                    evidence={"feature": feat, "active_features": sorted(features)},
-                )
-            )
-
-    # SystemConfig package firewall presence
+    # SystemConfig package firewall — PACKAGE_FIREWALL bucket (always probed).
     try:
         configs = client.SystemConfig.list(namespace=tenant, max_pages=1)
         has_pfw = False
@@ -453,7 +554,11 @@ def probe_project_presence(
     tenant: str | None = None,
     lookback_days: int = 30,
 ) -> list[CheckResult]:
-    """Tier A (+ selected Tier B) checks for one Project row."""
+    """Tier A (+ selected Tier B) checks for one Project row.
+
+    AI-SAST-specific rows always run; they land in the AI_SAST license bucket
+    via ``aggregate_by_license``.
+    """
     checks: list[CheckResult] = []
     ns = getattr(project, "namespace", None) or nested_str(
         project if isinstance(project, dict) else {}, "tenant_meta", "namespace"
@@ -476,6 +581,7 @@ def probe_project_presence(
                 present=val,
                 status="pass",
                 evidence={"classification": True},
+                license_bucket=license_bucket_for(cid),
             )
         )
 
@@ -523,6 +629,7 @@ def probe_project_presence(
                 present=True,
                 status="pass",
                 evidence={"applicable": False, "skipped": "not_app_registered"},
+                license_bucket=license_bucket_for("project.installation_valid"),
             )
         )
 
@@ -666,7 +773,7 @@ def probe_project_presence(
                     )
                 )
 
-    # AI-SAST findings
+    # AI-SAST findings — AI_SAST bucket (always probed).
     try:
         n = client.Finding.count(
             parent=project,
@@ -732,6 +839,7 @@ def probe_project_presence(
                     present=present,
                     status="pass",
                     evidence={"latest_scan_execution": label},
+                    license_bucket=license_bucket_for(cid),
                 )
             )
         reg = registration_source_label(client, project)
@@ -766,10 +874,10 @@ def probe_project_presence(
             hint = "Ask SE about missing MAIN full or CI scan activity in lookback."
         else:
             cadence_status = "fail"
-            hint = "Ask SE: no MAIN full or CI scans in lookback window."
+            hint = "Ask SE: no MAIN full or CI scan activity in lookback."
         checks.append(
             _guided(
-                "guided.main_ci_cadence",
+                "guided.scan_cadence",
                 status=cadence_status,
                 present=bool(main_ok and ci_ok),
                 evidence={
@@ -789,7 +897,7 @@ def probe_project_presence(
             )
         )
 
-    # RepositoryVersion AI-SAST status
+    # RepositoryVersion AI-SAST status / vector index — AI_SAST bucket.
     try:
         versions = client.RepositoryVersion.list(parent=project, max_pages=1)
         statuses: list[str] = []
@@ -824,7 +932,6 @@ def probe_project_presence(
             )
         )
 
-    # Vector store indexed (repo metadata casing)
     try:
         from endorlabs.workflows.vector_search.query import (
             probe_store_indexed_for_project,
@@ -853,11 +960,16 @@ def probe_project_presence(
                 "guided.vector_store_indexed",
                 status="pass" if indexed else "warn",
                 present=indexed,
-                evidence={"repo": chosen or (candidates[0] if candidates else None)},
+                evidence={
+                    "repo": chosen or (candidates[0] if candidates else None),
+                },
                 hint=(
                     ""
                     if indexed
-                    else "Ask SE whether AI-SAST vector indexing completed for this repo."
+                    else (
+                        "Ask SE whether AI-SAST vector indexing completed "
+                        "for this repo."
+                    )
                 ),
             )
         )
@@ -906,9 +1018,11 @@ def run_config_presence(
         deferred=list(_DEFERRED_IDS),
     )
     errors: list[str] = []
+    features = fetch_license_feature_types(client, tenant)
+    result.active_features = sorted(features) if features is not None else None
 
     try:
-        result.checks.extend(probe_tenant_presence(client, tenant))
+        result.checks.extend(probe_tenant_presence(client, tenant, features=features))
     except Exception as exc:
         errors.append(f"tenant probe: {type(exc).__name__}: {exc}")
 
@@ -940,12 +1054,17 @@ def run_config_presence(
     errs = sum(1 for c in result.checks if c.status == "error")
     if not result.checks and (errors or errs):
         result.status = "error"
-    elif fails or errs or errors:
+        result.message = f"config-presence failed: {errors or 'no checks'}"
+    elif fails or errs:
         result.status = "partial"
+        result.message = (
+            f"config-presence tenant={tenant} checks={len(result.checks)} "
+            f"fail={fails} warn={warns} error={errs}"
+        )
     else:
         result.status = "success"
-    result.message = (
-        f"config-presence tenant={tenant} checks={len(result.checks)} "
-        f"fail={fails} warn={warns} error={errs}"
-    )
+        result.message = (
+            f"config-presence tenant={tenant} checks={len(result.checks)} "
+            f"fail=0 warn={warns} error=0"
+        )
     return result
