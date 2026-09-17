@@ -4,9 +4,10 @@ FindingLog severity×reach series primitives live in
 ``endorlabs.workflows.findings.finding_log_trends``; this module orchestrates
 path/tag rollups and ScanResult throughput for ``report_packet.v0``.
 
-Tag series use **project-grain** pulls (one matrix per tagged project) then
-local redistribute. Path series still use leaf-namespace aggregates so untagged
-projects are included.
+Tag series use **parent_uuid is_in** pulls (one matrix per tag×path at the
+tenant with traverse). Path series still use leaf-namespace aggregates so
+untagged projects are included; PR-active path series use is_in over the
+allowlist.
 """
 
 from __future__ import annotations
@@ -21,7 +22,10 @@ from endorlabs.workflows.findings.finding_log_trends import (
 )
 from endorlabs.workflows.reports.analyze.burndown_common import (
     DEFAULT_BURNDOWN_WORKERS,
+    PR_LOOKBACK_WEEKS,
+    SCOPE_PR,
     SEV_KEYS,
+    attach_main_pr_scopes,
     build_category_burndown_block,
     sum_severity_facet_matrices,
 )
@@ -286,17 +290,19 @@ def build_sca_burndown_report(
     lookback: int = CHART_DEFAULT_LOOKBACK,
     min_projects: int = 1,
     max_workers: int = DEFAULT_BURNDOWN_WORKERS,
+    pr_active_uuids: list[str] | None = None,
+    include_pr_scope: bool = True,
 ) -> dict[str, Any]:
     """Build SCA (vulnerability) FindingLog series filters, tag series, and throughput.
 
     Uses the same category-spec + path/tag redistribute path as code findings,
-    with ``expand="reach"`` so ``all`` remains RF+PRF.
+    with ``expand="reach"`` so ``all`` remains RF+PRF. When *include_pr_scope*
+    is true, also pulls a PR/CI_RUN Detected/Blocked sibling under ``scopes.pr``.
     """
     from concurrent.futures import ThreadPoolExecutor
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        burndown_fut = pool.submit(
-            build_category_burndown_block,
+    def _main() -> dict[str, Any]:
+        return build_category_burndown_block(
             client,
             tenant=tenant,
             projects=projects,
@@ -308,11 +314,36 @@ def build_sca_burndown_report(
             min_projects=min_projects,
             max_workers=max_workers,
         )
+
+    def _pr() -> dict[str, Any] | None:
+        if not include_pr_scope:
+            return None
+        allow = list(pr_active_uuids) if pr_active_uuids is not None else None
+        return build_category_burndown_block(
+            client,
+            tenant=tenant,
+            projects=projects,
+            leaf_namespaces=leaf_namespaces,
+            path_options=path_options,
+            tag_catalog=tag_catalog,
+            category_key=CATEGORY_SCA,
+            lookback=PR_LOOKBACK_WEEKS,
+            min_projects=min_projects,
+            max_workers=max_workers,
+            context_scope=SCOPE_PR,
+            project_uuid_allowlist=allow,
+        )
+
+    workers = 4 if include_pr_scope else 3
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        burndown_fut = pool.submit(_main)
+        pr_fut = pool.submit(_pr) if include_pr_scope else None
         throughput_fut = pool.submit(
             collect_scan_throughput, client, projects, leaf_namespaces
         )
         bounds_fut = pool.submit(probe_scan_history_bounds, client, leaf_namespaces)
         block = burndown_fut.result()
+        pr_block = pr_fut.result() if pr_fut is not None else None
         scan_by_uuid = throughput_fut.result()
         scan_bounds = bounds_fut.result()
     tp_per_path = {
@@ -335,15 +366,25 @@ def build_sca_burndown_report(
         rows = [p for p in projects if p["uuid"] in uuids]
         tp_per_tag[tag] = _throughput_scope(rows, scan_by_uuid)
 
+    scoped = attach_main_pr_scopes(
+        block,
+        pr_block,
+        pr_active_uuids=pr_active_uuids,
+    )
     return {
-        "findingCriteria": block.get("findingCriteria") or FINDING_CRITERIA,
+        "findingCriteria": scoped.get("findingCriteria") or FINDING_CRITERIA,
         "lookback": lookback,
         "interval": "week",
-        "facetKeys": block.get("facetKeys") or list(SCA_FACET_KEYS),
-        "expand": block.get("expand") or "reach",
-        "seriesFilters": block["seriesFilters"],
-        "tagSeries": block["tagSeries"],
-        "tagSeriesMeta": block["tagSeriesMeta"],
+        "contextScope": scoped.get("contextScope") or "main",
+        "seriesLabels": scoped.get("seriesLabels"),
+        "facetKeys": scoped.get("facetKeys") or list(SCA_FACET_KEYS),
+        "expand": scoped.get("expand") or "reach",
+        "seriesFilters": scoped["seriesFilters"],
+        "tagSeries": scoped["tagSeries"],
+        "tagSeriesMeta": scoped["tagSeriesMeta"],
+        "scopes": scoped.get("scopes"),
+        "prActiveProjectUuids": scoped.get("prActiveProjectUuids")
+        or list(pr_active_uuids or []),
         "throughput": {
             "windows": {
                 "mainDays": MAIN_LOOKBACK_DAYS,
@@ -353,7 +394,7 @@ def build_sca_burndown_report(
             "perPath": tp_per_path,
             "perTag": tp_per_tag,
         },
-        "periodCaption": block.get("periodCaption"),
+        "periodCaption": scoped.get("periodCaption"),
     }
 
 
@@ -368,6 +409,8 @@ def build_findings_burndown_report(
     lookback: int = CHART_DEFAULT_LOOKBACK,
     min_projects: int = 1,
     max_workers: int = DEFAULT_BURNDOWN_WORKERS,
+    pr_active_uuids: list[str] | None = None,
+    include_pr_scope: bool = True,
 ) -> dict[str, Any]:
     """Compat alias for :func:`build_sca_burndown_report`."""
     return build_sca_burndown_report(
@@ -380,4 +423,6 @@ def build_findings_burndown_report(
         lookback=lookback,
         min_projects=min_projects,
         max_workers=max_workers,
+        pr_active_uuids=pr_active_uuids,
+        include_pr_scope=include_pr_scope,
     )

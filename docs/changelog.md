@@ -8,6 +8,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- Executive packet **Main vs PR scope** filter on SCA / SAST FindingLog burndown pages: PR scope uses `CONTEXT_TYPE_CI_RUN` Detected (CREATE) vs Blocked (`FINDING_TAGS_CI_BLOCKER`), ~30d lookback, PR-active projects (CI ScanResult evidence); onboarding adds a PR-active projects toggle.
 - `client.HuggingFaceOrganization` (list/get) — tenant inventory of connected Hugging Face orgs/models. Configure via `Installation` (`huggingface_config`) / `endorctl sync-org --platform-source=huggingface`.
 - Troubleshooting scan summaries expose `use_scan_profile`, `python_virtual_env`, and `python_global_site_packages` on `scan_mode` (with reconstructed `--python-virtual-env` flags).
 - Docs: portable Rego exception examples under `docs/guides/examples/` — `via-shared-lib-exception` (`graph.reachable` on `dependency_graph`) and `finding-age-exception` (discovery age).
@@ -17,7 +18,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
-- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1149).
+- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1156).
 - Agent-knowledge ontology: Threat Center → `MalwareExposure` / `MalwareExposureQuery`; Package Firewall VS Code extensions → `PackageFirewallLog` + `ECOSYSTEM_VSCODE` filter; Agents Hub Agent Kit call log ≠ Policy Violations.
 
 ### Fixed
@@ -129,7 +130,8 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - Executive packet SAST / AI-SAST / Secrets FindingLog burndown (`codeFindingsBurndown` / `04-sast-burndown.html`) with shared category-spec path; `endor-reports upsert-code-findings` rebuilds only that block.
 - Workflow report scripts under `agent-knowledge/workflow-reports/*/scripts/` removed; report CLIs and libraries live in `endorlabs.workflows.reports`.
 - `finding_log_trends.query_operation_group_counts` is public (was `_query_operation_group_counts`); report-packet burndown uses the shared severity×reach API instead of a private import.
-- Findings burndown tag series use project-grain FindingLog pulls (parallel per tagged project) with local redistribute; path series remain leaf-namespace aggregates. Default `--min-projects` is `1` (display filter only); `--workers` controls pull parallelism (default 24).
+- Findings burndown tag series use `meta.parent_uuid is_in` FindingLog pulls (one matrix per tag×path at the tenant with traverse; parallel `--workers`, default 24). Path series remain leaf-namespace aggregates; PR-active paths use is_in over the allowlist. Default `--min-projects` is `1` (display filter only).
+- `query_operation_group_counts_resilient` uses `traverse=True` whenever `parent_uuids` is set (including single-UUID) so child-namespace projects are included from a tenant/parent path.
 - Findings burndown HTML shows signed gap differentials (e.g. Widening (+240) / Narrowing (−420)) and best/worst tag leaderboards by Δ gap.
 - Executive report packet `data/` includes spreadsheet CSV exports (tag/path gap differentials, onboarding, throughput, tag catalog) alongside `packet.cube.json`.
 - Findings burndown throughput shows avg MAIN scans per project and observed ScanResult history bounds (newest/oldest).

@@ -3,6 +3,7 @@
 from endorlabs.filters.finding_categories import (
     AI_TAG_CLAUSE,
     CATEGORY_QUERY_REFS,
+    CI_BLOCKER_TAG_CLAUSE,
     DEFAULT_ESTATE_FINDING_CATEGORIES,
     FALSE_POSITIVE_TAG_CLAUSE,
     FINDING_CATEGORIES,
@@ -27,8 +28,12 @@ from endorlabs.filters.finding_categories import (
     sast_category_log_base_filter,
     sast_log_base_filter,
     secrets_log_base_filter,
+    to_ci_context_filter,
 )
 from endorlabs.filters.main_context import (
+    CI_CONTEXT_CLAUSE,
+    CI_CONTEXT_LIST_FILTER,
+    CI_CONTEXT_TYPE,
     MAIN_CONTEXT_CLAUSE,
     MAIN_CONTEXT_LIST_FILTER,
     MAIN_CONTEXT_TYPE,
@@ -48,6 +53,10 @@ from endorlabs.filters.query_wire import to_query_filter
 __all__ = [
     "AI_TAG_CLAUSE",
     "CATEGORY_QUERY_REFS",
+    "CI_BLOCKER_TAG_CLAUSE",
+    "CI_CONTEXT_CLAUSE",
+    "CI_CONTEXT_LIST_FILTER",
+    "CI_CONTEXT_TYPE",
     "DEFAULT_ESTATE_FINDING_CATEGORIES",
     "FALSE_POSITIVE_TAG_CLAUSE",
     "FINDING_CATEGORIES",
@@ -83,5 +92,6 @@ __all__ = [
     "sast_category_log_base_filter",
     "sast_log_base_filter",
     "secrets_log_base_filter",
+    "to_ci_context_filter",
     "to_query_filter",
 ]

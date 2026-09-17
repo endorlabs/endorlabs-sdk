@@ -766,6 +766,10 @@ class V1AutomatedScanParametersConfig(BaseModel):
     """
 
 
+class V1CToolChain(BaseModel):
+    conan_version: V1ToolChainVersion | None = None
+
+
 class V1DotNetToolChain(BaseModel):
     additional_dotnet_versions: list[str] | None = None
     dotnet_installer_version: V1ToolChainVersion | None = None
@@ -841,6 +845,7 @@ class V1SwiftToolChain(BaseModel):
 
 class V1ToolChains(BaseModel):
     android_tool_chain: V1AndroidToolChain | None = None
+    c_tool_chain: V1CToolChain | None = None
     dotnet_tool_chain: V1DotNetToolChain | None = None
     environment_variables: list[str] | None = None
     """

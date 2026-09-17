@@ -34,22 +34,22 @@ PURPOSE_ONBOARDING = (
 PURPOSE_VERSION_SPRAWL = "How many distinct package versions are in use, and where version sprawl concentrates."
 
 PURPOSE_SCA_BURNDOWN = (
-    "Weekly new versus resolved vulnerability (SCA) FindingLog CREATE/DELETE "
-    "events by function-reach selection — default any reachability, with "
-    "RF+PRF / RF / PRF / unreachable function — plus main-context scan "
-    "activity. Dependency reach is omitted (implied by function reach). "
-    "Severity defaults to High and higher; switch to Medium and higher or All "
-    "severities to include Medium/Low bands."
+    "Weekly vulnerability (SCA) FindingLog trends by function-reach selection — "
+    "default any reachability, with RF+PRF / RF / PRF / unreachable function — "
+    "plus main-context scan activity. Switch Scope to PR for Detected vs Blocked "
+    "on CI_RUN (~30d, PR-active projects). Dependency reach is omitted (implied "
+    "by function reach). Severity defaults to High and higher; switch to Medium "
+    "and higher or All severities to include Medium/Low bands."
 )
 
 PURPOSE_FINDINGS_BURNDOWN = PURPOSE_SCA_BURNDOWN  # compat alias
 
 PURPOSE_SAST_BURNDOWN = (
-    "Weekly new versus resolved OpenGrep, AI-SAST, and Secrets FindingLog "
-    "CREATE/DELETE events. OpenGrep and AI-SAST share triage facets "
-    "(all / true_positive / false_positive); Secrets uses valid/invalid only "
-    "(no TP/FP). OpenGrep excludes FINDING_TAGS_AI; AI-SAST requires it. "
-    "Severity defaults to High and higher (Critical–Low available via "
+    "Weekly OpenGrep, AI-SAST, and Secrets FindingLog trends. OpenGrep and "
+    "AI-SAST share triage facets (all / true_positive / false_positive); Secrets "
+    "uses valid/invalid only (no TP/FP). OpenGrep excludes FINDING_TAGS_AI; "
+    "AI-SAST requires it. Scope Main = New/Resolved; Scope PR = Detected/Blocked "
+    "(~30d). Severity defaults to High and higher (Critical–Low available via "
     "Medium+ / All). Same namespace and project-tag filters as SCA burndown."
 )
 
@@ -123,15 +123,25 @@ GLOSSARY_HTML = """
 
       thresholds (Critical / High and higher / Medium and higher /
 
-      All severities).</li>
+      All severities). Use <em>Scope</em> to switch Main (New/Resolved) vs PR
+
+      (Detected/Blocked on <code>CONTEXT_TYPE_CI_RUN</code>, ~30d, PR-active projects).</li>
 
     <li><strong>SAST burndown</strong> covers OpenGrep vs AI-SAST (shared TP/FP
 
       triage facets) and Secrets (valid/invalid only; no TP/FP), with
 
-      the same severity thresholds. CodeOwners filtering is not included in this
+      the same severity thresholds and Main/PR scope filter. CodeOwners filtering
 
-      packet (FindingLog has no code_owners field).</li>
+      is not included in this packet (FindingLog has no code_owners field).</li>
+
+    <li><strong>PR-active projects</strong> are those with ≥1 CI/PR
+
+      <code>ScanResult</code> (<code>CONTEXT_TYPE_CI_RUN</code>) in the ~30d cadence
+
+      window. Onboarding can filter registration/leaders to that set; PR burndown
+
+      scope already pulls only those projects.</li>
 
     <li><strong>Main-context scans</strong> count ScanResult events with
 

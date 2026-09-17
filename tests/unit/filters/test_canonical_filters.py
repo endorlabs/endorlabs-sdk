@@ -28,6 +28,31 @@ def test_category_filter_includes_main_context() -> None:
     assert "FINDING_CATEGORY_VULNERABILITY" in filt
 
 
+def test_to_ci_context_filter_swaps_main() -> None:
+    from endorlabs.filters import (
+        CI_BLOCKER_TAG_CLAUSE,
+        CI_CONTEXT_CLAUSE,
+        to_ci_context_filter,
+    )
+
+    main = category_filter("FINDING_CATEGORY_SAST")
+    ci = to_ci_context_filter(main)
+    assert CI_CONTEXT_CLAUSE in ci
+    assert MAIN_CONTEXT_CLAUSE not in ci
+    assert "FINDING_TAGS_CI_BLOCKER" in CI_BLOCKER_TAG_CLAUSE
+
+
+def test_to_ci_context_filter_requires_main() -> None:
+    from endorlabs.filters import to_ci_context_filter
+
+    try:
+        to_ci_context_filter("spec.operation==OPERATION_CREATE")
+    except ValueError as exc:
+        assert "CONTEXT_TYPE_MAIN" in str(exc)
+    else:
+        raise AssertionError("expected ValueError")
+
+
 def test_pv_count_filter_scopes_project() -> None:
     filt = pv_count_filter("abc-123")
     assert 'spec.project_uuid=="abc-123"' in filt

@@ -33,9 +33,12 @@ optional Endor Patches (`--patches` or `endor-reports patches`).
   `.endorlabs/reports/<slug>-<YYYY-MM-DD>/`.
 - Project tag discovery from `Project.meta.tags` (full catalog; no allowlists).
 - Onboarding scan cadence: weekly MAIN `TYPE_ALL_SCANS` + `CONTEXT_TYPE_CI_RUN`
-  (analytics off by default); tag/project leaderboards by cadence.
-- FindingLog window-net trends; tag series via project-grain pulls + local
-  redistribute (`--workers`); `--min-projects` only filters display.
+  (analytics off by default); tag/project leaderboards by cadence; PR-active
+  projects toggle (CI ScanResult evidence in ~30d).
+- FindingLog window-net trends; **Main vs PR scope** on SCA/SAST pages (PR =
+  Detected/Blocked on `CI_RUN`, PR-active projects only); tag series via
+  `parent_uuid is_in` pulls per tag×path (`--workers`); `--min-projects`
+  only filters display.
 
 **Out of scope**
 

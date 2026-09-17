@@ -394,6 +394,16 @@ def build_report_packet(
         milestone(_WF, "cadence.done", elapsed_s=_elapsed_s(t_cadence))
         return cadence
 
+    # Cadence first so PR-active project UUIDs can scope PR FindingLog pulls.
+    from endorlabs.workflows.reports.analyze.burndown_common import (
+        pr_active_project_uuids,
+    )
+
+    cadence = _run_slice("cadence", reports_meta, {}, _cadence)
+    pr_active = pr_active_project_uuids(
+        cadence if reports_meta.get("cadence", {}).get("status") == "ok" else {}
+    )
+
     def _sprawl() -> dict[str, Any]:
         t_sp = time.perf_counter()
         milestone(_WF, "sprawl.start", leaves=len(leaves))
@@ -420,6 +430,7 @@ def build_report_packet(
             lookback=lookback,
             workers=max_workers,
             leaves=len(leaves),
+            pr_active=len(pr_active),
         )
         built = build_sca_burndown_report(
             client,
@@ -431,6 +442,7 @@ def build_report_packet(
             lookback=lookback,
             min_projects=min_projects,
             max_workers=max_workers,
+            pr_active_uuids=pr_active,
         )
         meta = built.get("tagSeriesMeta") or {}
         milestone(
@@ -449,6 +461,7 @@ def build_report_packet(
             lookback=lookback,
             workers=max_workers,
             leaves=len(leaves),
+            pr_active=len(pr_active),
         )
         built = build_code_findings_burndown_report(
             client,
@@ -461,6 +474,7 @@ def build_report_packet(
             min_projects=min_projects,
             max_workers=max_workers,
             categories=code_categories,
+            pr_active_uuids=pr_active,
         )
         meta = built.get("tagSeriesMeta") or {}
         milestone(
@@ -484,9 +498,7 @@ def build_report_packet(
         milestone(_WF, "patches.done", elapsed_s=_elapsed_s(t_p))
         return built
 
-    jobs: list[tuple[str, dict[str, Any], Callable[[], dict[str, Any]]]] = [
-        ("cadence", {}, _cadence),
-    ]
+    jobs: list[tuple[str, dict[str, Any], Callable[[], dict[str, Any]]]] = []
     if include_version_sprawl and leaves:
         jobs.append(("versionSprawl", _empty_sprawl(), _sprawl))
     else:
@@ -508,26 +520,29 @@ def build_report_packet(
         milestone(_WF, "patches.skipped", reason=SKIP_REASON_OPT_IN)
         reports_meta["patches"] = {"status": "skipped", "reason": SKIP_REASON_OPT_IN}
 
-    results: dict[str, Any] = {}
-    workers = max(1, min(len(jobs), 5))
+    results: dict[str, Any] = {"cadence": cadence}
+    workers = max(1, min(len(jobs), 4)) if jobs else 1
     milestone(_WF, "slices.parallel.start", jobs=len(jobs), workers=workers)
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        futs = {
-            pool.submit(_invoke_slice, name, empty, fn): name
-            for name, empty, fn in jobs
-        }
-        for fut in as_completed(futs):
-            name, value, meta = fut.result()
-            reports_meta[name] = meta
-            results[name] = value
+    if jobs:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futs = {
+                pool.submit(_invoke_slice, name, empty, fn): name
+                for name, empty, fn in jobs
+            }
+            for fut in as_completed(futs):
+                name, value, meta = fut.result()
+                reports_meta[name] = meta
+                results[name] = value
 
     onboarding["cadence"] = results.get("cadence") or {}
     if reports_meta.get("cadence", {}).get("status") == "ok":
         reports_meta["cadence"] = {"status": "ok"}
+    onboarding["prActiveProjectUuids"] = list(pr_active)
     milestone(
         _WF,
         "onboarding.done",
         projects=int(onboarding.get("projectCount") or len(projects)),
+        pr_active=len(pr_active),
         elapsed_s=_elapsed_s(t0),
     )
 
@@ -642,6 +657,10 @@ def upsert_code_findings_burndown(
                 lookback=resolved_lookback,
                 min_projects=min_projects,
                 max_workers=max_workers,
+                pr_active_uuids=list(
+                    (reports.get("onboarding") or {}).get("prActiveProjectUuids")
+                    or (sca.get("prActiveProjectUuids") or [])
+                ),
             )
             milestone(
                 _WF,

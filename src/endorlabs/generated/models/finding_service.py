@@ -2064,6 +2064,18 @@ class V1Actions(BaseModel):
     Metadata added by the admission or notification policy scanner.
     """
 
+    ci_blocker_since: AwareDatetime | None = None
+    """
+    Time the finding first matched a blocking action policy.
+    Reset if the finding no longer matches a blocking action policy.
+    See also FINDING_TAGS_CI_BLOCKER in spec.finding_tags.
+    """
+    ci_warning_since: AwareDatetime | None = None
+    """
+    Time the finding first matched a warning action policy.
+    Reset if the finding no longer matches a warning action policy.
+    See also FINDING_TAGS_CI_WARNING in spec.finding_tags.
+    """
     policy_uuids: list[str] | None = None
     """
     List of action policies triggered by this finding.
@@ -2889,6 +2901,8 @@ class V1FindingTags(StrEnum):
      - FINDING_TAGS_REACHABLE_BY_INCLUSION: The vulnerability is assumed reachable because the package is included;
     no call path to a vulnerable function exists.
      - FINDING_TAGS_POTENTIALLY_VALID_SECRET: Finding applies to a secret that has not been validated.
+     - FINDING_TAGS_INFERRED: Finding applies to this package as it was forked from an upstream package
+    that is vulnerable to this CVE.
     """
 
     FINDING_TAGS_UNSPECIFIED = 'FINDING_TAGS_UNSPECIFIED'
@@ -2935,6 +2949,7 @@ class V1FindingTags(StrEnum):
     FINDING_TAGS_SEGMENT_MATCH = 'FINDING_TAGS_SEGMENT_MATCH'
     FINDING_TAGS_REACHABLE_BY_INCLUSION = 'FINDING_TAGS_REACHABLE_BY_INCLUSION'
     FINDING_TAGS_POTENTIALLY_VALID_SECRET = 'FINDING_TAGS_POTENTIALLY_VALID_SECRET'
+    FINDING_TAGS_INFERRED = 'FINDING_TAGS_INFERRED'
 
 
 class V1GroupAggregationValueResponse(BaseModel):
