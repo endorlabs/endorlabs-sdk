@@ -31,7 +31,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
-- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1156).
+- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1158).
 - Agent-knowledge ontology: Threat Center → `MalwareExposure` / `MalwareExposureQuery`; Package Firewall VS Code extensions → `PackageFirewallLog` + `ECOSYSTEM_VSCODE` filter; Agents Hub Agent Kit call log ≠ Policy Violations.
 - Agent knowledge INDEX Day-0 trap table (two-column rows), task routing for report CLIs via **endor-workflow-reports**, and consumer AGENTS/template alignment with deferred-auth `describe()` and workspace layout.
 - `APIClient` defers credential validation until the first API call when no credentials are configured; `client.<Kind>.describe()` works on a bare `Client(tenant=…)`.
