@@ -27,6 +27,7 @@ Each skill is a directory with `SKILL.md` plus optional reference files. Format:
 | [endor-sca-findings](endor-sca-findings/) | Trace vulnerability/dependency lineage and commit-scoped presence across findings, package versions, and artifacts | Skill-owned |
 | [endor-author-agent-skill](endor-author-agent-skill/) | Author or update shipped agent skills: frontmatter, sync, composition handoffs | [schema/README.md](schema/README.md), `devtools/codegen/sync_agent_knowledge.py` |
 | [endor-fetch-and-search-call-graph](endor-fetch-and-search-call-graph/) | Fetch/decode call graphs; direct-edge and multi-hop path search (customer PV plane) | `endorlabs.workflows.callgraph` |
+| [endor-aisast-callgraph-bridge](endor-aisast-callgraph-bridge/) | AI-SAST function_summary seeds → MAIN CG match / optional safe Finding→package path (`endor-aisast-callgraph`) | `endorlabs.workflows.aisast_callgraph` |
 | [endor-implement-sdk-resource](endor-implement-sdk-resource/) | Model-sync-first surface extension, overlay, integration tests | `docs/contributing/architecture.md`, `integration-resource-tests.md` |
 | [endor-model-sync-drift](endor-model-sync-drift/) | OpenAPI/provenance drift; regen `registry_contract`, stubs, reference docs; CI/pre-push verify failures | `docs/contributing/docs-drift-workflow.md`, `devtools/codegen/sync/` |
 | [endor-retrieve-scan-results](endor-retrieve-scan-results/) | Querying findings, scan results, or projects | `docs/guides/`, `docs/contributing/` |

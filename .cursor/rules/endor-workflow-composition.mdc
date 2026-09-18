@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: 37c60cbbade87081383f7b872d5431ad53a0517ae1c7eeb2599a9de75f0cd523
+x-endor-source-sha256: b3211aeca948f09c084b95fd88ed37f48d20262aa820c35a994010977571045e
 ---
 
 # Workflow composition
@@ -85,6 +85,8 @@ Generic entrypoints (no estate literals):
 - `endorlabs.workflows.estate.export_version_cardinality_for_package_match`
 - `endorlabs.workflows.callgraph.run_callgraph_export`
 - `endorlabs.workflows.callgraph.find_call_graph_path`
+- `endorlabs.workflows.aisast_callgraph.run_aisast_callgraph_bridge` — AI-SAST function_summary seeds → MAIN CG match / optional safe Finding→package path walk
+- `endorlabs.workflows.aisast_callgraph.resolve_vuln_walk_targets` — MAIN vuln Finding → CG path-to package token (not GHSA-as-URI)
 - `endorlabs.workflows.troubleshooting_scans` — workflow CLIs; prefer `ScanResult.list_by_project` and `workflows.projects.discovery.resolve_project_candidate`
 - `endorlabs.workflows.agent_context.hydration` — per-project BOM/CG hydration primitive; not a workflow orchestrator
 

@@ -139,14 +139,20 @@ def list_package_versions_for_project(
     namespace: str,
     max_pages: int = 50,
     page_size: int = 200,
+    filter: str | None = None,
 ) -> list[Any]:
-    """List package versions for *project* in *namespace*."""
-    return client.PackageVersion.list_by_project(
-        project,
-        namespace=namespace,
-        max_pages=max_pages,
-        page_size=page_size,
-    )
+    """List package versions for *project* in *namespace*.
+
+    Optional *filter* is forwarded to ``list_by_project`` (e.g. main-context MQL).
+    """
+    kwargs: dict[str, Any] = {
+        "namespace": namespace,
+        "max_pages": max_pages,
+        "page_size": page_size,
+    }
+    if filter:
+        kwargs["filter"] = filter
+    return client.PackageVersion.list_by_project(project, **kwargs)
 
 
 def resolve_package_version_with_callgraph(
@@ -158,6 +164,7 @@ def resolve_package_version_with_callgraph(
     page_size: int = 200,
     max_attempts: int | None = None,
     inventory_out: dict[str, Any] | None = None,
+    filter: str | None = None,
 ) -> tuple[Any, CallGraphDecoded] | None:
     """Return the first decodable (PV, graph) with ``call_graph_available`` set.
 
@@ -165,6 +172,8 @@ def resolve_package_version_with_callgraph(
     refs, then remaining ``call_graph_available`` rows. Skips PVs that raise
     ``NotFoundError`` on decode. Logs and optionally fills *inventory_out*
     when no suitable PV exists.
+
+    Optional *filter* narrows the PackageVersion list (e.g. main-context).
     """
     pvs = list_package_versions_for_project(
         client,
@@ -172,6 +181,7 @@ def resolve_package_version_with_callgraph(
         namespace=namespace,
         max_pages=max_pages,
         page_size=page_size,
+        filter=filter,
     )
     inventory = build_callgraph_pv_inventory(project, pvs, namespace=namespace)
     if inventory_out is not None:

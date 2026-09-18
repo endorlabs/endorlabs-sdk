@@ -8,6 +8,13 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- `endor-aisast-callgraph` / skill **endor-aisast-callgraph-bridge** — precheck MAIN AI-SAST
+  RepositoryVersion + `function_summary` index + MAIN CallGraphData PackageVersion, then map
+  AI-SAST seeds onto CG symbols. Optional **safe** BFS via `--path-to` and/or Finding-derived
+  package tokens (`--vuln` / `--finding-package`; GHSA/CVE never used as CG URI patterns;
+  depth/fanout caps; CG path ≠ Finding reachability). Library:
+  `run_aisast_callgraph_bridge`, `resolve_vuln_walk_targets`.
+
 ### Changed
 
 - Endor Patches packet defaults and Impact Calculator align to the product

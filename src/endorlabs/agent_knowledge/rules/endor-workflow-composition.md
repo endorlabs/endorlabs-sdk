@@ -80,6 +80,8 @@ Generic entrypoints (no estate literals):
 - `endorlabs.workflows.estate.export_version_cardinality_for_package_match`
 - `endorlabs.workflows.callgraph.run_callgraph_export`
 - `endorlabs.workflows.callgraph.find_call_graph_path`
+- `endorlabs.workflows.aisast_callgraph.run_aisast_callgraph_bridge` — AI-SAST function_summary seeds → MAIN CG match / optional safe Finding→package path walk
+- `endorlabs.workflows.aisast_callgraph.resolve_vuln_walk_targets` — MAIN vuln Finding → CG path-to package token (not GHSA-as-URI)
 - `endorlabs.workflows.troubleshooting_scans` — workflow CLIs; prefer `ScanResult.list_by_project` and `workflows.projects.discovery.resolve_project_candidate`
 - `endorlabs.workflows.agent_context.hydration` — per-project BOM/CG hydration primitive; not a workflow orchestrator
 

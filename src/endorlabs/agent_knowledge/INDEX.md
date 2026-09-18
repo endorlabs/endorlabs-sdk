@@ -228,6 +228,7 @@ Do not use repo-root `.tmp/`. Gitignore `.endorlabs/` in consumer projects.
 | Findings / scan results for one repo | `endor-retrieve-scan-results` |
 | Scan pipeline RCA | `endor-troubleshooting-scans` |
 | Call graph search | `endor-fetch-and-search-call-graph` |
+| AI-SAST → Call Graph bridge | `endor-aisast-callgraph-bridge` |
 | Project context bundle | `endor-project-retrieval-bundle` |
 | Policy validation | `endor-validate-policy` |
 | SDK/API errors | `endor-troubleshoot-sdk` |

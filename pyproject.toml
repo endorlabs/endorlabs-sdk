@@ -61,6 +61,7 @@ endor-estate = "endorlabs.workflows.estate.cli.main:main"
 # Security and analysis workflows
 endor-callgraph-search = "endorlabs.workflows.callgraph.search:main"
 endor-callgraph-path = "endorlabs.workflows.callgraph.path_cli:main"
+endor-aisast-callgraph = "endorlabs.workflows.aisast_callgraph.cli:main"
 endor-vector-query = "endorlabs.workflows.vector_search.cli:main"
 endor-reachability-context = "endorlabs.workflows.reachability.cli:main"
 endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
