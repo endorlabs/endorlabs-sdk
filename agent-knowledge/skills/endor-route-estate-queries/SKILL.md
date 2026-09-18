@@ -54,7 +54,7 @@ shards = topo.project_shards()
 | Tenant-wide finding total (no per-project breakdown) | Probe `Query.at_namespace` with `Finding` root; compare to `Finding.count` |
 | New vs resolved over time | `FindingLog.list_groups` — Query does not support `group_by_time` |
 | OSS CVE/coordinate lookup (catalog identity) | `QueryVulnerability` / `QueryMalware` (`scope=oss`) |
-| Tenant malware exposure / blast radius | `MalwareExposure` / `MalwareExposureQuery` (customer namespace) |
+| Tenant malware exposure / blast radius / Threat Center | `MalwareExposure` / `MalwareExposureQuery` (customer namespace) |
 
 ```python
 from endorlabs.query import QuerySpec

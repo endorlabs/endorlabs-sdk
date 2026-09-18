@@ -247,8 +247,34 @@ function destroyCharts() {
   if (gapChart) { gapChart.destroy(); gapChart = null; }
   if (weekChart) { weekChart.destroy(); weekChart = null; }
 }
-function renderGapCharts(cell, theme) {
+function defaultSeriesLabels(isPr) {
+  if (isPr) {
+    return {
+      primary: "Detected",
+      secondary: "Blocked",
+      cumulativePrimary: "Cumulative detected",
+      cumulativeSecondary: "Cumulative blocked",
+      windowNet: "Detected − blocked",
+      weeklyCard: "Weekly detected vs blocked (PR)",
+      cumulativeCard: "Cumulative detected vs blocked · PR window",
+    };
+  }
+  return {
+    primary: "New",
+    secondary: "Resolved",
+    cumulativePrimary: "Cumulative new",
+    cumulativeSecondary: "Cumulative resolved",
+    windowNet: "Window net",
+    weeklyCard: "Weekly new vs resolved",
+    cumulativeCard: "Cumulative new vs resolved · window net",
+  };
+}
+function renderGapCharts(cell, theme, labels, isPr) {
+  const L = labels || defaultSeriesLabels(!!isPr);
   const cats = (cell.categories||[]).map(c => String(c).slice(0,12));
+  const primaryColor = isPr ? theme.warn : theme.danger;
+  const secondaryColor = isPr ? theme.accent : theme.ok;
+  const netColor = isPr ? theme.warn : theme.warn;
   const opts = {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { labels: { color: theme.muted } } },
@@ -259,9 +285,9 @@ function renderGapCharts(cell, theme) {
     data: {
       labels: cats,
       datasets: [
-        { label: "Cumulative new", data: cell.cumulativeNew, borderColor: theme.danger, tension: 0.2 },
-        { label: "Cumulative resolved", data: cell.cumulativeResolved, borderColor: theme.ok, tension: 0.2 },
-        { label: "Window net", data: cell.gaps, borderColor: theme.warn, borderDash: [4,4], tension: 0.2 },
+        { label: L.cumulativePrimary, data: cell.cumulativeNew, borderColor: primaryColor, tension: 0.2 },
+        { label: L.cumulativeSecondary, data: cell.cumulativeResolved, borderColor: secondaryColor, tension: 0.2 },
+        { label: L.windowNet, data: cell.gaps, borderColor: netColor, borderDash: [4,4], tension: 0.2 },
       ]
     },
     options: opts
@@ -271,8 +297,8 @@ function renderGapCharts(cell, theme) {
     data: {
       labels: cats,
       datasets: [
-        { label: "New", data: cell.weeklyNew, backgroundColor: theme.danger + "99" },
-        { label: "Resolved", data: cell.weeklyResolved, backgroundColor: theme.ok + "99" },
+        { label: L.primary, data: cell.weeklyNew, backgroundColor: primaryColor + "99" },
+        { label: L.secondary, data: cell.weeklyResolved, backgroundColor: secondaryColor + "99" },
       ]
     },
     options: opts
@@ -351,6 +377,7 @@ def _render_onboarding(
   <div class="toggles">
     <label class="toggle"><input type="checkbox" id="once"/> Count each repository only once (earliest registration wins)</label>
     <label class="toggle"><input type="checkbox" id="excludeAnalytics" checked/> Exclude analytics ScanResults from MAIN weekly series</label>
+    <label class="toggle"><input type="checkbox" id="prActive"/> PR-active projects only (CI/PR ScanResult in ~30d)</label>
     <span class="pill" id="modePill"></span>
   </div>
 </div>
@@ -384,7 +411,12 @@ function weekMonday(iso) {{
 }}
 function filteredProjects() {{
   const tag = document.getElementById("tag").value;
-  const all = R.projects || [];
+  const prOnly = document.getElementById("prActive")?.checked;
+  const prActiveUuids = new Set(R.prActiveProjectUuids || []);
+  let all = R.projects || [];
+  if (prOnly && prActiveUuids.size) {{
+    all = all.filter(p => prActiveUuids.has(p.uuid));
+  }}
   if (!tag || tag === "all") return all;
   const uuids = new Set((R.cadence?.tagProjectUuids || {{}})[tag] || []);
   if (uuids.size) return all.filter(p => uuids.has(p.uuid));
@@ -534,10 +566,12 @@ function render() {{
   const theme = chartTheme();
   const once = document.getElementById("once").checked;
   const excludeAnalytics = document.getElementById("excludeAnalytics").checked;
+  const prOnly = document.getElementById("prActive")?.checked;
   const tag = document.getElementById("tag").value;
   document.getElementById("modePill").textContent = [
     once ? "Distinct repositories" : "Project count",
     excludeAnalytics ? "MAIN full scans only" : "MAIN includes analytics",
+    prOnly ? "PR-active only" : "all projects",
     tag !== "all" ? ("tag:" + tag) : "all tags",
   ].join(" · ");
   document.getElementById("modePill").className = "pill info";
@@ -648,7 +682,7 @@ fillSelect(document.getElementById("tag"), [
   {{v:"all", l:"All project tags"}},
   ...(R.tagCatalog||[]).map(t => ({{v:t.tag, l: `${{t.tag}} (${{t.projectCount}} projects)`}}))
 ]);
-["tag","once","excludeAnalytics"].forEach(id => document.getElementById(id).addEventListener("change", render));
+["tag","once","excludeAnalytics","prActive"].forEach(id => document.getElementById(id).addEventListener("change", render));
 render();
 </script>
 """,  # noqa: S608 - HTML <select> plus prose "from", not a query
@@ -905,6 +939,9 @@ def _render_sca_burndown(
         "tagSeriesMeta": cube.get("tagSeriesMeta") or report.get("tagSeriesMeta"),
         "seriesFilters": report.get("seriesFilters"),
         "tagSeries": report.get("tagSeries"),
+        "scopes": report.get("scopes"),
+        "seriesLabels": report.get("seriesLabels"),
+        "prActiveProjectUuids": report.get("prActiveProjectUuids") or [],
         "throughput": _slim_throughput(tp),
     }
     payload = json.dumps(slim, separators=(",", ":"))
@@ -922,13 +959,17 @@ def _render_sca_burndown(
 <div class="card">
   <div class="card-h">Filters</div>
   <div class="filters">
+    <label class="field">Scope<select id="scope"></select></label>
     <label class="field">Namespace<select id="ns"></select></label>
     <label class="field">Project tag<select id="tag"></select></label>
     <label class="field">Severity<select id="sev"></select></label>
     <label class="field">Reachability<select id="reach"></select></label>
   </div>
+  <div class="toggles">
+    <label class="toggle"><input type="checkbox" id="prActive" checked/> PR-active projects only (CI/PR ScanResult in ~30d)</label>
+  </div>
   <div class="toggles" id="pills"></div>
-  <p class="muted" style="margin:10px 0 0">{tag_help}. Tag selection scopes to projects that carry that tag.</p>
+  <p class="muted" style="margin:10px 0 0">{tag_help}. Tag selection scopes to projects that carry that tag. Scope switches Main FindingLog burndown vs PR Detected/Blocked (~30d).</p>
 </div>
 <div id="body"></div>
 <script>
@@ -942,12 +983,29 @@ const AVG_SCANS_LABEL = {json.dumps(avg_scans_label)};
 const GAP_DIFF_HELP = {json.dumps(gap_diff_help)};
 const LEADERS_NARROW = {json.dumps(leaders_narrow)};
 const LEADERS_WIDEN = {json.dumps(leaders_widen)};
-function resolveSeries(ns, sev, reach, tag) {{
-  let matrix = null;
-  if (tag && tag !== "all" && CUBE.tagSeries?.perTag?.[tag]) {{
-    matrix = CUBE.tagSeries.perTag[tag][pathKey(ns)] ?? null;
+function scopeBlock() {{
+  const scope = document.getElementById("scope").value || "main";
+  if (CUBE.scopes && CUBE.scopes[scope]) return CUBE.scopes[scope];
+  return CUBE;
+}}
+function syncPrActiveToggle() {{
+  const scope = document.getElementById("scope").value || "main";
+  const el = document.getElementById("prActive");
+  if (!el) return;
+  if (scope === "pr") {{
+    el.checked = true;
+    el.disabled = true;
   }} else {{
-    matrix = CUBE.seriesFilters?.perPath?.[pathKey(ns)] ?? null;
+    el.disabled = false;
+  }}
+}}
+function resolveSeries(ns, sev, reach, tag) {{
+  const block = scopeBlock();
+  let matrix = null;
+  if (tag && tag !== "all" && block.tagSeries?.perTag?.[tag]) {{
+    matrix = block.tagSeries.perTag[tag][pathKey(ns)] ?? null;
+  }} else {{
+    matrix = block.seriesFilters?.perPath?.[pathKey(ns)] ?? null;
   }}
   return resolveSevCell(matrix, sev, reach);
 }}
@@ -959,7 +1017,8 @@ function tagLabel(t) {{
   if (t === "all") return "All project tags";
   const cat = (CUBE.tagCatalog||[]).find(r => r.tag === t);
   const pc = cat?.projectCount;
-  const ready = !!(CUBE.tagSeries?.perTag?.[t]);
+  const block = scopeBlock();
+  const ready = !!(block.tagSeries?.perTag?.[t]);
   const base = pc != null ? `${{t}} (${{pc}} projects)` : t;
   return ready ? base : `${{base}} — series pending`;
 }}
@@ -990,13 +1049,21 @@ function throughputStatsHtml(tp, pending) {{
 }}
 function render() {{
   const theme = chartTheme();
+  syncPrActiveToggle();
+  const scope = document.getElementById("scope").value || "main";
+  const isPr = scope === "pr";
+  const block = scopeBlock();
+  const labels = block.seriesLabels || defaultSeriesLabels(isPr);
   const ns = document.getElementById("ns").value;
   const tag = document.getElementById("tag").value;
   const sev = document.getElementById("sev").value;
   const reach = document.getElementById("reach").value;
   const cell = resolveSeries(ns, sev, reach, tag);
   const tp = resolveTp(ns, tag);
+  const prN = (CUBE.prActiveProjectUuids || []).length;
   const bits = [];
+  bits.push(isPr ? "PR scope" : "Main scope");
+  if (isPr) bits.push("PR-active projects");
   if (ns === "all") bits.push("Entire organization"); else bits.push(ns);
   if (tag !== "all") bits.push("tag:" + tag);
   if (sev !== "high_plus") bits.push(SEV_LABELS[sev] || sev);
@@ -1009,17 +1076,19 @@ function render() {{
     }};
     bits.push(reachLabels[reach] || reach);
   }}
-  document.getElementById("pills").innerHTML = `<span class="pill info">${{bits.join(" · ")}}</span>`;
+  document.getElementById("pills").innerHTML =
+    `<span class="pill info">${{bits.join(" · ")}}</span>` +
+    `<span class="pill warn">${{prN.toLocaleString()}} PR-active projects (~30d)</span>`;
   destroyCharts();
   const body = document.getElementById("body");
-  const leaders = tagLeaderboardsHtml(CUBE.tagSeries?.perTag, pathKey(ns), sev, reach, tag);
-  const seriesPaths = Object.keys(CUBE.seriesFilters?.perPath || {{}}).length;
-  const seriesTags = Object.keys(CUBE.tagSeries?.perTag || {{}}).length;
+  const leaders = tagLeaderboardsHtml(block.tagSeries?.perTag, pathKey(ns), sev, reach, tag);
+  const seriesPaths = Object.keys(block.seriesFilters?.perPath || {{}}).length;
+  const seriesTags = Object.keys(block.tagSeries?.perTag || {{}}).length;
   if (!seriesPaths && !seriesTags) {{
     body.innerHTML = `<div class="callout warn">No SCA burndown series in this packet (skipped or empty).</div>`;
     return;
   }}
-  const pending = tag !== "all" && !CUBE.tagSeries?.perTag?.[tag];
+  const pending = tag !== "all" && !block.tagSeries?.perTag?.[tag];
   if (pending) {{
     body.innerHTML = `<div class="callout warn">${{PENDING_CAPTION}}</div>` +
       throughputStatsHtml(tp, true) + leaders;
@@ -1036,23 +1105,32 @@ function render() {{
   const trendLabel = gapTrendLabel(cell);
   const trendCls = gapTrendClass(cell);
   const trendCaption = gapTrendCaption(cell);
+  const netLabel = labels.windowNet || WINDOW_NET;
+  const criteria = block.findingCriteria || CUBE.findingCriteria || "";
+  const sourceNote = isPr
+    ? "FindingLog CREATE vs CREATE∩CI_BLOCKER · PR / CI_RUN (~30d retention)"
+    : "FindingLog CREATE/DELETE · main context";
   body.innerHTML = `<div class="stats">
-    <div class="stat ${{cell.gapEnd>0?"warn":"ok"}}"><b>${{cell.gapEnd.toLocaleString()}}</b><span>${{WINDOW_NET}}</span></div>
+    <div class="stat ${{cell.gapEnd>0?"warn":"ok"}}"><b>${{cell.gapEnd.toLocaleString()}}</b><span>${{netLabel}}</span></div>
     <div class="stat ${{trendCls}}"><b>${{trendLabel}}</b><span>${{trendCaption}}</span></div>
-    <div class="stat"><b>${{lastNew.toLocaleString()}}</b><span>New (last week)</span></div>
-    <div class="stat info"><b>${{lastRes.toLocaleString()}}</b><span>Resolved (last week)</span></div>
+    <div class="stat"><b>${{lastNew.toLocaleString()}}</b><span>${{labels.primary}} (last week)</span></div>
+    <div class="stat info"><b>${{lastRes.toLocaleString()}}</b><span>${{labels.secondary}} (last week)</span></div>
   </div>
   ${{throughputStatsHtml(tp, false)}}
-  <div class="card"><div class="card-h">Cumulative new vs resolved · window net</div>
-    <p class="caption">Source: FindingLog CREATE/DELETE · ${{CUBE.findingCriteria||""}} · ${{cell.periodCaption||""}} · filters: ${{bits.join(" · ")}}</p>
+  <div class="card"><div class="card-h">${{labels.cumulativeCard}}</div>
+    <p class="caption">Source: ${{sourceNote}} · ${{criteria}} · ${{cell.periodCaption||""}} · filters: ${{bits.join(" · ")}}</p>
     <div class="chart-box"><canvas id="gapChart"></canvas></div></div>
-  <div class="card"><div class="card-h">Weekly new vs resolved</div>
+  <div class="card"><div class="card-h">${{labels.weeklyCard}}</div>
     <p class="caption">Weekly FindingLog event counts under the same filters.</p>
     <div class="chart-box sm"><canvas id="weekChart"></canvas></div></div>
   ${{leaders}}`;
   wireLeaderClicks(body);
-  renderGapCharts(cell, theme);
+  renderGapCharts(cell, theme, labels, isPr);
 }}
+fillSelect(document.getElementById("scope"), [
+  {{v:"main", l:"Main (default branch)"}},
+  {{v:"pr", l:"PR / CI checks (~30d)"}},
+]);
 fillSelect(document.getElementById("ns"), [
   {{v:"all", l:"All namespaces"}},
   ...(CUBE.pathOptions||[]).filter(p => p!=="all").map(p => ({{v:p,l:p}}))
@@ -1071,7 +1149,10 @@ fillSelect(document.getElementById("reach"), [
   {{v:"unreachable_function", l:"Unreachable function"}},
 ]);
 document.getElementById("reach").value = "any";
-["ns","tag","sev","reach"].forEach(id => document.getElementById(id).addEventListener("change", render));
+["scope","ns","tag","sev","reach","prActive"].forEach(id => {{
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("change", render);
+}});
 render();
 </script>
 """,
@@ -1102,6 +1183,7 @@ def _render_sast_burndown(
         "tagSeriesMeta": report.get("tagSeriesMeta") or cube.get("tagSeriesMeta"),
         "byCategory": report.get("byCategory") or {},
         "categories": report.get("categories") or ["sast", "ai_sast", "secrets"],
+        "prActiveProjectUuids": report.get("prActiveProjectUuids") or [],
         "throughput": _slim_throughput(sca_tp),
     }
     payload = json.dumps(slim, separators=(",", ":"))
@@ -1117,14 +1199,18 @@ def _render_sast_burndown(
 <div class="card">
   <div class="card-h">Filters</div>
   <div class="filters">
+    <label class="field">Scope<select id="scope"></select></label>
     <label class="field">Namespace<select id="ns"></select></label>
     <label class="field">Project tag<select id="tag"></select></label>
     <label class="field">Category<select id="category"></select></label>
     <label class="field">Severity<select id="sev"></select></label>
     <label class="field" id="facetField">Facet<select id="facet"></select></label>
   </div>
+  <div class="toggles">
+    <label class="toggle"><input type="checkbox" id="prActive" checked/> PR-active projects only (CI/PR ScanResult in ~30d)</label>
+  </div>
   <div class="toggles" id="pills"></div>
-  <p class="muted" style="margin:10px 0 0">{tag_help}. Tag selection scopes to projects that carry that tag.</p>
+  <p class="muted" style="margin:10px 0 0">{tag_help}. Tag selection scopes to projects that carry that tag. Scope switches Main FindingLog burndown vs PR Detected/Blocked (~30d).</p>
 </div>
 <div id="body"></div>
 <script>
@@ -1158,9 +1244,27 @@ const CATEGORY_LABELS = {{
   ai_sast: "AI-SAST",
   secrets: "Secrets",
 }};
-function catBlock() {{
+function catRoot() {{
   const key = document.getElementById("category").value;
   return CUBE.byCategory?.[key] || null;
+}}
+function syncPrActiveToggle() {{
+  const scope = document.getElementById("scope").value || "main";
+  const el = document.getElementById("prActive");
+  if (!el) return;
+  if (scope === "pr") {{
+    el.checked = true;
+    el.disabled = true;
+  }} else {{
+    el.disabled = false;
+  }}
+}}
+function catBlock() {{
+  const root = catRoot();
+  if (!root) return null;
+  const scope = document.getElementById("scope").value || "main";
+  if (root.scopes && root.scopes[scope]) return root.scopes[scope];
+  return root;
 }}
 function resolveSeries(ns, sev, facet, tag) {{
   const block = catBlock();
@@ -1195,20 +1299,29 @@ function syncFacetOptions() {{
 function render() {{
   const theme = chartTheme();
   syncFacetOptions();
+  syncPrActiveToggle();
+  const scope = document.getElementById("scope").value || "main";
+  const isPr = scope === "pr";
   const ns = document.getElementById("ns").value;
   const tag = document.getElementById("tag").value;
   const category = document.getElementById("category").value;
   const sev = document.getElementById("sev").value;
   const facet = document.getElementById("facet").value;
   const block = catBlock();
+  const labels = (block && block.seriesLabels) || defaultSeriesLabels(isPr);
   const cell = resolveSeries(ns, sev, facet, tag);
+  const prN = (CUBE.prActiveProjectUuids || []).length;
   const bits = [];
+  bits.push(isPr ? "PR scope" : "Main scope");
+  if (isPr) bits.push("PR-active projects");
   if (ns === "all") bits.push("Entire organization"); else bits.push(ns);
   if (tag !== "all") bits.push("tag:" + tag);
   bits.push(CATEGORY_LABELS[category] || category);
   if (sev !== "high_plus") bits.push(SEV_LABELS[sev] || sev);
   if (facet !== "all") bits.push(facet.replaceAll("_", " "));
-  document.getElementById("pills").innerHTML = `<span class="pill info">${{bits.join(" · ")}}</span>`;
+  document.getElementById("pills").innerHTML =
+    `<span class="pill info">${{bits.join(" · ")}}</span>` +
+    `<span class="pill warn">${{prN.toLocaleString()}} PR-active projects (~30d)</span>`;
   destroyCharts();
   const body = document.getElementById("body");
   const leaders = tagLeaderboardsHtml(catBlock()?.tagSeries?.perTag, pathKey(ns), sev, facet, tag);
@@ -1233,22 +1346,30 @@ function render() {{
   const trendCls = gapTrendClass(cell);
   const trendCaption = gapTrendCaption(cell);
   const criteria = block.findingCriteria || "";
+  const netLabel = labels.windowNet || WINDOW_NET;
+  const sourceNote = isPr
+    ? "FindingLog CREATE vs CREATE∩CI_BLOCKER · PR / CI_RUN (~30d retention)"
+    : "FindingLog CREATE/DELETE · main context";
   body.innerHTML = `<div class="stats">
-    <div class="stat ${{cell.gapEnd>0?"warn":"ok"}}"><b>${{cell.gapEnd.toLocaleString()}}</b><span>${{WINDOW_NET}}</span></div>
+    <div class="stat ${{cell.gapEnd>0?"warn":"ok"}}"><b>${{cell.gapEnd.toLocaleString()}}</b><span>${{netLabel}}</span></div>
     <div class="stat ${{trendCls}}"><b>${{trendLabel}}</b><span>${{trendCaption}}</span></div>
-    <div class="stat"><b>${{lastNew.toLocaleString()}}</b><span>New (last week)</span></div>
-    <div class="stat info"><b>${{lastRes.toLocaleString()}}</b><span>Resolved (last week)</span></div>
+    <div class="stat"><b>${{lastNew.toLocaleString()}}</b><span>${{labels.primary}} (last week)</span></div>
+    <div class="stat info"><b>${{lastRes.toLocaleString()}}</b><span>${{labels.secondary}} (last week)</span></div>
   </div>
-  <div class="card"><div class="card-h">Cumulative new vs resolved · window net</div>
-    <p class="caption">Source: FindingLog CREATE/DELETE · ${{criteria}} · ${{cell.periodCaption||""}} · filters: ${{bits.join(" · ")}}</p>
+  <div class="card"><div class="card-h">${{labels.cumulativeCard}}</div>
+    <p class="caption">Source: ${{sourceNote}} · ${{criteria}} · ${{cell.periodCaption||""}} · filters: ${{bits.join(" · ")}}</p>
     <div class="chart-box"><canvas id="gapChart"></canvas></div></div>
-  <div class="card"><div class="card-h">Weekly new vs resolved</div>
+  <div class="card"><div class="card-h">${{labels.weeklyCard}}</div>
     <p class="caption">Weekly FindingLog event counts under the same filters.</p>
     <div class="chart-box sm"><canvas id="weekChart"></canvas></div></div>
   ${{leaders}}`;
   wireLeaderClicks(body);
-  renderGapCharts(cell, theme);
+  renderGapCharts(cell, theme, labels, isPr);
 }}
+fillSelect(document.getElementById("scope"), [
+  {{v:"main", l:"Main (default branch)"}},
+  {{v:"pr", l:"PR / CI checks (~30d)"}},
+]);
 fillSelect(document.getElementById("ns"), [
   {{v:"all", l:"All namespaces"}},
   ...(CUBE.pathOptions||[]).filter(p => p!=="all").map(p => ({{v:p,l:p}}))
@@ -1266,7 +1387,10 @@ fillSelect(document.getElementById("category"),
 fillSelect(document.getElementById("sev"), SEV_OPTIONS);
 document.getElementById("sev").value = "high_plus";
 syncFacetOptions();
-["ns","tag","category","sev","facet"].forEach(id => document.getElementById(id).addEventListener("change", render));
+["scope","ns","tag","category","sev","facet","prActive"].forEach(id => {{
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("change", render);
+}});
 render();
 </script>
 """,

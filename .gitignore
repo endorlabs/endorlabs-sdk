@@ -41,6 +41,9 @@ venv.bak/
 .cursor/mcp.json
 .cursor/skills/
 .cursor/plans/
+# Local agent harness mirrors (not shipped)
+.agents/
+.codex/
 # Claude Code — generated repo-root bootstrap, slash commands, local settings
 CLAUDE.md
 .claude/

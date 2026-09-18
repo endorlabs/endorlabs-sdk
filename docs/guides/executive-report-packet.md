@@ -33,6 +33,21 @@ render; also `ENDOR_LOG_LEVEL`), `--skip-version-sprawl`,
 exports — pages 01–04 are omitted rather than rendered from slices the run never
 collected. Full packet omits Patches unless `--patches` is set.
 
+### Main vs PR burndown scope
+
+SCA and SAST burndown pages include a **Scope** filter:
+
+| Scope | Context | Series | Lookback |
+| ----- | ------- | ------ | -------- |
+| **Main** (default) | `CONTEXT_TYPE_MAIN` | New / Resolved (CREATE / DELETE) | Packet `--lookback` weeks (default 13) |
+| **PR** | `CONTEXT_TYPE_CI_RUN` | Detected / Blocked (CREATE / CREATE∩`FINDING_TAGS_CI_BLOCKER`) | ~30d CI retention (~4 complete weeks) |
+
+PR scope is limited to **PR-active** projects (evidence: ≥1 `ScanResult` with
+`CONTEXT_TYPE_CI_RUN` in the onboarding cadence window). Onboarding has a matching
+**PR-active projects only** toggle for registration and leader tables. Cube fields:
+`scopes.main` / `scopes.pr`, `prActiveProjectUuids`. Legacy cubes without `scopes`
+keep Main-only behavior.
+
 SAST / AI-SAST / Secrets and Endor Patches are also gated by tenant
 `EndorLicense` feature entitlements when the license list succeeds: unentitled
 slices are skipped (`reportsMeta.*.reason=not_entitled`) and omitted from the
@@ -51,10 +66,10 @@ Default directory:
 
 | File | Content |
 |------|---------|
-| `01-onboarding.html` | Project registration + MAIN/CI scan cadence + tag/project ranks |
+| `01-onboarding.html` | Project registration + MAIN/CI scan cadence + tag/project ranks; optional PR-active projects toggle |
 | `02-version-sprawl.html` | Dependency version sprawl |
-| `03-sca-burndown.html` | SCA FindingLog burndown |
-| `04-sast-burndown.html` | OpenGrep / AI-SAST / Secrets FindingLog burndown (omitted if unentitled) |
+| `03-sca-burndown.html` | SCA FindingLog burndown with **Main vs PR** scope filter |
+| `04-sast-burndown.html` | OpenGrep / AI-SAST / Secrets FindingLog burndown with **Main vs PR** scope filter (omitted if unentitled) |
 | `05-endor-patches.html` | Endor Patches impact (only with `--patches` / entitlement) |
 | `data/packet.cube.json` | Portable cube (`endor.report_packet.v0`) |
 | `data/*.csv` | Raw exports (see `data/EXPORTS.txt`) |

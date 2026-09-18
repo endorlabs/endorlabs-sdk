@@ -4,9 +4,10 @@ description: |
   Use when doing scan pipeline RCA: resolve a project (including app scan-history
   URLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs
   for errors, diff aggregate metrics, and probe PackageVersion resolution_errors.
-  Summaries include scan_mode (CLI vs Cloud Scan, --quick-scan, local cache flags).
-  Not for individual Finding rows or policy validation—hand off to sibling skills
-  when deeper analysis is needed.
+  Summaries include scan_mode (CLI vs Cloud Scan, --quick-scan, local cache flags,
+  UseScanProfile, PythonVirtualEnv). Always resolve Project scan/toolchain profile
+  refs on first fetch. Not for individual Finding rows or policy validation—hand
+  off to sibling skills when deeper analysis is needed.
 endorlabs:
   catalog:
     workflow_id: troubleshooting-scans
@@ -37,7 +38,11 @@ Chain CLI steps on JSON artifacts; extend with library imports per [workflow-com
 - Pull scan logs for selected pair UUIDs (embedded fallback when ScanLog API rows are hollow).
 - Diff scan-level aggregate metrics into JSON + markdown artifacts.
 - **Library probe:** `PackageVersion.list_by_project(project)` → `spec.resolution_errors` when dependency metrics collapse.
-- **Per-scan execution mode:** `scan_mode` on fetch/pull summaries (`scan_execution`, `quick_scan`, `use_local_repo_cache`, reconstructed `endorctl_flags`).
+- **Per-scan execution mode:** `scan_mode` on fetch/pull summaries (`scan_execution`, `quick_scan`, `use_local_repo_cache`, `use_scan_profile`, `python_virtual_env`, reconstructed `endorctl_flags`).
+- **Scan / toolchain profile (always on first project resolve):** read
+  `Project.spec.scan_profile_uuid` / `toolchain_profile_uuid`; when set, `ScanProfile.get`
+  (use profile `tenant_meta.namespace`). Also record `ScanConfig.UseScanProfile` and
+  Python path fields from the scan environment even when no profile UUID is attached.
 
 **Out of scope (use another skill):**
 
@@ -72,7 +77,7 @@ Thread UUIDs and namespace from each artifact into the next step; do not re-list
 | Diff flagged `findings_*` counts; need which findings changed | This skill (pair UUIDs from diff) | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) via `Finding.list_for_context(scan)` |
 | `dependency_count_total` collapsed / resolution errors | This skill (embedded logs + PV probe) | [endor-sca-findings](../endor-sca-findings/SKILL.md) at branch/sha |
 | Tenant-wide PV resolution error patterns | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) | This skill for one scan pair |
-| Was this scan CLI or Cloud / `--quick-scan` / local cache? | **This skill** (`scan_mode` on fetch/pull/diff artifacts) | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) only for tenant-wide CLI vs Cloud inventory |
+| Was this scan CLI or Cloud / `--quick-scan` / local cache / ScanProfile / Python venv? | **This skill** (`scan_mode` + Project profile UUIDs on first resolve) | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) only for tenant-wide CLI vs Cloud inventory |
 | Exception policy matches a finding? | [endor-validate-policy](../endor-validate-policy/SKILL.md) | — |
 | Reachable dep vs unreachable function | [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) | — |
 | New vs resolved vuln trend (FindingLog) | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) | — |
@@ -83,21 +88,27 @@ Thread UUIDs and namespace from each artifact into the next step; do not re-list
 ### Heuristic regression (default)
 
 1. `search_projects` or `resolve_projects` → project UUID + namespace
-2. `fetch_scan_results` → scan window summary
-3. `select_anomalous_scans` → ranked pair (`regression_detected` = score > 0)
-4. `search_scan_errors` → embedded `spec.logs` regex hits
-5. `diff_scans` → aggregate metric diff
-6. `fetch_scan_logs` or `pull_scan_logs` → only if embedded search insufficient
-7. `summarize_scan_triage` → optional markdown from pull artifacts
+2. **Profile check (same turn):** `scan_profile_uuid` / `toolchain_profile_uuid` on
+   Project; `ScanProfile.get` when set; note `disable_automated_scan` /
+   `Project.is_app` / `is_cli`
+3. `fetch_scan_results` → scan window summary (includes `scan_mode`)
+4. Read `scan_mode.scan_execution`, `use_scan_profile`, `python_virtual_env` before
+   attributing runner / Python / App behavior
+5. `select_anomalous_scans` → ranked pair (`regression_detected` = score > 0)
+6. `search_scan_errors` → embedded `spec.logs` regex hits
+7. `diff_scans` → aggregate metric diff
+8. `fetch_scan_logs` or `pull_scan_logs` → only if embedded search insufficient
+9. `summarize_scan_triage` → optional markdown from pull artifacts
 
 ### Explicit pair (user named two scans)
 
 1. `search_projects --endor-app-url <either-scan-url>` → project UUID + namespace
-2. `build_scan_pair --primary-scan-result-url … --secondary-scan-result-url …`
-3. `search_scan_errors` (per scan or bounded window)
-4. `diff_scans --input-pairs <pairs-json>`
-5. **If dep metrics collapsed:** library PV `resolution_errors` probe (below)
-6. `fetch_scan_logs` / `pull_scan_logs` / `summarize_scan_triage` as needed
+2. **Profile check (same turn)** as above
+3. `build_scan_pair --primary-scan-result-url … --secondary-scan-result-url …`
+4. `search_scan_errors` (per scan or bounded window)
+5. `diff_scans --input-pairs <pairs-json>`
+6. **If dep metrics collapsed:** library PV `resolution_errors` probe (below)
+7. `fetch_scan_logs` / `pull_scan_logs` / `summarize_scan_triage` as needed
 
 ### Dependency-resolution branch
 
@@ -141,6 +152,8 @@ for pv in client.PackageVersion.list_by_project(project, namespace=project_ns, m
 | `status: STATUS_PARTIAL_SUCCESS` | `search_scan_errors` before ScanLog API pull |
 | `scan_success` ↓ and `dependency_count_total` ↓ | PV `resolution_errors` library probe |
 | `scan_mode.scan_execution` / `run_by_system` on fetch summary | Use these; **do not** infer GitHub App or GitHub Actions from checkout paths (`/__w/`, `GITHUB_WORKSPACE`) |
+| `Project.scan_profile_uuid` set / `scan_mode.use_scan_profile` | Fetch that `ScanProfile` (env vars + toolchain) before blaming CI-only config |
+| `scan_mode.python_virtual_env` set | Treat as explicit venv root for SCA; wrong `.../bin` path → discover fails without creating a temp venv |
 | `scan_mode.quick_scan` or `use_local_repo_cache` is true | Approximate graphs / Maven `--offline` are expected; compare to a scan without those flags |
 | `fetch_scan_logs` `entry_count > 0` but no `error` in text | Re-check embedded `spec.logs`; API rows may be hollow |
 | `regression_detected: false` but user named two scans | Use explicit-pair path; user intent overrides heuristic |
@@ -276,8 +289,10 @@ Do **not** filter on `context.scan_uuid` — see [resource-discovery contract](.
 ## Interpretation hints
 
 - Read **`scan_mode`** from `fetch_scan_results` / `pull_scan_results` / `diff_scans` artifacts **before** attributing GitHub App, `--quick-scan`, or a local Maven cache.
-- `scan_execution: CLI` is `RunBySystem: false`. `Cloud Scan` is `RunBySystem: true`. Missing field is `unknown` — not App.
+- On first project resolve, always record **`scan_profile_uuid` / `toolchain_profile_uuid`** (and fetch the profile when present). Namespace-listed profiles that are **not** attached to the project do not apply to the scan.
+- `scan_execution: CLI` is `RunBySystem: false`. `Cloud Scan` is `RunBySystem: true`. Missing field is `unknown` — not App. Project `is_app` / `is_cli` is inventory registration — still confirm per-scan `scan_execution`.
 - Do **not** infer GitHub App (or GitHub Actions) from runner checkout paths.
+- `python_virtual_env` must be the venv **root** (`/path/to/venv`), not `.../venv/bin`.
 - `Enables: ["git", "analytics"]` is **not** `--dependencies`. Reconstruct flags from `endorctl_flags` only.
 - `quick_scan: true` → `--quick-scan` (approximate SCA). `use_local_repo_cache: true` → `--use-local-repo-cache`; Maven `dependency:tree --offline` needs plugins already in `.m2`.
 - `scan_success` drop + `dependency_count_total` collapse → dependency-resolution pipeline failure; check embedded logs and PV `resolution_errors`.

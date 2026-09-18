@@ -136,3 +136,59 @@ def test_resilient_shard_timeout_returns_empty_counts() -> None:
     )
     assert counts == {}
     assert calls["n"] >= 2
+
+
+def test_resilient_multi_is_in_uses_traverse() -> None:
+    """Multi-UUID parent_uuid is_in must traverse child namespaces."""
+    client = MagicMock()
+    seen: dict[str, object] = {}
+
+    def list_groups(**kwargs: object) -> list[object]:
+        seen["traverse"] = kwargs.get("traverse")
+        lp = kwargs.get("list_params")
+        filt = ""
+        if lp is not None:
+            filt = str(getattr(lp, "filter", "") or "")
+        if not filt:
+            filt = str(kwargs.get("filter") or "")
+        seen["filter"] = filt
+        return []
+
+    client.FindingLog.list_groups = list_groups
+
+    counts = query_operation_group_counts_resilient(
+        client,
+        namespace="example-tenant",
+        base_filter="meta.create_time>=date(2026-01-01T00:00:00Z)",
+        operation="CREATE",
+        level="HIGH",
+        interval="week",
+        parent_uuids=["proj-1", "proj-2"],
+    )
+    assert counts == {}
+    assert seen.get("traverse") is True
+    assert "meta.parent_uuid in [" in str(seen.get("filter") or "")
+
+
+def test_resilient_single_parent_uuid_uses_traverse() -> None:
+    """Single parent_uuid at a parent path still traverses children."""
+    client = MagicMock()
+    seen: dict[str, object] = {}
+
+    def list_groups(**kwargs: object) -> list[object]:
+        seen["traverse"] = kwargs.get("traverse")
+        return []
+
+    client.FindingLog.list_groups = list_groups
+
+    counts = query_operation_group_counts_resilient(
+        client,
+        namespace="example-tenant",
+        base_filter="meta.create_time>=date(2026-01-01T00:00:00Z)",
+        operation="CREATE",
+        level="HIGH",
+        interval="week",
+        parent_uuids=["proj-1"],
+    )
+    assert counts == {}
+    assert seen.get("traverse") is True

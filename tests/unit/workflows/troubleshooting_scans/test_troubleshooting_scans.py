@@ -172,6 +172,9 @@ def test_extract_scan_mode_cli_quick_scan_and_local_cache() -> None:
                         "UseLocalCache": True,
                         "AsDefaultBranch": True,
                         "DisablePrivatePackageAnalysis": True,
+                        "UseScanProfile": False,
+                        "PythonVirtualEnv": "/src/venv/bin",
+                        "PythonGlobalSitePackages": False,
                         "Enables": ["git", "analytics"],
                         "Path": ".",
                         "ExcludePath": ["target/**"],
@@ -185,15 +188,20 @@ def test_extract_scan_mode_cli_quick_scan_and_local_cache() -> None:
     assert mode["run_by_system"] is False
     assert mode["quick_scan"] is True
     assert mode["use_local_repo_cache"] is True
+    assert mode["use_scan_profile"] is False
+    assert mode["python_virtual_env"] == "/src/venv/bin"
+    assert mode["python_global_site_packages"] is False
     assert mode["command"] == "scan"
     assert "--quick-scan" in mode["endorctl_flags"]
     assert "--use-local-repo-cache" in mode["endorctl_flags"]
     assert "--exclude-path=target/**" in mode["endorctl_flags"]
+    assert "--python-virtual-env=/src/venv/bin" in mode["endorctl_flags"]
     assert "--dependencies" not in mode["endorctl_flags"]
     metrics = scan_result_metrics(raw)
     assert metrics["scan_execution"] == "CLI"
     assert metrics["quick_scan"] is True
     assert metrics["scan_mode"]["enables"] == ["git", "analytics"]
+    assert metrics["scan_mode"]["python_virtual_env"] == "/src/venv/bin"
 
 
 def test_extract_scan_mode_cloud_scan() -> None:

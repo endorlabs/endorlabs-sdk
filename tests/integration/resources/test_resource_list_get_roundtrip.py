@@ -36,6 +36,7 @@ _RESOURCE_KINDS: list[str] = [
     "AuthorizationPolicy",
     "CodeOwners",
     "Finding",
+    "HuggingFaceOrganization",
     "Invitation",
     "LinterResult",
     "Metric",

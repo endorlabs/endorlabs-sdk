@@ -42,8 +42,8 @@
     "seriesPendingCount": 1,
     "pullPolicy": {
       "minProjects": 1,
-      "mode": "project_grain_redistribute",
-      "taggedProjectsPulled": 1,
+      "mode": "tag_parent_uuid_is_in",
+      "isInPulls": 1,
       "workers": 24
     }
   },
@@ -5181,8 +5181,8 @@
         "seriesPendingCount": 1,
         "pullPolicy": {
           "minProjects": 1,
-          "mode": "project_grain_redistribute",
-          "taggedProjectsPulled": 1,
+          "mode": "tag_parent_uuid_is_in",
+          "isInPulls": 1,
           "workers": 24
         }
       },
@@ -5808,8 +5808,8 @@
         "seriesPendingCount": 1,
         "pullPolicy": {
           "minProjects": 1,
-          "mode": "project_grain_redistribute",
-          "taggedProjectsPulled": 1,
+          "mode": "tag_parent_uuid_is_in",
+          "isInPulls": 1,
           "workers": 24
         }
       },
@@ -5872,8 +5872,8 @@
         "seriesPendingCount": 1,
         "pullPolicy": {
           "minProjects": 1,
-          "mode": "project_grain_redistribute",
-          "taggedProjectsPulled": 1,
+          "mode": "tag_parent_uuid_is_in",
+          "isInPulls": 1,
           "workers": 24
         }
       }

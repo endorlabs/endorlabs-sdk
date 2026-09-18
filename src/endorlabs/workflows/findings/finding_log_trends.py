@@ -549,7 +549,11 @@ def query_operation_group_counts_resilient(
 ) -> dict[str, int]:
     """``group_by_time`` with timeout→per-project shard escalate (chart pattern).
 
-    Tries one aggregate for the namespace (optional ``parent_uuids`` is_in). On
+    Tries one aggregate for the namespace (optional ``parent_uuids`` is_in /
+    equality). Any explicit ``parent_uuids`` scope uses ``traverse=True`` so
+    child-namespace projects are included when *namespace* is a tenant/parent
+    path. Whole-namespace aggregates (``parent_uuids is None``) keep
+    ``traverse=False`` (caller should pass a leaf for path rollups). On
     timeout-like errors with multi-project scope, fans out via
     :func:`parallel_map_shards`. Single-project scope does not escalate.
     """
@@ -559,6 +563,8 @@ def query_operation_group_counts_resilient(
     single_uuid = (
         parent_uuids[0] if parent_uuids is not None and len(parent_uuids) == 1 else None
     )
+    # Explicit parent UUID scope must traverse; leaf-wide aggregates do not.
+    parent_scoped = parent_uuids is not None
     try:
         if single_uuid is not None:
             return query_operation_group_counts(
@@ -567,7 +573,7 @@ def query_operation_group_counts_resilient(
                 base_filter=base_filter,
                 operation=operation,
                 level=level,
-                traverse=False,
+                traverse=parent_scoped,
                 interval=interval,
                 project_uuid=single_uuid,
             )
@@ -578,7 +584,7 @@ def query_operation_group_counts_resilient(
             base_filter=scoped,
             operation=operation,
             level=level,
-            traverse=False,
+            traverse=parent_scoped,
             interval=interval,
         )
     except Exception as exc:
@@ -602,7 +608,7 @@ def query_operation_group_counts_resilient(
                 base_filter=base_filter,
                 operation=operation,
                 level=level,
-                traverse=False,
+                traverse=parent_scoped,
                 interval=interval,
                 project_uuid=shard.project_uuid,
             )
@@ -634,15 +640,25 @@ def query_severity_facet_series_cell(
     interval: str = CHART_DEFAULT_INTERVAL,
     max_workers: int = 12,
     max_project_pages: int | None = None,
+    second_series: str = "delete",
 ) -> dict[str, Any]:
-    """Query one severity x facet FindingLog CREATE/DELETE series cell.
+    """Query one severity x facet FindingLog series cell.
 
     *facet_clause* may be empty (category-only / ``all`` facet). *parent_uuids*
     scopes to ``meta.parent_uuid``; ``None`` means the whole namespace path.
 
+    *second_series*:
+    - ``delete`` (default): CREATE vs DELETE (MAIN burndown New/Resolved).
+    - ``ci_blocker``: CREATE vs CREATE∩``FINDING_TAGS_CI_BLOCKER``
+      (PR Detected/Blocked). Cell keys still use ``weeklyNew`` /
+      ``weeklyResolved`` for redistribute math; HTML labels remap them for
+      PR scope.
+
     Multi-project / leaf aggregates escalate to project shards on timeout
     (same ladder as :func:`query_operation_counts`).
     """
+    from endorlabs.filters import CI_BLOCKER_TAG_CLAUSE
+
     clause = category_base_filter
     extra = (facet_clause or "").strip()
     if extra:
@@ -663,24 +679,47 @@ def query_severity_facet_series_cell(
         max_workers=max_workers,
         max_project_pages=max_project_pages,
     )
-    delete = query_operation_group_counts_resilient(
-        client,
-        namespace=namespace,
-        base_filter=base,
-        operation="DELETE",
-        level=level,
-        interval=interval,
-        parent_uuids=parent_uuids,
-        max_workers=max_workers,
-        max_project_pages=max_project_pages,
-    )
+    if second_series == "ci_blocker":
+        blocker_base = finding_log_time_window_filter(
+            window_start,
+            window_end,
+            base_filter=f"{clause} and {CI_BLOCKER_TAG_CLAUSE}",
+        )
+        second = query_operation_group_counts_resilient(
+            client,
+            namespace=namespace,
+            base_filter=blocker_base,
+            operation="CREATE",
+            level=level,
+            interval=interval,
+            parent_uuids=parent_uuids,
+            max_workers=max_workers,
+            max_project_pages=max_project_pages,
+        )
+    elif second_series == "delete":
+        second = query_operation_group_counts_resilient(
+            client,
+            namespace=namespace,
+            base_filter=base,
+            operation="DELETE",
+            level=level,
+            interval=interval,
+            parent_uuids=parent_uuids,
+            max_workers=max_workers,
+            max_project_pages=max_project_pages,
+        )
+    else:
+        msg = (
+            f"unsupported second_series={second_series!r}; use 'delete' or 'ci_blocker'"
+        )
+        raise ValueError(msg)
     return series_cell_from_analysis(
         build_analysis(
             namespace=namespace,
             window_start=window_start,
             window_end=window_end,
             create_counts=create,
-            delete_counts=delete,
+            delete_counts=second,
             severity_split=True,
             interval=interval,
             lookback=lookback,
@@ -739,6 +778,7 @@ def query_severity_facet_matrix(
     expand: str = "severity",
     max_workers: int = 12,
     max_project_pages: int | None = None,
+    second_series: str = "delete",
 ) -> dict[str, dict[str, dict[str, Any]]]:
     """Query severity x facet cells and expand rollups.
 
@@ -749,6 +789,9 @@ def query_severity_facet_matrix(
     - ``"severity"`` — sum Crit+High+Med+Low per facet (SAST / Secrets / AI-SAST).
     - ``"reach"`` — SCA function-reach rollups (``any`` = unfiltered; ``all`` =
       RF+PRF). *facet_keys* is unused for the expand step.
+
+    *second_series* is forwarded to :func:`query_severity_facet_series_cell`
+    (``delete`` or ``ci_blocker``).
     """
     if categories is None or period_caption is None:
         _seed_sev, _seed_facet, seed_level, seed_clause = cells[0]
@@ -765,6 +808,7 @@ def query_severity_facet_matrix(
             interval=interval,
             max_workers=max_workers,
             max_project_pages=max_project_pages,
+            second_series=second_series,
         )
         categories = list(seed["categories"])
         period_caption = str(seed["periodCaption"])
@@ -786,6 +830,7 @@ def query_severity_facet_matrix(
                 interval=interval,
                 max_workers=max_workers,
                 max_project_pages=max_project_pages,
+                second_series=second_series,
             )
         except Exception:
             matrix[sev][facet] = empty_series_cell(categories, period_caption)

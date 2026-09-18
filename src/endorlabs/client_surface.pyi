@@ -11,6 +11,7 @@ from .core.filter import FilterExpression
 from .core.types import ListParameters
 from .core.whoami import WhoamiResult
 from .facade import (
+    AgentTelemetryFacade,
     CallGraphDataFacade,
     ListableFacade,
     QueryFacade,
@@ -41,6 +42,7 @@ from .resources.dependency_metadata import (
 from .resources.endor_license import EndorLicense
 from .resources.finding import Finding
 from .resources.finding_log import FindingLog
+from .resources.hugging_face_organization import HuggingFaceOrganization
 from .resources.identity_provider import IdentityProvider
 from .resources.installation import CreateInstallationPayload, Installation
 from .resources.invitation import CreateInvitationPayload, Invitation
@@ -502,6 +504,45 @@ class _FindingLogFacade(ListableFacade[FindingLog]):
         namespace: str | None = ...,
     ) -> FindingLog: ...
 
+class _HuggingFaceOrganizationFacade(ListableFacade[HuggingFaceOrganization]):
+    """Inventory of a connected Hugging Face organization and its models.
+
+    Identity kwargs: name (-> meta.name).
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[HuggingFaceOrganization] | list[dict[str, Any]]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | HuggingFaceOrganization,
+        namespace: str | None = ...,
+    ) -> HuggingFaceOrganization: ...
+
 class _IdentityProviderFacade(ListableFacade[IdentityProvider]):
     """SSO identity provider configuration for the tenant."""
 
@@ -539,7 +580,7 @@ class _IdentityProviderFacade(ListableFacade[IdentityProvider]):
     ) -> IdentityProvider: ...
 
 class _InstallationFacade(ResourceRuntimeFacade[Installation]):
-    """SCM platform integration (GitHub, GitLab, Azure, Bitbucket).
+    """SCM / platform integration (GitHub, GitLab, Azure, Bitbucket, Hugging Face).
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -2091,16 +2132,16 @@ class Client:
 
     Resources:
     APIKey, AuditLog, AuthenticationLog, AuthorizationPolicy, CodeOwners,
-    DependencyMetadata, EndorLicense, Finding, FindingLog, IdentityProvider,
-    Installation, Invitation, LinterResult, Malware, MalwareExposure,
-    MalwareExposureQuery, Metric, Namespace, NotificationTarget,
-    PRCommentConfig, PackageFirewallLog, PackageLicense, PackageManager,
-    PackageVersion, Policy, PolicyTemplate, Project, Query, QueryMalware,
-    QuerySimilarPackages, QueryVulnerability, Repository, RepositoryVersion,
-    SavedQuery, ScanLogRequest, ScanProfile, ScanResult, ScanWorkflow,
-    ScanWorkflowResult, SemgrepRule, SystemConfig, VectorStore,
-    VectorStoreQuery, VersionUpgrade, Vulnerability
-    Custom: CallGraphData, Query
+    DependencyMetadata, EndorLicense, Finding, FindingLog,
+    HuggingFaceOrganization, IdentityProvider, Installation, Invitation,
+    LinterResult, Malware, MalwareExposure, MalwareExposureQuery, Metric,
+    Namespace, NotificationTarget, PRCommentConfig, PackageFirewallLog,
+    PackageLicense, PackageManager, PackageVersion, Policy, PolicyTemplate,
+    Project, Query, QueryMalware, QuerySimilarPackages, QueryVulnerability,
+    Repository, RepositoryVersion, SavedQuery, ScanLogRequest, ScanProfile,
+    ScanResult, ScanWorkflow, ScanWorkflowResult, SemgrepRule, SystemConfig,
+    VectorStore, VectorStoreQuery, VersionUpgrade, Vulnerability
+    Custom: CallGraphData, AgentTelemetry, Query
     """
 
     APIKey: _APIKeyFacade
@@ -2112,6 +2153,7 @@ class Client:
     EndorLicense: _EndorLicenseFacade
     Finding: _FindingFacade
     FindingLog: _FindingLogFacade
+    HuggingFaceOrganization: _HuggingFaceOrganizationFacade
     IdentityProvider: _IdentityProviderFacade
     Installation: _InstallationFacade
     Invitation: _InvitationFacade
@@ -2148,6 +2190,7 @@ class Client:
     VersionUpgrade: _VersionUpgradeFacade
     Vulnerability: _VulnerabilityFacade
     CallGraphData: CallGraphDataFacade
+    AgentTelemetry: AgentTelemetryFacade
     Query: QueryFacade
 
     _client: APIClient | None

@@ -73,6 +73,13 @@ def _call_graph_data_facade(client: APIClient, default_namespace: str | None) ->
     return CallGraphDataFacade(client, default_namespace)
 
 
+def _agent_telemetry_facade(client: APIClient, default_namespace: str | None) -> Any:
+    """Build AgentTelemetryFacade for ``client.AgentTelemetry``."""
+    from .facade import AgentTelemetryFacade
+
+    return AgentTelemetryFacade(client, default_namespace)
+
+
 def _query_facade(client: APIClient, default_namespace: str | None) -> Any:
     """Build QueryFacade for ``client.Query`` (recipes + create)."""
     from .facade import QueryFacade
@@ -420,6 +427,16 @@ CUSTOM_FACADE_REGISTRY: list[CustomFacadeEntry] = [
         pyi_import_module="facade",
         pyi_attr_doc=(
             "Call graph data facade. Use decode() or fetch() with a PackageVersion."
+        ),
+    ),
+    CustomFacadeEntry(
+        attr_name="AgentTelemetry",
+        factory=_agent_telemetry_facade,
+        pyi_facade_class="AgentTelemetryFacade",
+        pyi_import_module="facade",
+        pyi_attr_doc=(
+            "Agents Hub / Agent Kit API call metering. Use activity(), calls(), "
+            "or iter_calls(). Distinct from AgentHookEvent Policy Violations."
         ),
     ),
     CustomFacadeEntry(

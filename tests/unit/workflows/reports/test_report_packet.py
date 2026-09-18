@@ -107,7 +107,14 @@ def test_render_packet_captions_and_glossary(tmp_path: Path) -> None:
     assert "Per-ecosystem summary" in sprawl
     assert copy_mod.H1_SCA_BURNDOWN in burndown
     assert copy_mod.H1_SAST_BURNDOWN in sast
+    assert 'id="scope"' in burndown
+    assert 'id="scope"' in sast
+    assert 'id="prActive"' in onboarding
+    assert 'id="prActive"' in burndown
     assert 'id="category"' in sast
+    assert "defaultSeriesLabels" in burndown
+    assert "PR / CI checks" in burndown
+    assert "Detected" in burndown or "scopes" in burndown
     assert copy_mod.H1_ENDOR_PATCHES in patches
     assert copy_mod.PURPOSE_ENDOR_PATCHES in patches
     assert "Impact calculator" in patches

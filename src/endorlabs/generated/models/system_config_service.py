@@ -630,6 +630,7 @@ class V1PackageFirewallReason(StrEnum):
      - PACKAGE_FIREWALL_REASON_CVSS_SEVERITY_DETECTED: The requested package version has a CVSS vulnerability meeting or exceeding the configured severity threshold.
      - PACKAGE_FIREWALL_REASON_VERSIONS_CURATED: One or more versions were removed from the package metadata response as part of package curation.
     See PackageFirewallLog.Spec.filtered_versions for per-version detail.
+     - PACKAGE_FIREWALL_REASON_POLICY_NOT_EVALUATED: The configured policy could not produce a decision for the package request.
     """
 
     PACKAGE_FIREWALL_REASON_UNSPECIFIED = 'PACKAGE_FIREWALL_REASON_UNSPECIFIED'
@@ -645,6 +646,9 @@ class V1PackageFirewallReason(StrEnum):
     )
     PACKAGE_FIREWALL_REASON_VERSIONS_CURATED = (
         'PACKAGE_FIREWALL_REASON_VERSIONS_CURATED'
+    )
+    PACKAGE_FIREWALL_REASON_POLICY_NOT_EVALUATED = (
+        'PACKAGE_FIREWALL_REASON_POLICY_NOT_EVALUATED'
     )
 
 
@@ -863,9 +867,31 @@ class SystemConfigPackageFirewallConfig(BaseModel):
     The CVSS version used to evaluate this threshold is determined by AnalyticsConfig.cvss_version.
     Must be UNSPECIFIED, HIGH, or CRITICAL.
     """
+    ecosystem_package_manager_uuid: dict[str, str] | None = None
+    """
+    UUID of the PackageManager whose artifact repository serves an ecosystem, keyed by the name of
+    the Ecosystem enum value, for example "ECOSYSTEM_NPM". A named ecosystem is served from that
+    repository instead of its public registry.
+
+    An ecosystem absent from the map keeps its public registry, so an empty map preserves current
+    behavior and an ecosystem can be adopted on its own.
+
+    One UUID per ecosystem: a request resolves to exactly one repository, and there is no fallback
+    to a second one or to the public registry.
+
+    The referenced PackageManager must live in the same namespace as this config, and its
+    AuthProvider.package_manager_type must match the ecosystem its key names, so an "ECOSYSTEM_NPM"
+    key cannot point at a Maven repository. The rules below constrain the shape of the value only.
+    Whether the UUID names a PackageManager at all, and one of the right kind, is checked against
+    the referenced object.
+    """
     exceptions: list[Exception] | None = None
     """
     Exception rules. If any exception matches the request, all checks are skipped.
+    """
+    fail_closed: bool | None = None
+    """
+    Whether to fail closed when a firewall decision cannot be reached.
     """
     malware_action: V1PackageFirewallAction | None = (
         'PACKAGE_FIREWALL_ACTION_UNSPECIFIED'

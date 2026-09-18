@@ -214,5 +214,11 @@ uv run --env-file .env endor-reports build -n <tenant>
 See [executive-report-packet.md](executive-report-packet.md). Agents: skill
 **endor-workflow-reports**.
 
+
+### Custom exception Rego (via shared library)
+
+Portable drop-in: [examples/via-shared-lib-exception/](examples/via-shared-lib-exception/) —
+except findings whose leaf is reachable under a shared library using
+`graph.reachable` on `PackageVersion.spec.resolved_dependencies.dependency_graph`.
 Production automation should call `endorlabs.Client` and workflow modules directly;
 skills are playbooks, not runtime dependencies.

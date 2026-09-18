@@ -88,6 +88,17 @@ RESOURCE_CONTRACT_OVERLAY_BY_ATTR: dict[str, dict[str, Any]] = {
         ),
         "build_create_payload_fn_name": "build_create_payload",
     },
+    "HuggingFaceOrganization": {
+        "model_class_import_path": (
+            "endorlabs.resources.hugging_face_organization:HuggingFaceOrganization"
+        ),
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.hugging_face_organization:build_create_payload"
+        ),
+        "build_create_payload_fn_name": "build_create_payload",
+        "supported_ops": ["get", "list"],
+        "filter_kwarg_map": {"name": "meta.name"},
+    },
     "PackageFirewallLog": {
         "model_class_import_path": (
             "endorlabs.resources.package_firewall_log:PackageFirewallLog"

@@ -352,11 +352,15 @@ def _scan_mode_markdown_lines(latest: dict[str, Any]) -> list[str]:
         "use_local_repo_cache", latest.get("use_local_repo_cache")
     )
     command = mode_dict.get("command")
+    use_scan_profile = mode_dict.get("use_scan_profile")
+    python_virtual_env = mode_dict.get("python_virtual_env")
     return [
         f"- scan_execution: `{execution}`",
         f"- run_by_system: `{run_by_system}`",
         f"- quick_scan: `{quick_scan}`",
         f"- use_local_repo_cache: `{use_local}`",
+        f"- use_scan_profile: `{use_scan_profile}`",
+        f"- python_virtual_env: `{python_virtual_env}`",
         f"- command: `{command}`",
         f"- endorctl_flags: {flag_text}",
     ]

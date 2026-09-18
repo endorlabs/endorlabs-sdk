@@ -45,6 +45,9 @@ class SpecEndorLicenseBundleType(StrEnum):
      - ENDOR_LICENSE_BUNDLE_TYPE_OSS_FIREWALL: Endor OSS Firewall license bundle.
      - ENDOR_LICENSE_BUNDLE_TYPE_AI_GOVERNANCE: AI Governance license bundle. Grants access to AI agent hook event
     collection and review (Cursor, Claude Code, etc.).
+     - ENDOR_LICENSE_BUNDLE_TYPE_BYOK: BYOK license bundle. Grants the ability to register
+    customer-provided LLM provider credentials and route AI requests
+    through them.
     """
 
     ENDOR_LICENSE_BUNDLE_TYPE_UNSPECIFIED = 'ENDOR_LICENSE_BUNDLE_TYPE_UNSPECIFIED'
@@ -65,6 +68,7 @@ class SpecEndorLicenseBundleType(StrEnum):
     ENDOR_LICENSE_BUNDLE_TYPE_CODE_PRO = 'ENDOR_LICENSE_BUNDLE_TYPE_CODE_PRO'
     ENDOR_LICENSE_BUNDLE_TYPE_OSS_FIREWALL = 'ENDOR_LICENSE_BUNDLE_TYPE_OSS_FIREWALL'
     ENDOR_LICENSE_BUNDLE_TYPE_AI_GOVERNANCE = 'ENDOR_LICENSE_BUNDLE_TYPE_AI_GOVERNANCE'
+    ENDOR_LICENSE_BUNDLE_TYPE_BYOK = 'ENDOR_LICENSE_BUNDLE_TYPE_BYOK'
 
 
 class SpecEndorLicenseFeatureType(StrEnum):
@@ -95,6 +99,8 @@ class SpecEndorLicenseFeatureType(StrEnum):
      - ENDOR_LICENSE_FEATURE_TYPE_ENDOR_ENRICHMENT: Endor Enrichment feature allows access to Endor-proprietary data.
      - ENDOR_LICENSE_FEATURE_TYPE_AI_GOVERNANCE: AI Governance feature allows recording and reviewing AI agent hook
     events (e.g. Cursor, Claude Code) for governance and audit.
+     - ENDOR_LICENSE_FEATURE_TYPE_BYOK: BYOK feature allows routing AI requests through
+    customer-provided LLM provider credentials (bring your own key).
     """
 
     ENDOR_LICENSE_FEATURE_TYPE_UNSPECIFIED = 'ENDOR_LICENSE_FEATURE_TYPE_UNSPECIFIED'
@@ -143,6 +149,7 @@ class SpecEndorLicenseFeatureType(StrEnum):
     ENDOR_LICENSE_FEATURE_TYPE_AI_GOVERNANCE = (
         'ENDOR_LICENSE_FEATURE_TYPE_AI_GOVERNANCE'
     )
+    ENDOR_LICENSE_FEATURE_TYPE_BYOK = 'ENDOR_LICENSE_FEATURE_TYPE_BYOK'
 
 
 class SpecEndorLicenseInfo(BaseModel):

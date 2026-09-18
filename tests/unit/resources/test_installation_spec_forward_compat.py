@@ -48,3 +48,23 @@ def test_installation_model_parses_partial_bitbucket_config() -> None:
     assert (
         installation.spec.bitbucket_config.host_url == "https://bitbucket.org/example"
     )
+
+
+def test_installation_model_parses_huggingface_config() -> None:
+    """Installation accepts huggingface_config on forward-compatible rows."""
+    installation = Installation(
+        **_installation_payload(
+            {
+                "platform_type": "PLATFORM_SOURCE_HUGGING_FACE",
+                "huggingface_config": {
+                    "host_url": "https://example.com/example-org",
+                },
+            }
+        )
+    )
+    assert installation.spec is not None
+    dumped = installation.spec.model_dump()
+    assert dumped.get("platform_type") == "PLATFORM_SOURCE_HUGGING_FACE"
+    assert dumped.get("huggingface_config", {}).get("host_url") == (
+        "https://example.com/example-org"
+    )

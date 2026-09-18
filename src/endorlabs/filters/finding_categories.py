@@ -5,7 +5,11 @@ from __future__ import annotations
 from datetime import datetime
 
 from endorlabs.core.filter import F
-from endorlabs.filters.main_context import MAIN_CONTEXT_CLAUSE, MAIN_CONTEXT_TYPE
+from endorlabs.filters.main_context import (
+    CI_CONTEXT_CLAUSE,
+    MAIN_CONTEXT_CLAUSE,
+    MAIN_CONTEXT_TYPE,
+)
 
 VULNERABILITY_CATEGORY = (
     "spec.finding_categories contains FINDING_CATEGORY_VULNERABILITY"
@@ -13,6 +17,7 @@ VULNERABILITY_CATEGORY = (
 REACHABLE_FUNCTION_TAGS = (
     "[FINDING_TAGS_REACHABLE_FUNCTION, FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION]"
 )
+CI_BLOCKER_TAG_CLAUSE = "spec.finding_tags contains FINDING_TAGS_CI_BLOCKER"
 
 FINDING_CATEGORY_SCA = "FINDING_CATEGORY_SCA"
 FINDING_CATEGORY_VULNERABILITY = "FINDING_CATEGORY_VULNERABILITY"
@@ -55,11 +60,25 @@ DEFAULT_ESTATE_FINDING_CATEGORIES: tuple[str, ...] = (
 )
 
 
-def category_filter(category_enum: str) -> str:
-    """MQL filter for one finding category in main context."""
-    return (
-        f"{MAIN_CONTEXT_CLAUSE} and spec.finding_categories contains [{category_enum}]"
-    )
+def category_filter(
+    category_enum: str,
+    *,
+    context_clause: str = MAIN_CONTEXT_CLAUSE,
+) -> str:
+    """MQL filter for one finding category in the given context plane."""
+    return f"{context_clause} and spec.finding_categories contains [{category_enum}]"
+
+
+def to_ci_context_filter(main_filter: str) -> str:
+    """Swap ``CONTEXT_TYPE_MAIN`` → ``CONTEXT_TYPE_CI_RUN`` in a FindingLog filter.
+
+    Raises ``ValueError`` when *main_filter* has no main-context clause so callers
+    do not silently keep MAIN scope.
+    """
+    if MAIN_CONTEXT_CLAUSE not in main_filter:
+        msg = "filter must include CONTEXT_TYPE_MAIN to convert to CI_RUN"
+        raise ValueError(msg)
+    return main_filter.replace(MAIN_CONTEXT_CLAUSE, CI_CONTEXT_CLAUSE)
 
 
 def severity_level_filter(level_enum: str) -> str:

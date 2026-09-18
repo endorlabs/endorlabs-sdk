@@ -8,6 +8,8 @@ SDK how-to and workflows for **consumers** of the package.
 - [facade-helpers.md](facade-helpers.md) — Identity lane (`search_by_*`), generated relationship accessors (`list_by_project`, `list_for_context`, `RouteResult`), wire helpers.
 - [consumer-ux-list-update.md](consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; SDK consumer UX.
 - [retrieving-scan-results.md](retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.
+- [examples/via-shared-lib-exception/](examples/via-shared-lib-exception/) — Portable Rego exception for vulns whose leaf sits under a shared library (`graph.reachable` on `dependency_graph`).
+- [examples/finding-age-exception/](examples/finding-age-exception/) — Portable Rego exception for vulnerability findings older than N days (discovery age).
 - List performance (scope, traverse, debugging): [contributing/list-query-performance.md](../contributing/list-query-performance.md).
 
 **Scan regression troubleshooting:** Agent skill [endor-troubleshooting-scans](../../agent-knowledge/skills/endor-troubleshooting-scans/SKILL.md) (optional Cursor mirror: `.cursor/skills/endor-troubleshooting-scans/`); workflows in `endorlabs.workflows.troubleshooting_scans`. Related: [list-query-performance.md](../contributing/list-query-performance.md), [troubleshooting.md](../contributing/troubleshooting.md).

@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-09-01T14:22:52.088651+00:00",
+  "generated_at": "2026-09-16T18:04:43.450640+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -163,6 +163,13 @@
       "id": "endor-author-agent-skill",
       "name": "endor-author-agent-skill",
       "path": "skills/endor-author-agent-skill/SKILL.md",
+      "refs": []
+    },
+    {
+      "description": "Use when probing tenant or project onboarding configuration presence as a\nboolean / guided matrix (Installation, ScanProfile, AuthPolicy, license\nfeatures, MAIN/CI scan activity). Aggregates checks into a default bucket\n(auth/SSO/policies/\u2026) plus feature-specific license buckets. Read-only\nquick status. Not for executive onboarding growth charts, CLI vs Cloud CSV\ninventory, GitHub org inventory, or mutating platform_setup creates.\n",
+      "id": "endor-config-presence",
+      "name": "endor-config-presence",
+      "path": "skills/endor-config-presence/SKILL.md",
       "refs": []
     },
     {
@@ -281,7 +288,7 @@
       ]
     },
     {
-      "description": "Use when doing scan pipeline RCA: resolve a project (including app scan-history\nURLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs\nfor errors, diff aggregate metrics, and probe PackageVersion resolution_errors.\nSummaries include scan_mode (CLI vs Cloud Scan, --quick-scan, local cache flags).\nNot for individual Finding rows or policy validation\u2014hand off to sibling skills\nwhen deeper analysis is needed.\n",
+      "description": "Use when doing scan pipeline RCA: resolve a project (including app scan-history\nURLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs\nfor errors, diff aggregate metrics, and probe PackageVersion resolution_errors.\nSummaries include scan_mode (CLI vs Cloud Scan, --quick-scan, local cache flags,\nUseScanProfile, PythonVirtualEnv). Always resolve Project scan/toolchain profile\nrefs on first fetch. Not for individual Finding rows or policy validation\u2014hand\noff to sibling skills when deeper analysis is needed.\n",
       "id": "endor-troubleshooting-scans",
       "name": "endor-troubleshooting-scans",
       "path": "skills/endor-troubleshooting-scans/SKILL.md",
@@ -430,6 +437,20 @@
     },
     {
       "agent_visible": true,
+      "cli": "endor-config-presence",
+      "composition": "library_api",
+      "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/onboarding_config_presence/",
+      "id": "config-presence",
+      "library_entrypoints": [
+        "endorlabs.workflows.platform.config_presence.run_config_presence",
+        "endorlabs.workflows.platform.config_presence.probe_tenant_presence",
+        "endorlabs.workflows.platform.config_presence.probe_project_presence"
+      ],
+      "module": "endorlabs.workflows.platform.cli",
+      "skill": "endor-config-presence"
+    },
+    {
+      "agent_visible": true,
       "cli": "endor-context",
       "default_output": ".endorlabs/",
       "id": "context-bootstrap",
@@ -505,7 +526,8 @@
       "library_entrypoints": [
         "endorlabs.workflows.log_export.export_logs",
         "endorlabs.workflows.log_export.export_logs_for_namespaces",
-        "endorlabs.workflows.logs.probe_log_density"
+        "endorlabs.workflows.logs.probe_log_density",
+        "endorlabs.workflows.logs.collect_calls_for_principal"
       ],
       "module": "endorlabs.workflows.log_export.cli",
       "skill": null

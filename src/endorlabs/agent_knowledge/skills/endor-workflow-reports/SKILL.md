@@ -47,6 +47,7 @@ Do not use this skill for:
 - Scan failure or metrics RCA → [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md)
 - SDK/API errors or model drift → [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md)
 - PolicyValidation or exception policy matching → [endor-validate-policy](../endor-validate-policy/SKILL.md)
+- Onboarding config presence / readiness matrix → [endor-config-presence](../endor-config-presence/SKILL.md)
 
 ## When to recommend the executive HTML build
 
@@ -68,8 +69,10 @@ Refresh SAST burndown only into an existing packet:
 
 Deprecated (one release): `endor-reports packet` and `endor-reports upsert-code-findings`.
 Playbook: `agent-knowledge/workflow-reports/endor-executive-report-packet/SKILL.md`.
-Packet Available is any reachability (not the product RF|PRF header). Families
-group on the vulnerable library (`target_dependency_*`), not `upgrade_list`.
+SCA/SAST burndown pages include a **Main vs PR** scope filter (PR = CI_RUN
+Detected/Blocked, PR-active projects only). Packet Available is any
+reachability (not the product RF|PRF header). Families group on the vulnerable
+library (`target_dependency_*`), not `upgrade_list`.
 
 ## Report catalog
 

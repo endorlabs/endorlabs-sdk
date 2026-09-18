@@ -167,6 +167,7 @@ def test_build_code_findings_burndown_report_shape() -> None:
             lookback=2,
             min_projects=1,
             max_workers=2,
+            include_pr_scope=False,
         )
 
     assert report["categories"] == list(CODE_CATEGORIES)

@@ -177,12 +177,16 @@ class V1CycloneDxSpecVersion(StrEnum):
     CycloneDx specification versions Endor emits. Values are added as Endor adds
     support, so this list is the supported set.
 
-     - CYCLONE_DX_SPEC_VERSION_UNSPECIFIED: Unset. The export uses the current CycloneDx default.
-     - CYCLONE_DX_SPEC_VERSION_1_5: CycloneDx 1.5.
+     - CYCLONE_DX_SPEC_VERSION_UNSPECIFIED: Unset. The export uses CycloneDx 1.5.
+     - CYCLONE_DX_SPEC_VERSION_1_5: CycloneDx 1.5. The default when no version is requested.
+     - CYCLONE_DX_SPEC_VERSION_1_6: CycloneDx 1.6.
+     - CYCLONE_DX_SPEC_VERSION_1_7: CycloneDx 1.7.
     """
 
     CYCLONE_DX_SPEC_VERSION_UNSPECIFIED = 'CYCLONE_DX_SPEC_VERSION_UNSPECIFIED'
     CYCLONE_DX_SPEC_VERSION_1_5 = 'CYCLONE_DX_SPEC_VERSION_1_5'
+    CYCLONE_DX_SPEC_VERSION_1_6 = 'CYCLONE_DX_SPEC_VERSION_1_6'
+    CYCLONE_DX_SPEC_VERSION_1_7 = 'CYCLONE_DX_SPEC_VERSION_1_7'
 
 
 class V1ExportParameters(BaseModel):

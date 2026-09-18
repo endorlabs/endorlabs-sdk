@@ -178,3 +178,4 @@ workflows:
       - endorlabs.workflows.log_export.export_logs
       - endorlabs.workflows.log_export.export_logs_for_namespaces
       - endorlabs.workflows.logs.probe_log_density
+      - endorlabs.workflows.logs.collect_calls_for_principal

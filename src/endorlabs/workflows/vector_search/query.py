@@ -76,18 +76,22 @@ def probe_store_indexed_for_project(
         }
 
     hits = 0
-    documents_raw: Any = None
+    # Wire shape uses spec.matches (VectorStoreQuery); older docs said documents.
+    hits_raw: Any = None
     spec = getattr(result, "spec", None)
     if spec is not None:
-        documents_raw = getattr(spec, "documents", None)
+        hits_raw = getattr(spec, "matches", None)
+        if hits_raw is None:
+            hits_raw = getattr(spec, "documents", None)
     documents: list[Any] = (
-        cast("list[Any]", documents_raw) if isinstance(documents_raw, list) else []
+        cast("list[Any]", hits_raw) if isinstance(hits_raw, list) else []
     )
     hits = len(documents)
     if hits == 0:
         warnings.append(
             f"No documents matched metadata_filter repo={project_meta_name!r}; "
-            "project may not be indexed in this store."
+            "project may not be indexed in this store "
+            "(metadata repo casing must match indexed values)."
         )
 
     return {

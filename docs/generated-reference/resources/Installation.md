@@ -1,6 +1,6 @@
 # Installation
 
-SCM platform integration (GitHub, GitLab, Azure, Bitbucket).
+SCM / platform integration (GitHub, GitLab, Azure, Bitbucket, Hugging Face).
 
 ## Client access
 

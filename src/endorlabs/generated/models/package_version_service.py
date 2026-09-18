@@ -2426,6 +2426,16 @@ class BomDependency(BaseModel):
     hugging_face_dependency_scope: V1DependencyScope | None = (
         'DEPENDENCY_SCOPE_UNSPECIFIED'
     )
+    import_path: str | None = None
+    """
+    The path the source imports this dependency by, set only when it differs
+    from the path inside name. Empty whenever the two agree, which is every
+    ordinary dependency.
+
+    A Golang "replace" that redirects one module path to another leaves the
+    source importing the original path, so name carries the module that
+    supplied the code and this carries the path the compiler sees.
+    """
     imported_type: DependencyImportedType | None = 'IMPORTED_TYPE_UNSPECIFIED'
     """
     Whether this is dependency is imported throughthe analysis of the project
@@ -2585,6 +2595,16 @@ class Dependency(BaseModel):
     hugging_face_dependency_scope: V1DependencyScope | None = (
         'DEPENDENCY_SCOPE_UNSPECIFIED'
     )
+    import_path: str | None = None
+    """
+    The path the source imports this dependency by, set only when it differs
+    from the path inside name. Empty whenever the two agree, which is every
+    ordinary dependency.
+
+    A Golang "replace" that redirects one module path to another leaves the
+    source importing the original path, so name carries the module that
+    supplied the code and this carries the path the compiler sees.
+    """
     imported_type: DependencyImportedType | None = 'IMPORTED_TYPE_UNSPECIFIED'
     """
     Whether this is dependency is imported throughthe analysis of the project

@@ -8,12 +8,15 @@ if TYPE_CHECKING:
     from endorlabs.core.filter import FilterExpression
 
 MAIN_CONTEXT_TYPE = "CONTEXT_TYPE_MAIN"
+CI_CONTEXT_TYPE = "CONTEXT_TYPE_CI_RUN"
 
 # Unquoted enum form (FindingLog / legacy list filters).
 MAIN_CONTEXT_CLAUSE = "context.type==CONTEXT_TYPE_MAIN"
+CI_CONTEXT_CLAUSE = "context.type==CONTEXT_TYPE_CI_RUN"
 
 # Quoted enum form (facade list filters).
 MAIN_CONTEXT_LIST_FILTER = f'context.type=="{MAIN_CONTEXT_TYPE}"'
+CI_CONTEXT_LIST_FILTER = f'context.type=="{CI_CONTEXT_TYPE}"'
 
 
 def main_context_filter(extra: str | FilterExpression | None = None) -> str:

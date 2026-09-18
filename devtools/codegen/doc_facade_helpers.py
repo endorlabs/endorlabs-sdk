@@ -23,6 +23,21 @@ CUSTOM_FACADE_ROWS: tuple[tuple[str, str, str], ...] = (
         "Raw CallGraphData wire envelope",
     ),
     (
+        "AgentTelemetry",
+        "activity(window_days=…)",
+        "Agents Hub / Agent Kit per-agent usage summary",
+    ),
+    (
+        "AgentTelemetry",
+        "calls(agent_id, …)",
+        "One page of recent Agent Kit API calls",
+    ),
+    (
+        "AgentTelemetry",
+        "iter_calls(agent_id, …)",
+        "Yield Agent Kit call rows across cursor pages",
+    ),
+    (
         "Query",
         "create(payload=…, namespace=…)",
         "POST a graph join (root kind + nested references)",

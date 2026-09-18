@@ -83,7 +83,11 @@ def _build_parser() -> argparse.ArgumentParser:
     _ = parser.add_argument(
         "--filter",
         default=None,
-        help="Optional extra MQL filter combined with the time window.",
+        help=(
+            "Optional extra MQL filter combined with the time window. "
+            "Example (VS Code Package Firewall): "
+            'spec.ecosystem=="ECOSYSTEM_VSCODE".'
+        ),
     )
     _ = parser.add_argument(
         "--traverse",

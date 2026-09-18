@@ -4,8 +4,8 @@ Auto-generated inventories for stable/public surfaces.
 
 ## Model-sync coverage snapshot
 
-- facade contract resources: `45`
-- canonical entities (union): `45`
+- facade contract resources: `46`
+- canonical entities (union): `46`
 
 Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 
@@ -144,6 +144,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 | EndorLicense | endor-licenses | tenant | — | list, get |
 | Finding | findings | tenant | — | list, get, update, delete |
 | FindingLog | finding-logs | tenant | — | list, get |
+| HuggingFaceOrganization | hugging-face-organizations | tenant | — | list, get |
 | IdentityProvider | identity-providers | tenant | — | list, get |
 | Installation | installations | tenant | — | list, get, create, update, delete |
 | Invitation | invitations | tenant | — | list, get, create, update, delete |
@@ -220,6 +221,9 @@ Full edge inventory: [resource-routes.md](resource-routes.md).
 |--------|--------|---------|
 | `CallGraphData` | `decode(package_version, …)` | Decoded call graph JSON for a PackageVersion |
 | `CallGraphData` | `fetch(package_version, …)` | Raw CallGraphData wire envelope |
+| `AgentTelemetry` | `activity(window_days=…)` | Agents Hub / Agent Kit per-agent usage summary |
+| `AgentTelemetry` | `calls(agent_id, …)` | One page of recent Agent Kit API calls |
+| `AgentTelemetry` | `iter_calls(agent_id, …)` | Yield Agent Kit call rows across cursor pages |
 | `Query` | `create(payload=…, namespace=…)` | POST a graph join (root kind + nested references) |
 | `Query` | `execute(spec, scopes, parse=…)` | Run a custom join per QueryScope and merge parsed maps |
 | `Query` | `at_namespace(spec, namespace, parse=…, merge=…)` | Paginated join at one wire namespace |

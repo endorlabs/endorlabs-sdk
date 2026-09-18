@@ -10,12 +10,13 @@ See also [resource-discovery contract](../../agent-knowledge/contracts/resource-
 
 | Layer | Owns |
 |-------|------|
-| `facade/` | Public helpers on resource facades + `CallGraphData` custom facade |
+| `facade/` | Public helpers on resource facades + `CallGraphData` / `AgentTelemetry` custom facades |
 | `facade/search.py` | Shared `search_by_*` helpers (identity lane) |
 | `facade/context_partition.py` | Scan-plane list filters (`context_partition_filter`, `main_context_filter`) |
 | `operations/routes.py` | Generated accessor executors (`RouteExecutor`, `RouteResult`) |
 | `operations/` | Pagination, group wire parsing |
 | `resources/call_graph_data.py` | CallGraphData fetch/decode wire helpers |
+| `resources/agent_telemetry.py` | AgentTelemetry activity/calls wire helpers |
 | `api_client.py` | `get_all` — single low-level pagination loop |
 | `workflows/` | Orchestration — **must not** duplicate list/count/group pagination or hand-built relationship filters when a generated accessor exists |
 | `tools/` | Composition (`list_sharding`) — parallel list over project shards |
@@ -29,7 +30,7 @@ See also [resource-discovery contract](../../agent-knowledge/contracts/resource-
 3. **`list_by_*` / `list_for_context`** return **`list[T]`**; **`to_*`** stitch accessors return **`RouteResult`**. Normative map: [resource-discovery contract](../../agent-knowledge/contracts/resource-discovery.md). Inventory: [resource-routes.md](../generated-reference/resource-routes.md), [api-surfaces.md](../generated-reference/api-surfaces.md).
 4. **`search_by_*`** return **`list[T]`** (bounded discovery; forwards `mask`, `filter`, etc.).
 5. **Wire/auxiliary helpers** — custom decode/fetch, log POST (below).
-6. **Custom facades** only when the kind is not yet on `registry_contract` — today: **`CallGraphData`** only.
+6. **Custom facades** when the kind is not a CRUD row on `registry_contract` — today: **`CallGraphData`**, **`AgentTelemetry`**, **`Query`**.
 
 ## Identity lane (`search_by_*`)
 
@@ -111,6 +112,7 @@ for row in client.Project.list_iter(traverse=True, mask="meta.name,spec.git.exte
 ```
 
 Installation lookup: `endorlabs.workflows.projects.inventory.fetch_installation_lookup`.
+Hugging Face connector rows: `is_huggingface_installation` in the same module; inventory after sync via `client.HuggingFaceOrganization` (list/get). Configure with `Installation.create(..., huggingface_config={...})`.
 
 Per-**scan** CLI vs cloud execution uses `ScanResult.spec.environment.config.RunBySystem` (see product KB) — not the same as project registration above.
 
@@ -158,6 +160,9 @@ for bucket in client.FindingLog.list_groups(
 |--------|-------|---------|
 | `CallGraphData.decode(package_version)` | `PackageVersion` or UUID + `namespace=` | `CallGraphDecoded` (searchable callables/edges) |
 | `CallGraphData.fetch(package_version)` | same | raw envelope only — prefer `decode` or `resolve_package_version_with_callgraph` |
+| `AgentTelemetry.activity(window_days=…)` | namespace via `Client(tenant=)` or `namespace=` | per-agent usage summary |
+| `AgentTelemetry.calls(agent_id, …)` | agent id + optional cursor filters | one page of recent Agent Kit API calls |
+| `AgentTelemetry.iter_calls(agent_id, …)` | same | yields call rows across pages (history capped) |
 | `ScanResult.get_logs(scan_result, …)` | `ScanResult` or UUID + `namespace=` | `ScanLogRequestLogMessage[]` |
 
 **Call graph path search:** Prefer `endor-agent-context --callgraph-export --decode-zstd` then `endor-callgraph-search` (`--path-from` / `--path-to` for multi-hop BFS) or `endor-callgraph-path` for live probes. Zero direct edges between two symbols often means a **multi-hop** wrapper chain — see shipped skill **endor-fetch-and-search-call-graph** (`call-graph-format-and-search.md` → path search protocol). Semantic function summaries: `endor-vector-query` or `VectorStore.query` (separate from call-graph export). Not for Finding/CVE reachability (use `endor-reachability-context`).

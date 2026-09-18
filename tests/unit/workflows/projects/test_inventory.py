@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 
 from endorlabs.workflows.projects.inventory import (
     extract_run_by_system,
+    is_huggingface_installation,
     is_mixed_registration_execution,
     scan_execution_label,
 )
@@ -28,6 +29,23 @@ def test_is_mixed_registration_execution() -> None:
     assert is_mixed_registration_execution("Cloud Scan", "CLI") is True
     assert is_mixed_registration_execution("CLI", "CLI") is False
     assert is_mixed_registration_execution("Cloud Scan", "unknown") is False
+
+
+def test_is_huggingface_installation() -> None:
+    assert is_huggingface_installation(
+        {"spec": {"platform_type": "PLATFORM_SOURCE_HUGGING_FACE"}}
+    )
+    assert is_huggingface_installation(
+        {
+            "spec": {
+                "huggingface_config": {"host_url": "https://example.com/example-org"}
+            }
+        }
+    )
+    assert not is_huggingface_installation(
+        {"spec": {"platform_type": "PLATFORM_SOURCE_GITHUB"}}
+    )
+    assert not is_huggingface_installation(None)
 
 
 def test_latest_scan_execution_label_uses_list_by_project() -> None:

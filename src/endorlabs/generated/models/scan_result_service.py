@@ -650,6 +650,8 @@ class V1EndorctlRC(StrEnum):
      - ENDORCTL_RC_BASELINE_NOT_FOUND: Baseline is invalid or has not been scanned yet.
      - ENDORCTL_RC_SCAN_CANCELLED: Scan was cancelled.
      - ENDORCTL_RC_CLONE_ERROR: Error while cloning a git repository.
+     - ENDORCTL_RC_FAILED_PRECONDITION: The server refused the request because of the current tenant state or the
+    supplied configuration. The error details say what the caller must correct.
      - ENDORCTL_RC_POLICY_VIOLATION: One or more, enforced, admission policy violations detected.
      - ENDORCTL_RC_POLICY_WARNING: One ore more, unenforced, admission policy violations detected.
      - ENDORCTL_RC_PR_SECURITY_REVIEW_ERROR: Deprecated: Use ENDORCTL_RC_SECURITY_REVIEW_ERROR instead.
@@ -709,6 +711,7 @@ class V1EndorctlRC(StrEnum):
     ENDORCTL_RC_BASELINE_NOT_FOUND = 'ENDORCTL_RC_BASELINE_NOT_FOUND'
     ENDORCTL_RC_SCAN_CANCELLED = 'ENDORCTL_RC_SCAN_CANCELLED'
     ENDORCTL_RC_CLONE_ERROR = 'ENDORCTL_RC_CLONE_ERROR'
+    ENDORCTL_RC_FAILED_PRECONDITION = 'ENDORCTL_RC_FAILED_PRECONDITION'
     ENDORCTL_RC_POLICY_VIOLATION = 'ENDORCTL_RC_POLICY_VIOLATION'
     ENDORCTL_RC_POLICY_WARNING = 'ENDORCTL_RC_POLICY_WARNING'
     ENDORCTL_RC_PR_SECURITY_REVIEW_ERROR = 'ENDORCTL_RC_PR_SECURITY_REVIEW_ERROR'
@@ -801,6 +804,11 @@ class V1FindingTags(StrEnum):
      - FINDING_TAGS_AI: This finding was generated using AI.
      - FINDING_TAGS_IGNORED: Finding has been ignored via the ignore file.
      - FINDING_TAGS_SEGMENT_MATCH: Finding applies to a dependency discovered via segment-matching.
+     - FINDING_TAGS_REACHABLE_BY_INCLUSION: The vulnerability is assumed reachable because the package is included;
+    no call path to a vulnerable function exists.
+     - FINDING_TAGS_POTENTIALLY_VALID_SECRET: Finding applies to a secret that has not been validated.
+     - FINDING_TAGS_INFERRED: Finding applies to this package as it was forked from an upstream package
+    that is vulnerable to this CVE.
     """
 
     FINDING_TAGS_UNSPECIFIED = 'FINDING_TAGS_UNSPECIFIED'
@@ -845,6 +853,9 @@ class V1FindingTags(StrEnum):
     FINDING_TAGS_AI = 'FINDING_TAGS_AI'
     FINDING_TAGS_IGNORED = 'FINDING_TAGS_IGNORED'
     FINDING_TAGS_SEGMENT_MATCH = 'FINDING_TAGS_SEGMENT_MATCH'
+    FINDING_TAGS_REACHABLE_BY_INCLUSION = 'FINDING_TAGS_REACHABLE_BY_INCLUSION'
+    FINDING_TAGS_POTENTIALLY_VALID_SECRET = 'FINDING_TAGS_POTENTIALLY_VALID_SECRET'
+    FINDING_TAGS_INFERRED = 'FINDING_TAGS_INFERRED'
 
 
 class V1GroupAggregationValueResponse(BaseModel):
@@ -1190,6 +1201,10 @@ class V1AutomatedScanParametersConfig(BaseModel):
     """
 
 
+class V1CToolChain(BaseModel):
+    conan_version: V1ToolChainVersion | None = None
+
+
 class V1DotNetToolChain(BaseModel):
     additional_dotnet_versions: list[str] | None = None
     dotnet_installer_version: V1ToolChainVersion | None = None
@@ -1265,6 +1280,7 @@ class V1SwiftToolChain(BaseModel):
 
 class V1ToolChains(BaseModel):
     android_tool_chain: V1AndroidToolChain | None = None
+    c_tool_chain: V1CToolChain | None = None
     dotnet_tool_chain: V1DotNetToolChain | None = None
     environment_variables: list[str] | None = None
     """

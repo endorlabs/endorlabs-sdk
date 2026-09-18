@@ -8,6 +8,7 @@ Thin index of SDK workflow entry points. See `MANIFEST.json` for machine-readabl
 | auth-setup | `endor-auth` | `endorlabs.workflows.auth.cli` | endor-auth-setup | — |
 | callgraph-path | `endor-callgraph-path` | `endorlabs.workflows.callgraph.path_cli` | — | stdout or caller path |
 | callgraph-search | `endor-callgraph-search` | `endorlabs.workflows.callgraph.search` | endor-fetch-and-search-call-graph | stdout or caller path |
+| config-presence | `endor-config-presence` | `endorlabs.workflows.platform.cli` | endor-config-presence | .endorlabs/tasks/<slug>-<YYYY-MM-DD>/onboarding_config_presence/ |
 | context-bootstrap | `endor-context` | `endorlabs.context.cli` | — | .endorlabs/ |
 | log-export | `endor-log-export` | `endorlabs.workflows.log_export.cli` | — | .endorlabs/tasks/<slug>-<YYYY-MM-DD>/logs/ |
 | policies-validate | `—` | `endorlabs.workflows.policies.validate` | endor-validate-policy | stdout or --output-json |

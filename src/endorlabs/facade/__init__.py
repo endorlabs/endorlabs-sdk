@@ -12,6 +12,7 @@ from .context_partition import context_partition_filter, main_context_filter
 from .runtime import ResourceRuntimeFacade
 from .specialized import (
     FACADE_CLASS_BY_ATTR,
+    AgentTelemetryFacade,
     CallGraphDataFacade,
     FindingFacade,
     ProjectFacade,
@@ -25,6 +26,7 @@ ResourceFacade = ResourceRuntimeFacade
 
 __all__ = [
     "FACADE_CLASS_BY_ATTR",
+    "AgentTelemetryFacade",
     "BaseResourceOperations",
     "CallGraphDataFacade",
     "FindingFacade",

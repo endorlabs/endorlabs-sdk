@@ -12,6 +12,9 @@ from typing import TYPE_CHECKING, Any
 from endorlabs.workflows.findings.finding_log_trends import CHART_DEFAULT_LOOKBACK
 from endorlabs.workflows.reports.analyze.burndown_common import (
     DEFAULT_BURNDOWN_WORKERS,
+    PR_LOOKBACK_WEEKS,
+    SCOPE_PR,
+    attach_main_pr_scopes,
     build_category_burndown_block,
 )
 from endorlabs.workflows.reports.analyze.finding_burndown_specs import (
@@ -55,11 +58,14 @@ def build_code_findings_burndown_report(
     min_projects: int = 1,
     max_workers: int = DEFAULT_BURNDOWN_WORKERS,
     categories: list[str] | tuple[str, ...] | None = None,
+    pr_active_uuids: list[str] | None = None,
+    include_pr_scope: bool = True,
 ) -> dict[str, Any]:
     """Build SAST / AI-SAST / Secrets FindingLog series under path + tag grain.
 
     *categories* defaults to all code categories; pass a license-filtered
-    subset to skip unentitled FindingLog matrices.
+    subset to skip unentitled FindingLog matrices. When *include_pr_scope* is
+    true, each category also carries ``scopes.pr`` (CI_RUN Detected/Blocked).
     """
     selected = list(categories) if categories is not None else list(CODE_CATEGORIES)
     unknown = [k for k in selected if k not in CODE_CATEGORIES]
@@ -70,6 +76,8 @@ def build_code_findings_burndown_report(
     shared_meta: dict[str, Any] | None = None
     period_caption = ""
     week_categories: list[str] = []
+    pr_week_categories: list[str] = []
+    pr_period_caption = ""
 
     for key in selected:
         block = build_category_burndown_block(
@@ -86,7 +94,42 @@ def build_code_findings_burndown_report(
             categories=week_categories or None,
             period_caption=period_caption or None,
         )
-        by_category[key] = block
+        pr_block = None
+        if include_pr_scope:
+            allow = list(pr_active_uuids) if pr_active_uuids is not None else None
+            pr_block = build_category_burndown_block(
+                client,
+                tenant=tenant,
+                projects=projects,
+                leaf_namespaces=leaf_namespaces,
+                path_options=path_options,
+                tag_catalog=tag_catalog,
+                category_key=key,
+                lookback=PR_LOOKBACK_WEEKS,
+                min_projects=min_projects,
+                max_workers=max_workers,
+                categories=pr_week_categories or None,
+                period_caption=pr_period_caption or None,
+                context_scope=SCOPE_PR,
+                project_uuid_allowlist=allow,
+            )
+            if not pr_week_categories:
+                pr_week_categories = list(
+                    (
+                        ((pr_block.get("seriesFilters") or {}).get("perPath") or {})
+                        .get("all", {})
+                        .get("all", {})
+                        .get("all")
+                        or {}
+                    ).get("categories")
+                    or []
+                )
+            pr_period_caption = str(pr_block.get("periodCaption") or pr_period_caption)
+        by_category[key] = attach_main_pr_scopes(
+            block,
+            pr_block,
+            pr_active_uuids=pr_active_uuids,
+        )
         if not week_categories:
             week_categories = list(
                 (
@@ -108,6 +151,7 @@ def build_code_findings_burndown_report(
         "periodCaption": period_caption,
         "categories": selected,
         "byCategory": by_category,
+        "prActiveProjectUuids": list(pr_active_uuids or []),
         "tagSeriesMeta": shared_meta
         or {
             "seriesReady": [],
