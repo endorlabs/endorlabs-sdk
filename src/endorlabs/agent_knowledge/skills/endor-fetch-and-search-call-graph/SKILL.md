@@ -21,6 +21,7 @@ Use this skill for **static call-graph facts**: symbol presence, direct edges, a
 | User ask | Use | Do **not** use |
 |----------|-----|----------------|
 | “Does **our code** call **library X**?” (e.g. `APIClient` → `httpx`) | This skill | `VectorStoreQuery`, finding reachability |
+| “Map AI-SAST entry points onto CG nodes / optional path” | [endor-aisast-callgraph-bridge](../endor-aisast-callgraph-bridge/SKILL.md) | This skill alone |
 | “Is the **vulnerable function** reachable for **this Finding**?” | `uv run endor-reachability-context` → [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) | Call-graph search alone |
 | “List findings / scans for a project” | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) | Call graph |
 | “Semantic **function summary** / NL code search” | `client.VectorStore` + `VectorStoreQuery` (tenant store; scope by project `meta.name`) | `CallGraphData.decode` |
@@ -167,6 +168,7 @@ Use this structure in the final result:
 | Skill | When |
 |-------|------|
 | [endor-project-retrieval-bundle](../endor-project-retrieval-bundle/SKILL.md) | **Required first** for `--callgraph-export` + manifest |
+| [endor-aisast-callgraph-bridge](../endor-aisast-callgraph-bridge/SKILL.md) | AI-SAST `function_summary` seeds → CG match / optional path |
 | [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) | Finding / `oss` vuln function reachability |
 | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) | Tenant-wide PRF approximation + PV error summary |
 | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) | Finding rows, scan-scoped lists |

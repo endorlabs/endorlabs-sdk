@@ -15,6 +15,20 @@
   },
   {
     "agent_visible": true,
+    "cli": "endor-aisast-callgraph",
+    "composition": "library_api",
+    "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/aisast-callgraph/",
+    "id": "aisast-callgraph-bridge",
+    "library_entrypoints": [
+      "endorlabs.workflows.aisast_callgraph.run_aisast_callgraph_bridge",
+      "endorlabs.workflows.aisast_callgraph.precheck_aisast_and_callgraph",
+      "endorlabs.workflows.aisast_callgraph.resolve_vuln_walk_targets"
+    ],
+    "module": "endorlabs.workflows.aisast_callgraph.cli",
+    "skill": "endor-aisast-callgraph-bridge"
+  },
+  {
+    "agent_visible": true,
     "cli": "endor-auth",
     "default_output": null,
     "id": "auth-setup",

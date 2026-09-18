@@ -59,8 +59,8 @@ for a campaign batch that writes under
 (override date with `--date-suffix 2026-08-28`). A patches-only run
 emits only page 05 and the `patches-*.csv` exports.
 
-Packet Available is any reachability; the product Patches dashboard header is
-RF or PRF. Families group on the vulnerable library, not `upgrade_list`. See
+Endor Patches pull matches the product dashboard (Maven Fix Available Crit/High
+under RF|PRF). Families group on the vulnerable library, not `upgrade_list`. See
 [executive-report-packet.md](../../../../docs/guides/executive-report-packet.md#endor-patches-vs-the-product-dashboard).
 
 When a slice is skipped in a full packet, its page renders an explicit callout

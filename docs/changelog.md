@@ -8,7 +8,18 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- `endor-aisast-callgraph` / skill **endor-aisast-callgraph-bridge** — precheck MAIN AI-SAST
+  RepositoryVersion + `function_summary` index + MAIN CallGraphData PackageVersion, then map
+  AI-SAST seeds onto CG symbols. Optional **safe** BFS via `--path-to` and/or Finding-derived
+  package tokens (`--vuln` / `--finding-package`; GHSA/CVE never used as CG URI patterns;
+  depth/fanout caps; CG path ≠ Finding reachability). Library:
+  `run_aisast_callgraph_bridge`, `resolve_vuln_walk_targets`.
+
 ### Changed
+
+- Endor Patches packet defaults and Impact Calculator align to the product
+  dashboard: Maven + Fix Available + RF|PRF pull; calculator ranks Crit then
+  High with denom = full catalog (not the Available-only view pool).
 
 ### Fixed
 
@@ -31,7 +42,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
-- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1156).
+- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1158).
 - Agent-knowledge ontology: Threat Center → `MalwareExposure` / `MalwareExposureQuery`; Package Firewall VS Code extensions → `PackageFirewallLog` + `ECOSYSTEM_VSCODE` filter; Agents Hub Agent Kit call log ≠ Policy Violations.
 - Agent knowledge INDEX Day-0 trap table (two-column rows), task routing for report CLIs via **endor-workflow-reports**, and consumer AGENTS/template alignment with deferred-auth `describe()` and workspace layout.
 - `APIClient` defers credential validation until the first API call when no credentials are configured; `client.<Kind>.describe()` works on a bare `Client(tenant=…)`.

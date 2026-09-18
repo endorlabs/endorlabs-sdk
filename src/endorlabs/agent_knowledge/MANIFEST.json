@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-09-16T18:04:43.450640+00:00",
+  "generated_at": "2026-09-18T21:56:03.467216+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -151,6 +151,13 @@
   "schema_version": 2,
   "sdk_version": "0.7.2",
   "skills": [
+    {
+      "description": "Use when mapping AI-SAST function_summary vector seeds (entry points / rest_path metadata) onto customer PackageVersion CallGraphData symbols, with hard prechecks that MAIN RepositoryVersion AI-SAST SUCCESS and a function_summary index exist plus a MAIN-context call-graph PackageVersion is decodable. Optional safe BFS via --path-to and/or Finding-derived package tokens (--vuln / --finding-package). Not for Finding/oss SCA reachability proof (endor-reachability-provenance), offline CG-only search (endor-fetch-and-search-call-graph), or NL-only vector browse (endor-vector-query).\n",
+      "id": "endor-aisast-callgraph-bridge",
+      "name": "endor-aisast-callgraph-bridge",
+      "path": "skills/endor-aisast-callgraph-bridge/SKILL.md",
+      "refs": []
+    },
     {
       "description": "Use when probing, verifying, or refreshing Endor Labs SDK credentials before API\nworkflows\u2014env-key scan, Client whoami check, endorctl detection, and interactive\nbrowser token refresh into .env. Step zero for any tenant session. Not for SSO\npolicy mapping or AuthenticationLog RCA.\n",
       "id": "endor-auth-setup",
@@ -326,6 +333,20 @@
       ],
       "module": "endorlabs.workflows.agent_context.cli",
       "skill": "endor-project-retrieval-bundle"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-aisast-callgraph",
+      "composition": "library_api",
+      "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/aisast-callgraph/",
+      "id": "aisast-callgraph-bridge",
+      "library_entrypoints": [
+        "endorlabs.workflows.aisast_callgraph.run_aisast_callgraph_bridge",
+        "endorlabs.workflows.aisast_callgraph.precheck_aisast_and_callgraph",
+        "endorlabs.workflows.aisast_callgraph.resolve_vuln_walk_targets"
+      ],
+      "module": "endorlabs.workflows.aisast_callgraph.cli",
+      "skill": "endor-aisast-callgraph-bridge"
     },
     {
       "agent_visible": false,

@@ -15,13 +15,11 @@ H1_SAST_BURNDOWN = "SAST burndown"
 H1_ENDOR_PATCHES = "Endor Patches"
 
 PURPOSE_ENDOR_PATCHES = (
-    "Highest-impact dependency families with Endor Patch coverage, ranked by "
-    "severity- and reach-weighted Available risk (confirmed function-reachable "
-    "boosted; potentially reachable is not treated as reachable). Families "
-    "group on the vulnerable library current version. Packet Available includes "
-    "any reachability; the product Patches dashboard header is RF or PRF only. "
-    "Click a family for the per-version heat map and use the impact calculator "
-    "for top-K closure."
+    "Highest-impact dependency families with Endor Patch coverage. Pull matches "
+    "the product dashboard (Maven Fix Available Crit/High under RF|PRF). Heat-map "
+    "risk still boosts confirmed function-reachable; families group on the "
+    "vulnerable library current version. Impact Calculator ranks Crit then High "
+    "against the full catalog denom. Click a family for the per-version heat map."
 )
 
 
@@ -366,10 +364,7 @@ Metric notes
 ------------
 
 - Scope: Critical + High vulnerability findings in main context, not
-
-  dismissed, any reachability. The product Patches dashboard Available
-
-  header is RF or PRF only.
+  dismissed, Maven, Fix Available, RF|PRF (product Endor Patches dashboard).
 
 - Families group on the vulnerable library current version
 

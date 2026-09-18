@@ -145,9 +145,10 @@ counts. Guide: [docs/guides/executive-report-packet.md](../../../docs/guides/exe
 
 | Surface | What it counts |
 | -------- | -------------- |
-| Packet pull | Critical + High, not dismissed, main context, **any reachability**, patch/fix gate |
-| Packet **Available** catalog | `spec.fixing_patch.endor_patch_available==true` |
-| Product Patches **Available** header | Same as catalog, but reach is RF **or** PRF only |
+| Packet pull (default) | Crit+High, not dismissed, main, **Maven**, **Fix Available**, **RF\|PRF** |
+| Packet **Available** catalog | Same pull + `spec.fixing_patch.endor_patch_available==true` |
+| Product Patches Impact Calculator | Same population; top-K ranked Crit then High; denom = full catalog |
+| Product Patches **Available** header | Available catalog under the dashboard filter |
 | Family / version group key | Vulnerable library current version: `spec.target_dependency_package_name` + `spec.target_dependency_version` |
 | Not a group key | `spec.fixing_upgrades.upgrade_list` (upgrade-impact / what to bump) |
 

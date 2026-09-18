@@ -106,7 +106,7 @@ def render_patches_html(
                 include_sast=include_sast,
                 include_patches=include_patches,
             ),
-            meta_extra="Scope: Critical + High · not dismissed · main context · any reach",
+            meta_extra="Scope: Crit+High · not dismissed · main · Maven · Fix Available · RF|PRF",
         )
     }
 <div id="patchesEmpty"></div>
@@ -114,8 +114,8 @@ def render_patches_html(
   <aside class="card impact-card">
     <div class="card-h"><span>Impact calculator</span>
       <div class="impact-header-flips">
-        <div class="impact-flip" id="includeWrap"><span>Include To Request</span>
-          <label class="flip"><input type="checkbox" id="includeReq"/><span class="flip-track"></span></label></div>
+        <div class="impact-flip on" id="includeWrap"><span>Include To Request</span>
+          <label class="flip"><input type="checkbox" id="includeReq" checked/><span class="flip-track"></span></label></div>
         <div class="denom-mode" id="denomMode" role="group" aria-label="Denominator">
           <button type="button" class="active" data-mode="fixable">Fixable findings</button>
           <button type="button" data-mode="java">Java Crit/High estate</button>
@@ -126,7 +126,7 @@ def render_patches_html(
       <div class="donut-meta"><div class="fixable-summary" id="summary"></div>
         <div class="pct-caption" id="pctCaption"></div>
         <div class="impact-controls">
-        <div class="impact-k-row">Top <input type="number" id="topK" min="1" value="3"/> of <span id="total">0</span> <span id="kind">Available</span> versions</div>
+        <div class="impact-k-row">Top <input type="number" id="topK" min="1" value="3"/> of <span id="total">0</span> <span id="kind">Available + To Request</span> versions</div>
         <div class="impact-slider-row"><input type="range" id="slider" min="1" value="3"/></div>
         <div class="impact-slider-ends"><span>1</span><span id="maxLabel">1</span></div>
       </div></div></div>
@@ -145,7 +145,7 @@ def render_patches_html(
       Population is already Critical/High. Bar length is distinct
       <em>projects</em>, not PackageVersion consumers.</div>
     <dl class="glossary-grid">
-      <div><dt>Fixable findings</dt><dd>Default calculator denom: findings on the Endor Patch units in this view (any reachability). The product Patches dashboard header counts RF or PRF only. Top‑K can reach 100%.</dd></div>
+      <div><dt>Fixable findings</dt><dd>Impact Calculator denom: full Maven Fix Available Crit/High catalog under RF|PRF (Available + To Request). Rank top‑K by Critical then High. Unchecking Include To Request ranks Available units only; denom stays the full catalog (product pie parity).</dd></div>
       <div><dt>Java Crit/High estate</dt><dd>Optional denom: all Maven Critical/High vulnerability findings in the estate.</dd></div>
       <div><dt>Available</dt><dd>Endor Patch exists today and is campaign-ready.</dd></div>
       <div><dt>To Request</dt><dd>Coverage is incomplete; mixed Available + To Request versions count here.</dd></div>
@@ -169,17 +169,29 @@ def render_patches_html(
 const PATCHES = {payload};
 const families = PATCHES.families || [];
 const patchUnits = PATCHES.patch_units || [];
+const catalogDenom = PATCHES.estate_impact_denominator != null
+  ? Number(PATCHES.estate_impact_denominator)
+  : patchUnits.reduce((s,u)=>s+(Number(u.findings)||((Number(u.available)||0)+(Number(u.to_request)||0))), 0);
 const javaEstateDenom = PATCHES.estate_java_findings ?? null;
 const javaEstateLabel = PATCHES.java_denominator_label
   || "Java (Maven) Critical/High vulnerability findings (estate)";
+const fixableDenomLabel = PATCHES.denominator_label
+  || "Fixable findings (Maven Fix Available · Crit/High · RF|PRF — full catalog)";
 let denomMode = "fixable";
 let activeIdx=0, sortMode="risk", sortDir=1, donutShown=0, donutRaf=0, heatFamily=null;
 const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const motionMs=reduceMotion?0:520;
 function badges(c,h) {{ let s="";if(c)s+=`<span class="sev c">C ${{c}}</span>`;if(h)s+=`<span class="sev h">H ${{h}}</span>`;return s||"—"; }}
 function pure(r) {{ return (r.available||0)>0&&!(r.to_request||0); }}
+function hasAvailable(u) {{ return (u.available||0)>0; }}
 function unitFindings(u, include) {{
   return include ? (u.findings ?? ((u.available||0)+(u.to_request||0))) : (u.available||0);
+}}
+function unitCrit(u, include) {{
+  return include ? (u.critical||0) : (u.avail_critical??u.critical??0);
+}}
+function unitHigh(u, include) {{
+  return include ? (u.high||0) : (u.avail_high??u.high??0);
 }}
 function riskColor(v,max) {{
   const t=max?Math.min(1,v/max):0, stops=[[0,[38,208,124]],[.35,[240,180,41]],[.65,[240,122,41]],[1,[255,92,92]]];
@@ -194,9 +206,17 @@ function tweenDonut(target) {{
   donutRaf=requestAnimationFrame(run);
 }}
 function activeUnits() {{
+  // Product Impact Calculator ranks Crit then High. Include To Request = full catalog
+  // (product default). Available-only = units with Available findings > 0 (not pure).
   const include=document.getElementById("includeReq").checked;
-  const rows=patchUnits.filter(include?u=>(u.available||0)||(u.to_request||0):pure);
-  rows.sort((a,b)=>include?(b.risk-a.risk)||((b.findings||0)-(a.findings||0)):(b.risk_available||b.risk)-(a.risk_available||a.risk));
+  const rows=patchUnits.filter(include?u=>(u.available||0)||(u.to_request||0):hasAvailable);
+  rows.sort((a,b)=>{{
+    const dc=unitCrit(b,include)-unitCrit(a,include);
+    if(dc)return dc;
+    const dh=unitHigh(b,include)-unitHigh(a,include);
+    if(dh)return dh;
+    return String(a.package_version||"").localeCompare(String(b.package_version||""));
+  }});
   return {{include,rows}};
 }}
 function updateImpact(ev) {{
@@ -207,16 +227,13 @@ function updateImpact(ev) {{
   slider.style.setProperty("--impact-fill",(max===1?100:(k-1)/(max-1)*100)+"%");
   let findings=0,crit=0,high=0;rows.slice(0,k).forEach(u=>{{
     findings+=unitFindings(u, include);
-    crit+=include?(u.critical||0):(u.avail_critical??u.critical??0);
-    high+=include?(u.high||0):(u.avail_high??u.high??0);
+    crit+=unitCrit(u, include);
+    high+=unitHigh(u, include);
   }});
-  // Fixable findings = units in this view (any reach). Dashboard header is RF or PRF.
-  const fixablePool = rows.reduce((s,u)=>s+unitFindings(u, include), 0);
+  // Denom stays the full catalog (product pie), not the filtered top-K view pool.
   const useJava = denomMode === "java" && javaEstateDenom != null && javaEstateDenom > 0;
-  const denom = useJava ? javaEstateDenom : fixablePool;
-  const denomLabel = useJava
-    ? javaEstateLabel
-    : (include ? "Fixable findings (Available + To Request in this view)" : "Fixable findings (Available in this view)");
+  const denom = useJava ? javaEstateDenom : catalogDenom;
+  const denomLabel = useJava ? javaEstateLabel : fixableDenomLabel;
   const pct = denom > 0 ? 100 * findings / denom : null;
   if (pct == null) document.getElementById("donutPct").textContent = "—";
   else tweenDonut(pct);
