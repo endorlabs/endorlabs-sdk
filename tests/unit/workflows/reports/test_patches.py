@@ -24,8 +24,10 @@ def test_patches_run_bucket() -> None:
     assert PATCHES_RUN_BUCKET == "patches-reports"
 
 
-def test_impact_denom_label_is_not_product_ui() -> None:
-    assert "product UI" not in IMPACT_DENOM_LABEL
+def test_impact_denom_label_matches_product_catalog() -> None:
+    assert "RF|PRF" in IMPACT_DENOM_LABEL
+    assert "full catalog" in IMPACT_DENOM_LABEL
+    assert "any reachability" not in IMPACT_DENOM_LABEL
 
 
 def test_java_denom_filter_excludes_dismissed() -> None:
@@ -215,8 +217,10 @@ def test_render_packet_with_empty_patches_slice(tmp_path: Path) -> None:
     text = patches_html.read_text(encoding="utf-8")
     assert 'id="denomMode"' in text
     assert "product UI default" not in text
-    assert "RF/PRF" not in text
+    assert "RF|PRF" in text
     assert "not dismissed" in text
+    assert 'id="includeReq" checked' in text
+    assert "full catalog" in text
     assert "assets/endor-wordmark.png" in text
     assert "chart.umd.min.js" not in text
     assert "site-footer" in text

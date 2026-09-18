@@ -1,17 +1,16 @@
 """Endor Patches executive report cube from Finding rows.
 
 Builds the ``reports.patches`` packet slice: top families by Available
-reach-weighted risk, per-version heat-map rows, patch units, and a Java
-(Maven) Crit/High finding-count denominator for the impact calculator.
+reach-weighted risk, per-version heat-map rows, patch units, and impact
+denominators aligned to the product Endor Patches dashboard.
 
-Risk uses mild Critical/High bases (population is already severity-scoped)
-and a **tiered** reach ladder across function and dependency tags:
+**Default pull** (Impact Calculator population): Crit/High vulnerability,
+``FIX_AVAILABLE``, Maven, RF|PRF, main context, not dismissed. Available vs
+To Request is sliced from ``endor_patch_available`` on those rows.
 
-``RF > RD > PRF > PRD > unreachable/none``. Confirmed function-reachable is
-the strongest boost; potentially-reachable is inconclusive (not "reachable");
-confirmed dependency-reachable is a milder boost than RF. Bar / ``projects``
-counts are distinct Project UUIDs — a weak proxy for consumer blast radius;
-PackageVersion-level consumers are not in this Finding rollup.
+Heat-map **risk** still uses mild Critical/High bases and a tiered reach
+ladder (``RF > RD > PRF > PRD > unreachable/none``). The Impact Calculator
+ranks by Critical then High (product order), with denom = full catalog.
 
 Finding lists are required for canonical heat maps; prefer leaf
 ``Finding.count`` only for the Java denominator. Documented as expensive at
@@ -19,7 +18,7 @@ estate scale — pair with ``--patches-only`` for campaign batch runs.
 
 Collection (filter / list / detail rows) lives in
 ``endorlabs.workflows.findings.patch_core``; this module owns narrative
-aggregation and the Java denominator.
+aggregation and denominators.
 """
 
 from __future__ import annotations
@@ -38,6 +37,7 @@ from endorlabs.workflows.findings.patch_core import (
     compute_signal_breakdown,
     discover_and_list,
     extract_patch_rows,
+    filter_by_reachability,
 )
 from endorlabs.workflows.findings.prf_analysis import list_findings_tenant
 
@@ -75,7 +75,11 @@ JAVA_DENOM_FILTER = (
     "spec.ecosystem == ECOSYSTEM_MAVEN"
 )
 
-IMPACT_DENOM_LABEL = "Fixable findings (Endor Patch units in view — any reachability)"
+# Product Endor Patches dashboard base (Impact Calculator population).
+MAVEN_ECOSYSTEM_CLAUSE = "spec.ecosystem==ECOSYSTEM_MAVEN"
+IMPACT_DENOM_LABEL = (
+    "Fixable findings (Maven Fix Available · Crit/High · RF|PRF — full catalog)"
+)
 JAVA_DENOM_LABEL = "Java (Maven) Critical/High vulnerability findings (estate)"
 
 
@@ -435,6 +439,7 @@ def empty_patches_report() -> dict[str, Any]:
         "denominator_label": IMPACT_DENOM_LABEL,
         "java_denominator_label": JAVA_DENOM_LABEL,
         "denominator_source": "",
+        "filter_preset": "",
         "risk_weights": _risk_weights_payload(),
         "signal_breakdown": {},
         "families": [],
@@ -452,17 +457,21 @@ def collect_patches_report(
     include_java_denominator: bool = True,
     finding_categories: Sequence[str] = (FINDING_CATEGORY_VULNERABILITY,),
     severities: Sequence[str] | None = None,
-    gate: str = "any",
+    gate: str = "fix-available",
+    reachability: str = "reachable",
+    maven_only: bool = True,
     shards: Sequence[ProjectShard] | None = None,
     leaf_namespaces: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     """Pull patch-gated findings and build the patches cube slice.
 
-    Defaults match the Endor Patches narrative: vulnerability findings at
-    Critical/High with ``gate="any"`` and any reachability. The product
-    Patches dashboard **Available** header is RF or PRF only — do not treat
-    this slice as that header. Pass *finding_categories* / *severities* /
-    *gate* to reuse the same collector for alternate presets.
+    Defaults match the product Endor Patches dashboard Impact Calculator
+    population: vulnerability Crit/High, ``FIX_AVAILABLE``, Maven,
+    RF|PRF (``reachability="reachable"``), main context, not dismissed.
+    Available vs To Request is sliced from ``endor_patch_available`` on the
+    same rows (table / include toggle) — not a separate list pull.
+
+    Pass *gate* / *reachability* / *maven_only* only for alternate presets.
 
     When *shards* is provided (e.g. from packet ``discover_projects``), skip
     rediscovery and list findings on those shards only. Pass
@@ -471,6 +480,8 @@ def collect_patches_report(
     """
     sev = list(SEVERITIES if severities is None else severities)
     finding_filter = build_finding_filter(finding_categories, sev, gate=gate)
+    if maven_only:
+        finding_filter = f"{finding_filter} and {MAVEN_ECOSYSTEM_CLAUSE}"
     if shards is not None:
         shard_list = list(shards)
         if not shard_list:
@@ -494,6 +505,7 @@ def collect_patches_report(
     if not shard_list:
         return empty_patches_report()
 
+    findings = filter_by_reachability(findings, reachability)
     signal_breakdown = compute_signal_breakdown(findings)
     detail = extract_patch_rows(findings)
     families = _build_families(detail, top_n=top_n_families)
@@ -503,6 +515,8 @@ def collect_patches_report(
         for r in detail
         if r.get("patch_status") == "available" and r.get("finding_uuid")
     }
+    # Impact Calculator denom = full catalog finding count (Available + To Request).
+    catalog_findings = sum(int(u.get("findings") or 0) for u in units)
     java_count: int | None = None
     if include_java_denominator:
         java_leaves = (
@@ -517,18 +531,18 @@ def collect_patches_report(
             leaf_namespaces=java_leaves or None,
         )
 
-    endor_patch_n = int(signal_breakdown.get("endor_patch_available_count") or 0)
-    # Donut denom is computed in HTML from patch_units in the active view
-    # (Fixable findings, any reachability — not the product RF|PRF header).
     return {
         "top_n_families": top_n_families,
         "rollup_mode": "target_dependency",
         "estate_available_findings": len(available_uuids),
-        "estate_impact_denominator": endor_patch_n,
+        "estate_impact_denominator": catalog_findings,
         "estate_java_findings": java_count,
         "denominator_label": IMPACT_DENOM_LABEL,
         "java_denominator_label": JAVA_DENOM_LABEL,
-        "denominator_source": "fixable_pool_in_view",
+        "denominator_source": "product_fixable_catalog",
+        "filter_preset": (
+            f"gate={gate};reachability={reachability};maven_only={maven_only}"
+        ),
         "risk_weights": _risk_weights_payload(),
         "signal_breakdown": signal_breakdown,
         "families": families,

@@ -70,9 +70,9 @@ Refresh SAST burndown only into an existing packet:
 Deprecated (one release): `endor-reports packet` and `endor-reports upsert-code-findings`.
 Playbook: `agent-knowledge/workflow-reports/endor-executive-report-packet/SKILL.md`.
 SCA/SAST burndown pages include a **Main vs PR** scope filter (PR = CI_RUN
-Detected/Blocked, PR-active projects only). Packet Available is any
-reachability (not the product RF|PRF header). Families group on the vulnerable
-library (`target_dependency_*`), not `upgrade_list`.
+Detected/Blocked, PR-active projects only). Endor Patches pull matches the
+product dashboard (Maven Fix Available Crit/High under RF|PRF). Families group
+on the vulnerable library (`target_dependency_*`), not `upgrade_list`.
 
 ## Report catalog
 

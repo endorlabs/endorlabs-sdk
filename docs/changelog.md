@@ -10,6 +10,10 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Endor Patches packet defaults and Impact Calculator align to the product
+  dashboard: Maven + Fix Available + RF|PRF pull; calculator ranks Crit then
+  High with denom = full catalog (not the Available-only view pool).
+
 ### Fixed
 
 ### Breaking
