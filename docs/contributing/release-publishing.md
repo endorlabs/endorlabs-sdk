@@ -94,7 +94,7 @@ reviewer approves the pending deployment.
 No `PYPI_API_TOKEN` or `TEST_PYPI_API_TOKEN` secrets are used. OIDC + PEP 740 attestations
 are handled by `pypa/gh-action-pypi-publish` pinned to a release commit SHA (attestations on by default).
 
-Pin the action to the **git commit SHA** for a release (e.g. `@cef22109… # v1.14.0`), not `@release/v1` (moving branch; Endor “Block Misconfigured GHAs”) and not a **tag object SHA** (PyPA publishes `ghcr.io` images keyed by commit SHA only — tag object SHAs cause `manifest unknown`).
+Pin the action to the **git commit SHA** for a release (e.g. `@dc37677b… # v1.14.2`), not `@release/v1` (moving branch; Endor “Block Misconfigured GHAs”) and not a **tag object SHA** (PyPA publishes `ghcr.io` images keyed by commit SHA only — tag object SHAs cause `manifest unknown`). Use **≥ v1.14.2** when hatchling emits Metadata-Version 2.5.
 
 ## Local verification (before any upload)
 
