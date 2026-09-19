@@ -8,18 +8,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
-- `endor-aisast-callgraph` / skill **endor-aisast-callgraph-bridge** — precheck MAIN AI-SAST
-  RepositoryVersion + `function_summary` index + MAIN CallGraphData PackageVersion, then map
-  AI-SAST seeds onto CG symbols. Optional **safe** BFS via `--path-to` and/or Finding-derived
-  package tokens (`--vuln` / `--finding-package`; GHSA/CVE never used as CG URI patterns;
-  depth/fanout caps; CG path ≠ Finding reachability). Library:
-  `run_aisast_callgraph_bridge`, `resolve_vuln_walk_targets`.
-
 ### Changed
-
-- Endor Patches packet defaults and Impact Calculator align to the product
-  dashboard: Maven + Fix Available + RF|PRF pull; calculator ranks Crit then
-  High with denom = full catalog (not the Available-only view pool).
 
 ### Fixed
 
@@ -29,6 +18,12 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- `endor-aisast-callgraph` / skill **endor-aisast-callgraph-bridge** — precheck MAIN AI-SAST
+  RepositoryVersion + `function_summary` index + MAIN CallGraphData PackageVersion, then map
+  AI-SAST seeds onto CG symbols. Optional **safe** BFS via `--path-to` and/or Finding-derived
+  package tokens (`--vuln` / `--finding-package`; GHSA/CVE never used as CG URI patterns;
+  depth/fanout caps; CG path ≠ Finding reachability). Library:
+  `run_aisast_callgraph_bridge`, `resolve_vuln_walk_targets`.
 - Executive packet **Main vs PR scope** filter on SCA / SAST FindingLog burndown pages: PR scope uses `CONTEXT_TYPE_CI_RUN` Detected (CREATE) vs Blocked (`FINDING_TAGS_CI_BLOCKER`), ~30d lookback, PR-active projects (CI ScanResult evidence); onboarding adds a PR-active projects toggle.
 - `client.HuggingFaceOrganization` (list/get) — tenant inventory of connected Hugging Face orgs/models. Configure via `Installation` (`huggingface_config`) / `endorctl sync-org --platform-source=huggingface`.
 - Troubleshooting scan summaries expose `use_scan_profile`, `python_virtual_env`, and `python_global_site_packages` on `scan_mode` (with reconstructed `--python-virtual-env` flags).
@@ -42,6 +37,9 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Endor Patches packet defaults and Impact Calculator align to the product
+  dashboard: Maven + Fix Available + RF|PRF pull; calculator ranks Crit then
+  High with denom = full catalog (not the Available-only view pool).
 - Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1158).
 - Agent-knowledge ontology: Threat Center → `MalwareExposure` / `MalwareExposureQuery`; Package Firewall VS Code extensions → `PackageFirewallLog` + `ECOSYSTEM_VSCODE` filter; Agents Hub Agent Kit call log ≠ Policy Violations.
 - Agent knowledge INDEX Day-0 trap table (two-column rows), task routing for report CLIs via **endor-workflow-reports**, and consumer AGENTS/template alignment with deferred-auth `describe()` and workspace layout.

@@ -37,7 +37,7 @@ The SDK wheel version (`endorlabs`) is **independent** of [endorctl](https://doc
 
 | PyPI `endorlabs` | OpenAPI watermark (endorctl) | Notes |
 | ---------------- | ---------------------------- | ----- |
-| **0.7.2** (latest) | 1.7.1133 | [changelog](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md#072) |
+| **0.7.2** (latest) | 1.7.1158 | [changelog](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md#072) |
 | **0.7.1** | 1.7.1133 | [changelog](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md#071) |
 | `main` (unreleased) | 1.7.1133 | Integration branch; targets **0.8.0** — not on PyPI yet |
 
