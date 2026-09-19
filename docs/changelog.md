@@ -51,6 +51,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 - Pre-commit and sync verify guardrails: `MANIFEST.sdk_version` parity, shipped bundle link lint, Day-0 trap table shape, blocking `agent-knowledge-verify`, README PyPI link and stale devtools path checks.
 - PyPI wheel omitted `agent_knowledge` subtree paths and hollow `estate/analyze` imports (sdist force-include + runtime bundle validation).
+- Release publish action bumped to `gh-action-pypi-publish` v1.14.2 so hatchling Metadata-Version 2.5 wheels upload successfully.
 
 ### Breaking
 
