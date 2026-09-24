@@ -1,0 +1,28 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:00000000-0000-4000-8000-000000000001",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "name": "example-app",
+      "version": "1.0.0",
+      "purl": "pkg:pypi/example-app@1.0.0"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "requests",
+      "version": "2.32.0",
+      "purl": "pkg:pypi/requests@2.32.0"
+    },
+    {
+      "type": "library",
+      "name": "urllib3",
+      "version": "2.2.0",
+      "purl": "pkg:pypi/urllib3@2.2.0"
+    }
+  ]
+}

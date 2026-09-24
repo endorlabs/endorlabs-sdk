@@ -156,6 +156,22 @@
   },
   {
     "agent_visible": true,
+    "cli": "endor-sbom",
+    "composition": "library_api",
+    "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/sbom/",
+    "id": "sbom-management",
+    "library_entrypoints": [
+      "endorlabs.workflows.sbom.coverage.run_coverage",
+      "endorlabs.workflows.sbom.import_sbom.run_import",
+      "endorlabs.workflows.sbom.export_sbom.run_sbom_export",
+      "endorlabs.workflows.sbom.export_sbom.run_vex_export",
+      "endorlabs.workflows.sbom.export_sbom.poll_async_job"
+    ],
+    "module": "endorlabs.workflows.sbom.cli",
+    "skill": "endor-sbom-management"
+  },
+  {
+    "agent_visible": true,
     "cli": "endor-semgrep-inventory",
     "default_output": ".endorlabs/tasks/inventory/semgrep_rule_metadata_inventory.json",
     "id": "semgrep-inventory",

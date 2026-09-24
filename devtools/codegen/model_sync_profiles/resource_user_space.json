@@ -497,5 +497,48 @@
       "update": "not-supported",
       "delete": "not-supported"
     }
+  },
+  "ImportedSBOM": {
+    "limitations_short": "Imported SBOM records; prefer endorctl sbom import for scan",
+    "customer_ops": {
+      "list": "yes",
+      "get": "yes",
+      "create": "yes",
+      "update": "yes",
+      "delete": "yes"
+    }
+  },
+  "SBOMExport": {
+    "limitations_short": "Create-only SBOM export",
+    "customer_ops": {
+      "list": "no",
+      "get": "no",
+      "create": "create-only",
+      "update": "no",
+      "delete": "no"
+    },
+    "sdk_ops": ["create"]
+  },
+  "VEXExport": {
+    "limitations_short": "Create-only VEX export",
+    "customer_ops": {
+      "list": "no",
+      "get": "no",
+      "create": "create-only",
+      "update": "no",
+      "delete": "no"
+    },
+    "sdk_ops": ["create"]
+  },
+  "AsyncJob": {
+    "limitations_short": "Async SBOM/VEX export jobs; create then get by UUID",
+    "customer_ops": {
+      "list": "no",
+      "get": "yes",
+      "create": "yes",
+      "update": "no",
+      "delete": "no"
+    },
+    "sdk_ops": ["create", "get"]
   }
 }

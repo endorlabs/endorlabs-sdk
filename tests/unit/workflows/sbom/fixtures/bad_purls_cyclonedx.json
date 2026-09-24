@@ -1,0 +1,40 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:00000000-0000-4000-8000-000000000002",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "name": "example-app",
+      "version": "1.0.0",
+      "purl": "pkg:pypi/example-app@1.0.0"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "left-pad",
+      "version": "1.0.0",
+      "purl": "pkg:javascript/left-pad@1.0.0",
+      "properties": [
+        {
+          "name": "cdx:vcs:hash",
+          "value": "deadbeef"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "bad-swift",
+      "version": "1.0.0",
+      "purl": "pkg:swif/bad-swift@1.0.0"
+    },
+    {
+      "type": "library",
+      "name": "rails",
+      "version": "7.0.0",
+      "purl": "pkg:gem:rails@7.0.0"
+    }
+  ]
+}

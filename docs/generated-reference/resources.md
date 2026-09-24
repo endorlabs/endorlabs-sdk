@@ -1,7 +1,7 @@
 # Resources (SDK API Surface)
 
 Auto-generated from `src/endorlabs/registry.py` and OpenAPI spec.
-Model sync contract: `src/endorlabs/generated/registry_contract.py` (46 resources, 46 canonical entities).
+Model sync contract: `src/endorlabs/generated/registry_contract.py` (50 resources, 50 canonical entities).
 Each operation column is `sdk/spec` where spec is derived from OpenAPI
 collection and item paths.
 
@@ -23,12 +23,13 @@ gates (`IsCallerEndorAccount`) are additional field/route restrictions.
 
 ## Model-sync coverage snapshot
 
-- facade contract resources: `46`
-- canonical entities (union): `46`
+- facade contract resources: `50`
+- canonical entities (union): `50`
 
 | Resource | List (sdk/spec) | Get (sdk/spec) | Create (sdk/spec) | Update (sdk/spec) | Delete (sdk/spec) | Scope | Parent | Limitations |
 |----------|------------------|----------------|-------------------|-------------------|-------------------|-------|--------|-------------|
 | APIKey | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | Admin-managed programmatic credentials |
+| AsyncJob | no/no | yes/yes | yes/yes | no/no | no/no | tenant | — | Async SBOM/VEX export jobs; create then get by UUID |
 | AuditLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Append-only audit trail |
 | AuthenticationLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Tenant-context read-only resource |
 | AuthorizationPolicy | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Permission grants for identities |
@@ -39,6 +40,7 @@ gates (`IsCallerEndorAccount`) are additional field/route restrictions.
 | FindingLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Finding state history log |
 | HuggingFaceOrganization | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | HF org inventory after Installation sync; configure via Installation |
 | IdentityProvider | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | SSO identity provider configuration |
+| ImportedSBOM | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Imported SBOM records; prefer endorctl sbom import for scan |
 | Installation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Platform-managed |
 | Invitation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | User invitations |
 | LinterResult | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Scan-generated |
@@ -62,6 +64,7 @@ gates (`IsCallerEndorAccount`) are additional field/route restrictions.
 | QueryVulnerability | no/no | no/no | yes/yes | no/no | no/no | oss | — | Request-based query endpoint (create only) |
 | Repository | yes/yes | yes/yes | no/yes | yes/no | no/yes | tenant | — | Platform-managed |
 | RepositoryVersion | yes/yes | yes/yes | no/yes | yes/no | no/yes | tenant | project | Platform-managed |
+| SBOMExport | no/no | no/no | yes/yes | no/no | no/no | tenant | — | Create-only SBOM export |
 | SavedQuery | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Saved query definitions |
 | ScanLogRequest | no/no | no/no | yes/yes | no/no | no/no | tenant | — | Request-based only; no list/get/delete for log messages |
 | ScanProfile | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Scan configuration profiles |
@@ -70,6 +73,7 @@ gates (`IsCallerEndorAccount`) are additional field/route restrictions.
 | ScanWorkflowResult | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | Platform-managed |
 | SemgrepRule | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | Custom SAST rules |
 | SystemConfig | yes/yes | yes/yes | no/yes | yes/no | no/yes | tenant | — | Singleton per namespace; onboard-seeded; ADMIN update |
+| VEXExport | no/no | no/no | yes/yes | no/no | no/no | tenant | — | Create-only VEX export |
 | VectorStore | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | Vector store inventory (read-only) |
 | VectorStoreQuery | no/no | no/no | yes/yes | no/no | no/no | tenant | — | Natural-language vector store query |
 | VersionUpgrade | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | Platform-managed |
