@@ -67,6 +67,7 @@ endor-reachability-context = "endorlabs.workflows.reachability.cli:main"
 endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
 endor-auth = "endorlabs.workflows.auth.cli:main"
 endor-config-presence = "endorlabs.workflows.platform.cli:main"
+endor-sbom = "endorlabs.workflows.sbom.cli:main"
 endor-reports = "endorlabs.workflows.reports.cli:main"
 endor-log-export = "endorlabs.workflows.log_export.cli:main"
 
@@ -308,6 +309,8 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 "src/endorlabs/api_client.py" = ["C901", "S105"]  # complex _handle_response; "browser" sentinel comparison
 # --- Client surface ---
 "src/endorlabs/client_surface.py" = []
+# Generated stub mirrors OpenAPI field names (e.g. SBOMExport format=).
+"src/endorlabs/client_surface.pyi" = ["A002"]
 # --- Auth: global token capture is intentional ---
 "src/endorlabs/auth_server.py" = ["PLW0603"]
 # --- Context: lazy module loading ---
@@ -586,6 +589,7 @@ executionEnvironments = [
     { root = "src/endorlabs/workflows/reports", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportPrivateUsage = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none", reportOptionalMemberAccess = "none" },
     # Call-graph and dependency hydration workflow modules.
     { root = "src/endorlabs/workflows/callgraph", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
+    { root = "src/endorlabs/workflows/sbom", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
     { root = "src/endorlabs/workflows/dependencies/bom_graph.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
     { root = "src/endorlabs/workflows/dependencies/coordinates.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
     { root = "src/endorlabs/workflows/dependencies/metadata_fetch.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },

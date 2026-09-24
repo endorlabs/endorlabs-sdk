@@ -1,8 +1,8 @@
 {
-  "canonical_entity_count": 46,
-  "facade_contract_resource_count": 46,
+  "canonical_entity_count": 50,
+  "facade_contract_resource_count": 50,
   "registry_contract_path": "src/endorlabs/generated/registry_contract.py",
-  "resource_count": 46,
+  "resource_count": 50,
   "resources": [
     {
       "attr_name": "APIKey",
@@ -21,6 +21,26 @@
         "delete": true,
         "get": true,
         "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "AsyncJob",
+      "parent_kind": null,
+      "resource_name": "async-jobs",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": false,
+        "get": true,
+        "list": false,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": false,
+        "get": true,
+        "list": false,
         "update": false
       }
     },
@@ -215,6 +235,26 @@
         "get": true,
         "list": true,
         "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "ImportedSBOM",
+      "parent_kind": null,
+      "resource_name": "sbom-imports",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
       },
       "supported_ops_spec": {
         "create": true,
@@ -685,6 +725,26 @@
       }
     },
     {
+      "attr_name": "SBOMExport",
+      "parent_kind": null,
+      "resource_name": "sbom-export",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      }
+    },
+    {
       "attr_name": "SavedQuery",
       "parent_kind": null,
       "resource_name": "saved-queries",
@@ -841,6 +901,26 @@
         "delete": true,
         "get": true,
         "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "VEXExport",
+      "parent_kind": null,
+      "resource_name": "vex-export",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
         "update": false
       }
     },

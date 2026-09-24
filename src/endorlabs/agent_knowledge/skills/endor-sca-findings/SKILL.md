@@ -194,3 +194,4 @@ Use this structure in investigation notes:
 | Scan never completed / aggregate stats collapsed | [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) |
 | Exception policy on a finding | [endor-validate-policy](../endor-validate-policy/SKILL.md) |
 | Manifest path introduction only | [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md) |
+| SBOM import / coverage / export | [endor-sbom-management](../endor-sbom-management/SKILL.md) |

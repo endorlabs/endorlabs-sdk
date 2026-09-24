@@ -37,6 +37,7 @@ Each skill is a directory with `SKILL.md` plus optional reference files. Format:
 | [endor-troubleshoot-authlog](endor-troubleshoot-authlog/) | AuthenticationLog / AuthorizationPolicy / SSO login troubleshooting | Skill-owned |
 | [endor-auth-setup](endor-auth-setup/) | Probe, verify, and refresh SDK credentials (`endor-auth check` / `refresh`) | `endorlabs.workflows.auth` |
 | [endor-config-presence](endor-config-presence/) | Tenant/project onboarding config presence matrix (`endor-config-presence`) | `endorlabs.workflows.platform.config_presence` |
+| [endor-sbom-management](endor-sbom-management/) | Import/cover/export SBOMs (`endor-sbom`); ImportedSBOM / SBOMExport / VEXExport | `endorlabs.workflows.sbom` |
 | [endor-workflow-reports](endor-workflow-reports/) | Route tenant/namespace audit and report requests to script-backed CSV, canvas, and PDF report playbooks | `agent-knowledge/workflow-reports/`, `workflows.yaml` |
 | [endor-reachability-provenance](endor-reachability-provenance/) | Triaging conflicting reachability signals on findings | `endor-reachability-context` |
 | [endor-sso-integration-validation-troubleshooting](endor-sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, and claims-to-namespace troubleshooting | Skill-owned |

@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-09-18T21:56:03.467216+00:00",
+  "generated_at": "2026-09-24T18:54:14.021703+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -259,6 +259,13 @@
       "id": "endor-route-estate-queries",
       "name": "endor-route-estate-queries",
       "path": "skills/endor-route-estate-queries/SKILL.md",
+      "refs": []
+    },
+    {
+      "description": "Use when importing CycloneDX/SPDX SBOMs via endorctl, checking file-vs-project\ncoverage, listing ImportedSBOM rows, or exporting SBOM/VEX through Client\nfacades (SBOMExport / VEXExport / AsyncJob). Coverage is baked into the import\nplaybook. Not for estate-wide bulk pull, monorepo bom.Scan reimplementation,\nor SCA finding lineage (use endor-sca-findings).\n",
+      "id": "endor-sbom-management",
+      "name": "endor-sbom-management",
+      "path": "skills/endor-sbom-management/SKILL.md",
       "refs": []
     },
     {
@@ -627,6 +634,22 @@
       "id": "relationships-map",
       "module": "endorlabs.workflows.estate.analyze.project_map.map",
       "skill": "endor-namespace-relationship-map"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-sbom",
+      "composition": "library_api",
+      "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/sbom/",
+      "id": "sbom-management",
+      "library_entrypoints": [
+        "endorlabs.workflows.sbom.coverage.run_coverage",
+        "endorlabs.workflows.sbom.import_sbom.run_import",
+        "endorlabs.workflows.sbom.export_sbom.run_sbom_export",
+        "endorlabs.workflows.sbom.export_sbom.run_vex_export",
+        "endorlabs.workflows.sbom.export_sbom.poll_async_job"
+      ],
+      "module": "endorlabs.workflows.sbom.cli",
+      "skill": "endor-sbom-management"
     },
     {
       "agent_visible": true,

@@ -1121,6 +1121,23 @@ class V1ValidationStatus(StrEnum):
     VALIDATION_STATUS_SECRET_IS_INVALID = 'VALIDATION_STATUS_SECRET_IS_INVALID'
 
 
+class V1ValidationVerdict(StrEnum):
+    """
+    Verdict from AI SAST validation about whether a reported finding is real.
+    Distinct from FindingClassification, which describes the kind of issue.
+
+     - VALIDATION_VERDICT_UNSPECIFIED: No verdict is recorded for this finding.
+     - VALIDATION_VERDICT_TRUE_POSITIVE: Validation confirmed the finding.
+     - VALIDATION_VERDICT_FALSE_POSITIVE: Validation refuted the finding.
+     - VALIDATION_VERDICT_UNKNOWN: Validation could not determine whether the finding is real.
+    """
+
+    VALIDATION_VERDICT_UNSPECIFIED = 'VALIDATION_VERDICT_UNSPECIFIED'
+    VALIDATION_VERDICT_TRUE_POSITIVE = 'VALIDATION_VERDICT_TRUE_POSITIVE'
+    VALIDATION_VERDICT_FALSE_POSITIVE = 'VALIDATION_VERDICT_FALSE_POSITIVE'
+    VALIDATION_VERDICT_UNKNOWN = 'VALIDATION_VERDICT_UNKNOWN'
+
+
 class DataflowItem(BaseModel):
     description: str | None = None
     """
@@ -1794,6 +1811,11 @@ class AIResultSAST(BaseModel):
     validation_outcome: str | None = None
     """
     Validation outcome for unknown findings (the "## Validation Outcome" section).
+    """
+    validation_verdict: V1ValidationVerdict | None = 'VALIDATION_VERDICT_UNSPECIFIED'
+    """
+    The verdict AI SAST validation reached for this finding. Unset for
+    findings recorded before verdict tracking.
     """
     verification_scorecard: str | None = None
     """

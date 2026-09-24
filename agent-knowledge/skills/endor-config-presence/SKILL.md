@@ -83,4 +83,5 @@ payload = result.to_dict()
 | Tenant audit CSVs / executive packet | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) |
 | AuthPolicy form heuristics deep-dive | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) (`auth-policies`) |
 | Credential probe / refresh | [endor-auth-setup](../endor-auth-setup/SKILL.md) |
+| SBOM import / Project.is_sbom follow-up | [endor-sbom-management](../endor-sbom-management/SKILL.md) |
 | SSO claim mapping RCA | [endor-troubleshoot-authlog](../endor-troubleshoot-authlog/SKILL.md) |

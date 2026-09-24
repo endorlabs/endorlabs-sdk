@@ -1,5 +1,6 @@
 {
   "APIKey": "API key for programmatic access.",
+  "AsyncJob": "Asynchronous job (SBOM/VEX export) with pollable status.",
   "AuditLog": "Audit trail of API operations.",
   "AuthenticationLog": "Authentication event log.",
   "AuthorizationPolicy": "Permission grant for an authenticated identity.",
@@ -9,6 +10,7 @@
   "Finding": "Security or compliance finding from a scan.",
   "FindingLog": "Historical snapshot of a finding state.",
   "Installation": "SCM / platform integration (GitHub, GitLab, Azure, Bitbucket, Hugging Face).",
+  "ImportedSBOM": "Imported CycloneDX or SPDX software bill of materials.",
   "Invitation": "User invitation for platform access.",
   "LinterResult": "Linter analysis result for a package or repository version.",
   "HuggingFaceOrganization": "Inventory of a connected Hugging Face organization and its models.",
@@ -43,6 +45,8 @@
   "Query": "Graph join query (create-only); POST query spec to namespace.",
   "QuerySimilarPackages": "Similar-package query (create-only).",
   "SavedQuery": "Saved query definition for reuse in the product UI.",
+  "SBOMExport": "Create-only SBOM export for a package version or project.",
   "SystemConfig": "Tenant-wide system settings singleton (list/update; onboard-seeded).",
+  "VEXExport": "Create-only VEX export for a package version or project.",
   "Vulnerability": "Open-source vulnerability records."
 }

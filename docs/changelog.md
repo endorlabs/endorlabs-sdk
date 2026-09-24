@@ -8,6 +8,11 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- `endor-sbom` / skill **endor-sbom-management** — import via `endorctl sbom import`,
+  file-vs-project coverage (`PackageVersion.list_by_project`), list imports, and
+  SBOM/VEX export. Client facades: `ImportedSBOM`, `SBOMExport`, `VEXExport`,
+  `AsyncJob`. Library: `endorlabs.workflows.sbom`.
+
 ### Changed
 
 ### Fixed
