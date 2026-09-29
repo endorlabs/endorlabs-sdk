@@ -146,7 +146,7 @@ def init(
     include_openapi: bool = False,
     include_agent_knowledge: bool = True,
     force: bool = False,
-    sync_skills: Literal["none", "cursor", "claude", "both"] = "none",
+    sync_skills: Literal["none", "cursor"] = "none",
     client: APIClient | None = None,
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
@@ -159,7 +159,8 @@ def init(
         include_openapi: Download OpenAPI spec (default: False).
         include_agent_knowledge: Copy agent knowledge to sdk/ (default: True).
         force: Force re-download even if files exist (default: False).
-        sync_skills: Mirror skills into runtime discovery directories.
+        sync_skills: Mirror skills into ``.cursor/skills/`` (``none`` or ``cursor``).
+            Claude Code uses repo-root ``AGENTS.md``.
         client: Optional APIClient instance for OpenAPI download.
 
     Returns:
@@ -191,7 +192,7 @@ def init(
 def sync_agent_skills(
     *,
     repo_root: str | Path = ".",
-    target: Literal["none", "cursor", "claude", "both"] = "none",
+    target: Literal["none", "cursor"] = "none",
     source_dir: str | Path | None = None,
 ) -> dict[str, Path]:
     """Mirror ``endor-*`` skills into runtime discovery directories."""

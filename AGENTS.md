@@ -55,7 +55,7 @@ Prefer these before assuming full-tenant sweeps or hand-built relationship filte
 | API + workflow CLIs | **SDK-only** — no `.endorlabs/` |
 | INDEX / MANIFEST / skills without cwd writes | `agent_knowledge_index_path()`, `agent_knowledge_manifest()` (wheel) |
 | Cwd-relative skills + optional OpenAPI | `endorlabs.init()` or `uv run endor-context` |
-| IDE skill mirrors | `init(sync_skills="cursor")` / `"claude"` / `"both"` after SDK bootstrap |
+| IDE skill mirrors | `init(sync_skills="cursor")` after SDK bootstrap (Claude Code uses this file) |
 
 Pick the shallowest depth:
 

@@ -30,7 +30,7 @@ For materializing SDK context and optional OpenAPI, use the programmatic API:
 
 ```python
 import endorlabs
-endorlabs.init(sync_skills="cursor")  # or "claude"/"both" as needed
+endorlabs.init(sync_skills="cursor")  # optional IDE skill mirror
 ```
 
 See [AGENTS.md](../AGENTS.md#bootstrap) for agent bootstrap details.

@@ -27,6 +27,10 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Breaking
 
+- Removed `init(sync_skills="claude"|"both")` and the repo-root `CLAUDE.md` /
+  `.claude/commands/` generator. Claude Code uses [AGENTS.md](../AGENTS.md);
+  skill mirrors remain `sync_skills="cursor"` only.
+
 ## 0.7.2
 
 ### Added

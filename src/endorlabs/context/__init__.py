@@ -54,7 +54,7 @@ def init(
     include_openapi: bool = False,
     include_agent_knowledge: bool = True,
     force: bool = False,
-    sync_skills: Literal["none", "cursor", "claude", "both"] = "none",
+    sync_skills: Literal["none", "cursor"] = "none",
     client: APIClient | None = None,
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
@@ -98,10 +98,10 @@ def sync_openapi(
 def sync_agent_skills(
     *,
     repo_root: str | Path = ".",
-    target: Literal["none", "cursor", "claude", "both"] = "none",
+    target: Literal["none", "cursor"] = "none",
     source_dir: str | Path | None = None,
 ) -> dict[str, Path]:
-    """Mirror ``endor-*`` skills into runtime dirs; preserve non-endor entries."""
+    """Mirror ``endor-*`` skills into ``.cursor/skills/``; keep non-endor entries."""
     return _get_sync().sync_agent_skills(
         repo_root=repo_root,
         target=target,
