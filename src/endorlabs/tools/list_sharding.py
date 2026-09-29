@@ -52,14 +52,21 @@ def single_shard_namespace(shards: Sequence[ProjectShard]) -> str | None:
 
 
 def project_model_to_shard(project: Any, fallback_ns: str) -> ProjectShard:
-    """Build a shard from an SDK Project model."""
+    """Build a shard from an SDK Project model or DiscoveredProject."""
     uuid = str(getattr(project, "uuid", None) or "")
     tenant_meta = getattr(project, "tenant_meta", None)
     ns = getattr(tenant_meta, "namespace", None) if tenant_meta else None
-    namespace = str(ns) if ns else fallback_ns
+    if not isinstance(ns, str) or not ns:
+        top_ns = getattr(project, "namespace", None)
+        ns = top_ns if isinstance(top_ns, str) and top_ns else None
+    namespace = ns or fallback_ns
     meta = getattr(project, "meta", None)
     name = getattr(meta, "name", None) if meta else None
-    label = str(name) if name else None
+    if not isinstance(name, str) or not name:
+        # DiscoveredProject / topology rows expose name at the top level.
+        top_name = getattr(project, "name", None)
+        name = top_name if isinstance(top_name, str) and top_name else None
+    label = name or None
     return ProjectShard(project_uuid=uuid, namespace=namespace, label=label)
 
 

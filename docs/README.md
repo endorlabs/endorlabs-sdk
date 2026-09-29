@@ -33,6 +33,7 @@ Index for SDK-specific documentation.
 - [guides/examples.md](guides/examples.md) — Skill walkthrough and minimal API snippets for a first tenant session.
 - [guides/executive-report-packet.md](guides/executive-report-packet.md) — Tenant executive HTML packet (`endor-reports build` or bare `-n`).
 - [guides/facade-helpers.md](guides/facade-helpers.md) — When to use `search_by_*`, relationship accessors, `RouteResult`, wire helpers.
+- [guides/license-export.md](guides/license-export.md) — Scheduleable MAIN-context dependency + SPDX license join (`endor-license-export`).
 - [guides/query-recipes.md](guides/query-recipes.md) — Query vs facade routing, supported `list_parameters`, and estate join recipes.
 - [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; SDK consumer UX.
 - [guides/retrieving-scan-results.md](guides/retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.

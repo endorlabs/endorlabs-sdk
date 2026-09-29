@@ -6,6 +6,7 @@ SDK how-to and workflows for **consumers** of the package.
 - [executive-report-packet.md](executive-report-packet.md) — Tenant executive HTML packet (`endor-reports build` or bare `-n`).
 - [query-recipes.md](query-recipes.md) — Query vs facade routing and estate join recipes.
 - [facade-helpers.md](facade-helpers.md) — Identity lane (`search_by_*`), generated relationship accessors (`list_by_project`, `list_for_context`, `RouteResult`), wire helpers.
+- [license-export.md](license-export.md) — Scheduleable MAIN-context dependency + SPDX license join (`endor-license-export`).
 - [consumer-ux-list-update.md](consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; SDK consumer UX.
 - [retrieving-scan-results.md](retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.
 - [examples/via-shared-lib-exception/](examples/via-shared-lib-exception/) — Portable Rego exception for vulns whose leaf sits under a shared library (`graph.reachable` on `dependency_graph`).

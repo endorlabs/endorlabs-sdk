@@ -3,18 +3,35 @@ description: Resolve Project first; pass namespace=project.namespace on project-
 alwaysApply: true
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-namespace-scoping.md
-x-endor-source-sha256: c6d5a1bf7f41411036ff7b4806b50f079950edaf800ec2948a4e0889c722f3c8
+x-endor-source-sha256: b9db69646ed13b0bb30e2bf8c2a5402ba0129c27a5f33033a4f370ce891307b3
 ---
 
 # Namespace scoping
 
-## OSS catalog plane
+## License resolution (export namespace)
 
-`Vulnerability`, `Malware`, `QueryVulnerability`, and `QueryMalware` use registry
-`scope="oss"`. List/get and catalog query creates hit `/v1/namespaces/oss/…`
-regardless of `Client(tenant=…)`. OpenAPI paths for these kinds are already
+**Dependency + license export** (`endor-license-export`) and OSO-style SPDX joins
+use the **export namespace only** (tenant root or child path being exported):
+
+- POST **`PackageLicenseQuery`** and **`BatchPackageLicenseQuery`** at
+  `/v1/namespaces/<export-ns>/queries/…`
+- Do **not** list `PackageLicense` under a hardcoded catalog namespace for bulk
+  export; tenant `PackageLicense.list` is not the product merge path and often
+  returns empty rows for catalog-backed PVs
+- Per-PV Query **404** → no license data (empty SPDX), not a workflow error
+
+`PackageLicense` registry scope is **tenant**; merged catalog + override view is
+the Query response at the customer namespace chain.
+
+## OSS catalog plane (Vulnerability / Malware only)
+
+These kinds use registry `scope="oss"`. List/get and catalog query creates hit
+`/v1/namespaces/oss/…` regardless of `Client(tenant=…)`. OpenAPI paths are
 parameterized as `{tenant_meta.namespace}`; the SDK **forces** the literal `oss`
-plane via `resource_scope_overrides.json`.
+wire plane via `resource_scope_overrides.json` and facade `_ns()`.
+
+Applies to: **`Vulnerability`**, **`Malware`**, **`QueryVulnerability`**,
+**`QueryMalware`** — not license export.
 
 **Customer investigations prefer the tenant plane:** use **`MalwareExposure`** /
 **`MalwareExposureQuery`**, Finding malware category

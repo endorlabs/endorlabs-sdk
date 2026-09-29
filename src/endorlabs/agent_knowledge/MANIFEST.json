@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-09-24T18:54:14.021703+00:00",
+  "generated_at": "2026-09-29T21:19:46.605371+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -544,6 +544,21 @@
       ],
       "module": "endorlabs.workflows.reports.cli",
       "skill": "endor-workflow-reports"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-license-export",
+      "composition": "library_api",
+      "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/licenses/",
+      "id": "license-export",
+      "library_entrypoints": [
+        "endorlabs.workflows.license_export.run_license_export",
+        "endorlabs.workflows.license_export.collect_dependency_inventory",
+        "endorlabs.workflows.license_export.resolve_licenses",
+        "endorlabs.workflows.license_export.write_joined_export"
+      ],
+      "module": "endorlabs.workflows.license_export.cli",
+      "skill": null
     },
     {
       "agent_visible": true,

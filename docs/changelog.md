@@ -8,6 +8,14 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- `endor-license-export` — scheduleable MAIN-context DependencyMetadata inventory
+  plus SPDX license resolve via `PackageLicenseQuery` /
+  `BatchPackageLicenseQuery` at the export namespace (no catalog-namespace list),
+  one CSV/JSONL per namespace for CI. Library:
+  `endorlabs.workflows.license_export`. Guide: [license-export.md](guides/license-export.md).
+  UX: keyed JSONL upserts (`JsonlKeyedStore`), `export_summary.json`,
+  `--filter`/`--mask`, `--include-license-object`, shared CLI auth flags
+  (`workflows.common.cli_client`; also on `endor-log-export`).
 - `endor-sbom` / skill **endor-sbom-management** — import via `endorctl sbom import`,
   file-vs-project coverage (`PackageVersion.list_by_project`), list imports, and
   SBOM/VEX export. Client facades: `ImportedSBOM`, `SBOMExport`, `VEXExport`,

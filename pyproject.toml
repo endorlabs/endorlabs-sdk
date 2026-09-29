@@ -70,6 +70,7 @@ endor-config-presence = "endorlabs.workflows.platform.cli:main"
 endor-sbom = "endorlabs.workflows.sbom.cli:main"
 endor-reports = "endorlabs.workflows.reports.cli:main"
 endor-log-export = "endorlabs.workflows.log_export.cli:main"
+endor-license-export = "endorlabs.workflows.license_export.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/endorlabs/endorlabs-sdk"

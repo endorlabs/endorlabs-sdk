@@ -9,8 +9,11 @@ import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-import endorlabs
 from endorlabs.context.paths import sanitize_path_segment, task_activity_dir
+from endorlabs.workflows.common.cli_client import (
+    add_client_auth_arguments,
+    client_from_namespace_args,
+)
 from endorlabs.workflows.logs.density import (
     probe_log_density,
     probe_result_to_dict,
@@ -125,6 +128,7 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Parallel workers for per-namespace density counts.",
     )
+    add_client_auth_arguments(parser)
     return parser
 
 
@@ -180,7 +184,7 @@ def _resolve_multi_output_dir(args: argparse.Namespace, *, namespace: str) -> Pa
 
 
 def _run_probe_only(
-    client: endorlabs.Client,
+    client: object,
     args: argparse.Namespace,
     *,
     namespace: str,
@@ -215,7 +219,7 @@ def _run_probe_only(
 
 
 def _run_discover_export(
-    client: endorlabs.Client,
+    client: object,
     args: argparse.Namespace,
     *,
     namespace: str,
@@ -276,7 +280,7 @@ def main(argv: list[str] | None = None) -> int:
     fmt: ExportFormat = args.format
     source: LogSource = args.source
 
-    client = endorlabs.Client(tenant=namespace)
+    client = client_from_namespace_args(namespace, args)
     try:
         if args.probe_only:
             return _run_probe_only(
