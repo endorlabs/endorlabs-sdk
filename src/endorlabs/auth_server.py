@@ -96,6 +96,44 @@ _METHOD_ALIASES: dict[str, str] = {
     "admin": "browser-auth",
 }
 
+# Human labels for the localhost success page (initiated CLI / selector method).
+_AUTH_METHOD_LABELS: dict[str, str] = {
+    "browser-auth": "Browser",
+    "sso": "SSO",
+    "google": "Google",
+    "github": "GitHub",
+    "gitlab": "GitLab",
+    "azureadv2": "Microsoft",
+    "email": "Email",
+}
+
+
+def auth_method_label(method: str | None) -> str | None:
+    """Return a short display label for an OAuth auth method, or ``None``."""
+    if not method:
+        return None
+    cleaned = method.strip().lower()
+    if not cleaned:
+        return None
+    normalized = _METHOD_ALIASES.get(cleaned, cleaned)
+    return _AUTH_METHOD_LABELS.get(normalized, normalized)
+
+
+def _resolve_auth_type_label(
+    method: str | None,
+    auth_source: str | None = None,
+) -> str | None:
+    """Pick the success-page Auth type label (initiated method, or IdP from whoami)."""
+    method_label = auth_method_label(method)
+    source_key = auth_source.strip().lower() if isinstance(auth_source, str) else ""
+    # Provider-picker flow only knows ``browser-auth`` until whoami; prefer a known IdP.
+    if (not method_label or method_label == "Browser") and source_key in (
+        _AUTH_METHOD_LABELS
+    ):
+        return _AUTH_METHOD_LABELS[source_key]
+    return method_label
+
+
 # HTML template; long attribute lines are intentional (noqa on block via per-line).
 _AUTH_SELECTOR_HTML = """\
 <!DOCTYPE html>
@@ -338,10 +376,16 @@ _SUCCESS_PAGE_HTML = """\
 def _success_page(
     environment: str,
     summary: CallbackSessionSummary | None = None,
+    *,
+    auth_method: str | None = None,
 ) -> bytes:
     """Render the localhost callback success page (identity + TTL, never the token)."""
     app_url = f"https://app.{environment}"
     rows: list[str] = []
+    auth_source = summary.auth_source if summary is not None else None
+    type_label = _resolve_auth_type_label(auth_method, auth_source)
+    if type_label:
+        rows.append(f"<dt>Auth type</dt><dd>{escape(type_label)}</dd>")
     if summary is not None:
         if summary.identity:
             rows.append(f"<dt>Identity</dt><dd>{escape(summary.identity)}</dd>")
@@ -368,6 +412,7 @@ def _make_token_handler(
     *,
     environment: str = DEFAULT_ENV,
     serve_selector: bool = False,
+    auth_method: str | None = None,
 ) -> type[BaseHTTPRequestHandler]:
     """Build a callback handler that validates OAuth CSRF state before capture."""
 
@@ -429,7 +474,11 @@ def _make_token_handler(
                     self.end_headers()
                     with contextlib.suppress(Exception):
                         _ = self.wfile.write(
-                            _success_page(environment, summary=summary)
+                            _success_page(
+                                environment,
+                                summary=summary,
+                                auth_method=auth_method,
+                            )
                         )
                 else:
                     logger.warning("Token not found in redirect: %s", self.path)
@@ -479,6 +528,7 @@ def _bind_callback_server(
     *,
     environment: str = DEFAULT_ENV,
     serve_selector: bool = False,
+    auth_method: str | None = None,
 ) -> tuple[HTTPServer, int]:
     """Bind localhost callback server on the first free port in the CLI range."""
     last_error: OSError | None = None
@@ -486,6 +536,7 @@ def _bind_callback_server(
         expected_state,
         environment=environment,
         serve_selector=serve_selector,
+        auth_method=auth_method,
     )
     for offset in range(OAUTH_CALLBACK_PORT_COUNT):
         port = OAUTH_CALLBACK_PORT_START + offset
@@ -570,6 +621,7 @@ def get_token(  # noqa: C901
                 expected_state,
                 environment=environment,
                 serve_selector=True,
+                auth_method=normalized_method,
             )
             server.timeout = timeout
             browser = get_browser(browser_name)
@@ -648,6 +700,7 @@ def get_token(  # noqa: C901
             expected_state,
             environment=environment,
             serve_selector=False,
+            auth_method=normalized_method,
         )
         server.timeout = timeout
 
