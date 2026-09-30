@@ -13,6 +13,9 @@ from endorlabs.workflows.projects.inventory import (
     extract_run_by_system,
     scan_execution_label,
 )
+from endorlabs.workflows.troubleshooting_scans.manifest_extract import (
+    extract_discovered_manifests,
+)
 from endorlabs.workflows.wire_access import dict_str, nested_dict, nested_str
 
 
@@ -190,6 +193,9 @@ def extract_scan_mode(scan_result: dict[str, Any]) -> dict[str, Any]:
     use_scan_profile = _as_bool(scan_cfg.get("UseScanProfile"))
     python_virtual_env = dict_str(scan_cfg, "PythonVirtualEnv") or None
     python_global_site_packages = _as_bool(scan_cfg.get("PythonGlobalSitePackages"))
+    toolchains = nested_dict(config, "ToolChainsConfig")
+    docker_source = dict_str(toolchains, "DockerSource") or None
+    docker_source_uuid = dict_str(toolchains, "DockerSourceUUID") or None
     flags: list[str] = []
     flag_values: tuple[tuple[bool | None, str], ...] = (
         (quick_scan, "--quick-scan"),
@@ -224,6 +230,15 @@ def extract_scan_mode(scan_result: dict[str, Any]) -> dict[str, Any]:
         "path": path,
         "exclude_path": exclude_path,
         "endorctl_flags": flags,
+        "toolchains": {
+            "docker_source": docker_source,
+            "docker_source_uuid": docker_source_uuid or None,
+        },
+        "config_allowlist": {
+            "UseScanProfile": use_scan_profile,
+            "ToolChainsConfig.DockerSource": docker_source,
+            "ToolChainsConfig.DockerSourceUUID": docker_source_uuid or None,
+        },
     }
     return result
 
@@ -294,9 +309,23 @@ def scan_result_extended_summary(scan_result: dict[str, Any]) -> dict[str, Any]:
                 }
             )
     logs_raw = spec.get("logs")
-    log_line_count = (
-        len(cast("list[Any]", logs_raw)) if isinstance(logs_raw, list) else 0
+    log_lines: list[Any] = (
+        cast("list[Any]", logs_raw) if isinstance(logs_raw, list) else []
     )
+    log_line_count = len(log_lines)
+    discovered: dict[str, Any] = (
+        extract_discovered_manifests(log_lines)
+        if log_lines
+        else {
+            "hit_count": 0,
+            "path_count": 0,
+            "paths": [],
+            "languages": [],
+            "analytics_walk_count": 0,
+            "hits": [],
+        }
+    )
+    mode = extract_scan_mode(scan_result)
     return {
         **scan_result_metrics(scan_result),
         "meta_parent_uuid": meta.get("parent_uuid"),
@@ -326,6 +355,9 @@ def scan_result_extended_summary(scan_result: dict[str, Any]) -> dict[str, Any]:
         "versions": versions,
         "provisioning_result_summary": prov_summary,
         "log_line_count": log_line_count,
+        "discovered_manifests": discovered,
+        "config_allowlist": mode.get("config_allowlist"),
+        "toolchains": mode.get("toolchains"),
     }
 
 

@@ -354,6 +354,15 @@ def _scan_mode_markdown_lines(latest: dict[str, Any]) -> list[str]:
     command = mode_dict.get("command")
     use_scan_profile = mode_dict.get("use_scan_profile")
     python_virtual_env = mode_dict.get("python_virtual_env")
+    toolchains_raw: object = (
+        mode_dict.get("toolchains") or latest.get("toolchains") or {}
+    )
+    toolchains: dict[str, Any] = (
+        cast("dict[str, Any]", toolchains_raw)
+        if isinstance(toolchains_raw, dict)
+        else {}
+    )
+    docker_source = toolchains.get("docker_source")
     return [
         f"- scan_execution: `{execution}`",
         f"- run_by_system: `{run_by_system}`",
@@ -361,6 +370,7 @@ def _scan_mode_markdown_lines(latest: dict[str, Any]) -> list[str]:
         f"- use_local_repo_cache: `{use_local}`",
         f"- use_scan_profile: `{use_scan_profile}`",
         f"- python_virtual_env: `{python_virtual_env}`",
+        f"- ToolChainsConfig.DockerSource: `{docker_source}`",
         f"- command: `{command}`",
         f"- endorctl_flags: {flag_text}",
     ]
@@ -395,6 +405,10 @@ def _build_markdown(
     scan_uuid = dict_str(logs_artifact, "scan_result_uuid") or dict_str(latest, "uuid")
     namespace = dict_str(logs_artifact, "namespace") or dict_str(latest, "namespace")
     project_name = _project_name_from_search(search_artifact)
+    project_app_url = dict_str(results_artifact, "project_app_url")
+    dual = as_dict(results_artifact.get("dual_scan_pair"))
+    profile_refs = as_dict(results_artifact.get("project_profile_refs"))
+    discovered = as_dict(latest.get("discovered_manifests"))
 
     lines: list[str] = [
         "# Troubleshooting Scan Triage Summary",
@@ -409,23 +423,76 @@ def _build_markdown(
         f"- scan_results: `{results_path}`",
         f"- scan_logs: `{logs_path}`",
         "",
-        "## Scan Context",
-        "",
-        f"- tenant: `{tenant}`",
-        f"- namespace: `{namespace}`",
-        f"- project_uuid: `{project_uuid}`",
-        f"- project_name: `{project_name}`" if project_name else "- project_name: n/a",
-        f"- scan_result_uuid: `{scan_uuid}`",
-        f"- scan_status: `{dict_str(latest, 'status')}`",
-        f"- scan_exit_code: `{dict_str(latest, 'exit_code')}`",
-        f"- scan_success: `{dict_str(latest, 'scan_success')}`",
-        f"- scan_failures: `{dict_str(latest, 'scan_failures')}`",
-        f"- endorctl_version: `{dict_str(latest, 'endorctl_version')}`",
-        *_scan_mode_markdown_lines(latest),
-        "",
-        "## What Is Wrong (citing logs)",
+        "## Endor app links (cite first)",
         "",
     ]
+    if project_app_url:
+        lines.append(f"- project: {project_app_url}")
+    elif namespace and project_uuid:
+        lines.append(
+            f"- project: https://app.endorlabs.com/t/{namespace}/projects/{project_uuid}"
+        )
+    else:
+        lines.append("- project: n/a")
+    if scan_uuid and namespace:
+        lines.append(
+            f"- scan-history: https://app.endorlabs.com/t/{namespace}/scan-history/{scan_uuid}"
+        )
+    analytics_url = dict_str(dual, "analytics_app_url")
+    full_sca_url = dict_str(dual, "full_sca_app_url")
+    if analytics_url:
+        lines.append(f"- latest Analytics: {analytics_url}")
+    if full_sca_url:
+        lines.append(f"- latest full SCA (TYPE_ALL_SCANS): {full_sca_url}")
+    lines.extend(
+        [
+            "",
+            "## Scan Context",
+            "",
+            f"- tenant: `{tenant}`",
+            f"- namespace: `{namespace}`",
+            f"- project_uuid: `{project_uuid}`",
+            (
+                f"- project_name: `{project_name}`"
+                if project_name
+                else "- project_name: n/a"
+            ),
+            (
+                "- scan_profile_uuid: "
+                f"`{dict_str(profile_refs, 'scan_profile_uuid') or None}`"
+            ),
+            (
+                "- toolchain_profile_uuid: "
+                f"`{dict_str(profile_refs, 'toolchain_profile_uuid') or None}`"
+            ),
+            f"- scan_result_uuid: `{scan_uuid}`",
+            f"- scan_status: `{dict_str(latest, 'status')}`",
+            f"- scan_exit_code: `{dict_str(latest, 'exit_code')}`",
+            f"- scan_success: `{dict_str(latest, 'scan_success')}`",
+            f"- scan_failures: `{dict_str(latest, 'scan_failures')}`",
+            f"- endorctl_version: `{dict_str(latest, 'endorctl_version')}`",
+            *_scan_mode_markdown_lines(latest),
+            "",
+            "## Discovered manifests (embedded logs)",
+            "",
+            f"- path_count: `{discovered.get('path_count', 0)}`",
+            f"- languages: `{discovered.get('languages', [])}`",
+            f"- analytics_walk_count: `{discovered.get('analytics_walk_count', 0)}`",
+        ]
+    )
+    paths_raw = discovered.get("paths")
+    if isinstance(paths_raw, list) and paths_raw:
+        lines.append("- paths:")
+        lines.extend(f"  - `{path}`" for path in cast("list[Any]", paths_raw)[:40])
+    else:
+        lines.append("- paths: (none in embedded logs — pull get_logs including DEBUG)")
+    lines.extend(
+        [
+            "",
+            "## What Is Wrong (citing logs)",
+            "",
+        ]
+    )
 
     if errors:
         lines.extend(_error_markdown_rows(errors, max_errors=max_errors))

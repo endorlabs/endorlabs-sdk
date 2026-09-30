@@ -39,10 +39,21 @@ Chain CLI steps on JSON artifacts; extend with library imports per [workflow-com
 - Diff scan-level aggregate metrics into JSON + markdown artifacts.
 - **Library probe:** `PackageVersion.list_by_project(project)` → `spec.resolution_errors` when dependency metrics collapse.
 - **Per-scan execution mode:** `scan_mode` on fetch/pull summaries (`scan_execution`, `quick_scan`, `use_local_repo_cache`, `use_scan_profile`, `python_virtual_env`, reconstructed `endorctl_flags`).
+- **Config allowlist:** `ScanConfig.UseScanProfile`, `ToolChainsConfig.DockerSource` / `DockerSourceUUID` on summaries (`config_allowlist`, `toolchains`).
 - **Scan / toolchain profile (always on first project resolve):** read
   `Project.spec.scan_profile_uuid` / `toolchain_profile_uuid`; when set, `ScanProfile.get`
   (use profile `tenant_meta.namespace`). Also record `ScanConfig.UseScanProfile` and
   Python path fields from the scan environment even when no profile UUID is attached.
+- **Dual-scan window:** latest Analytics (`TYPE_ANALYTICS` / `TYPE_ANALYTICS_CHECK`) **and**
+  latest full SCA (`TYPE_ALL_SCANS`). Cite Analytics first for profile/config; extract
+  manifests from **both** log sets (`discovered_manifests` — path hits usually on full SCA).
+- **Manifest extraction:** `extract_discovered_manifests` over embedded `spec.logs` and
+  `ScanResult.get_logs` (include DEBUG). Language walks: `Discovering {lang} dependency
+  files ...`; path lines: `Found package.json file at: …`, lockfile / maven / requirements
+  shapes. See `pull_scan_results.dual_scan_pair`.
+- **Evidence order:** Endor app URLs first (scan-history / project), then local artifacts
+  when critical. Templates in shipped [INDEX.md](../../INDEX.md) (Structured Endor app
+  hyperlinks).
 
 **Out of scope (use another skill):**
 
@@ -91,14 +102,18 @@ Thread UUIDs and namespace from each artifact into the next step; do not re-list
 2. **Profile check (same turn):** `scan_profile_uuid` / `toolchain_profile_uuid` on
    Project; `ScanProfile.get` when set; note `disable_automated_scan` /
    `Project.is_app` / `is_cli`
-3. `fetch_scan_results` → scan window summary (includes `scan_mode`)
-4. Read `scan_mode.scan_execution`, `use_scan_profile`, `python_virtual_env` before
-   attributing runner / Python / App behavior
-5. `select_anomalous_scans` → ranked pair (`regression_detected` = score > 0)
-6. `search_scan_errors` → embedded `spec.logs` regex hits
-7. `diff_scans` → aggregate metric diff
-8. `fetch_scan_logs` or `pull_scan_logs` → only if embedded search insufficient
-9. `summarize_scan_triage` → optional markdown from pull artifacts
+3. `fetch_scan_results` / `pull_scan_results` → scan window summary (includes `scan_mode`,
+   `config_allowlist`, `toolchains`, `discovered_manifests`, `dual_scan_pair`)
+4. **Dual-scan check:** from `dual_scan_pair`, open Analytics app URL first, then full SCA.
+   Run `extract_discovered_manifests` on both (via pull summaries or `fetch_scan_logs`).
+5. Read `scan_mode.scan_execution`, `use_scan_profile`, `toolchains.docker_source`,
+   `python_virtual_env` before attributing runner / Python / App behavior
+6. `select_anomalous_scans` → ranked pair (`regression_detected` = score > 0)
+7. `search_scan_errors` → embedded `spec.logs` regex hits
+8. `diff_scans` → aggregate metric diff
+9. `fetch_scan_logs` or `pull_scan_logs` → only if embedded search insufficient
+   (index includes `discovered_manifests`)
+10. `summarize_scan_triage` → optional markdown from pull artifacts
 
 ### Explicit pair (user named two scans)
 
@@ -153,6 +168,9 @@ for pv in client.PackageVersion.list_by_project(project, namespace=project_ns, m
 | `scan_success` ↓ and `dependency_count_total` ↓ | PV `resolution_errors` library probe |
 | `scan_mode.scan_execution` / `run_by_system` on fetch summary | Use these; **do not** infer GitHub App or GitHub Actions from checkout paths (`/__w/`, `GITHUB_WORKSPACE`) |
 | `Project.scan_profile_uuid` set / `scan_mode.use_scan_profile` | Fetch that `ScanProfile` (env vars + toolchain) before blaming CI-only config |
+| `scan_mode.toolchains.docker_source` / `config_allowlist` | Record DockerSource (`auto-detect` vs profile) before blaming toolchain |
+| `dual_scan_pair.analytics_uuid` vs `full_sca_uuid` | Cite Analytics first for config; expect path manifests mainly on full SCA |
+| `discovered_manifests.path_count == 0` on full SCA | Pull DEBUG logs via `get_logs`; language_walk alone ≠ missing manifests |
 | `scan_mode.python_virtual_env` set | Treat as explicit venv root for SCA; wrong `.../bin` path → discover fails without creating a temp venv |
 | `scan_mode.quick_scan` or `use_local_repo_cache` is true | Approximate graphs / Maven `--offline` are expected; compare to a scan without those flags |
 | `fetch_scan_logs` `entry_count > 0` but no `error` in text | Re-check embedded `spec.logs`; API rows may be hollow |
@@ -196,6 +214,11 @@ Installed package modules (run with `uv run python -m endorlabs.workflows.troubl
 
 - `pull_scan_results.py`
   - Heavier scan-result pull for `summarize_scan_triage` input artifacts.
+  - Adds **`project_profile_refs`**, **`dual_scan_pair`** (latest Analytics +
+    `TYPE_ALL_SCANS`, Analytics cited first), **`discovered_manifests`** per
+    summary (from embedded logs), and **`config_allowlist`** /
+    **`toolchains.docker_source`**.
+  - App URLs: `project_app_url`, `dual_scan_pair.*_app_url`.
 
 - `select_anomalous_scans.py`
   - **Heuristic** scoring on adjacent pairs. `regression_detected` = selected pair **score > 0**.
@@ -212,6 +235,7 @@ Installed package modules (run with `uv run python -m endorlabs.workflows.troubl
 
 - `fetch_scan_logs.py`
   - ScanLog API via `ScanResult.get_logs`; falls back to embedded `spec.logs` when API returns no rows **or hollow messages** (timestamp/level only).
+  - Index entries include **`discovered_manifests`** from pulled log text.
   - Output object kinds: `scan_log`, `scan_logs`.
 
 - `pull_scan_logs.py`
@@ -219,6 +243,7 @@ Installed package modules (run with `uv run python -m endorlabs.workflows.troubl
 
 - `summarize_scan_triage.py`
   - Markdown triage summary from `pull_scan_results` + `pull_scan_logs` artifacts.
+  - Includes Endor app links, profile UUIDs, DockerSource, and discovered manifest paths.
 
 - `run_troubleshooting_workflow.py`
   - End-to-end orchestrator (heuristic path).

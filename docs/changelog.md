@@ -23,6 +23,15 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Troubleshooting scan RCA: `extract_discovered_manifests` +
+  `select_latest_scan_pair_by_type` (latest Analytics + `TYPE_ALL_SCANS`);
+  `pull_scan_results` / summaries expose `dual_scan_pair`,
+  `discovered_manifests`, `config_allowlist` (`UseScanProfile`,
+  `ToolChainsConfig.DockerSource`), and project profile UUIDs. Skills
+  **endor-troubleshooting-scans**, **endor-sca-findings**,
+  **endor-dependency-provenance** and shipped `INDEX.md` (structured Endor
+  app URL templates) updated accordingly.
+
 ### Fixed
 
 ### Breaking
