@@ -329,6 +329,47 @@ EXPERIMENTAL_RESOURCE_SPECS: list[dict[str, Any]] = [
             "endorlabs.resources.malware_exposure_query:build_create_payload"
         ),
     },
+    {
+        "attr_name": "ImportedSBOM",
+        "resource_name": "sbom-imports",
+        "model_import_path": "endorlabs.resources.imported_sbom:ImportedSBOM",
+        "supported_ops": frozenset({"list", "get", "create", "update", "delete"}),
+        "create_mode": "both",
+        "filter_kwarg_map": {"name": "meta.name"},
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.imported_sbom:build_create_payload"
+        ),
+    },
+    {
+        "attr_name": "SBOMExport",
+        "resource_name": "sbom-export",
+        "model_import_path": "endorlabs.resources.sbom_export:SBOMExport",
+        "supported_ops": frozenset({"create"}),
+        "create_mode": "both",
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.sbom_export:build_create_payload"
+        ),
+    },
+    {
+        "attr_name": "VEXExport",
+        "resource_name": "vex-export",
+        "model_import_path": "endorlabs.resources.vex_export:VEXExport",
+        "supported_ops": frozenset({"create"}),
+        "create_mode": "both",
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.vex_export:build_create_payload"
+        ),
+    },
+    {
+        "attr_name": "AsyncJob",
+        "resource_name": "async-jobs",
+        "model_import_path": "endorlabs.resources.async_job:AsyncJob",
+        "supported_ops": frozenset({"create", "get"}),
+        "create_mode": "both",
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.async_job:build_create_payload"
+        ),
+    },
 ]
 
 EXPERIMENTAL_REGISTRY_ATTR_NAMES: frozenset[str] = frozenset(

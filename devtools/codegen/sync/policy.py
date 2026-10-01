@@ -25,6 +25,8 @@ _COMMON_SUFFIXES = (
 MODEL_SYNC_ENTITY_ALIASES_BY_MODEL: dict[str, str] = {
     "Metric": "MetricServiceCreateMetricBody",
     "Vulnerability": "v1Vuln",
+    "SBOMExport": "v1ExportedSBOM",
+    "VEXExport": "v1ExportedVEX",
 }
 
 

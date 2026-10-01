@@ -32,6 +32,14 @@ This keeps separate introduction paths distinct across manifest files and refs.
 
 ## Workflow
 
+0. **Scan discovery gate (before collapsing paths):** resolve Project; pull latest
+   Analytics (`TYPE_ANALYTICS` / `TYPE_ANALYTICS_CHECK`) and latest full SCA
+   (`TYPE_ALL_SCANS`) via [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md)
+   (`dual_scan_pair`, `discovered_manifests`). Cite Analytics app URL first for
+   config (`UseScanProfile`, `ToolChainsConfig.DockerSource`, profile UUIDs);
+   use full SCA logs for path-bearing discovery lines. Do not merge introduction
+   paths that never appear in either scan's discovered manifest set without
+   noting the gap.
 1. Pull findings for the project/package scope.
 2. Record exact coordinate (`spec.target_dependency_package_name`) and
    `spec.dependency_file_paths`.
@@ -40,6 +48,8 @@ This keeps separate introduction paths distinct across manifest files and refs.
    finding summary text or dependency metadata).
 5. Classify each path as direct or transitive and emit one row per path.
 6. Report unresolved ambiguity explicitly (for example missing parent edge).
+7. Prefer Endor app links in writeups (scan-history / project / finding) before
+   local file paths — templates in shipped [INDEX.md](../../INDEX.md).
 
 ## Output Shape
 

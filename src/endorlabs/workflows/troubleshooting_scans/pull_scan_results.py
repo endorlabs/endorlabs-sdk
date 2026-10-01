@@ -27,6 +27,12 @@ from .common import (
     scan_result_extended_summary,
     write_json,
 )
+from .manifest_extract import (
+    app_project_url,
+    app_scan_history_url,
+    extract_project_profile_refs,
+    select_latest_scan_pair_by_type,
+)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -112,12 +118,54 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         page_size=args.page_size,
     )
     summaries = [scan_result_extended_summary(d) for d in raw_list]
+    project_profiles = extract_project_profile_refs(object_to_dict(project))
+    dual = select_latest_scan_pair_by_type(raw_list)
+    # Drop full scan bodies from dual pair; keep UUIDs + summary pointers
+    dual_compact: dict[str, Any] = {
+        "citation_priority": dual["citation_priority"],
+        "analytics_uuid": dual["analytics_uuid"],
+        "analytics_type": dual["analytics_type"],
+        "full_sca_uuid": dual["full_sca_uuid"],
+        "full_sca_type": dual["full_sca_type"],
+    }
+    ns_for_urls = str(project_profiles.get("namespace") or list_ns)
+    if dual["analytics_uuid"]:
+        dual_compact["analytics_app_url"] = app_scan_history_url(
+            namespace=ns_for_urls, scan_result_uuid=str(dual["analytics_uuid"])
+        )
+    if dual["full_sca_uuid"]:
+        dual_compact["full_sca_app_url"] = app_scan_history_url(
+            namespace=ns_for_urls, scan_result_uuid=str(dual["full_sca_uuid"])
+        )
+    # Attach discovered_manifests from matching summaries
+    summary_by_uuid = {
+        str(s.get("uuid")): s for s in summaries if s.get("uuid") is not None
+    }
+    for role, uuid_key in (
+        ("analytics", "analytics_uuid"),
+        ("full_sca", "full_sca_uuid"),
+    ):
+        uid = dual_compact.get(uuid_key)
+        if not uid:
+            continue
+        summary = summary_by_uuid.get(str(uid))
+        if summary:
+            dual_compact[f"{role}_discovered_manifests"] = summary.get(
+                "discovered_manifests"
+            )
+            dual_compact[f"{role}_config_allowlist"] = summary.get("config_allowlist")
+            dual_compact[f"{role}_toolchains"] = summary.get("toolchains")
 
     payload: dict[str, Any] = {
         "root_tenant": rt,
         "query_tenant": args.tenant,
         "list_namespace": list_ns,
         "project_uuid": args.project_uuid,
+        "project_app_url": app_project_url(
+            namespace=ns_for_urls, project_uuid=str(args.project_uuid)
+        ),
+        "project_profile_refs": project_profiles,
+        "dual_scan_pair": dual_compact,
         "window": {"from_date": from_d, "to_date": to_d},
         "scan_result_count": len(raw_list),
         "list_truncated": list_truncated,

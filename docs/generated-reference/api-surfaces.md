@@ -4,8 +4,8 @@ Auto-generated inventories for stable/public surfaces.
 
 ## Model-sync coverage snapshot
 
-- facade contract resources: `46`
-- canonical entities (union): `46`
+- facade contract resources: `50`
+- canonical entities (union): `50`
 
 Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 
@@ -136,6 +136,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 | Attr | Resource path | Scope | Parent kind | Supported ops |
 |------|---------------|-------|-------------|---------------|
 | APIKey | api-keys | tenant | — | list, get, create, delete |
+| AsyncJob | async-jobs | tenant | — | get, create |
 | AuditLog | audit-logs | tenant | — | list, get |
 | AuthenticationLog | authentication-logs | tenant | — | list, get |
 | AuthorizationPolicy | authorization-policies | tenant | — | list, get, create, update, delete |
@@ -146,6 +147,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 | FindingLog | finding-logs | tenant | — | list, get |
 | HuggingFaceOrganization | hugging-face-organizations | tenant | — | list, get |
 | IdentityProvider | identity-providers | tenant | — | list, get |
+| ImportedSBOM | sbom-imports | tenant | — | list, get, create, update, delete |
 | Installation | installations | tenant | — | list, get, create, update, delete |
 | Invitation | invitations | tenant | — | list, get, create, update, delete |
 | LinterResult | linter-results | tenant | — | list, get |
@@ -169,6 +171,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 | QueryVulnerability | queries/vulnerabilities | oss | — | create |
 | Repository | repositories | tenant | — | list, get, update |
 | RepositoryVersion | repository-versions | tenant | project | list, get, update |
+| SBOMExport | sbom-export | tenant | — | create |
 | SavedQuery | saved-queries | tenant | — | list, get |
 | ScanLogRequest | scan-log-requests | tenant | — | create |
 | ScanProfile | scan-profiles | tenant | — | list, get, create, update, delete |
@@ -177,6 +180,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 | ScanWorkflowResult | scan-workflow-results | tenant | — | list, get, delete |
 | SemgrepRule | semgrep-rules | tenant | — | list, get, create, update, delete |
 | SystemConfig | system-config | tenant | — | list, get, update |
+| VEXExport | vex-export | tenant | — | create |
 | VectorStore | vector-stores | tenant | — | list, get |
 | VectorStoreQuery | queries/vector-stores | tenant | — | create |
 | VersionUpgrade | version-upgrades | tenant | — | list, get, delete |

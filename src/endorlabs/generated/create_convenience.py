@@ -7,6 +7,11 @@ A_P_I_KEY_SPEC_REQUIRED = ("permissions", "expiration_time")
 A_P_I_KEY_META_FIELDS = ()
 A_P_I_KEY_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
 
+ASYNC_JOB_SPEC_FIELDS = ("sbom", "vex")
+ASYNC_JOB_SPEC_REQUIRED = ()
+ASYNC_JOB_META_FIELDS = ()
+ASYNC_JOB_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
+
 AUDIT_LOG_SPEC_FIELDS = (
     "operation",
     "message_uuid",
@@ -169,6 +174,22 @@ IDENTITY_PROVIDER_SPEC_FIELDS = ("oidc_provider", "saml_provider")
 IDENTITY_PROVIDER_SPEC_REQUIRED = ()
 IDENTITY_PROVIDER_META_FIELDS = ()
 IDENTITY_PROVIDER_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
+
+IMPORTED_S_B_O_M_SPEC_FIELDS = (
+    "kind",
+    "cyclone_dx",
+    "spdx",
+    "cyclone_dx_bytes",
+    "spdx_bytes",
+)
+IMPORTED_S_B_O_M_SPEC_REQUIRED = ("kind",)
+IMPORTED_S_B_O_M_META_FIELDS = ()
+IMPORTED_S_B_O_M_PAYLOAD_TOP_LEVEL_FIELDS = (
+    "context",
+    "meta",
+    "processing_status",
+    "tenant_meta",
+)
 
 INSTALLATION_SPEC_FIELDS = (
     "public",
@@ -521,6 +542,18 @@ REPOSITORY_VERSION_PAYLOAD_TOP_LEVEL_FIELDS = (
     "tenant_meta",
 )
 
+S_B_O_M_EXPORT_SPEC_FIELDS = (
+    "component_type",
+    "kind",
+    "format",
+    "hide_private_components",
+    "export_parameters",
+    "include_test_dependencies",
+)
+S_B_O_M_EXPORT_SPEC_REQUIRED = ("component_type",)
+S_B_O_M_EXPORT_META_FIELDS = ()
+S_B_O_M_EXPORT_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
+
 SAVED_QUERY_SPEC_FIELDS = ("query", "monitor", "query_type", "is_default")
 SAVED_QUERY_SPEC_REQUIRED = ()
 SAVED_QUERY_META_FIELDS = ()
@@ -637,6 +670,17 @@ SYSTEM_CONFIG_SPEC_FIELDS = (
 SYSTEM_CONFIG_SPEC_REQUIRED = ()
 SYSTEM_CONFIG_META_FIELDS = ()
 SYSTEM_CONFIG_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
+
+V_E_X_EXPORT_SPEC_FIELDS = (
+    "component_type",
+    "format",
+    "kind",
+    "export_parameters",
+    "include_test_dependencies",
+)
+V_E_X_EXPORT_SPEC_REQUIRED = ("component_type",)
+V_E_X_EXPORT_META_FIELDS = ("name",)
+V_E_X_EXPORT_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
 
 VECTOR_STORE_SPEC_FIELDS = (
     "embedding_provider",

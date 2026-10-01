@@ -29,14 +29,14 @@ def test_parse_args_supports_switches() -> None:
             "--no-materialize-agent-knowledge",
             "--force",
             "--sync-skills",
-            "both",
+            "cursor",
         ]
     )
     assert parsed.output_dir == "tmp-context"
     assert parsed.include_openapi is True
     assert parsed.include_agent_knowledge is False
     assert parsed.force is True
-    assert parsed.sync_skills == "both"
+    assert parsed.sync_skills == "cursor"
 
 
 def test_print_gitignore_line(capsys: object) -> None:

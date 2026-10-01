@@ -10,6 +10,7 @@ from endorlabs.client_surface import Client
 from endorlabs.utils.logging_config import get_resource_logger
 
 from .common import (
+    extract_discovered_manifests,
     load_json,
     resolve_troubleshooting_output_dir,
     root_tenant,
@@ -115,6 +116,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 "namespace": args.namespace,
                 "entry_count": len(entries),
                 "log_artifact": str(log_artifact),
+                "discovered_manifests": extract_discovered_manifests(entries),
             }
         )
 

@@ -68,6 +68,7 @@ Generic entrypoints (no estate literals):
 - `endorlabs.workflows.logs.group_by_time.group_by_time_counts` — generic log `list_groups` + `group_by_time` aggregation
 - `endorlabs.workflows.logs.probe_log_density` — per-namespace time-window count vs threshold (PFW / AgentHookEvent)
 - `endorlabs.workflows.log_export.export_logs` / `export_logs_for_namespaces` — full-row log dump (`endor-log-export`)
+- `endorlabs.workflows.license_export.run_license_export` / `collect_dependency_inventory` / `resolve_licenses` / `write_joined_export` — MAIN-context dependency + SPDX join via `PackageLicenseQuery` at the export namespace (`endor-license-export`)
 - `endorlabs.workflows.auth.verify_auth` / `refresh_token_to_dotenv` — credential probe and browser refresh (`endor-auth`)
 - `endorlabs.workflows.auth.probe_auth_logs` — tenant list-path auth-log RCA rows
 - `endorlabs.workflows.auth.count_logins_from_groups` — server-side login counts (`list_groups`)

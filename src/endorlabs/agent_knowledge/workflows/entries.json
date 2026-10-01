@@ -94,6 +94,21 @@
   },
   {
     "agent_visible": true,
+    "cli": "endor-license-export",
+    "composition": "library_api",
+    "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/licenses/",
+    "id": "license-export",
+    "library_entrypoints": [
+      "endorlabs.workflows.license_export.run_license_export",
+      "endorlabs.workflows.license_export.collect_dependency_inventory",
+      "endorlabs.workflows.license_export.resolve_licenses",
+      "endorlabs.workflows.license_export.write_joined_export"
+    ],
+    "module": "endorlabs.workflows.license_export.cli",
+    "skill": null
+  },
+  {
+    "agent_visible": true,
     "cli": "endor-log-export",
     "composition": "library_api",
     "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/logs/",
@@ -153,6 +168,22 @@
     "id": "relationships-map",
     "module": "endorlabs.workflows.estate.analyze.project_map.map",
     "skill": "endor-namespace-relationship-map"
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-sbom",
+    "composition": "library_api",
+    "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/sbom/",
+    "id": "sbom-management",
+    "library_entrypoints": [
+      "endorlabs.workflows.sbom.coverage.run_coverage",
+      "endorlabs.workflows.sbom.import_sbom.run_import",
+      "endorlabs.workflows.sbom.export_sbom.run_sbom_export",
+      "endorlabs.workflows.sbom.export_sbom.run_vex_export",
+      "endorlabs.workflows.sbom.export_sbom.poll_async_job"
+    ],
+    "module": "endorlabs.workflows.sbom.cli",
+    "skill": "endor-sbom-management"
   },
   {
     "agent_visible": true,

@@ -23,6 +23,15 @@ from endorlabs.workflows.troubleshooting_scans.collect import (
     match_projects,
     parallel_collect_for_projects,
 )
+from endorlabs.workflows.troubleshooting_scans.manifest_extract import (
+    ANALYTICS_TYPES,
+    FULL_SCA_TYPE,
+    app_project_url,
+    app_scan_history_url,
+    extract_discovered_manifests,
+    extract_project_profile_refs,
+    select_latest_scan_pair_by_type,
+)
 from endorlabs.workflows.troubleshooting_scans.scan_summaries import (
     date_window_from_bounds,
     date_window_from_days,
@@ -39,10 +48,16 @@ from endorlabs.workflows.troubleshooting_scans.scan_summaries import (
 )
 
 __all__ = [
+    "ANALYTICS_TYPES",
+    "FULL_SCA_TYPE",
     "RUN_BUCKET",
+    "app_project_url",
+    "app_scan_history_url",
     "build_filename",
     "date_window_from_bounds",
     "date_window_from_days",
+    "extract_discovered_manifests",
+    "extract_project_profile_refs",
     "extract_scan_mode",
     "iso_now_compact",
     "load_json",
@@ -60,6 +75,7 @@ __all__ = [
     "scanlog_entries_have_content",
     "scanlog_line",
     "scanlog_line_has_content",
+    "select_latest_scan_pair_by_type",
     "summarize_environment_config",
     "to_json_dict",
     "write_json",

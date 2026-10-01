@@ -97,6 +97,14 @@ client.DependencyMetadata.list(
    - `spec.target_uuid`
    - `spec.dependency_file_paths`
    - `spec.source_code_version.ref` and `.sha`
+5. **Was this manifest scanned?** Before concluding a path was missed, pull latest
+   Analytics + full SCA (`TYPE_ALL_SCANS`) via
+   [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md)
+   (`pull_scan_results` → `dual_scan_pair` / `discovered_manifests`). Cite
+   Analytics scan-history URL first for config/profile; expect path-bearing
+   discovery lines mainly on full SCA. Cross-check
+   `Finding.spec.dependency_file_paths` against extractor `paths`.
+   App URL templates: shipped [INDEX.md](../../INDEX.md).
 
 ## Flow C — Dependency Provenance
 
@@ -194,3 +202,4 @@ Use this structure in investigation notes:
 | Scan never completed / aggregate stats collapsed | [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) |
 | Exception policy on a finding | [endor-validate-policy](../endor-validate-policy/SKILL.md) |
 | Manifest path introduction only | [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md) |
+| SBOM import / coverage / export | [endor-sbom-management](../endor-sbom-management/SKILL.md) |

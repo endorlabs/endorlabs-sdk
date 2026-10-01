@@ -41,6 +41,26 @@ rules live in [errors-and-auth](../../contracts/errors-and-auth.md).
 
 Do not assume a child namespace passed to `endor-auth refresh` becomes the API list path — set `ENDOR_NAMESPACE` or pass `-n` on the workflow CLI you run after auth.
 
+### Workflow CLI credential override
+
+Scheduleable workflow CLIs (`endor-license-export`, `endor-log-export`, and
+follow-on adopters) share `endorlabs.workflows.common.cli_client` flags. They
+**never** open a browser — refresh first, then run with env or overrides:
+
+| Flag | Env equivalent | Notes |
+|------|----------------|-------|
+| `--token` | `ENDOR_TOKEN` | Bearer after `endor-auth refresh` |
+| `--api-key` | `ENDOR_API_CREDENTIALS_KEY` | Pair with `--api-secret` |
+| `--api-secret` | `ENDOR_API_CREDENTIALS_SECRET` | Pair with `--api-key` |
+| `--api` | `ENDOR_API` | Non-default API host |
+
+```bash
+uv run endor-auth refresh --method sso -n <tenant>
+uv run --env-file .env endor-license-export -n example-tenant.child
+# or explicit overrides (CI secret injection):
+uv run endor-license-export -n example-tenant.child --token "$ENDOR_TOKEN"
+```
+
 **Single auth mode:** never set `ENDOR_TOKEN` and both API key vars (same rule as endorctl). No `ENDOR_AUTH_MODE` env — unset one credential set or pass `auth_method=` to `Client(...)` in code.
 
 **Do not document or invent:** `ENDOR_AUTH_TENANT`, `ENDOR_AUTH_MODE`, `ENDOR_AUTH_METHOD`, `ENDOR_BROWSER`, `ENDOR_AUTH_INTERACTIVE`, `ENDOR_AUTH_PERSIST_TOKEN`, `ENDOR_TOKEN_REFRESH_METHOD`.

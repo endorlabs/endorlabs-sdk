@@ -190,13 +190,19 @@ class TestTokenHandler:
                 "spec": {"email": "user@endor.ai"},
             },
         }
-        handler = _make_token_handler(_TEST_STATE, environment="endorlabs.com")
+        handler = _make_token_handler(
+            _TEST_STATE,
+            environment="endorlabs.com",
+            auth_method="sso",
+        )
         status, token, body = _invoke_handler(
             handler,
             f"token=secret-bearer&state={_TEST_STATE}",
         )
         assert status == 200
         assert token == "secret-bearer"
+        assert b"Auth type" in body
+        assert b"SSO" in body
         assert b"user@endor.ai" in body
         assert b"Token TTL" in body
         assert b"secret-bearer" not in body
@@ -228,6 +234,21 @@ class TestSuccessPageSummary:
         assert summary.expires_in_label == "2h 0m"
         assert summary.tenant_count == 2
         assert summary.expiration_time == "2099-01-01 12:00:00 UTC"
+
+    def test_auth_method_label_known_and_aliases(self) -> None:
+        from endorlabs.auth_server import auth_method_label
+
+        assert auth_method_label("sso") == "SSO"
+        assert auth_method_label("browser") == "Browser"
+        assert auth_method_label("azureadv2") == "Microsoft"
+        assert auth_method_label(None) is None
+
+    def test_resolve_auth_type_prefers_idp_for_browser_picker(self) -> None:
+        from endorlabs.auth_server import _resolve_auth_type_label
+
+        assert _resolve_auth_type_label("browser-auth", "google") == "Google"
+        assert _resolve_auth_type_label("sso", "endor") == "SSO"
+        assert _resolve_auth_type_label("browser-auth", "endor") == "Browser"
 
 
 class TestAuthUrlHelpers:
@@ -404,6 +425,6 @@ class TestGetToken:
         """SSO URL template requires an explicit tenant."""
         sso = AUTH_METHODS["sso"].format(
             environment="endorlabs.com",
-            tenant="acme",
+            tenant="example-tenant",
         )
-        assert sso == "https://api.endorlabs.com/v1/auth/sso?tenant=acme"
+        assert sso == ("https://api.endorlabs.com/v1/auth/sso?tenant=example-tenant")

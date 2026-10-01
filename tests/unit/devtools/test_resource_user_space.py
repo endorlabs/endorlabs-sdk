@@ -30,7 +30,8 @@ def test_profile_covers_all_registry_resources() -> None:
     names = {entry.attr_name for entry in RESOURCE_REGISTRY}
     validate_complete(names)
     profile = load_resource_user_space()
-    assert len(profile) == len(names) == 46
+    assert len(profile) == len(names)
+    assert len(names) >= 46  # sanity floor; grows when facades are added
 
 
 def test_profile_customer_ops_use_known_enums() -> None:

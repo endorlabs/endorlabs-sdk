@@ -5,6 +5,7 @@ One page per SDK facade resource (`client.<AttrName>`).
 | Resource | API segment | Scope | Operations | Page |
 |----------|-------------|-------|------------|------|
 | `APIKey` | `api-keys` | `tenant` | create, delete, get, list | [APIKey.md](APIKey.md) |
+| `AsyncJob` | `async-jobs` | `tenant` | create, get | [AsyncJob.md](AsyncJob.md) |
 | `AuditLog` | `audit-logs` | `tenant` | get, list | [AuditLog.md](AuditLog.md) |
 | `AuthenticationLog` | `authentication-logs` | `tenant` | get, list | [AuthenticationLog.md](AuthenticationLog.md) |
 | `AuthorizationPolicy` | `authorization-policies` | `tenant` | create, delete, get, list, update | [AuthorizationPolicy.md](AuthorizationPolicy.md) |
@@ -15,6 +16,7 @@ One page per SDK facade resource (`client.<AttrName>`).
 | `FindingLog` | `finding-logs` | `tenant` | get, list | [FindingLog.md](FindingLog.md) |
 | `HuggingFaceOrganization` | `hugging-face-organizations` | `tenant` | get, list | [HuggingFaceOrganization.md](HuggingFaceOrganization.md) |
 | `IdentityProvider` | `identity-providers` | `tenant` | get, list | [IdentityProvider.md](IdentityProvider.md) |
+| `ImportedSBOM` | `sbom-imports` | `tenant` | create, delete, get, list, update | [ImportedSBOM.md](ImportedSBOM.md) |
 | `Installation` | `installations` | `tenant` | create, delete, get, list, update | [Installation.md](Installation.md) |
 | `Invitation` | `invitations` | `tenant` | create, delete, get, list, update | [Invitation.md](Invitation.md) |
 | `LinterResult` | `linter-results` | `tenant` | get, list | [LinterResult.md](LinterResult.md) |
@@ -38,6 +40,7 @@ One page per SDK facade resource (`client.<AttrName>`).
 | `QueryVulnerability` | `queries/vulnerabilities` | `oss` | create | [QueryVulnerability.md](QueryVulnerability.md) |
 | `Repository` | `repositories` | `tenant` | get, list, update | [Repository.md](Repository.md) |
 | `RepositoryVersion` | `repository-versions` | `tenant` | get, list, update | [RepositoryVersion.md](RepositoryVersion.md) |
+| `SBOMExport` | `sbom-export` | `tenant` | create | [SBOMExport.md](SBOMExport.md) |
 | `SavedQuery` | `saved-queries` | `tenant` | get, list | [SavedQuery.md](SavedQuery.md) |
 | `ScanLogRequest` | `scan-log-requests` | `tenant` | create | [ScanLogRequest.md](ScanLogRequest.md) |
 | `ScanProfile` | `scan-profiles` | `tenant` | create, delete, get, list, update | [ScanProfile.md](ScanProfile.md) |
@@ -46,6 +49,7 @@ One page per SDK facade resource (`client.<AttrName>`).
 | `ScanWorkflowResult` | `scan-workflow-results` | `tenant` | delete, get, list | [ScanWorkflowResult.md](ScanWorkflowResult.md) |
 | `SemgrepRule` | `semgrep-rules` | `tenant` | create, delete, get, list, update | [SemgrepRule.md](SemgrepRule.md) |
 | `SystemConfig` | `system-config` | `tenant` | get, list, update | [SystemConfig.md](SystemConfig.md) |
+| `VEXExport` | `vex-export` | `tenant` | create | [VEXExport.md](VEXExport.md) |
 | `VectorStore` | `vector-stores` | `tenant` | get, list | [VectorStore.md](VectorStore.md) |
 | `VectorStoreQuery` | `queries/vector-stores` | `tenant` | create | [VectorStoreQuery.md](VectorStoreQuery.md) |
 | `VersionUpgrade` | `version-upgrades` | `tenant` | delete, get, list | [VersionUpgrade.md](VersionUpgrade.md) |

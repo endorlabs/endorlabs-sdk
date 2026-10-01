@@ -179,3 +179,15 @@ workflows:
       - endorlabs.workflows.log_export.export_logs_for_namespaces
       - endorlabs.workflows.logs.probe_log_density
       - endorlabs.workflows.logs.collect_calls_for_principal
+  - id: license-export
+    cli: endor-license-export
+    module: endorlabs.workflows.license_export.cli
+    skill: null
+    default_output: .endorlabs/tasks/<slug>-<YYYY-MM-DD>/licenses/
+    agent_visible: true
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.license_export.run_license_export
+      - endorlabs.workflows.license_export.collect_dependency_inventory
+      - endorlabs.workflows.license_export.resolve_licenses
+      - endorlabs.workflows.license_export.write_joined_export

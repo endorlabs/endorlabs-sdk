@@ -28,6 +28,7 @@ from .facade.specialized import (
 )
 from .operations.routes import RouteResult
 from .resources.api_key import APIKey, CreateAPIKeyPayload
+from .resources.async_job import AsyncJob, CreateAsyncJobPayload
 from .resources.audit_log import AuditLog
 from .resources.authentication_log import AuthenticationLog
 from .resources.authorization_policy import (
@@ -44,6 +45,7 @@ from .resources.finding import Finding
 from .resources.finding_log import FindingLog
 from .resources.hugging_face_organization import HuggingFaceOrganization
 from .resources.identity_provider import IdentityProvider
+from .resources.imported_sbom import CreateImportedSBOMPayload, ImportedSBOM
 from .resources.installation import CreateInstallationPayload, Installation
 from .resources.invitation import CreateInvitationPayload, Invitation
 from .resources.linter_result import LinterResult
@@ -76,6 +78,7 @@ from .resources.query_vulnerability import (
 from .resources.repository import Repository
 from .resources.repository_version import RepositoryVersion
 from .resources.saved_query import SavedQuery
+from .resources.sbom_export import CreateSBOMExportPayload, SBOMExport
 from .resources.scan_log_request import ScanLogRequest
 from .resources.scan_profile import CreateScanProfilePayload, ScanProfile
 from .resources.scan_result import ScanResult
@@ -89,6 +92,7 @@ from .resources.vector_store_query import (
     VectorStoreQuery,
 )
 from .resources.version_upgrade import VersionUpgrade
+from .resources.vex_export import CreateVEXExportPayload, VEXExport
 from .resources.vulnerability import Vulnerability
 
 class _APIKeyFacade(ResourceRuntimeFacade[APIKey]):
@@ -136,6 +140,52 @@ class _APIKeyFacade(ResourceRuntimeFacade[APIKey]):
         expiration_time: Any,
         **kwargs: Any,
     ) -> APIKey: ...
+
+class _AsyncJobFacade(ResourceRuntimeFacade[AsyncJob]):
+    """Asynchronous job (SBOM/VEX export) with pollable status.
+
+    Create mode: both.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[AsyncJob] | list[dict[str, Any]]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def create(
+        self,
+        payload: CreateAsyncJobPayload | None = None,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        namespace_uuid: str | None = None,
+        namespace: str | None = None,
+        sbom: Any | None = None,
+        vex: Any | None = None,
+        **kwargs: Any,
+    ) -> AsyncJob: ...
 
 class _AuditLogFacade(ListableFacade[AuditLog]):
     """Audit trail of API operations."""
@@ -578,6 +628,57 @@ class _IdentityProviderFacade(ListableFacade[IdentityProvider]):
         id_or_resource: str | IdentityProvider,
         namespace: str | None = ...,
     ) -> IdentityProvider: ...
+
+class _ImportedSBOMFacade(ResourceRuntimeFacade[ImportedSBOM]):
+    """Imported CycloneDX or SPDX software bill of materials.
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[ImportedSBOM] | list[dict[str, Any]]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def create(
+        self,
+        payload: CreateImportedSBOMPayload | None = None,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        namespace_uuid: str | None = None,
+        namespace: str | None = None,
+        kind: Any,
+        cyclone_dx: Any | None = None,
+        spdx: Any | None = None,
+        cyclone_dx_bytes: Any | None = None,
+        spdx_bytes: Any | None = None,
+        **kwargs: Any,
+    ) -> ImportedSBOM: ...
 
 class _InstallationFacade(ResourceRuntimeFacade[Installation]):
     """SCM / platform integration (GitHub, GitLab, Azure, Bitbucket, Hugging Face).
@@ -1631,6 +1732,56 @@ class _RepositoryVersionFacade(ResourceRuntimeFacade[RepositoryVersion]):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
+class _SBOMExportFacade(ResourceRuntimeFacade[SBOMExport]):
+    """Create-only SBOM export for a package version or project.
+
+    Create mode: both.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[SBOMExport] | list[dict[str, Any]]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def create(
+        self,
+        payload: CreateSBOMExportPayload | None = None,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        namespace_uuid: str | None = None,
+        namespace: str | None = None,
+        component_type: Any,
+        kind: Any | None = None,
+        format: Any | None = None,
+        hide_private_components: Any | None = None,
+        export_parameters: Any | None = None,
+        include_test_dependencies: Any | None = None,
+        **kwargs: Any,
+    ) -> SBOMExport: ...
+
 class _SavedQueryFacade(ListableFacade[SavedQuery]):
     """Saved query definition for reuse in the product UI."""
 
@@ -1959,6 +2110,55 @@ class _SystemConfigFacade(ResourceRuntimeFacade[SystemConfig]):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
+class _VEXExportFacade(ResourceRuntimeFacade[VEXExport]):
+    """Create-only VEX export for a package version or project.
+
+    Create mode: both.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[VEXExport] | list[dict[str, Any]]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def create(
+        self,
+        payload: CreateVEXExportPayload | None = None,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        namespace_uuid: str | None = None,
+        namespace: str | None = None,
+        component_type: Any,
+        format: Any | None = None,
+        kind: Any | None = None,
+        export_parameters: Any | None = None,
+        include_test_dependencies: Any | None = None,
+        **kwargs: Any,
+    ) -> VEXExport: ...
+
 class _VectorStoreFacade(VectorStoreFacade):
     """Tenant vector store inventory (embeddings index metadata).
 
@@ -2131,20 +2331,22 @@ class Client:
     """Resource-oriented client with typed facades.
 
     Resources:
-    APIKey, AuditLog, AuthenticationLog, AuthorizationPolicy, CodeOwners,
-    DependencyMetadata, EndorLicense, Finding, FindingLog,
-    HuggingFaceOrganization, IdentityProvider, Installation, Invitation,
-    LinterResult, Malware, MalwareExposure, MalwareExposureQuery, Metric,
-    Namespace, NotificationTarget, PRCommentConfig, PackageFirewallLog,
+    APIKey, AsyncJob, AuditLog, AuthenticationLog, AuthorizationPolicy,
+    CodeOwners, DependencyMetadata, EndorLicense, Finding, FindingLog,
+    HuggingFaceOrganization, IdentityProvider, ImportedSBOM, Installation,
+    Invitation, LinterResult, Malware, MalwareExposure, MalwareExposureQuery,
+    Metric, Namespace, NotificationTarget, PRCommentConfig, PackageFirewallLog,
     PackageLicense, PackageManager, PackageVersion, Policy, PolicyTemplate,
     Project, Query, QueryMalware, QuerySimilarPackages, QueryVulnerability,
-    Repository, RepositoryVersion, SavedQuery, ScanLogRequest, ScanProfile,
-    ScanResult, ScanWorkflow, ScanWorkflowResult, SemgrepRule, SystemConfig,
-    VectorStore, VectorStoreQuery, VersionUpgrade, Vulnerability
+    Repository, RepositoryVersion, SBOMExport, SavedQuery, ScanLogRequest,
+    ScanProfile, ScanResult, ScanWorkflow, ScanWorkflowResult, SemgrepRule,
+    SystemConfig, VEXExport, VectorStore, VectorStoreQuery, VersionUpgrade,
+    Vulnerability
     Custom: CallGraphData, AgentTelemetry, Query
     """
 
     APIKey: _APIKeyFacade
+    AsyncJob: _AsyncJobFacade
     AuditLog: _AuditLogFacade
     AuthenticationLog: _AuthenticationLogFacade
     AuthorizationPolicy: _AuthorizationPolicyFacade
@@ -2155,6 +2357,7 @@ class Client:
     FindingLog: _FindingLogFacade
     HuggingFaceOrganization: _HuggingFaceOrganizationFacade
     IdentityProvider: _IdentityProviderFacade
+    ImportedSBOM: _ImportedSBOMFacade
     Installation: _InstallationFacade
     Invitation: _InvitationFacade
     LinterResult: _LinterResultFacade
@@ -2177,6 +2380,7 @@ class Client:
     QueryVulnerability: _QueryVulnerabilityFacade
     Repository: _RepositoryFacade
     RepositoryVersion: _RepositoryVersionFacade
+    SBOMExport: _SBOMExportFacade
     SavedQuery: _SavedQueryFacade
     ScanLogRequest: _ScanLogRequestFacade
     ScanProfile: _ScanProfileFacade
@@ -2185,6 +2389,7 @@ class Client:
     ScanWorkflowResult: _ScanWorkflowResultFacade
     SemgrepRule: _SemgrepRuleFacade
     SystemConfig: _SystemConfigFacade
+    VEXExport: _VEXExportFacade
     VectorStore: _VectorStoreFacade
     VectorStoreQuery: _VectorStoreQueryFacade
     VersionUpgrade: _VersionUpgradeFacade

@@ -7,13 +7,30 @@ summary: >-
 
 # Namespace scoping
 
-## OSS catalog plane
+## License resolution (export namespace)
 
-`Vulnerability`, `Malware`, `QueryVulnerability`, and `QueryMalware` use registry
-`scope="oss"`. List/get and catalog query creates hit `/v1/namespaces/oss/…`
-regardless of `Client(tenant=…)`. OpenAPI paths for these kinds are already
+**Dependency + license export** (`endor-license-export`) and OSO-style SPDX joins
+use the **export namespace only** (tenant root or child path being exported):
+
+- POST **`PackageLicenseQuery`** and **`BatchPackageLicenseQuery`** at
+  `/v1/namespaces/<export-ns>/queries/…`
+- Do **not** list `PackageLicense` under a hardcoded catalog namespace for bulk
+  export; tenant `PackageLicense.list` is not the product merge path and often
+  returns empty rows for catalog-backed PVs
+- Per-PV Query **404** → no license data (empty SPDX), not a workflow error
+
+`PackageLicense` registry scope is **tenant**; merged catalog + override view is
+the Query response at the customer namespace chain.
+
+## OSS catalog plane (Vulnerability / Malware only)
+
+These kinds use registry `scope="oss"`. List/get and catalog query creates hit
+`/v1/namespaces/oss/…` regardless of `Client(tenant=…)`. OpenAPI paths are
 parameterized as `{tenant_meta.namespace}`; the SDK **forces** the literal `oss`
-plane via `resource_scope_overrides.json`.
+wire plane via `resource_scope_overrides.json` and facade `_ns()`.
+
+Applies to: **`Vulnerability`**, **`Malware`**, **`QueryVulnerability`**,
+**`QueryMalware`** — not license export.
 
 **Customer investigations prefer the tenant plane:** use **`MalwareExposure`** /
 **`MalwareExposureQuery`**, Finding malware category

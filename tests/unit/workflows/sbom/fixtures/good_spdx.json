@@ -1,0 +1,35 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "example-spdx",
+  "documentNamespace": "https://example.com/spdx/example-1",
+  "packages": [
+    {
+      "name": "example-app",
+      "SPDXID": "SPDXRef-Package-root",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/example-app@1.0.0"
+        }
+      ]
+    },
+    {
+      "name": "requests",
+      "SPDXID": "SPDXRef-Package-requests",
+      "versionInfo": "2.32.0",
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/requests@2.32.0"
+        }
+      ]
+    }
+  ]
+}

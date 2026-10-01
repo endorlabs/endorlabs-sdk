@@ -8,11 +8,37 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- `endor-license-export` — scheduleable MAIN-context DependencyMetadata inventory
+  plus SPDX license resolve via `PackageLicenseQuery` /
+  `BatchPackageLicenseQuery` at the export namespace (no catalog-namespace list),
+  one CSV/JSONL per namespace for CI. Library:
+  `endorlabs.workflows.license_export`. Guide: [license-export.md](guides/license-export.md).
+  UX: keyed JSONL upserts (`JsonlKeyedStore`), `export_summary.json`,
+  `--filter`/`--mask`, `--include-license-object`, shared CLI auth flags
+  (`workflows.common.cli_client`; also on `endor-log-export`).
+- `endor-sbom` / skill **endor-sbom-management** — import via `endorctl sbom import`,
+  file-vs-project coverage (`PackageVersion.list_by_project`), list imports, and
+  SBOM/VEX export. Client facades: `ImportedSBOM`, `SBOMExport`, `VEXExport`,
+  `AsyncJob`. Library: `endorlabs.workflows.sbom`.
+
 ### Changed
+
+- Troubleshooting scan RCA: `extract_discovered_manifests` +
+  `select_latest_scan_pair_by_type` (latest Analytics + `TYPE_ALL_SCANS`);
+  `pull_scan_results` / summaries expose `dual_scan_pair`,
+  `discovered_manifests`, `config_allowlist` (`UseScanProfile`,
+  `ToolChainsConfig.DockerSource`), and project profile UUIDs. Skills
+  **endor-troubleshooting-scans**, **endor-sca-findings**,
+  **endor-dependency-provenance** and shipped `INDEX.md` (structured Endor
+  app URL templates) updated accordingly.
 
 ### Fixed
 
 ### Breaking
+
+- Removed `init(sync_skills="claude"|"both")` and the repo-root `CLAUDE.md` /
+  `.claude/commands/` generator. Claude Code uses [AGENTS.md](../AGENTS.md);
+  skill mirrors remain `sync_skills="cursor"` only.
 
 ## 0.7.2
 

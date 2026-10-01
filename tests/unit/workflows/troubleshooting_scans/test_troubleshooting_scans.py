@@ -211,7 +211,11 @@ def test_extract_scan_mode_cloud_scan() -> None:
                 "config": {
                     "Command": "scan",
                     "RunBySystem": True,
-                    "ScanConfig": {"QuickScan": False},
+                    "ScanConfig": {"QuickScan": False, "UseScanProfile": False},
+                    "ToolChainsConfig": {
+                        "DockerSource": "auto-detect",
+                        "DockerSourceUUID": "",
+                    },
                 }
             }
         }
@@ -220,7 +224,139 @@ def test_extract_scan_mode_cloud_scan() -> None:
     assert mode["scan_execution"] == "Cloud Scan"
     assert mode["run_by_system"] is True
     assert mode["quick_scan"] is False
+    assert mode["use_scan_profile"] is False
+    assert mode["toolchains"]["docker_source"] == "auto-detect"
+    assert mode["config_allowlist"]["ToolChainsConfig.DockerSource"] == "auto-detect"
     assert "--quick-scan" not in mode["endorctl_flags"]
+
+
+def test_extract_discovered_manifests_cross_ecosystem() -> None:
+    from endorlabs.workflows.troubleshooting_scans.manifest_extract import (
+        extract_discovered_manifests,
+    )
+
+    lines = [
+        "2026-01-01T00:00:00Z [INFO] Discovering JavaScript dependency files ...",
+        "2026-01-01T00:00:00Z [DEBUG] Found package.json file at: /tmp/endorctl/sha1-x/pkg/package.json",
+        (
+            "2026-01-01T00:00:00Z [INFO] Using lock file for "
+            "'npm://example-pkg@1.0.0' at path '/tmp/endorctl/sha1-x/pkg/package-lock.json'"
+        ),
+        "2026-01-01T00:00:00Z [INFO] Discovering java dependency files ...",
+        "2026-01-01T00:00:00Z [DEBUG] Found 2 'maven' manifest files",
+        {
+            "level": "LOG_LEVEL_DEBUG",
+            "json_payload": {
+                "msg": "Discovered maven manifests to scan",
+                "poms": ["services/api/pom.xml", "services/worker/pom.xml"],
+            },
+        },
+        "2026-01-01T00:00:00Z [INFO] Discovering python dependency files ...",
+        "2026-01-01T00:00:00Z [DEBUG] Found requirements based package for requirements.txt",
+        "2026-01-01T00:00:00Z [INFO] Discovering package versions",
+        "2026-01-01T00:00:00Z [INFO] Discovering go dependency files ...",
+    ]
+    result = extract_discovered_manifests(lines)
+    assert result["analytics_walk_count"] == 1
+    assert "javascript" in result["languages"]
+    assert "java" in result["languages"]
+    assert "python" in result["languages"]
+    assert "go" in result["languages"]
+    assert "/tmp/endorctl/sha1-x/pkg/package.json" in result["paths"]
+    assert "/tmp/endorctl/sha1-x/pkg/package-lock.json" in result["paths"]
+    assert "services/api/pom.xml" in result["paths"]
+    assert "requirements.txt" in result["paths"]
+    kinds = {hit["kind"] for hit in result["hits"]}
+    assert "language_walk" in kinds
+    assert "manifest" in kinds
+    assert "lockfile" in kinds
+    assert "analytics_walk" in kinds
+
+
+def test_select_latest_scan_pair_by_type_prefers_analytics_citation() -> None:
+    from endorlabs.workflows.troubleshooting_scans.manifest_extract import (
+        select_latest_scan_pair_by_type,
+    )
+
+    scans = [
+        {
+            "uuid": "full-old",
+            "meta": {"create_time": "2026-01-01T00:00:00Z"},
+            "spec": {"type": "TYPE_ALL_SCANS"},
+        },
+        {
+            "uuid": "analytics-new",
+            "meta": {"create_time": "2026-01-03T00:00:00Z"},
+            "spec": {"type": "TYPE_ANALYTICS"},
+        },
+        {
+            "uuid": "full-new",
+            "meta": {"create_time": "2026-01-02T00:00:00Z"},
+            "spec": {"type": "TYPE_ALL_SCANS"},
+        },
+        {
+            "uuid": "analytics-check",
+            "meta": {"create_time": "2026-01-01T12:00:00Z"},
+            "spec": {"type": "TYPE_ANALYTICS_CHECK"},
+        },
+    ]
+    pair = select_latest_scan_pair_by_type(scans)
+    assert pair["analytics_uuid"] == "analytics-new"
+    assert pair["full_sca_uuid"] == "full-new"
+    assert pair["citation_priority"] == ["analytics", "full_sca"]
+
+
+def test_extract_project_profile_refs_nullable() -> None:
+    from endorlabs.workflows.troubleshooting_scans.manifest_extract import (
+        extract_project_profile_refs,
+    )
+
+    refs = extract_project_profile_refs(
+        {
+            "uuid": "aaaaaaaaaaaaaaaaaaaaaaaa",
+            "tenant_meta": {"namespace": "example-tenant.child"},
+            "spec": {
+                "scan_profile_uuid": None,
+                "toolchain_profile_uuid": None,
+            },
+        }
+    )
+    assert refs["project_uuid"] == "aaaaaaaaaaaaaaaaaaaaaaaa"
+    assert refs["namespace"] == "example-tenant.child"
+    assert refs["scan_profile_uuid"] is None
+    assert refs["toolchain_profile_uuid"] is None
+
+
+def test_scan_result_extended_summary_includes_discovered_manifests() -> None:
+    raw = {
+        "uuid": "sr1",
+        "tenant_meta": {"namespace": "example-tenant"},
+        "meta": {"parent_uuid": "proj1", "create_time": "2026-01-01T00:00:00Z"},
+        "spec": {
+            "status": "STATUS_SUCCESS",
+            "type": "TYPE_ALL_SCANS",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T01:00:00Z",
+            "stats": {"dependency_count_total": 10, "call_graph_errors": 1},
+            "environment": {
+                "num_cpus": 4,
+                "config": {
+                    "ScanConfig": {"UseScanProfile": False, "Enables": ["git"]},
+                    "ToolChainsConfig": {"DockerSource": "auto-detect"},
+                },
+            },
+            "logs": [
+                "2026-01-01T00:00:00Z [INFO] Discovering JavaScript dependency files ...",
+                "2026-01-01T00:00:00Z [DEBUG] Found package.json file at: ./package.json",
+            ],
+            "versions": [],
+        },
+    }
+    s = scan_result_extended_summary(raw)
+    assert s["discovered_manifests"]["path_count"] == 1
+    assert "./package.json" in s["discovered_manifests"]["paths"]
+    assert s["toolchains"]["docker_source"] == "auto-detect"
+    assert s["config_allowlist"]["UseScanProfile"] is False
 
 
 def test_compute_diff_includes_quick_scan() -> None:

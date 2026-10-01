@@ -1,4 +1,4 @@
-"""Shared utilities and result types for workflows."""
+"""Shared workflow result types."""
 
 from __future__ import annotations
 

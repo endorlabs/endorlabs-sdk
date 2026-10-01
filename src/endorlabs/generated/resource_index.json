@@ -13,6 +13,16 @@
       ]
     },
     {
+      "attr_name": "AsyncJob",
+      "doc_path": "docs/generated-reference/resources/AsyncJob.md",
+      "resource_name": "async-jobs",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "get"
+      ]
+    },
+    {
       "attr_name": "AuditLog",
       "doc_path": "docs/generated-reference/resources/AuditLog.md",
       "resource_name": "audit-logs",
@@ -120,6 +130,19 @@
       "supported_ops": [
         "get",
         "list"
+      ]
+    },
+    {
+      "attr_name": "ImportedSBOM",
+      "doc_path": "docs/generated-reference/resources/ImportedSBOM.md",
+      "resource_name": "sbom-imports",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
       ]
     },
     {
@@ -379,6 +402,15 @@
       ]
     },
     {
+      "attr_name": "SBOMExport",
+      "doc_path": "docs/generated-reference/resources/SBOMExport.md",
+      "resource_name": "sbom-export",
+      "scope": "tenant",
+      "supported_ops": [
+        "create"
+      ]
+    },
+    {
       "attr_name": "SavedQuery",
       "doc_path": "docs/generated-reference/resources/SavedQuery.md",
       "resource_name": "saved-queries",
@@ -466,6 +498,15 @@
         "get",
         "list",
         "update"
+      ]
+    },
+    {
+      "attr_name": "VEXExport",
+      "doc_path": "docs/generated-reference/resources/VEXExport.md",
+      "resource_name": "vex-export",
+      "scope": "tenant",
+      "supported_ops": [
+        "create"
       ]
     },
     {

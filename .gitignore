@@ -44,7 +44,7 @@ venv.bak/
 # Local agent harness mirrors (not shipped)
 .agents/
 .codex/
-# Claude Code — generated repo-root bootstrap, slash commands, local settings
+# Legacy local Claude Code artifacts (SDK no longer generates CLAUDE.md)
 CLAUDE.md
 .claude/
 *.swp
