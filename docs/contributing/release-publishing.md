@@ -34,7 +34,7 @@ PyPI versions are immutable. Release CI asserts `[project].version` equals the w
 
 | Requirement | Status in `pyproject.toml` |
 |-------------|---------------------------|
-| `[build-system]` pinned backend (PEP 518/517) | `hatchling==1.32.0` |
+| `[build-system]` pinned backend (PEP 518/517) | `hatchling==1.32.4` |
 | `[project]` name, description, readme, requires-python, authors (PEP 621) | Present |
 | `[project].version` static PEP 440 string | Present (committed) |
 | Dependencies as PEP 508 strings | Present (compatible ranges for runtime deps; CI exercises lowest-direct and highest resolutions) |

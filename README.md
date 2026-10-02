@@ -37,9 +37,10 @@ The SDK wheel version (`endorlabs`) is **independent** of [endorctl](https://doc
 
 | PyPI `endorlabs` | OpenAPI watermark (endorctl) | Notes |
 | ---------------- | ---------------------------- | ----- |
-| **0.7.2** (latest) | 1.7.1158 | [changelog](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md#072) |
+| **0.7.3** (latest) | 1.7.1174 | [changelog](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md#073) |
+| **0.7.2** | 1.7.1158 | [changelog](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md#072) |
 | **0.7.1** | 1.7.1133 | [changelog](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md#071) |
-| `main` (unreleased) | 1.7.1133 | Integration branch; targets **0.8.0** — not on PyPI yet |
+| `main` (unreleased) | 1.7.1174 | Integration branch — not on PyPI yet |
 
 Refresh model-sync before publishing when live API has moved: `uv run python devtools/codegen/model_sync.py --verify-upstream-only`. Automated bot PRs: [model-sync-dispatch workflow](https://github.com/endorlabs/endorlabs-sdk/blob/main/.github/workflows/model-sync-dispatch.yml).
 

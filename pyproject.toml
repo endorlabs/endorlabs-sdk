@@ -1,6 +1,6 @@
 [project]
 name = "endorlabs"
-version = "0.7.2"
+version = "0.7.3"
 description = "Type-safe Python SDK for the Endor Labs REST API — resource facades, operational workflows, and optional agent-context bootstrap"
 authors = [
     { name = "Tim Gowan", email = "tgowan@endor.ai" }
@@ -85,8 +85,8 @@ dev = [
     "jsonschema==4.26.0",
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
-    "ruff==0.16.5",
-    "pyright==1.1.411",
+    "ruff==0.16.9",
+    "pyright==1.1.414",
     "pre-commit==4.6.2",
     "rich==15.0.0",
     # Analytics deps for unit tests (mirrors [project.optional-dependencies.analytics])
@@ -94,16 +94,17 @@ dev = [
     "pyarrow>=18.0.0,<26",
     "igraph>=0.11.6,<2",
     "leidenalg>=0.10.2,<1",
-    "datamodel-code-generator==0.76.0",
+    "datamodel-code-generator==0.83.0",
     # Build Dependencies
     "twine==7.0.0",
 ]
 
 [tool.uv]
-override-dependencies = ["filelock==3.32.4"]
+# Pin mature filelock; avoid resolving to same-day minors during lock refresh.
+override-dependencies = ["filelock==4.0.3"]
 
 [build-system]
-requires = ["hatchling==1.32.0"]
+requires = ["hatchling==1.32.4"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
