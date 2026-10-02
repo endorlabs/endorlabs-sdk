@@ -814,15 +814,9 @@ class ReferenceReferenceType(StrEnum):
     REFERENCE_TYPE_ARTICLE = 'REFERENCE_TYPE_ARTICLE'
 
 
-class Node1(BaseModel):
-    cpe_match: list[CpeMatchItem]
-    negate: bool | None = None
-    operator: ConfigOperator
-
-
 class RootCveConfig(BaseModel):
     negate: bool | None = None
-    nodes: list[Node1] | None = None
+    nodes: list[Node] | None = None
     operator: ConfigOperator | None = 'OPERATOR_UNSPECIFIED'
 
 
@@ -2392,7 +2386,7 @@ class CloudResourceAccessedWithoutOidcItem(BaseModel):
     """
 
 
-class Job1(BaseModel):
+class Job(BaseModel):
     """
     A single job defined in the workflow file.
     """
@@ -2462,7 +2456,7 @@ class Workflow(BaseModel):
     """
     Path of the workflow file.
     """
-    jobs: list[Job1] | None = None
+    jobs: list[Job] | None = None
     """
     All jobs defined in the workflow file.
     """
@@ -4031,59 +4025,6 @@ class ConfigCVSSNode(BaseModel):
     cpe_match: list[CpeMatchItem]
     negate: bool | None = None
     operator: ConfigOperator
-
-
-class Job(BaseModel):
-    """
-    A single job defined in the workflow file.
-    """
-
-    actions: list[str] | None = None
-    """
-    List of all actions used in the job.
-    """
-    cloud_resource_accessed_without_oidc: (
-        list[CloudResourceAccessedWithoutOidcItem] | None
-    ) = None
-    """
-    Lists all cloud resources accessed without the workflow identity federation.
-    """
-    id: str | None = None
-    """
-    The Job ID.
-    """
-    imposter_commit: list[ImposterCommitItem] | None = None
-    """
-    Imposter commit SHA detected for the job.
-    """
-    name: str | None = None
-    """
-    Name of the job.
-    """
-    permissions: list[WorkflowGHTokenPermission] | None = None
-    """
-    Permissions of the GITHUB_TOKEN defined at the job level.
-    """
-    script_injection_detected: list[ScriptInjectionDetectedItem] | None = None
-    """
-    Detected script injection in the job's shell script code.
-    """
-    unpinned_commit_sha_actions: list[UnpinnedCommitShaAction] | None = None
-    """
-    Unpinned commit SHA action versions used.
-    """
-    unpinned_runner_version: JobUnpinnedRunner | None = None
-    """
-    Unpinned runner version used to run the job.
-    """
-    untrusted_code_execution: list[UntrustedCodeExecutionItem] | None = None
-    """
-    Untrusted code execution identified for the job.
-    """
-    unverified_gh_actions: list[UnverifiedGhAction] | None = None
-    """
-    Unverified GitHub actions used.
-    """
 
 
 class GitHubWorkflowsWorkflow(BaseModel):

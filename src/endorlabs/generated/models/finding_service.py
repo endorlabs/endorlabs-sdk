@@ -1051,15 +1051,9 @@ class ResolutionStatusStatusError(StrEnum):
     STATUS_ERROR_UNSUPPORTED = 'STATUS_ERROR_UNSUPPORTED'
 
 
-class Node2(BaseModel):
-    cpe_match: list[CpeMatchItem]
-    negate: bool | None = None
-    operator: ConfigOperator
-
-
 class RootCveConfig(BaseModel):
     negate: bool | None = None
-    nodes: list[Node2] | None = None
+    nodes: list[Node] | None = None
     operator: ConfigOperator | None = 'OPERATOR_UNSPECIFIED'
 
 
@@ -5192,30 +5186,6 @@ class V1AISASTContextRegion(BaseModel):
     """
 
 
-class RuntimeFile1(BaseModel):
-    """
-    ContainerRuntimeDependencyFile is a file accessed in the container image at runtime.
-    """
-
-    digests: list[Digest] | None = None
-    """
-    Digest of the file.
-    """
-    file_type: V1FileType | None = 'FILE_TYPE_UNSPECIFIED'
-    """
-    File type of the file.
-    """
-    path: str | None = None
-    """
-    Path of the dependency file as seen in the container image.
-    """
-    real_path: str | None = None
-    """
-    Actual path of the file accessed when a dependency is called at runtime in the
-    container image.
-    """
-
-
 class V1CategoryScore(BaseModel):
     """
     The score for one score category. The is the overall score
@@ -6610,7 +6580,7 @@ class Dependency(BaseModel):
     """
     The date that the dependency was released, if known.
     """
-    runtime_files: list[RuntimeFile1] | None = None
+    runtime_files: list[RuntimeFile] | None = None
     """
     A list of files accessed when a dependency is called at runtime in the container image.
     This is an optional field. It is only set when a

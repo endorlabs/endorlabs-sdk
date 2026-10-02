@@ -48,7 +48,7 @@ def assert_bounded_log_rows(rows: list[object]) -> None:
 
 
 @pytest.fixture(autouse=True)
-def _auto_traverse_project_scoped_lists_at_tenant_root(  # pyright: ignore[reportUnusedFunction]
+def _auto_traverse_project_scoped_lists_at_tenant_root(
     monkeypatch,
 ):
     """CI may set ``ENDOR_NAMESPACE`` to the tenant root.

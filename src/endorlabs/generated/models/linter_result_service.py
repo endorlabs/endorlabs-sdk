@@ -96,17 +96,6 @@ class LinterCorrectnessAnalysisDataFlowNode(BaseModel):
     """
 
 
-class SarifSuppressionKind(StrEnum):
-    """
-    - KIND_IN_SOURCE: Suppression is in the source code.
-    - KIND_EXTERNAL: Suppression is external to the source code.
-    """
-
-    KIND_UNSPECIFIED = 'KIND_UNSPECIFIED'
-    KIND_IN_SOURCE = 'KIND_IN_SOURCE'
-    KIND_EXTERNAL = 'KIND_EXTERNAL'
-
-
 class SarifThreadFlowLocationImportance(StrEnum):
     """
     Specifies the importance of this location in understanding the code flow.
@@ -916,13 +905,6 @@ class V1SarifLogicalLocation(BaseModel):
     """
 
 
-class Suppression(BaseModel):
-    kind: SarifSuppressionKind | None = 'KIND_UNSPECIFIED'
-    """
-    Type of suppression.
-    """
-
-
 class V1SarifResultProperty(BaseModel):
     action_policies_triggered: list[str] | None = Field(
         None, title='List of action policies that were triggered by this finding'
@@ -972,11 +954,15 @@ class V1SarifResultProperty(BaseModel):
     )
 
 
-class V1SarifSuppression(BaseModel):
-    kind: SarifSuppressionKind | None = 'KIND_UNSPECIFIED'
+class V1SarifSuppressionKind(StrEnum):
     """
-    Type of suppression.
+    - KIND_IN_SOURCE: Suppression is in the source code.
+    - KIND_EXTERNAL: Suppression is external to the source code.
     """
+
+    KIND_UNSPECIFIED = 'KIND_UNSPECIFIED'
+    KIND_IN_SOURCE = 'KIND_IN_SOURCE'
+    KIND_EXTERNAL = 'KIND_EXTERNAL'
 
 
 class V1SarifText(BaseModel):
@@ -1413,6 +1399,20 @@ class V1SarifReportingDescriptorReference(BaseModel):
     """
 
 
+class Suppression(BaseModel):
+    kind: V1SarifSuppressionKind | None = 'KIND_UNSPECIFIED'
+    """
+    Type of suppression.
+    """
+
+
+class V1SarifSuppression(BaseModel):
+    kind: V1SarifSuppressionKind | None = 'KIND_UNSPECIFIED'
+    """
+    Type of suppression.
+    """
+
+
 class V1SarifWebRequest(BaseModel):
     """
     Describes an HTTP request.
@@ -1551,7 +1551,7 @@ class V1SarifLocation(BaseModel):
     """
 
 
-class Location2(BaseModel):
+class Location(BaseModel):
     annotations: list[Annotation] | None = Field(
         None,
         title='An array of regions that describe regions within the artifact specified by the location object that is relevant to the location',
@@ -1923,51 +1923,6 @@ class V1LocationWithName(BaseModel):
     """
 
 
-class Location(BaseModel):
-    """
-    A location visited by an analysis tool in the course of simulating or tracing the execution of a program.
-    """
-
-    execution_order: int | None = Field(
-        None,
-        title='An integer representing the temporal order in which execution reached this location',
-    )
-    execution_time_utc: str | None = Field(
-        None, title='The time at which execution reached this location'
-    )
-    importance: SarifThreadFlowLocationImportance | None = 'IMPORTANCE_UNSPECIFIED'
-    index: int | None = Field(
-        None, title='The index of the thread flow location within the thread flow'
-    )
-    kinds: list[str] | None = Field(
-        None, title='An array of strings that classify the location'
-    )
-    location: V1SarifLocation | None = Field(None, title='The code location')
-    module: str | None = Field(
-        None, title='The name of the module that contains the code location'
-    )
-    nesting_level: int | None = Field(
-        None,
-        title='An integer representing the level of nesting within the thread flow',
-    )
-    stack: V1SarifStack | None = Field(
-        None, title='The call stack leading to this location'
-    )
-    state: dict[str, V1SarifText] | None = Field(
-        None, title='Values of relevant expressions at this location'
-    )
-    taxa: list[TaxaItem] | None = None
-    """
-    A set of distinct strings that categorize the thread flow location.
-    """
-    web_request: V1SarifWebRequest | None = Field(
-        None, title='Web request associated with the thread flow location'
-    )
-    web_response: V1SarifWebResponse | None = Field(
-        None, title='Web response associated with the thread flow location'
-    )
-
-
 class ThreadFlow(BaseModel):
     """
     Thread flow object representing a sequence of code locations executed by a single thread.
@@ -1983,7 +1938,7 @@ class ThreadFlow(BaseModel):
     initial_state: dict[str, Any] | None = Field(
         None, title='Values of relevant expressions at the start of the thread flow'
     )
-    locations: list[Location] = Field(
+    locations: list[Location3] = Field(
         ..., title='The locations that were executed during this thread flow'
     )
     message: V1SarifText | None = Field(
@@ -2004,74 +1959,6 @@ class V1SarifCodeFlow(BaseModel):
     )
 
 
-class Location1(BaseModel):
-    """
-    A location visited by an analysis tool in the course of simulating or tracing the execution of a program.
-    """
-
-    execution_order: int | None = Field(
-        None,
-        title='An integer representing the temporal order in which execution reached this location',
-    )
-    execution_time_utc: str | None = Field(
-        None, title='The time at which execution reached this location'
-    )
-    importance: SarifThreadFlowLocationImportance | None = 'IMPORTANCE_UNSPECIFIED'
-    index: int | None = Field(
-        None, title='The index of the thread flow location within the thread flow'
-    )
-    kinds: list[str] | None = Field(
-        None, title='An array of strings that classify the location'
-    )
-    location: V1SarifLocation | None = Field(None, title='The code location')
-    module: str | None = Field(
-        None, title='The name of the module that contains the code location'
-    )
-    nesting_level: int | None = Field(
-        None,
-        title='An integer representing the level of nesting within the thread flow',
-    )
-    stack: V1SarifStack | None = Field(
-        None, title='The call stack leading to this location'
-    )
-    state: dict[str, V1SarifText] | None = Field(
-        None, title='Values of relevant expressions at this location'
-    )
-    taxa: list[TaxaItem] | None = None
-    """
-    A set of distinct strings that categorize the thread flow location.
-    """
-    web_request: V1SarifWebRequest | None = Field(
-        None, title='Web request associated with the thread flow location'
-    )
-    web_response: V1SarifWebResponse | None = Field(
-        None, title='Web response associated with the thread flow location'
-    )
-
-
-class ThreadFlow1(BaseModel):
-    """
-    Thread flow object representing a sequence of code locations executed by a single thread.
-    """
-
-    id: str | None = Field(
-        None, title='A unique identifier for the thread flow within the code flow'
-    )
-    immutable_state: dict[str, Any] | None = Field(
-        None,
-        title='Values of relevant expressions at the start of the thread flow that remain constant',
-    )
-    initial_state: dict[str, Any] | None = Field(
-        None, title='Values of relevant expressions at the start of the thread flow'
-    )
-    locations: list[Location1] = Field(
-        ..., title='The locations that were executed during this thread flow'
-    )
-    message: V1SarifText | None = Field(
-        None, title='A message relevant to the thread flow'
-    )
-
-
 class CodeFlow(BaseModel):
     """
     Code flow object representing a sequence of code locations that specify a data flow path.
@@ -2080,7 +1967,7 @@ class CodeFlow(BaseModel):
     message: V1SarifText | None = Field(
         None, title='A message relevant to the code flow'
     )
-    thread_flows: list[ThreadFlow1] | None = Field(
+    thread_flows: list[ThreadFlow] | None = Field(
         None, title='An array of one or more unique threadFlow objects'
     )
 
@@ -2096,7 +1983,7 @@ class V1SarifResult(BaseModel):
     level: str | None = Field(
         None, title='Severity level of the notification (e.g., "error", "warning")'
     )
-    locations: list[Location2] | None = Field(
+    locations: list[Location] | None = Field(
         None, title='List of locations in the code where the finding was detected'
     )
     message: V1SarifText | None = Field(
