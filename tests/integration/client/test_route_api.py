@@ -15,6 +15,7 @@ from __future__ import annotations
 import pytest
 
 from endorlabs.core.exceptions import (
+    NotFoundError,
     RouteNotApplicableError,
     ServerError,
 )
@@ -22,7 +23,7 @@ from endorlabs.facade.context_partition import context_partition_filter
 from endorlabs.operations.routes import RouteResult
 from tests.conftest import TEST_MAX_PAGES
 from tests.integration.client.conftest import (
-    require_first_project,
+    require_canonical_project,
     require_list_for_context_sample,
     require_scan_with_context,
     resource_has_rows_in_scope,
@@ -114,7 +115,7 @@ class TestRouteAPI:
 
     def test_finding_list_by_project_scoped_to_source(self) -> None:
         """Wiring: list_by_project rows belong to the source project."""
-        project = require_first_project(self.client)
+        project = require_canonical_project(self.client)
         rows = self.client.Finding.list_by_project(
             project,
             max_pages=TEST_MAX_PAGES,
@@ -129,7 +130,7 @@ class TestRouteAPI:
 
     def test_scan_result_list_by_project_scoped_to_source(self) -> None:
         """Wiring: ScanResult list_by_project rows reference parent project."""
-        project = require_first_project(self.client)
+        project = require_canonical_project(self.client)
         rows = self.client.ScanResult.list_by_project(
             project,
             max_pages=TEST_MAX_PAGES,
@@ -144,7 +145,7 @@ class TestRouteAPI:
 
     def test_package_version_list_by_project_scoped_to_source(self) -> None:
         """Wiring: PackageVersion list_by_project rows reference source project."""
-        project = require_first_project(self.client)
+        project = require_canonical_project(self.client)
         rows = self.client.PackageVersion.list_by_project(
             project,
             max_pages=TEST_MAX_PAGES,
@@ -160,7 +161,7 @@ class TestRouteAPI:
     @pytest.mark.long
     def test_finding_list_for_context_partition_integrity(self) -> None:
         _project, scan = require_scan_with_context(
-            self.client, require_first_project(self.client)
+            self.client, require_canonical_project(self.client)
         )
         try:
             rows = self.client.Finding.list_for_context(
@@ -182,7 +183,7 @@ class TestRouteAPI:
     @pytest.mark.long
     def test_finding_list_for_context_equivalent_to_manual_filter(self) -> None:
         project, scan = require_scan_with_context(
-            self.client, require_first_project(self.client)
+            self.client, require_canonical_project(self.client)
         )
         try:
             accessor_rows = self.client.Finding.list_for_context(
@@ -224,7 +225,7 @@ class TestRouteAPI:
 
     def test_finding_to_dependency_metadata_matches_target(self) -> None:
         """Stitch: to_dependency_metadata resolves spec.target_uuid when present."""
-        project = require_first_project(self.client)
+        project = require_canonical_project(self.client)
         findings = self.client.Finding.list_by_project(
             project,
             max_pages=TEST_MAX_PAGES,
@@ -244,6 +245,10 @@ class TestRouteAPI:
             result = self.client.Finding.to_dependency_metadata(target_finding)
         except RouteNotApplicableError:
             pytest.skip("DependencyMetadata route not applicable for sample finding")
+        except NotFoundError:
+            pytest.skip(
+                "stale target_uuid / missing DependencyMetadata for sample finding"
+            )
         assert isinstance(result, RouteResult)
         assert result.edge_used.startswith("finding.dependency_metadata")
         if result.edge_used == "finding.dependency_metadata.get":
@@ -256,7 +261,7 @@ class TestRouteAPI:
             pytest.skip("DependencyMetadata route returned no rows for sample finding")
 
     def test_scan_result_parent_returns_project(self) -> None:
-        project = require_first_project(self.client)
+        project = require_canonical_project(self.client)
         scans = self.client.ScanResult.list_by_project(
             project,
             max_pages=TEST_MAX_PAGES,
@@ -272,7 +277,7 @@ class TestRouteAPI:
 
     def test_finding_count_matches_bounded_list(self) -> None:
         """Wiring: facade count is at least the bounded list row count."""
-        project = require_first_project(self.client)
+        project = require_canonical_project(self.client)
         ns = project.namespace
         if not ns:
             pytest.skip("Project has no namespace for count scope")
