@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-09-29T21:19:46.605371+00:00",
+  "generated_at": "2026-10-02T16:38:39.076615+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -149,7 +149,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.7.2",
+  "sdk_version": "0.7.3",
   "skills": [
     {
       "description": "Use when mapping AI-SAST function_summary vector seeds (entry points / rest_path metadata) onto customer PackageVersion CallGraphData symbols, with hard prechecks that MAIN RepositoryVersion AI-SAST SUCCESS and a function_summary index exist plus a MAIN-context call-graph PackageVersion is decodable. Optional safe BFS via --path-to and/or Finding-derived package tokens (--vuln / --finding-package). Not for Finding/oss SCA reachability proof (endor-reachability-provenance), offline CG-only search (endor-fetch-and-search-call-graph), or NL-only vector browse (endor-vector-query).\n",

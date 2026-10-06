@@ -7,7 +7,7 @@ import pytest
 from endorlabs.core.exceptions import NotFoundError, ServerError
 from tests.conftest import TEST_MAX_PAGES, TEST_SCAN_LOG_MAX_ENTRIES
 from tests.integration.client.conftest import (
-    require_first_project,
+    require_canonical_project,
 )
 from tests.integration.client.helper_assertions import nested_attr
 
@@ -21,7 +21,7 @@ class TestFacadeWireHelpers:
         self.client = facade_client
 
     def test_scan_result_get_logs_for_sample_scan(self) -> None:
-        project = require_first_project(self.client)
+        project = require_canonical_project(self.client)
         scans = self.client.ScanResult.list_by_project(
             project,
             max_pages=TEST_MAX_PAGES,
@@ -42,7 +42,7 @@ class TestFacadeWireHelpers:
             assert hasattr(entry, "timestamp") or hasattr(entry, "level")
 
     def test_call_graph_data_fetch_and_decode_for_package_version(self) -> None:
-        project = require_first_project(self.client)
+        project = require_canonical_project(self.client)
         try:
             pvs = self.client.PackageVersion.list_by_project(
                 project,
@@ -75,7 +75,7 @@ class TestFacadeWireHelpers:
             pytest.skip("No CallGraphData rows for sampled package versions")
 
     def test_scan_result_latest_created_for_project(self) -> None:
-        project = require_first_project(self.client)
+        project = require_canonical_project(self.client)
         scans = self.client.ScanResult.list_by_project(
             project,
             max_pages=TEST_MAX_PAGES,

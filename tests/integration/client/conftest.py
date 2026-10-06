@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 import endorlabs
 from endorlabs.core.exceptions import ServerError
 from endorlabs.facade.context_partition import context_partition_filter
-from tests.conftest import TEST_MAX_PAGES
+from tests.conftest import CANONICAL_SDK_REPO_URL, TEST_MAX_PAGES
 from tests.integration.client.helper_assertions import nested_attr
 
 # Registry scope is ``tenant`` (OpenAPI exposes both tenant and oss paths), but OSS
@@ -35,7 +37,11 @@ def facade_oss_client(api_client):
 
 
 def require_first_project(client, *, max_pages: int = TEST_MAX_PAGES):
-    """Return first project in scope or skip."""
+    """Return first project in scope or skip.
+
+    Prefer :func:`require_canonical_project` for tests that assume this
+    repository's scan graph (CI sets ``TEST_REPO_URL``).
+    """
     try:
         projects = client.Project.list(max_pages=max_pages)
     except ServerError as err:
@@ -43,6 +49,27 @@ def require_first_project(client, *, max_pages: int = TEST_MAX_PAGES):
     if not projects:
         pytest.skip("No projects in scope")
     return projects[0]
+
+
+def require_canonical_project(client, *, max_pages: int = TEST_MAX_PAGES):
+    """Return the Project for ``TEST_REPO_URL`` / canonical SDK repo, or skip.
+
+    CI sets ``TEST_REPO_URL`` to this repository's clone URL. Pinning avoids
+    non-deterministic ``Project.list`` page order (e.g. unrelated lab projects
+    with stale finding→DependencyMetadata links).
+    """
+    repo_url = os.getenv("TEST_REPO_URL", CANONICAL_SDK_REPO_URL)
+    try:
+        matches = client.Project.search_by_name(
+            repo_url,
+            traverse=True,
+            max_pages=max_pages,
+        )
+    except ServerError as err:
+        pytest.skip(f"Project search unavailable: {err}")
+    if not matches:
+        pytest.skip(f"No project matched repo URL: {repo_url}")
+    return matches[0]
 
 
 def _list_rows(client, list_method: str) -> list[object]:

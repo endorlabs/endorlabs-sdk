@@ -478,6 +478,12 @@ class V1ValidateAPIKeyReq(BaseModel):
     """
     The unique identifier of the API key.
     """
+    namespace: str | None = None
+    """
+    The namespace the API key belongs to. A caller that mints a derived token
+    binds it to this namespace, so the platform can vouch for the scope of the
+    derived token instead of trusting a scope the caller supplies.
+    """
     secret: str
     """
     The secret associated with the provided API Key.

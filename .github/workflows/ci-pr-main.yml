@@ -3,7 +3,7 @@ name: CI PR Main
 # Required Repository Configuration:
 # Variables (Settings > Secrets and variables > Actions > Variables):
 #   - ENDOR_API: Endor Labs API endpoint (e.g., "https://api.endorlabs.com")
-#   - ENDOR_NAMESPACE: Endor namespace for CI (e.g., "endor-solutions-tgowan")
+#   - ENDOR_NAMESPACE: Endor namespace for CI (e.g., "auri")
 # Secrets (Settings > Secrets and variables > Actions > Secrets):
 #   - ENDOR_API_CREDENTIALS_KEY: API credentials key (integration tests only)
 #   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret (integration tests only)

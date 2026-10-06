@@ -153,6 +153,10 @@ class RemediationParametersAutomatedPRParameters(BaseModel):
 class ScanResultSpecStatus(StrEnum):
     """
     Success state.
+
+     - STATUS_SKIPPED: The scan stopped on purpose before it analyzed anything, for example
+    because a newer commit replaced the one it was dispatched for. It is not
+    a failure and produced no findings. exit_code records why.
     """
 
     STATUS_UNSPECIFIED = 'STATUS_UNSPECIFIED'
@@ -160,6 +164,7 @@ class ScanResultSpecStatus(StrEnum):
     STATUS_PARTIAL_SUCCESS = 'STATUS_PARTIAL_SUCCESS'
     STATUS_FAILURE = 'STATUS_FAILURE'
     STATUS_RUNNING = 'STATUS_RUNNING'
+    STATUS_SKIPPED = 'STATUS_SKIPPED'
 
 
 class ScanResultSpecType(StrEnum):

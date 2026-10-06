@@ -15,6 +15,7 @@ From `endorlabs.generated.models.scan_result_service.ScanResultSpecStatus`:
 | `STATUS_PARTIAL_SUCCESS` | Completed with partial results |
 | `STATUS_FAILURE` | Scan failed |
 | `STATUS_RUNNING` | Scan in progress |
+| `STATUS_SKIPPED` | — |
 
 Example:
 

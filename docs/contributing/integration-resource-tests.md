@@ -26,6 +26,12 @@ in this order where the registry supports the operation:
 
 **Fixtures:** Use integration conftest `api_client`, `namespace`, `root_namespace`. Prefer `endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)` for LIST/GET in namespace scope.
 
+**Canonical project (CI):** Route/wiring tests that assume this repository's scan
+graph use `require_canonical_project()` (resolves `TEST_REPO_URL`, defaulting to
+the SDK clone URL). Do not use arbitrary `Project.list` page order for those
+tests — tenant roots such as `auri` contain unrelated lab projects. CI sets
+`TEST_REPO_URL` from `github.repository` (see `.github/workflows/ci-pr-main.yml`).
+
 **Cleanup:** Every CREATE test must use try/finally (or teardown) so cleanup runs on pass, failure, or exception.
 
 **No-update resources:** For resources where update is unsupported (`api_keys`, `audit_logs`, `finding_logs`, `linter_results`, …), add a test that asserts `client.<Kind>.update(...)` raises `NotImplementedError`.

@@ -8,6 +8,16 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Breaking
+
+## 0.7.3
+
+### Added
+
 - `endor-license-export` — scheduleable MAIN-context DependencyMetadata inventory
   plus SPDX license resolve via `PackageLicenseQuery` /
   `BatchPackageLicenseQuery` at the export namespace (no catalog-namespace list),
@@ -31,6 +41,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
   **endor-troubleshooting-scans**, **endor-sca-findings**,
   **endor-dependency-provenance** and shipped `INDEX.md` (structured Endor
   app URL templates) updated accordingly.
+- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1174).
 
 ### Fixed
 
