@@ -47,6 +47,8 @@ Consumer entrypoint: **`AGENTS.md`** (points here). Copy **`templates/consumer-A
 | Stub as kwargs source | Prefer `print(client.Finding.describe())` — live identity kwargs + routes; stub is for typing |
 | `F()` positional | `list(filter=F("spec.level") == "…", traverse=True)` — never `list(F(...) == …, traverse=True)` |
 | `F.field` attribute | Use `F("spec.field")` — dotted paths are strings, not attributes on `F` |
+| `from endorlabs.filters import F` | `from endorlabs import F` — `endorlabs.filters` is MQL fragments only |
+| `ScanResult.list(filter=…spec.project_uuid…)` | `ScanResult.list_by_project(project)` — project link is `meta.parent_uuid` (same for FindingLog); Finding/PV use `spec.project_uuid` |
 | `list_by_*` / `list_for_context` expecting wrong return type | `list[T]` — same as `.list()`; project/scan-plane edges |
 | `to_*` expecting wrong return type | `RouteResult` — stitch; `.value` / `.single`; check `.edge_used`, `.warnings` |
 | `limit` on `.list()` | Use `page_size=` or `limit=` (alias for `page_size`; same as `list_by_project(limit=)`) |

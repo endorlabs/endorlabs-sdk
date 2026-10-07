@@ -10,6 +10,8 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Agent Day-0 / skill traps: `from endorlabs import F` (not `endorlabs.filters`), and ScanResult/FindingLog project scope via `list_by_project` / `meta.parent_uuid` (not `spec.project_uuid`).
+
 ### Fixed
 
 ### Breaking

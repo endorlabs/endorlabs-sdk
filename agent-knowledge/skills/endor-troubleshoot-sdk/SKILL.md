@@ -72,6 +72,16 @@ client.Namespace.update(ns, meta_description="new description")
 
 **Fix:** Keep sort with `max_pages=1` and a larger `limit` / `page_size` for N newest rows, or drop `sort_by` and paginate then order client-side. See [list-parameters](../../contracts/list-parameters.md).
 
+### `ImportError: cannot import name 'F'` / `Invalid filter path: 'spec.project_uuid'` (400)
+
+**Symptom:** `ImportError: cannot import name 'F' from 'endorlabs.filters'`.
+
+**Fix:** `from endorlabs import F` — `endorlabs.filters` exports MQL fragments only, not the `F` builder.
+
+**Symptom:** `ValidationError: Invalid filter path: 'spec.project_uuid'` on `ScanResult` or `FindingLog` list.
+
+**Fix:** Use `ScanResult.list_by_project(project)` (or filter on `meta.parent_uuid`). Finding/PV use `spec.project_uuid`; ScanResult/FindingLog do not.
+
 ### List field mask (dict rows) vs partial **model** responses
 
 **Masked list (non-empty `mask`):** dict wire rows — use `isinstance(row, dict)` or omit `mask` for models.
