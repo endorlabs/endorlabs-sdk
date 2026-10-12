@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-10-02T16:38:39.076615+00:00",
+  "generated_at": "2026-10-12T19:55:12.579878+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -283,6 +283,15 @@
       "refs": [
         "skills/endor-sso-integration-validation-troubleshooting/README.md",
         "skills/endor-sso-integration-validation-troubleshooting/sso_access_spotcheck.py"
+      ]
+    },
+    {
+      "description": "Use when checking which toolchain versions and download URLs the platform\nstores, then picking pins for a local ScanProfile or registering a custom\nbuild tool. Not for scan-log selected_toolchains RCA.",
+      "id": "endor-toolchain-catalog",
+      "name": "endor-toolchain-catalog",
+      "path": "skills/endor-toolchain-catalog/SKILL.md",
+      "refs": [
+        "skills/endor-toolchain-catalog/scripts/export_toolchain_catalog.py"
       ]
     },
     {
