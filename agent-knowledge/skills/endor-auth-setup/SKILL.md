@@ -49,7 +49,8 @@ Do not assume a child namespace passed to `endor-auth refresh` becomes the API l
 
 ### Workflow CLI credential override
 
-Scheduleable workflow CLIs (`endor-license-export`, `endor-log-export`, and
+Scheduleable workflow CLIs (`endor-license-export`, `endor-findings-export`,
+`endor-log-export`, and
 follow-on adopters) share `endorlabs.workflows.common.cli_client` flags. They
 **never** open a browser — refresh first, then run with env or overrides:
 

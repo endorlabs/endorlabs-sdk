@@ -2,8 +2,10 @@
 name: endor-troubleshooting-scans
 description: |
   Use when doing scan pipeline RCA: resolve a project (including app scan-history
-  URLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs
-  for errors, diff aggregate metrics, and probe PackageVersion resolution_errors.
+  URLs), compare scan pairs (heuristic or user-supplied), pull full ScanResult
+  get_logs for selected_toolchains + underlying_errors, search embedded spec.logs,
+  diff aggregate metrics, and probe PackageVersion resolution_errors. Do not answer
+  ecosystem-degrade questions with status % or error-code histograms alone.
   Summaries include scan_mode (CLI vs Cloud Scan, --quick-scan, local cache flags,
   UseScanProfile, PythonVirtualEnv). Always resolve Project scan/toolchain profile
   refs on first fetch. Not for individual Finding rows or policy validation—hand
@@ -36,8 +38,12 @@ Chain CLI steps on JSON artifacts; extend with library imports per [workflow-com
 - **Heuristically** rank adjacent scan pairs **or** build an **explicit user-supplied pair**.
 - Search **embedded** `spec.logs` for error signatures (`search_scan_errors`).
 - Pull scan logs for selected pair UUIDs (embedded fallback when ScanLog API rows are hollow).
-- Diff scan-level aggregate metrics into JSON + markdown artifacts.
-- **Library probe:** `PackageVersion.list_by_project(project)` → `spec.resolution_errors` when dependency metrics collapse.
+- **Log grain (required for degrade claims):** artifact keys `selected_toolchains.versions`
+  (from `Endorctl toolchains selected` / protobuf-text `toolchains`) and
+  `underlying_errors[]` (`msg`, `code`, `resolution_error`, `stderr`, `command`,
+  `package_name`, `caller`). Pair deltas via `summarize_scan_triage --secondary-scan-logs-artifact`.
+- Diff scan-level aggregate metrics into JSON + markdown artifacts (**secondary** to log grain).
+- **Library probe:** `PackageVersion.list_by_project(project)` → `spec.resolution_errors` when dependency metrics collapse (secondary after underlying_errors).
 - **Per-scan execution mode:** `scan_mode` on fetch/pull summaries (`scan_execution`, `quick_scan`, `use_local_repo_cache`, `use_scan_profile`, `python_virtual_env`, reconstructed `endorctl_flags`).
 - **Config allowlist:** `ScanConfig.UseScanProfile`, `ToolChainsConfig.DockerSource` / `DockerSourceUUID` on summaries (`config_allowlist`, `toolchains`).
 - **Scan / toolchain profile (always on first project resolve):** read
@@ -67,6 +73,23 @@ Chain CLI steps on JSON artifacts; extend with library imports per [workflow-com
 - Package introduction paths across manifests/versions → [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md)
 
 Finding counts here come from **`ScanResult.spec.stats` aggregates only** — not `Finding.list`.
+
+## Anti-pattern: status % / error-code rollups
+
+**Do not** answer “did ecosystems degrade?” / ScanProfile migration RCA with:
+
+- `% STATUS_PARTIAL_SUCCESS` or success/failure percentages alone
+- Histograms of log `code` values (`dependency-scanning-error` counts) without payload fields
+- Embedded `search_scan_errors` regex hit counts as the only evidence
+
+**Required grain before that claim** (placeholders only — never commit customer tenant names):
+
+1. `pull_scan_logs` / `fetch_scan_logs` on the compared scan UUID(s)
+2. Read artifact `selected_toolchains.versions` (and pair **Toolchain version delta** when both logs exist)
+3. Read `underlying_errors[]` — cite `resolution_error` / `stderr` / `command` / `package_name`
+4. Only then relate to `dependency_count_*` / `scan_success` / status
+
+`summarize_scan_triage` puts selected toolchains + underlying errors **above** aggregate status commentary. PV `resolution_errors` remains a secondary probe when dep metrics collapse.
 
 ## Entry paths (pick one)
 
@@ -109,11 +132,13 @@ Thread UUIDs and namespace from each artifact into the next step; do not re-list
 5. Read `scan_mode.scan_execution`, `use_scan_profile`, `toolchains.docker_source`,
    `python_virtual_env` before attributing runner / Python / App behavior
 6. `select_anomalous_scans` → ranked pair (`regression_detected` = score > 0)
-7. `search_scan_errors` → embedded `spec.logs` regex hits
-8. `diff_scans` → aggregate metric diff
-9. `fetch_scan_logs` or `pull_scan_logs` → only if embedded search insufficient
-   (index includes `discovered_manifests`)
-10. `summarize_scan_triage` → optional markdown from pull artifacts
+7. `search_scan_errors` → embedded `spec.logs` regex hits (signal only; not final grain)
+8. `diff_scans` → aggregate metric diff (secondary)
+9. `fetch_scan_logs` or `pull_scan_logs` on **both** pair UUIDs → read
+   `selected_toolchains` + `underlying_errors` (required before degrade claims;
+   index also includes `discovered_manifests`)
+10. `summarize_scan_triage` → markdown with toolchain pins/deltas + underlying errors
+    (`--secondary-scan-logs-artifact` for pair baseline)
 
 ### Explicit pair (user named two scans)
 
@@ -174,6 +199,8 @@ for pv in client.PackageVersion.list_by_project(project, namespace=project_ns, m
 | `scan_mode.python_virtual_env` set | Treat as explicit venv root for SCA; wrong `.../bin` path → discover fails without creating a temp venv |
 | `scan_mode.quick_scan` or `use_local_repo_cache` is true | Approximate graphs / Maven `--offline` are expected; compare to a scan without those flags |
 | `fetch_scan_logs` `entry_count > 0` but no `error` in text | Re-check embedded `spec.logs`; API rows may be hollow |
+| `underlying_errors[]` non-empty or `selected_toolchains.versions` drift | Cite those fields; **do not stop** at `code` histogram or status % |
+| `selected_toolchains.source` is null on both pair logs | Note missing `Endorctl toolchains selected` line; still cite underlying_errors |
 | `regression_detected: false` but user named two scans | Use explicit-pair path; user intent overrides heuristic |
 | Pair differs on `scan_execution` / `quick_scan` | Treat as config mismatch first; tenant-wide inventory still [endor-workflow-reports](../endor-workflow-reports/SKILL.md) |
 
@@ -235,14 +262,23 @@ Installed package modules (run with `uv run python -m endorlabs.workflows.troubl
 
 - `fetch_scan_logs.py`
   - ScanLog API via `ScanResult.get_logs`; falls back to embedded `spec.logs` when API returns no rows **or hollow messages** (timestamp/level only).
+  - Attaches **`selected_toolchains`** + **`underlying_errors`** (and index fields).
   - Index entries include **`discovered_manifests`** from pulled log text.
   - Output object kinds: `scan_log`, `scan_logs`.
 
 - `pull_scan_logs.py`
   - Paginated full log pull for deep RCA / `summarize_scan_triage`.
+  - After normalizing `messages[]`, attaches **`selected_toolchains`** + **`underlying_errors`**
+    (do not truncate `json_payload` fields needed for those extractors before enrichment).
+
+- `log_payload_extract.py`
+  - Library: `parse_toolchains_blob`, `extract_selected_toolchains`,
+    `extract_underlying_errors`, `diff_selected_toolchain_versions`.
 
 - `summarize_scan_triage.py`
   - Markdown triage summary from `pull_scan_results` + `pull_scan_logs` artifacts.
+  - Surfaces **Selected toolchains**, optional **Toolchain version delta**
+    (`--secondary-scan-logs-artifact`), and **Underlying errors** above aggregate status.
   - Includes Endor app links, profile UUIDs, DockerSource, and discovered manifest paths.
 
 - `run_troubleshooting_workflow.py`
@@ -313,6 +349,7 @@ Do **not** filter on `context.scan_uuid` — see [resource-discovery contract](.
 
 ## Interpretation hints
 
+- **Wrong grain:** status % / `code` tallies alone. **Right grain:** `selected_toolchains.versions` + `underlying_errors[]` fields from full `get_logs` payloads.
 - Read **`scan_mode`** from `fetch_scan_results` / `pull_scan_results` / `diff_scans` artifacts **before** attributing GitHub App, `--quick-scan`, or a local Maven cache.
 - On first project resolve, always record **`scan_profile_uuid` / `toolchain_profile_uuid`** (and fetch the profile when present). Namespace-listed profiles that are **not** attached to the project do not apply to the scan.
 - `scan_execution: CLI` is `RunBySystem: false`. `Cloud Scan` is `RunBySystem: true`. Missing field is `unknown` — not App. Project `is_app` / `is_cli` is inventory registration — still confirm per-scan `scan_execution`.
@@ -320,9 +357,9 @@ Do **not** filter on `context.scan_uuid` — see [resource-discovery contract](.
 - `python_virtual_env` must be the venv **root** (`/path/to/venv`), not `.../venv/bin`.
 - `Enables: ["git", "analytics"]` is **not** `--dependencies`. Reconstruct flags from `endorctl_flags` only.
 - `quick_scan: true` → `--quick-scan` (approximate SCA). `use_local_repo_cache: true` → `--use-local-repo-cache`; Maven `dependency:tree --offline` needs plugins already in `.m2`.
-- `scan_success` drop + `dependency_count_total` collapse → dependency-resolution pipeline failure; check embedded logs and PV `resolution_errors`.
-- Compare `endorctl_version`, scan status, `scan_mode`, and dependency metrics first.
-- Use `search_scan_errors.py` with ecosystem-specific patterns before pulling full ScanLog streams.
+- `scan_success` drop + `dependency_count_total` collapse → after citing underlying_errors, check embedded logs and PV `resolution_errors` (secondary).
+- Compare selected toolchain pins/deltas, then `endorctl_version`, scan status, `scan_mode`, and dependency metrics.
+- Use `search_scan_errors.py` with ecosystem-specific patterns as a lead; still pull full ScanLog streams for underlying fields before concluding degrade.
 - Empty `package defined in ''` in embedded logs → root build unit (e.g. root `build.sbt` / `pom.xml`).
 
 ## Related skills
@@ -330,6 +367,7 @@ Do **not** filter on `context.scan_uuid` — see [resource-discovery contract](.
 | Need | Skill |
 | ---- | ----- |
 | Finding rows for a scan plane | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) |
+| Platform toolchain download catalog CSV | [endor-toolchain-catalog](../endor-toolchain-catalog/SKILL.md) |
 | Tenant-wide CLI vs Cloud project inventory | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) |
 | Branch/sha fixed vs present | [endor-sca-findings](../endor-sca-findings/SKILL.md) |
 | Tenant-wide PV resolution errors | [endor-workflow-reports](../endor-workflow-reports/SKILL.md) |

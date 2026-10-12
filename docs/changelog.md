@@ -11,6 +11,11 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - Agent skill **endor-toolchain-catalog** — export platform
   `SupportedToolChainVersion` pins to CSV (versions + provider URLs) for
   ScanProfile / custom build-tool mapping.
+- `endor-findings-export` — scheduleable MAIN-context Finding JSONL export per
+  project shard (mandatory MAIN + `spec.project_uuid`; no category filter by
+  default; default mask none / full bodies). Library:
+  `endorlabs.workflows.findings_export`. Guide:
+  [findings-export.md](guides/findings-export.md).
 
 ### Changed
 

@@ -27,6 +27,7 @@ from .common import (
     root_tenant,
     write_json,
 )
+from .log_payload_extract import enrich_log_artifact
 
 
 def _parse_args() -> argparse.Namespace:
@@ -317,6 +318,7 @@ def main() -> int:
             "project_list_truncated": project_list_truncated,
             "messages": [_message_to_dict(m) for m in messages],
         }
+        enrich_log_artifact(payload)
 
         if args.output_dir:
             rt = root_tenant(str(args.tenant))

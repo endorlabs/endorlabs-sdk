@@ -1,7 +1,8 @@
 """List ScanResults for a project with a bounded create-time window (default 7 days).
 
-Uses ``ScanResult.list_by_project`` with ``from_date`` / ``to_date`` for server-side
-filtering instead of unbounded lists.
+Uses ``ScanResult.list(parent=project)`` with ``from_date`` / ``to_date`` for
+server-side filtering. Omits ``sort_by`` so multi-page ``page_id`` pagination
+works (platform rejects sort + page_id); orders newest-first client-side.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from endorlabs.tools.list_bounds import (
     resolve_max_pages,
 )
 from endorlabs.utils.namespace import resource_namespace
+from endorlabs.workflows.wire_access import nested_str
 
 from .common import (
     date_window_from_bounds,
@@ -94,16 +96,16 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         project = client.Project.get(args.project_uuid, namespace=ns)
         list_ns = resource_namespace(project) or ns
 
+        # Do not use list_by_project here: it forces sort_by + default max_pages=1.
+        # Multi-page windowed pulls must omit sort (page_id ⊕ sort → 400).
         lp = ListParameters(
             from_date=from_d,
             to_date=to_d,
-            sort_by="meta.create_time",
-            desc=True,
             page_size=args.page_size,
         )
         list_max_pages = resolve_max_pages(args.max_pages)
-        scans = client.ScanResult.list_by_project(
-            project,
+        scans = client.ScanResult.list(
+            parent=project,
             namespace=list_ns,
             list_params=lp,
             max_pages=list_max_pages,
@@ -112,6 +114,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         client.close()
 
     raw_list = [object_to_dict(s) for s in scans]
+    raw_list.sort(
+        key=lambda row: nested_str(row, "meta", "create_time") or "",
+        reverse=True,
+    )
     list_truncated = is_list_truncated(
         len(raw_list),
         max_pages=list_max_pages,

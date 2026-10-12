@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workspace-layout.md
-x-endor-source-sha256: f0f3c88f50fc2246fa64daece176af491b7310d2204f9b171c0a7b640d03031b
+x-endor-source-sha256: aa202b8f08206f31e114518b0fec8260536422574022b59b91f0e3c8e52433f9
 ---
 
 # Workspace layout
@@ -56,6 +56,7 @@ SDK helpers: `report_packet_dir()`, `task_activity_dir()`, `flat_task_dir()`,
 | `endor-agent-context` | `tasks/<slug>-<date>/projects/<slug>_<timestamp>/` |
 | `endor-log-export` | `tasks/<slug>-<date>/logs/` |
 | `endor-license-export` | `tasks/<slug>-<date>/licenses/` |
+| `endor-findings-export` | `tasks/<slug>-<date>/findings/` |
 | Relationship map | `tasks/<slug>-<date>/relationships/` |
 | Semgrep inventory (no tenant) | `tasks/inventory/` |
 | Packet parity (maintainer) | `tasks/parity/<slug>-<date>/` |

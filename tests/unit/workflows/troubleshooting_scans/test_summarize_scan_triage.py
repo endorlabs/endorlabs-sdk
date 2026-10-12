@@ -117,6 +117,7 @@ def test_main_writes_summary_and_evidence(
                     tenant="tenant.ns",
                     scan_results_artifact=str(results_path),
                     scan_logs_artifact=str(logs_path),
+                    secondary_scan_logs_artifact=None,
                     project_search_artifact=str(search_path),
                     max_errors=5,
                     output_dir=str(tmp_path),

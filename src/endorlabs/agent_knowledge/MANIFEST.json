@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-10-12T19:55:12.579878+00:00",
+  "generated_at": "2026-10-12T22:25:06.942284+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -311,7 +311,7 @@
       ]
     },
     {
-      "description": "Use when doing scan pipeline RCA: resolve a project (including app scan-history\nURLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs\nfor errors, diff aggregate metrics, and probe PackageVersion resolution_errors.\nSummaries include scan_mode (CLI vs Cloud Scan, --quick-scan, local cache flags,\nUseScanProfile, PythonVirtualEnv). Always resolve Project scan/toolchain profile\nrefs on first fetch. Not for individual Finding rows or policy validation\u2014hand\noff to sibling skills when deeper analysis is needed.\n",
+      "description": "Use when doing scan pipeline RCA: resolve a project (including app scan-history\nURLs), compare scan pairs (heuristic or user-supplied), pull full ScanResult\nget_logs for selected_toolchains + underlying_errors, search embedded spec.logs,\ndiff aggregate metrics, and probe PackageVersion resolution_errors. Do not answer\necosystem-degrade questions with status % or error-code histograms alone.\nSummaries include scan_mode (CLI vs Cloud Scan, --quick-scan, local cache flags,\nUseScanProfile, PythonVirtualEnv). Always resolve Project scan/toolchain profile\nrefs on first fetch. Not for individual Finding rows or policy validation\u2014hand\noff to sibling skills when deeper analysis is needed.\n",
       "id": "endor-troubleshooting-scans",
       "name": "endor-troubleshooting-scans",
       "path": "skills/endor-troubleshooting-scans/SKILL.md",
@@ -553,6 +553,20 @@
       ],
       "module": "endorlabs.workflows.reports.cli",
       "skill": "endor-workflow-reports"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-findings-export",
+      "composition": "library_api",
+      "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/findings/",
+      "id": "findings-export",
+      "library_entrypoints": [
+        "endorlabs.workflows.findings_export.run_findings_export",
+        "endorlabs.workflows.findings_export.collect_findings_export",
+        "endorlabs.workflows.findings_export.compose_finding_filter"
+      ],
+      "module": "endorlabs.workflows.findings_export.cli",
+      "skill": null
     },
     {
       "agent_visible": true,
