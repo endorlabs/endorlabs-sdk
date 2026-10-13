@@ -167,6 +167,18 @@ workflows:
       - endorlabs.workflows.reports.analyze.package_resolution.write_csv
       - endorlabs.workflows.reports.export.html.package_resolution.load_csv
       - endorlabs.workflows.reports.export.html.package_resolution.render_html
+  - id: dependency-resolution-analysis
+    cli: endor-reports
+    module: endorlabs.workflows.reports.cli
+    skill: endor-workflow-reports
+    default_output: .endorlabs/reports/depr-coverage/
+    agent_visible: false
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.reports.analyze.depr_coverage.build_depr_coverage_report
+      - endorlabs.workflows.reports.analyze.depr_progress.build_progress_artifacts
+      - endorlabs.workflows.reports.export.html.depr_coverage.render_exec_html
+      - endorlabs.workflows.reports.export.html.depr_coverage.render_progress_html
   - id: log-export
     cli: endor-log-export
     module: endorlabs.workflows.log_export.cli
