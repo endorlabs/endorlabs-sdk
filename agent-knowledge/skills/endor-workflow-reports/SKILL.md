@@ -4,11 +4,12 @@ description: |
   Use when the user asks for tenant or namespace-level Endor Labs audit reports,
   CSV exports, Cursor canvases, executive HTML report packets (QBR / customer)
   read-out / org onboarding growth / dependency sprawl / SCA·SAST·Secrets
-  FindingLog burndown), PackageVersion resolution HTML, or workflow summaries
-  backed by bundled report scripts rather than day-0 SDK troubleshooting skills.
+  FindingLog burndown), PackageVersion resolution HTML, dependency-resolution
+  (DEPR) coverage or progress reports, or workflow summaries backed by bundled
+  report scripts rather than day-0 SDK troubleshooting skills.
   Routes to auth, project inventory, CI version, finding trend, executive HTML
-  packet, package-resolution, and PRF report playbooks. Not for single-project
-  scan RCA, finding retrieval, SDK debugging, or policy validation.
+  packet, package-resolution, DEPR coverage, and PRF report playbooks. Not for
+  single-project scan RCA, finding retrieval, SDK debugging, or policy validation.
 ---
 
 # Workflow reports
@@ -86,6 +87,8 @@ Run `uv run endor-reports list` (or `list --json`) for the full subcommand picke
 | Refresh SAST/AI-SAST/Secrets burndown in existing packet | `endor-reports refresh-code --packet-dir <path>` | In-place under `--packet-dir` |
 | Potentially reachable finding approximation + PV resolution errors | `endor-reports prf-analysis -n <tenant>` | `.endorlabs/reports/prf-analysis/` |
 | PackageVersion resolution CSV + interactive HTML (manifest / dep resolution / reachability) | `endor-reports package-resolution -n <tenant>` | `.endorlabs/reports/package-resolution/` |
+| Dependency-resolution (DEPR) coverage EXEC (JSON + MD + HTML) | `endor-reports depr-coverage -n <tenant>` | `.endorlabs/reports/depr-coverage/` |
+| DEPR coverage progress across dated checkpoints (MD + HTML) | `endor-reports depr-progress -n <tenant> --dates YYYYMMDD,…` | `.endorlabs/reports/depr-coverage/` |
 
 Playbooks (filters, schemas, edge cases): `agent-knowledge/workflow-reports/<id>/SKILL.md`.
 

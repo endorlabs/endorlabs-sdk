@@ -35,6 +35,8 @@ uv run endor-reports ci-endorctl -n <tenant>
 uv run endor-reports findings-trend -n <tenant>
 uv run endor-reports prf-analysis -n <tenant>
 uv run endor-reports package-resolution -n <tenant>
+uv run endor-reports depr-coverage -n <tenant>
+uv run endor-reports depr-progress -n <tenant> --dates YYYYMMDD,YYYYMMDD
 ```
 
 Deprecated (one release): `packet`, `upsert-code-findings`.

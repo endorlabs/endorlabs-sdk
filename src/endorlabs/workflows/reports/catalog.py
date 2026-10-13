@@ -126,6 +126,18 @@ REPORT_CATALOG: tuple[ReportCatalogEntry, ...] = (
         default_output=_reports_subdir_path("package-resolution"),
     ),
     ReportCatalogEntry(
+        category="Analysis",
+        subcommand="depr-coverage",
+        summary="Dependency-resolution coverage (JSON + Markdown + HTML)",
+        default_output=_reports_subdir_path("depr-coverage"),
+    ),
+    ReportCatalogEntry(
+        category="Analysis",
+        subcommand="depr-progress",
+        summary="Dependency-resolution progress from dated checkpoints",
+        default_output=_reports_subdir_path("depr-coverage"),
+    ),
+    ReportCatalogEntry(
         category="Maintainer",
         subcommand="parity",
         summary="Compare packet cube to scratch baseline JSON",
