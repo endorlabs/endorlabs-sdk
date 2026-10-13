@@ -539,6 +539,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Render HTML from --csv (or --output) without calling the API.",
     )
     pkg.add_argument("--timeout", type=float, default=120.0)
+
+    coverage = sub.add_parser(
+        "depr-coverage",
+        parents=[ns_parent],
+        help="Dependency-resolution coverage (JSON + Markdown + HTML).",
+        description=_catalog_description("depr-coverage"),
+    )
+    coverage.add_argument("--output-dir", type=Path, default=None)
+    coverage.add_argument("--timeout", type=float, default=600.0)
+    coverage.add_argument("--workers", type=int, default=3)
+
+    progress = sub.add_parser(
+        "depr-progress",
+        parents=[ns_parent],
+        help="Dependency-resolution progress from dated coverage checkpoints.",
+        description=_catalog_description("depr-progress"),
+    )
+    progress.add_argument("--output-dir", type=Path, default=None)
+    progress_source = progress.add_mutually_exclusive_group(required=True)
+    progress_source.add_argument("--dates")
+    progress_source.add_argument("--from-json", type=Path, nargs="+", default=None)
     return parser
 
 
@@ -886,6 +907,30 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "package-resolution":
         args.namespace = _resolve_namespace(args, parser)
         return _run_package_resolution(args)
+    if args.command == "depr-coverage":
+        args.namespace = _resolve_namespace(args, parser)
+        from endorlabs.workflows.reports.analyze.depr_coverage import main as run
+
+        coverage_argv = ["-n", args.namespace]
+        if args.output_dir is not None:
+            coverage_argv.extend(["--output-dir", str(args.output_dir)])
+        coverage_argv.extend(
+            ["--timeout", str(args.timeout), "--workers", str(args.workers)]
+        )
+        return run(coverage_argv + remainder)
+    if args.command == "depr-progress":
+        args.namespace = _resolve_namespace(args, parser)
+        from endorlabs.workflows.reports.analyze.depr_progress import main as run
+
+        progress_argv = ["-n", args.namespace]
+        if args.output_dir is not None:
+            progress_argv.extend(["--output-dir", str(args.output_dir)])
+        if args.from_json:
+            progress_argv.append("--from-json")
+            progress_argv.extend(str(path) for path in args.from_json)
+        else:
+            progress_argv.extend(["--dates", args.dates])
+        return run(progress_argv + remainder)
 
     parser.error(f"unknown command {args.command!r}")
     return 2

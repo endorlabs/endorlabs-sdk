@@ -8,6 +8,8 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- `endor-reports depr-coverage` and `depr-progress`: tenant-wide dependency-resolution (DEPR) coverage EXEC and multi-checkpoint progress reports (dated JSON + Markdown + HTML). Playbook: `agent-knowledge/workflow-reports/endor-depr-coverage/`.
+
 ### Changed
 
 ### Fixed

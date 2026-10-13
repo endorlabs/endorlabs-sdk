@@ -20,6 +20,7 @@ invoked via **`endor-reports <subcommand>`** (see
 | `endor-executive-report-packet` | `build` (default `-n`) / `parity` | `reports.bundles.executive_packet` |
 | `endor-potentially-reachable-analysis` | `prf-analysis` | `reports.analyze.prf_report_analysis` |
 | `endor-package-resolution-report` | `package-resolution` | `reports.analyze.package_resolution` + `reports.export.html.package_resolution` |
+| `endor-depr-coverage` | `depr-coverage` / `depr-progress` | `reports.analyze.depr_coverage` / `depr_progress` |
 
 Library-backed report workflow rows live in `agent-knowledge/workflows.yaml`
 with `skill: endor-workflow-reports` and `agent_visible: false`; detailed
