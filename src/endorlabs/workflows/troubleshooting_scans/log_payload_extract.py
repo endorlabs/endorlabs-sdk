@@ -304,19 +304,16 @@ def extract_underlying_errors(
             "package_name": _clip(dict_str(payload, "package_name"), max_len=200),
             "caller": _clip(dict_str(payload, "caller"), max_len=160),
         }
-        # Skip empty shells (code-only with no narrative fields)
-        if (
-            not any(
-                row[k]
-                for k in (
-                    "msg",
-                    "resolution_error",
-                    "stderr",
-                    "command",
-                    "package_name",
-                )
+        # Skip empty shells / code-only tallies (no narrative fields).
+        if not any(
+            row[k]
+            for k in (
+                "msg",
+                "resolution_error",
+                "stderr",
+                "command",
+                "package_name",
             )
-            and not row["code"]
         ):
             continue
         fingerprint = _error_fingerprint(row)

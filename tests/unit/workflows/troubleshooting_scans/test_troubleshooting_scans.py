@@ -456,7 +456,15 @@ def test_extract_underlying_errors_resolution_and_command() -> None:
                 "stderr": "ERROR: Failed to execute goal",
                 "caller": "dependency.scan",
             },
-        }
+        },
+        {
+            "level": "LOG_LEVEL_ERROR",
+            "json_payload": {"code": "dependency-scanning-error"},
+        },
+        {
+            "level": "LOG_LEVEL_ERROR",
+            "json_payload": {},
+        },
     ]
     rows = extract_underlying_errors(messages)
     assert len(rows) == 1
