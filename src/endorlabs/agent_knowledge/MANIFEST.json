@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-10-02T16:38:39.076615+00:00",
+  "generated_at": "2026-10-14T13:24:37.993622+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -149,7 +149,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.7.3",
+  "sdk_version": "0.7.4",
   "skills": [
     {
       "description": "Use when mapping AI-SAST function_summary vector seeds (entry points / rest_path metadata) onto customer PackageVersion CallGraphData symbols, with hard prechecks that MAIN RepositoryVersion AI-SAST SUCCESS and a function_summary index exist plus a MAIN-context call-graph PackageVersion is decodable. Optional safe BFS via --path-to and/or Finding-derived package tokens (--vuln / --finding-package). Not for Finding/oss SCA reachability proof (endor-reachability-provenance), offline CG-only search (endor-fetch-and-search-call-graph), or NL-only vector browse (endor-vector-query).\n",
@@ -286,6 +286,15 @@
       ]
     },
     {
+      "description": "Use when checking which toolchain versions and download URLs the platform\nstores, then picking pins for a local ScanProfile or registering a custom\nbuild tool. Not for scan-log selected_toolchains RCA.",
+      "id": "endor-toolchain-catalog",
+      "name": "endor-toolchain-catalog",
+      "path": "skills/endor-toolchain-catalog/SKILL.md",
+      "refs": [
+        "skills/endor-toolchain-catalog/scripts/export_toolchain_catalog.py"
+      ]
+    },
+    {
       "description": "Use when investigating tenant SSO/login issues with AuthenticationLog,\nAuthorizationPolicy, and optional AuditLog\u2014correlating IdP claims with Endor\npolicy mapping, \"no authorized tenant\" symptoms, or exporting structured\nflow-agnostic auth investigation JSON.",
       "id": "endor-troubleshoot-authlog",
       "name": "endor-troubleshoot-authlog",
@@ -302,7 +311,7 @@
       ]
     },
     {
-      "description": "Use when doing scan pipeline RCA: resolve a project (including app scan-history\nURLs), compare scan pairs (heuristic or user-supplied), search embedded spec.logs\nfor errors, diff aggregate metrics, and probe PackageVersion resolution_errors.\nSummaries include scan_mode (CLI vs Cloud Scan, --quick-scan, local cache flags,\nUseScanProfile, PythonVirtualEnv). Always resolve Project scan/toolchain profile\nrefs on first fetch. Not for individual Finding rows or policy validation\u2014hand\noff to sibling skills when deeper analysis is needed.\n",
+      "description": "Use when doing scan pipeline RCA: resolve a project (including app scan-history\nURLs), compare scan pairs (heuristic or user-supplied), pull full ScanResult\nget_logs for selected_toolchains + underlying_errors, search embedded spec.logs,\ndiff aggregate metrics, and probe PackageVersion resolution_errors. Do not answer\necosystem-degrade questions with status % or error-code histograms alone.\nSummaries include scan_mode (CLI vs Cloud Scan, --quick-scan, local cache flags,\nUseScanProfile, PythonVirtualEnv). Always resolve Project scan/toolchain profile\nrefs on first fetch. Not for individual Finding rows or policy validation\u2014hand\noff to sibling skills when deeper analysis is needed.\n",
       "id": "endor-troubleshooting-scans",
       "name": "endor-troubleshooting-scans",
       "path": "skills/endor-troubleshooting-scans/SKILL.md",
@@ -544,6 +553,20 @@
       ],
       "module": "endorlabs.workflows.reports.cli",
       "skill": "endor-workflow-reports"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-findings-export",
+      "composition": "library_api",
+      "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/findings/",
+      "id": "findings-export",
+      "library_entrypoints": [
+        "endorlabs.workflows.findings_export.run_findings_export",
+        "endorlabs.workflows.findings_export.collect_findings_export",
+        "endorlabs.workflows.findings_export.compose_finding_filter"
+      ],
+      "module": "endorlabs.workflows.findings_export.cli",
+      "skill": null
     },
     {
       "agent_visible": true,

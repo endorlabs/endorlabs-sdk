@@ -24,4 +24,5 @@ Subpackages:
     troubleshooting_scans: Scan result/log triage scripts (CLI-oriented).
     log_export: Scheduleable PackageFirewallLog / AgentHookEvent file dumps.
     license_export: MAIN-context DependencyMetadata + SPDX license join for CI.
+    findings_export: MAIN-context Finding JSONL export for CI.
 """

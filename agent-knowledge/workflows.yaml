@@ -191,3 +191,14 @@ workflows:
       - endorlabs.workflows.license_export.collect_dependency_inventory
       - endorlabs.workflows.license_export.resolve_licenses
       - endorlabs.workflows.license_export.write_joined_export
+  - id: findings-export
+    cli: endor-findings-export
+    module: endorlabs.workflows.findings_export.cli
+    skill: null
+    default_output: .endorlabs/tasks/<slug>-<YYYY-MM-DD>/findings/
+    agent_visible: true
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.findings_export.run_findings_export
+      - endorlabs.workflows.findings_export.collect_findings_export
+      - endorlabs.workflows.findings_export.compose_finding_filter

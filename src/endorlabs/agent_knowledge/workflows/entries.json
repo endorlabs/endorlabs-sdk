@@ -94,6 +94,20 @@
   },
   {
     "agent_visible": true,
+    "cli": "endor-findings-export",
+    "composition": "library_api",
+    "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/findings/",
+    "id": "findings-export",
+    "library_entrypoints": [
+      "endorlabs.workflows.findings_export.run_findings_export",
+      "endorlabs.workflows.findings_export.collect_findings_export",
+      "endorlabs.workflows.findings_export.compose_finding_filter"
+    ],
+    "module": "endorlabs.workflows.findings_export.cli",
+    "skill": null
+  },
+  {
+    "agent_visible": true,
     "cli": "endor-license-export",
     "composition": "library_api",
     "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/licenses/",

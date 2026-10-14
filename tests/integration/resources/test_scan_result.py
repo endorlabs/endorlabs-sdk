@@ -130,11 +130,11 @@ class TestScanResult:
         to_d = to_dt.isoformat().replace("+00:00", "Z")
         from_d = from_dt.isoformat().replace("+00:00", "Z")
 
+        # Omit sort_by: platform rejects sort + page_id when max_pages > 1
+        # (pull_scan_results path). Order client-side if newest-first is needed.
         list_params = ListParameters(
             from_date=from_d,
             to_date=to_d,
-            sort_by="meta.create_time",
-            desc=True,
             page_size=TEST_PAGE_SIZE,
         )
         results = list_client.ScanResult.list(
