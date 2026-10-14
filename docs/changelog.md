@@ -8,6 +8,16 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Breaking
+
+## 0.7.4
+
+### Added
+
 - Agent skill **endor-toolchain-catalog** — export platform
   `SupportedToolChainVersion` pins to CSV (versions + provider URLs) for
   ScanProfile / custom build-tool mapping.
@@ -20,8 +30,15 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 ### Changed
 
 - Agent Day-0 / skill traps: `from endorlabs import F` (not `endorlabs.filters`), and ScanResult/FindingLog project scope via `list_by_project` / `meta.parent_uuid` (not `spec.project_uuid`).
+- Troubleshooting scan RCA: selected-toolchain grain and underlying error
+  extract from scan logs (`log_payload_extract`), triage summary sections for
+  toolchain pins / deltas, and skill **endor-troubleshooting-scans** updates.
+- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1184).
 
 ### Fixed
+
+- Scan-log `underlying_errors` extract skips code-only tallies (keep rows with
+  narrative fields only).
 
 ### Breaking
 

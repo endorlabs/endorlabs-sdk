@@ -8181,6 +8181,12 @@ class V1PackageVersionSpec(BaseModel):
     vulnerabilities can be attributed to the fork. Empty means the resolver
     has not run yet; "N/A" means it ran and found no upstream.
     """
+    upstream_resolver_version: int | None = None
+    """
+    Version of the upstream resolver that wrote spec.upstream_reference. Unset
+    means the stamp predates versioning or the resolver has not run yet; it is
+    written for every verdict, resolved or "N/A".
+    """
 
 
 class V1ReleaseUpgradeInfo(BaseModel):
