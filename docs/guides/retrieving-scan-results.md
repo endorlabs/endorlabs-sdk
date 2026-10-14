@@ -4,7 +4,7 @@ Agent skill (on-demand): [endor-retrieve-scan-results](../../agent-knowledge/ski
 
 ## Concepts
 
-- **ScanResult**: Scan metadata, environment, runtime stats, policies triggered; `spec.findings` holds Finding UUIDs.
+- **ScanResult**: Scan metadata, environment, runtime stats, policies triggered; `spec.findings` holds Finding UUIDs. Project link is `meta.parent_uuid` — do **not** filter on `spec.project_uuid` (API 400); use `ScanResult.list_by_project`.
 - **Finding**: Security findings; linked by `context.type` / `context.id` (scan plane) and `spec.project_uuid`.
 - **Relationship**: Project (`meta.name` = repo URL) → ScanResult (`meta.parent_uuid` = Project UUID) → Finding rows (via `list_for_context(scan)`, `list_by_project`, or `spec.findings` UUIDs + `get`).
 

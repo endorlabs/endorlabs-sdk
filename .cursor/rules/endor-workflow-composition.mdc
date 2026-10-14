@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: 4c2dfa0457c9c75d0712457d40303f47ae8f95f7d7e82a6fe3dfa04be2ef6c6f
+x-endor-source-sha256: 0df4efe09eebb3e524ddf3f5ef8b3b99100d3d0b6a8b5ee997407c3d9ea44f17
 ---
 
 # Workflow composition
@@ -74,6 +74,7 @@ Generic entrypoints (no estate literals):
 - `endorlabs.workflows.logs.probe_log_density` — per-namespace time-window count vs threshold (PFW / AgentHookEvent)
 - `endorlabs.workflows.log_export.export_logs` / `export_logs_for_namespaces` — full-row log dump (`endor-log-export`)
 - `endorlabs.workflows.license_export.run_license_export` / `collect_dependency_inventory` / `resolve_licenses` / `write_joined_export` — MAIN-context dependency + SPDX join via `PackageLicenseQuery` at the export namespace (`endor-license-export`)
+- `endorlabs.workflows.findings_export.run_findings_export` / `collect_findings_export` — MAIN-context Finding JSONL per project shard (`endor-findings-export`; optional `--mask`/`--filter`)
 - `endorlabs.workflows.auth.verify_auth` / `refresh_token_to_dotenv` — credential probe and browser refresh (`endor-auth`)
 - `endorlabs.workflows.auth.probe_auth_logs` — tenant list-path auth-log RCA rows
 - `endorlabs.workflows.auth.count_logins_from_groups` — server-side login counts (`list_groups`)

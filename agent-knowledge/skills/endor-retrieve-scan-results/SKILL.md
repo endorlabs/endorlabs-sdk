@@ -33,7 +33,7 @@ Prefer **namespace + filter** when the user names a child namespace; use **`trav
 
 ```python
 import endorlabs
-from endorlabs import F
+from endorlabs import F  # not endorlabs.filters — that package is MQL fragments only
 
 # Discovery — bounded list; caller picks row or disambiguates
 projects = client.Project.search_by_name(
@@ -61,6 +61,8 @@ project = projects[0] if projects else None
 scan_result = client.ScanResult.list_by_project(project, limit=1)
 latest_scan = scan_result[0] if scan_result else None
 ```
+
+> **Agent note — ScanResult project field:** Do **not** hand-filter `ScanResult.list` with `spec.project_uuid` (API 400). Use `list_by_project` or `meta.parent_uuid`. Finding/PV use `spec.project_uuid`.
 
 For a **multi-scan window** (N newest), use `limit=N` (maps to `page_size`; default `max_pages=1` + newest-first sort). Do **not** raise `max_pages` while the sort preset remains — the platform rejects `page_id` with sort ([list-parameters](../../contracts/list-parameters.md)).
 

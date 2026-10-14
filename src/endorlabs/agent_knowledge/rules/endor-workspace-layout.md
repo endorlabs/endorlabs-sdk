@@ -51,6 +51,7 @@ SDK helpers: `report_packet_dir()`, `task_activity_dir()`, `flat_task_dir()`,
 | `endor-agent-context` | `tasks/<slug>-<date>/projects/<slug>_<timestamp>/` |
 | `endor-log-export` | `tasks/<slug>-<date>/logs/` |
 | `endor-license-export` | `tasks/<slug>-<date>/licenses/` |
+| `endor-findings-export` | `tasks/<slug>-<date>/findings/` |
 | Relationship map | `tasks/<slug>-<date>/relationships/` |
 | Semgrep inventory (no tenant) | `tasks/inventory/` |
 | Packet parity (maintainer) | `tasks/parity/<slug>-<date>/` |

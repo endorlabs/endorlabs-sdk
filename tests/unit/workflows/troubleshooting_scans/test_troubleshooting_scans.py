@@ -18,6 +18,12 @@ from endorlabs.workflows.troubleshooting_scans.common import (
     scanlog_line_has_content,
 )
 from endorlabs.workflows.troubleshooting_scans.diff_scans import compute_diff
+from endorlabs.workflows.troubleshooting_scans.log_payload_extract import (
+    diff_selected_toolchain_versions,
+    extract_selected_toolchains,
+    extract_underlying_errors,
+    parse_toolchains_blob,
+)
 from endorlabs.workflows.troubleshooting_scans.select_anomalous_scans import (
     anomaly_score,
 )
@@ -418,3 +424,84 @@ def test_resolve_scan_uuid_from_url() -> None:
     assert _resolve_scan_uuid(url=url, uuid=None, label="primary") == (
         "69e7d564f391c87dbcba85b2"
     )
+
+
+def test_parse_toolchains_blob_golang_and_subkeys() -> None:
+    blob = (
+        'golang_tool_chain:{version:{name:{value:"1.24.6"} '
+        "type:VERSION_TYPE_SEMVER}} "
+        'java_tool_chain:{version:{name:{value:"17.0.12"} '
+        "type:VERSION_TYPE_SEMVER} "
+        'maven_version:{name:{value:"3.9.6"} type:VERSION_TYPE_SEMVER} '
+        'gradle_version:{name:{value:"8.7"} type:VERSION_TYPE_SEMVER}}'
+    )
+    versions = parse_toolchains_blob(blob)
+    assert versions["golang"] == "1.24.6"
+    assert versions["java"] == "17.0.12"
+    assert versions["maven"] == "3.9.6"
+    assert versions["gradle"] == "8.7"
+
+
+def test_extract_underlying_errors_resolution_and_command() -> None:
+    messages = [
+        {
+            "timestamp": "2026-01-02T00:00:00Z",
+            "level": "LOG_LEVEL_ERROR",
+            "json_payload": {
+                "code": "dependency-scanning-error",
+                "msg": "failed to resolve dependencies",
+                "package_name": "mvn://example.group:sample-artifact@1.0.0",
+                "command": "mvn -q dependency:tree -f /workspace/example/pom.xml",
+                "resolution_error": "Could not find artifact example.group:missing:jar:1.0.0",
+                "stderr": "ERROR: Failed to execute goal",
+                "caller": "dependency.scan",
+            },
+        },
+        {
+            "level": "LOG_LEVEL_ERROR",
+            "json_payload": {"code": "dependency-scanning-error"},
+        },
+        {
+            "level": "LOG_LEVEL_ERROR",
+            "json_payload": {},
+        },
+    ]
+    rows = extract_underlying_errors(messages)
+    assert len(rows) == 1
+    assert rows[0]["code"] == "dependency-scanning-error"
+    assert "example.group:sample-artifact" in rows[0]["package_name"]
+    assert "pom.xml" in rows[0]["command"]
+    assert "Could not find artifact" in rows[0]["resolution_error"]
+    assert rows[0]["stderr"].startswith("ERROR:")
+
+
+def test_pair_toolchain_version_delta_golang() -> None:
+    prev_messages = [
+        {
+            "json_payload": {
+                "msg": "Endorctl toolchains selected",
+                "toolchains": (
+                    'golang_tool_chain:{version:{name:{value:"1.24.6"} '
+                    "type:VERSION_TYPE_SEMVER}}"
+                ),
+            }
+        }
+    ]
+    new_messages = [
+        {
+            "json_payload": {
+                "msg": "Endorctl toolchains selected",
+                "toolchains": (
+                    'golang_tool_chain:{version:{name:{value:"1.27.1"} '
+                    "type:VERSION_TYPE_SEMVER}}"
+                ),
+            }
+        }
+    ]
+    prev = extract_selected_toolchains(prev_messages)
+    new = extract_selected_toolchains(new_messages)
+    assert prev["versions"]["golang"] == "1.24.6"
+    assert new["versions"]["golang"] == "1.27.1"
+    assert prev["source"] == "toolchains_selected_log"
+    delta = diff_selected_toolchain_versions(prev, new)
+    assert delta["changed"]["golang"] == {"prev": "1.24.6", "new": "1.27.1"}

@@ -38,6 +38,8 @@ Probe: `uv run endor-auth check`. Refresh: `uv run endor-auth refresh --method s
 See INDEX.md for the full table. Most common:
 
 - `list(filter=F(...), …)` — never positional `F()`
+- `from endorlabs import F` — not `from endorlabs.filters import F` (`filters` is MQL fragments only)
+- `ScanResult.list_by_project(project)` — not `spec.project_uuid` on ScanResult/FindingLog (`meta.parent_uuid`)
 - Project-scoped lists: resolve `Project`, use `namespace=project.namespace` or `list_by_*`
 - Call graph: `init()` → skill **endor-fetch-and-search-call-graph**; `decode()` not `fetch()` alone
 

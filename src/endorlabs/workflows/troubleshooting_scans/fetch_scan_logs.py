@@ -19,6 +19,10 @@ from .common import (
     write_json,
     write_text,
 )
+from .log_payload_extract import (
+    extract_selected_toolchains,
+    extract_underlying_errors,
+)
 
 _LOGGER = get_resource_logger(__name__)
 
@@ -110,13 +114,35 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             extension=".txt",
             timestamped=args.timestamped,
         )
+        selected_toolchains = extract_selected_toolchains(entries)
+        underlying_errors = extract_underlying_errors(entries)
+        grain_payload: dict[str, Any] = {
+            "scan_result_uuid": scan_uuid,
+            "namespace": args.namespace,
+            "entry_count": len(entries),
+            "selected_toolchains": selected_toolchains,
+            "underlying_errors": underlying_errors,
+            "discovered_manifests": extract_discovered_manifests(entries),
+        }
+        grain_artifact = write_json(
+            output_dir=output_dir,
+            root_tenant_name=root,
+            object_kind="scan_log_grain",
+            object_uuid=scan_uuid,
+            purpose="extract",
+            payload=grain_payload,
+            timestamped=args.timestamped,
+        )
         index_entries.append(
             {
                 "scan_result_uuid": scan_uuid,
                 "namespace": args.namespace,
                 "entry_count": len(entries),
                 "log_artifact": str(log_artifact),
+                "grain_artifact": str(grain_artifact),
                 "discovered_manifests": extract_discovered_manifests(entries),
+                "selected_toolchains": selected_toolchains,
+                "underlying_errors": underlying_errors,
             }
         )
 

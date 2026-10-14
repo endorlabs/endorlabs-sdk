@@ -78,7 +78,7 @@ Project → ScanResult → Finding hierarchy, namespace scoping, and filters.
 ## 3. Filters with `F()`
 
 ```python
-from endorlabs import F
+from endorlabs import F  # not endorlabs.filters (MQL fragments only)
 
 critical = client.Finding.list(
     filter=F("spec.level") == "FINDING_LEVEL_CRITICAL",
@@ -104,6 +104,7 @@ projects = client.Project.search_by_name(
 )
 project = projects[0] if projects else None
 
+# Prefer list_by_project — do not filter ScanResult on spec.project_uuid (400)
 scan_results = client.ScanResult.list_by_project(
     project,
     sort_by="meta.create_time",
