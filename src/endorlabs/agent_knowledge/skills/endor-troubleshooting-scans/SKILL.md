@@ -54,8 +54,8 @@ Chain CLI steps on JSON artifacts; extend with library imports per [workflow-com
   files ...`; path lines: `Found package.json file at: …`, lockfile / maven / requirements
   shapes. See `pull_scan_results.dual_scan_pair`.
 - **Evidence order:** Endor app URLs first (scan-history / project), then local artifacts
-  when critical. Templates in shipped [INDEX.md](../../INDEX.md) (Structured Endor app
-  hyperlinks).
+  when critical. Templates in shipped
+  [endor-app-url-templates.md](../../reference/endor-app-url-templates.md).
 
 **Out of scope (use another skill):**
 

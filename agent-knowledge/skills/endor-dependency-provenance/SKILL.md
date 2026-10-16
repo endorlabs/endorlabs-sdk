@@ -47,7 +47,8 @@ This keeps separate introduction paths distinct across manifest files and refs.
 5. Classify each path as direct or transitive and emit one row per path.
 6. Report unresolved ambiguity explicitly (for example missing parent edge).
 7. Prefer Endor app links in writeups (scan-history / project / finding) before
-   local file paths — templates in shipped [INDEX.md](../../INDEX.md).
+   local file paths — templates in shipped
+   [endor-app-url-templates.md](../../reference/endor-app-url-templates.md).
 
 ## Output Shape
 

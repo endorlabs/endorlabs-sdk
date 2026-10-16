@@ -954,11 +954,13 @@ class BaseResourceOperations[T: BaseModel]:
         elif list_params.sort_field:
             import warnings
 
+            msg = "sort_field/sort_order are deprecated; use sort_by/desc instead."
             warnings.warn(
-                "sort_field/sort_order are deprecated; use sort_by/desc instead.",
+                msg,
                 DeprecationWarning,
                 stacklevel=4,
             )
+            self.logger.warning(msg)
             path = list_params.sort_field
             raw = (list_params.sort_order or "asc").lower()
             order = (

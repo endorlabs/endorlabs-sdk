@@ -6,6 +6,64 @@ import inspect
 from dataclasses import dataclass
 from typing import Any, override
 
+# High-leverage MQL filter paths for common list/RCA flows (not full OpenAPI).
+# Merged with identity kwargs from the registry; keep short.
+_TOP_FILTERABLE_SPEC_PATHS: dict[str, tuple[str, ...]] = {
+    "Finding": (
+        "spec.project_uuid",
+        "spec.level",
+        "spec.finding_categories",
+        "spec.finding_tags",
+        "spec.source_code_version.ref",
+        "context.type",
+    ),
+    "ScanResult": (
+        "spec.status",
+        "meta.parent_uuid",
+        "spec.environment.type",
+        "context.type",
+    ),
+    "PackageVersion": (
+        "spec.project_uuid",
+        "meta.name",
+        "context.type",
+    ),
+    "DependencyMetadata": (
+        "spec.project_uuid",
+        "meta.name",
+        "spec.dependency_data.direct",
+        "spec.dependency_data.namespace",
+    ),
+    "FindingLog": (
+        "spec.project_uuid",
+        "spec.level",
+        "spec.finding_categories",
+        "context.type",
+    ),
+    "MalwareExposure": (
+        "spec.project_uuid",
+        "meta.name",
+    ),
+    "PackageFirewallLog": (
+        "spec.ecosystem",
+        "spec.action",
+    ),
+    "AuthenticationLog": (
+        "spec.request.user_email",
+        "spec.request.requested_namespace",
+    ),
+    "Project": (
+        "meta.name",
+        "spec.platform_source",
+    ),
+    "RepositoryVersion": (
+        "meta.name",
+        "spec.version.ref",
+    ),
+}
+
+FILTER_ENUM_SNIPPETS_RELPATH = "reference/filter-enum-snippets.md"
+
 
 @dataclass(frozen=True)
 class ParamInfo:
@@ -100,6 +158,10 @@ def _format_facade_description(d: FacadeDescription) -> str:
         lines.append(f"filterable: {', '.join(d.filterable_fields)}")
     if d.route_methods:
         lines.append(f"routes: {', '.join(d.route_methods)}")
+    lines.append(
+        f"filter enums: {FILTER_ENUM_SNIPPETS_RELPATH} "
+        "(wheel agent_knowledge_dir() / materialized sdk/)"
+    )
     return "\n".join(lines)
 
 
@@ -127,7 +189,9 @@ def build_facade_description(
         list_params_from_signature(list_method) if list_method is not None else ()
     )
     identity_kwargs = tuple(sorted(filter_kwarg_map.items()))
-    filterable = tuple(sorted(set(filter_kwarg_map.values())))
+    identity_paths = set(filter_kwarg_map.values())
+    top_paths = _TOP_FILTERABLE_SPEC_PATHS.get(attr_name, ())
+    filterable = tuple(sorted(identity_paths | set(top_paths)))
     route_methods: list[str] = []
     if route_contract is not None:
         for edge in route_contract.edges_for_attr(attr_name):
@@ -149,6 +213,7 @@ def build_facade_description(
 
 
 __all__ = [
+    "FILTER_ENUM_SNIPPETS_RELPATH",
     "FacadeDescription",
     "ParamInfo",
     "build_facade_description",

@@ -26,7 +26,8 @@ src/endorlabs/  (SDK + workflows)
 docs/  (public docs)
 devtools/  (maintainer automation)
 .cursor/rules/  (optional IDE rule mirror)
-.cursor/skills/  (optional IDE skill mirror)
+.agents/skills/  (optional cross-harness skill mirror)
+.claude/skills/  (optional Claude Code skill mirror)
 ```
 
 **Runtime read rule:** at execution time, read the **wheel** or **`.endorlabs/_cache/sdk/`** — not repo `agent-knowledge/` (authoring only).
@@ -45,7 +46,7 @@ devtools/  (maintainer automation)
 | [`tests/`](../../tests/) | `unit/` (client, workflows, platform, tooling) · `integration/` (client, resources, workflows) |
 | [`.github/workflows/`](../../.github/workflows/) | CI, model-sync verify, PyPI release |
 | [`.endorlabs/`](../../.endorlabs/) | Local runtime root (see below) |
-| [`.cursor/skills/`](../../.cursor/skills/) | Optional IDE skill mirror after `sync_skills` — not authoring source |
+| [`.agents/skills/`](../../.agents/skills/) / [`.claude/skills/`](../../.claude/skills/) | Optional IDE skill mirrors after `sync_skills` — not authoring source |
 
 Edit `agent-knowledge/` → `uv run python devtools/codegen/sync_agent_knowledge.py` → commit `src/endorlabs/agent_knowledge/`.
 
@@ -84,7 +85,7 @@ Tracked [`docs/`](../README.md) is durable and public-safe. Ephemeral markdown �
 | Path | Role |
 | ---- | ---- |
 | [`.cursor/rules/endor-*.mdc`](../../.cursor/rules/) | Generated from `agent-knowledge/rules/` — `endor-namespace-scoping` and `endor-list-query-performance` are always-on in Cursor |
-| [`.cursor/skills/`](../../.cursor/skills/) | Optional mirror after `init(sync_skills=...)` or `endor-context --sync-skills` |
+| [`.agents/skills/`](../../.agents/skills/) / [`.claude/skills/`](../../.claude/skills/) | Optional mirrors after `init(sync_skills=...)` or `endor-context --sync-skills` |
 | [`agent-knowledge-authoring.mdc`](../../.cursor/rules/agent-knowledge-authoring.mdc) | Editing `agent-knowledge/**` — [schema/README.md](../../agent-knowledge/schema/README.md) |
 
 Regenerate rules/skills: `uv run python devtools/codegen/sync_agent_knowledge.py`.

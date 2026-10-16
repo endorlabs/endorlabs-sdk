@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: 0df4efe09eebb3e524ddf3f5ef8b3b99100d3d0b6a8b5ee997407c3d9ea44f17
+x-endor-source-sha256: 72bde30ba779e668ecf0fd74a065946205691af7c4951ed64f50cf8b21600485
 ---
 
 # Workflow composition
@@ -109,9 +109,9 @@ permanent session script.
 
 ## SDK ↔ product ontology
 
-UI nav labels and CLI/SDK kinds diverge. See **INDEX.md → SDK ↔ product ontology
-(glossary)** for Package Firewall logs / Policy Violations / Finding vs
-FindingLog / Malware catalog vs MalwareExposure. Prefer product-aligned
-`endor-log-export --source` tokens (`package-firewall-logs`,
-`policy-violations`); wire paths may remain kebab kinds such as
-`agent-hook-events`.
+UI nav labels and CLI/SDK kinds diverge. See shipped
+`reference/product-ontology.md` (MANIFEST `references[]`) for Package Firewall
+logs / Policy Violations / Finding vs FindingLog / Malware catalog vs
+MalwareExposure. Prefer product-aligned `endor-log-export --source` tokens
+(`package-firewall-logs`, `policy-violations`); wire paths may remain kebab
+kinds such as `agent-hook-events`.

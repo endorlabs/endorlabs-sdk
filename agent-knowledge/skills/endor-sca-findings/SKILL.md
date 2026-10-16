@@ -102,7 +102,8 @@ client.DependencyMetadata.list(
    Analytics scan-history URL first for config/profile; expect path-bearing
    discovery lines mainly on full SCA. Cross-check
    `Finding.spec.dependency_file_paths` against extractor `paths`.
-   App URL templates: shipped [INDEX.md](../../INDEX.md).
+   App URL templates: shipped
+   [endor-app-url-templates.md](../../reference/endor-app-url-templates.md).
 
 ## Flow C — Dependency Provenance
 

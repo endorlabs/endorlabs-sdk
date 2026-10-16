@@ -22,12 +22,22 @@ def test_finding_describe_has_identity_kwargs_and_routes() -> None:
     assert desc.resource_name == "findings"
     assert ("name", "meta.name") in desc.identity_kwargs
     assert "meta.name" in desc.filterable_fields
+    assert "spec.project_uuid" in desc.filterable_fields
+    assert "spec.level" in desc.filterable_fields
     assert "list_by_project" in desc.route_methods
     text = str(desc)
     assert "Finding (findings)" in text
     assert "name -> meta.name" in text
+    assert "filter-enum-snippets.md" in text
     assert "FacadeDescription(" not in text
     assert mock.mock_calls == []
+
+
+def test_scan_result_describe_includes_status_filter_path() -> None:
+    client = endorlabs.Client(tenant="example-tenant", api_client=Mock(spec=APIClient))
+    desc = client.ScanResult.describe()
+    assert "spec.status" in desc.filterable_fields
+    assert "filter-enum-snippets.md" in str(desc)
 
 
 def test_describe_list_params_match_signature() -> None:

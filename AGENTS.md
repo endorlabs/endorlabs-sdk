@@ -29,24 +29,31 @@ Shipped bootstrap rules (`endor-namespace-scoping`, `endor-list-query-performanc
 
 ## Agent notes
 
-Prefer these before assuming full-tenant sweeps or hand-built relationship filters:
+Prefer these before assuming full-tenant sweeps or hand-built relationship filters.
+Canonical trap text: shipped
+[critical-validation-traps.md](agent-knowledge/reference/critical-validation-traps.md)
+(also via Tier-0 [INDEX.md](agent-knowledge/INDEX.md) → `references[]`).
 
-- **Ambiguous project URL:** identical `meta.name` may exist under multiple child namespaces. Use `Project.search_by_name(..., traverse=True, max_pages=…)` and pick the row for the intended namespace, or use project UUID with `get()`.
-- **Project-scoped list namespace:** resolve `Project` first; pass `namespace=project.namespace` on downstream lists or use **`list_by_project`** accessors. Empty rows often mean wrong namespace, not missing data.
-- **Generated accessor helpers:** use `Finding.list_by_project`, `Finding.list_for_context`, `ScanResult.list_by_project`, `Finding.to_dependency_metadata` — relationship map in [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md).
-- **Finding branch field:** `spec.source_code_version.ref` may be a short branch name, not `refs/heads/main`. List findings without a branch filter first, or use `RepositoryVersion.list`.
-- **Tenant-wide scan fetch:** `fetch_scan_results --all-projects` is O(projects × scans). Prefer `--project-name` / `--project-uuid` for interactive RCA.
+<!-- trap-ids: ambiguous-project-url, project-scoped-list-namespace, finding-branch-refs, tenant-wide-scan-cost, list-masks-return-dict, portable-examples -->
+
+- **ambiguous-project-url** — identical `meta.name` may exist under multiple child namespaces; use `Project.search_by_name(..., traverse=True, max_pages=…)` or UUID `get()`.
+- **project-scoped-list-namespace** — resolve `Project` first; pass `namespace=project.namespace` or `list_by_project`.
+- **finding-branch-refs** — `spec.source_code_version.ref` may be a short branch name; list without branch filter first.
+- **tenant-wide-scan-cost** — prefer `--project-name` / `--project-uuid` over `--all-projects` for interactive RCA.
+- **list-masks-return-dict** — non-empty `mask=` → `dict` rows from `list()` / `search_by_*`.
+- **portable-examples** — placeholders only in tracked content; integration tenants via env.
+
+### Contributor extras (not trap-table rows)
+
+- **Generated accessor helpers:** `Finding.list_by_project`, `Finding.list_for_context`, `ScanResult.list_by_project`, `Finding.to_dependency_metadata` — [resource-routes.md](docs/generated-reference/resource-routes.md).
 - **Relationship map:** `estate.analyze.project_map.map` uses a bounded `PackageVersion` list — distinguish wrong namespace / unscanned consumers from pagination truncation before raising caps.
-- **List deserialization vs API drift:** Pydantic validation failures on `list()` → model-sync / payload tolerance (**endor-troubleshoot-sdk**, `devtools/codegen/sync/`), not query-parameter tweaks alone.
-- **List field masks:** non-empty `mask=` → `dict` rows from `list()` / `list_iter()` and from `search_by_*`. See [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md), [docs/contracts.md](docs/contracts.md), shipped `contracts/list-parameters.md`.
-- **Sharded parallel lists:** for large project-scoped resources, prefer per-project parallel `list()` with selective filters — [docs/contributing/list-query-performance.md](docs/contributing/list-query-performance.md#sharded-parallel-lists).
-- **Graph joins (kind-agnostic):** `client.Query.execute` / `at_namespace` with `QuerySpec.root(any_kind)` — POST at the resource wire namespace; see [docs/guides/query-recipes.md](docs/guides/query-recipes.md).
-- **Estate dashboard joins (Project-root recipes):** `client.Query.Project.count_*` / `collect_*` — validated per-project patterns; run `validate_sample` before scale; same guide.
-- **Evidence vs inference:** Separate API rows, workflow artifacts, and cited spec paths from heuristic or partial conclusions. Mark guesses as **Inferred:**; for SDK/API failure playbooks use skill **endor-troubleshoot-sdk** (maintainers: [docs/contributing/troubleshooting.md](docs/contributing/troubleshooting.md)).
-- **Portable examples / fixtures:** No customer tenants, emails, or production UUIDs in tracked content (unit fixtures, docstrings, skills, docs). Placeholders only; integration tenants via env. Rule `endor-portable-examples`.
-- **Endor Patches grain:** family/version keys are the vulnerable library current version (`spec.target_dependency_package_name` + `target_dependency_version`), not UIA `upgrade_list`. Packet pull defaults match the product dashboard (Maven Fix Available Crit/High under RF|PRF); Impact Calculator denom is the full catalog. Quote the filter before comparing counts.
-- **`list_groups` counts:** group buckets use `aggregation_count.count`. `GroupBucket.count` is filled from that; do not re-parse `count` / `count_response` only.
-- **Client concurrency:** One `Client` per credential set; thread-safe session with blocking I/O — see [docs/contracts.md](docs/contracts.md#concurrency-and-transport-retries).
+- **List deserialization vs API drift:** Pydantic validation failures on `list()` → model-sync / payload tolerance (**endor-troubleshoot-sdk**, `devtools/codegen/sync/`).
+- **Sharded parallel lists:** [list-query-performance.md](docs/contributing/list-query-performance.md#sharded-parallel-lists).
+- **Graph joins / estate counts:** `client.Query.execute` / `Query.Project.count_*` — [query-recipes.md](docs/guides/query-recipes.md); run `validate_sample` before scale.
+- **Evidence vs inference:** Mark guesses as **Inferred:**; skill **endor-troubleshoot-sdk**.
+- **Endor Patches grain:** family/version keys are `spec.target_dependency_package_name` + `target_dependency_version`, not UIA `upgrade_list`. Quote the filter before comparing counts.
+- **`list_groups` counts:** use `aggregation_count.count` / `GroupBucket.count`.
+- **Client concurrency:** One `Client` per credential set — [docs/contracts.md](docs/contracts.md#concurrency-and-transport-retries).
 
 ## Bootstrap
 
@@ -55,7 +62,7 @@ Prefer these before assuming full-tenant sweeps or hand-built relationship filte
 | API + workflow CLIs | **SDK-only** — no `.endorlabs/` |
 | INDEX / MANIFEST / skills without cwd writes | `agent_knowledge_index_path()`, `agent_knowledge_manifest()` (wheel) |
 | Cwd-relative skills + optional OpenAPI | `endorlabs.init()` or `uv run endor-context` |
-| IDE skill mirrors | `init(sync_skills="cursor")` after SDK bootstrap (Claude Code uses this file) |
+| IDE skill mirrors | `init(sync_skills="both")` after SDK bootstrap (`.agents/skills/` + `.claude/skills/`) |
 
 Pick the shallowest depth:
 

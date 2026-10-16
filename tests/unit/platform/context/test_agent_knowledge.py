@@ -36,6 +36,15 @@ def test_agent_knowledge_manifest_structure() -> None:
     assert manifest["contracts"]
     assert manifest["rules"]
     assert manifest["skills"]
+    assert manifest["references"]
+    ref_ids = [entry["id"] for entry in manifest["references"]]
+    assert len(ref_ids) == len(set(ref_ids))
+    assert "critical-validation-traps" in ref_ids
+    assert "filter-enum-snippets" in ref_ids
+    for entry in manifest["references"]:
+        assert entry["path"].startswith("reference/")
+        assert entry.get("summary", "").strip()
+        assert (package_dir / entry["path"]).is_file()
 
     rule_ids = [entry["id"] for entry in manifest["rules"]]
     assert len(rule_ids) == len(set(rule_ids))
