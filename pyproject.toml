@@ -101,17 +101,12 @@ dev = [
 ]
 
 [tool.uv]
-# Pin mature transitives; skip releases still inside the 7-day cooldown.
+# Hold transitives whose latest upload is still inside the 24h cooldown.
+# uv itself is whitelisted and pinned in CI, not here.
 override-dependencies = [
-    "filelock==4.2.4",
-    "certifi==2026.10.19",
     "virtualenv==21.14.13",
-    "pandas==3.0.6",
-    "coverage==7.16.2",
     "platformdirs==4.13.5",
-    "pycparser==3.11",
-    "python-dateutil==2.9.0.post0",
-    "inflect==7.5.0",
+    "python-discovery==1.6.4",
 ]
 
 [build-system]

@@ -8,7 +8,7 @@ inputs:
   uv-version:
     description: 'UV version to install'
     required: false
-    default: '0.13.5'
+    default: '0.13.6'
   install-dependencies:
     description: 'Whether to install dependencies'
     required: false
@@ -17,7 +17,7 @@ runs:
   using: 'composite'
   steps:
     - name: Install UV
-      uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+      uses: astral-sh/setup-uv@0192b6951893e558e24cfbd971d641a8cd336a95 # v10.3.2 + 0.13.6 checksums
       with:
         version: ${{ inputs.uv-version }}
         python-version: ${{ inputs.python-version }}
