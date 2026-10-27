@@ -101,8 +101,8 @@ def _add_build_flags(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--workers",
         type=int,
-        default=24,
-        help="Parallel FindingLog matrix pulls for tagged projects (default: 24).",
+        default=2,
+        help="Parallel FindingLog leaf and project pulls (default: 2).",
     )
     parser.add_argument("--skip-version-sprawl", action="store_true")
     parser.add_argument(
@@ -274,7 +274,7 @@ def _refresh_code_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentPa
     )
     refresh.add_argument("--lookback", type=int, default=None)
     refresh.add_argument("--min-projects", type=int, default=1)
-    refresh.add_argument("--workers", type=int, default=24)
+    refresh.add_argument("--workers", type=int, default=2)
     refresh.add_argument("--timeout", type=float, default=900.0)
     refresh.add_argument(
         "--log-level",
@@ -298,7 +298,7 @@ def _upsert_code_parser(sub: argparse._SubParsersAction) -> argparse.ArgumentPar
     )
     upsert.add_argument("--lookback", type=int, default=None)
     upsert.add_argument("--min-projects", type=int, default=1)
-    upsert.add_argument("--workers", type=int, default=24)
+    upsert.add_argument("--workers", type=int, default=2)
     upsert.add_argument("--timeout", type=float, default=900.0)
     upsert.add_argument(
         "--log-level",
@@ -357,8 +357,8 @@ def _parity_parser(
     parity.add_argument(
         "--workers",
         type=int,
-        default=24,
-        help="Parallel FindingLog matrix pulls for tagged projects (default: 24).",
+        default=2,
+        help="Parallel FindingLog leaf and project pulls (default: 2).",
     )
     parity.add_argument("--skip-version-sprawl", action="store_true")
     parity.add_argument(
@@ -546,6 +546,15 @@ def _default_parity_dir(namespace: str) -> Path:
     return flat_task_dir("parity") / tenant_day_slug(namespace)
 
 
+def _packet_client(tenant: str, timeout: float) -> endorlabs.Client:
+    """Packet transport. ``x-endor-op-comment`` names this workflow in slow logs."""
+    return endorlabs.Client(
+        tenant=tenant,
+        timeout=timeout,
+        op_comment=f"endor-reports/{endorlabs.__version__}",
+    )
+
+
 def _run_refresh_code(args: argparse.Namespace) -> int:
     configure_reports_cli_logging(level=getattr(args, "log_level", None))
     packet_dir = Path(args.packet_dir)
@@ -560,7 +569,7 @@ def _run_refresh_code(args: argparse.Namespace) -> int:
         return 2
     milestone("packet", "cli.upsert_start")
     print(f"upsert code findings into {packet_dir} …", flush=True)
-    client = endorlabs.Client(tenant=tenant, timeout=float(args.timeout))
+    client = _packet_client(tenant, float(args.timeout))
     try:
         cube = upsert_code_findings_burndown(
             client,
@@ -630,7 +639,7 @@ def _run_packet(args: argparse.Namespace) -> int:
         patches_only=int(patches_only),
         patches=int(include_patches or patches_only),
     )
-    client = endorlabs.Client(tenant=args.namespace, timeout=float(args.timeout))
+    client = _packet_client(args.namespace, float(args.timeout))
     try:
         skip_sca = bool(
             getattr(args, "skip_findings_burndown", False)
@@ -711,7 +720,7 @@ def _run_parity(args: argparse.Namespace) -> int:
     packet_dir = out_root / "packet"
     packet_dir.mkdir(parents=True, exist_ok=True)
 
-    client = endorlabs.Client(tenant=args.namespace, timeout=float(args.timeout))
+    client = _packet_client(args.namespace, float(args.timeout))
     try:
         skip_sca = bool(
             getattr(args, "skip_findings_burndown", False)

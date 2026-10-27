@@ -10,6 +10,13 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Executive report FindingLog burndown queries each tagged or PR-active project
+  at that project's namespace (`meta.parent_uuid` equality, `traverse=False`)
+  and sums the week buckets. Main path charts stay leaf-namespace aggregates.
+  `--workers` defaults to 2. SCA and code burndowns, and the main and PR
+  passes, no longer run at the same time. Packet requests send
+  `x-endor-op-comment: endor-reports/<version>`. A FindingLog timeout fails
+  the slice instead of charting a zero or fanning out per project.
 - `init(sync_skills=…)` / `endor-context --sync-skills` mirrors Endor skills into
   `.agents/skills/` and/or `.claude/skills/` (`none|agents|claude|both`; copy only).
   Prefer `both` for max harness coverage. `cursor` remains a deprecated alias for

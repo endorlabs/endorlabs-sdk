@@ -510,31 +510,6 @@ def query_operation_group_counts(
 _query_operation_group_counts = query_operation_group_counts
 
 
-def _shards_for_parent_scope(
-    client: Client,
-    namespace: str,
-    parent_uuids: list[str] | None,
-    *,
-    max_project_pages: int | None,
-) -> list[Any]:
-    """Project shards for leaf/tenant FindingLog escalate (timeout fallback)."""
-    from endorlabs.tools.list_sharding import ProjectShard
-
-    if parent_uuids is not None:
-        return [
-            ProjectShard(project_uuid=str(uid), namespace=namespace)
-            for uid in parent_uuids
-            if uid
-        ]
-    return list(
-        client.Query.Project.discover(
-            namespace,
-            traverse=True,
-            max_pages=max_project_pages,
-        ).project_shards()
-    )
-
-
 def query_operation_group_counts_resilient(
     client: Client,
     *,
@@ -547,83 +522,47 @@ def query_operation_group_counts_resilient(
     max_workers: int = 12,
     max_project_pages: int | None = None,
 ) -> dict[str, int]:
-    """``group_by_time`` with timeout→per-project shard escalate (chart pattern).
+    """One FindingLog ``group_by_time`` count. Timeouts propagate.
 
-    Tries one aggregate for the namespace (optional ``parent_uuids`` is_in /
-    equality). Any explicit ``parent_uuids`` scope uses ``traverse=True`` so
-    child-namespace projects are included when *namespace* is a tenant/parent
-    path. Whole-namespace aggregates (``parent_uuids is None``) keep
-    ``traverse=False`` (caller should pass a leaf for path rollups). On
-    timeout-like errors with multi-project scope, fans out via
-    :func:`parallel_map_shards`. Single-project scope does not escalate.
+    A single parent UUID is ``meta.parent_uuid`` equality at *namespace* with
+    ``traverse=False`` (pass the project's namespace). Several parent UUIDs
+    use ``is_in`` and ``traverse=True``. A leaf aggregate (``parent_uuids``
+    is ``None``) uses ``traverse=False``.
+
+    *max_workers* and *max_project_pages* are accepted for existing callers.
+    This function does not fan out after a timeout: a failed call must fail
+    the report slice instead of merging an empty count as zero.
     """
+    del max_workers, max_project_pages
     if parent_uuids is not None and len(parent_uuids) == 0:
         return {}
 
     single_uuid = (
         parent_uuids[0] if parent_uuids is not None and len(parent_uuids) == 1 else None
     )
-    # Explicit parent UUID scope must traverse; leaf-wide aggregates do not.
-    parent_scoped = parent_uuids is not None
-    try:
-        if single_uuid is not None:
-            return query_operation_group_counts(
-                client,
-                namespace=namespace,
-                base_filter=base_filter,
-                operation=operation,
-                level=level,
-                traverse=parent_scoped,
-                interval=interval,
-                project_uuid=single_uuid,
-            )
-        scoped = append_parent_uuid_filter(base_filter, parent_uuids)
+    if single_uuid is not None:
         return query_operation_group_counts(
             client,
             namespace=namespace,
-            base_filter=scoped,
+            base_filter=base_filter,
             operation=operation,
             level=level,
-            traverse=parent_scoped,
+            traverse=False,
             interval=interval,
+            project_uuid=single_uuid,
         )
-    except Exception as exc:
-        if single_uuid is not None or not is_timeout_like(exc):
-            raise
-
-    shards = _shards_for_parent_scope(
+    # Several parent UUIDs still traverse. Leaf aggregates do not.
+    traverse = parent_uuids is not None
+    scoped = append_parent_uuid_filter(base_filter, parent_uuids)
+    return query_operation_group_counts(
         client,
-        namespace,
-        parent_uuids,
-        max_project_pages=max_project_pages,
+        namespace=namespace,
+        base_filter=scoped,
+        operation=operation,
+        level=level,
+        traverse=traverse,
+        interval=interval,
     )
-    if not shards:
-        return {}
-
-    def worker(shard: Any) -> dict[str, int]:
-        try:
-            return query_operation_group_counts(
-                client,
-                namespace=shard.namespace,
-                base_filter=base_filter,
-                operation=operation,
-                level=level,
-                traverse=parent_scoped,
-                interval=interval,
-                project_uuid=shard.project_uuid,
-            )
-        except Exception as exc:
-            if is_timeout_like(exc):
-                return {}
-            raise
-
-    results = parallel_map_shards(
-        shards,
-        worker,
-        max_workers=max(1, max_workers),
-        progress_label=f"FindingLog {operation} shards",
-    )
-    return merge_count_dicts(results)
 
 
 def query_severity_facet_series_cell(
@@ -654,8 +593,8 @@ def query_severity_facet_series_cell(
       ``weeklyResolved`` for redistribute math; HTML labels remap them for
       PR scope.
 
-    Multi-project / leaf aggregates escalate to project shards on timeout
-    (same ladder as :func:`query_operation_counts`).
+    A timeout or other query error propagates. Callers must not store it as
+    a zero series.
     """
     from endorlabs.filters import CI_BLOCKER_TAG_CLAUSE
 
@@ -782,8 +721,8 @@ def query_severity_facet_matrix(
 ) -> dict[str, dict[str, dict[str, Any]]]:
     """Query severity x facet cells and expand rollups.
 
-    *cells* rows are ``(severity, facet, level, facet_clause)``. Failed cells
-    become zeros so callers can still roll up partial results.
+    *cells* rows are ``(severity, facet, level, facet_clause)``. A failed cell
+    propagates so the report slice is marked failed instead of charted as zero.
 
     *expand*:
     - ``"severity"`` — sum Crit+High+Med+Low per facet (SAST / Secrets / AI-SAST).
@@ -816,24 +755,21 @@ def query_severity_facet_matrix(
     matrix: dict[str, dict[str, dict[str, Any]]] = {}
     for sev, facet, level, clause in cells:
         matrix.setdefault(sev, {})
-        try:
-            matrix[sev][facet] = query_severity_facet_series_cell(
-                client,
-                namespace=namespace,
-                window_start=window_start,
-                window_end=window_end,
-                category_base_filter=category_base_filter,
-                facet_clause=clause,
-                level=level,
-                parent_uuids=parent_uuids,
-                lookback=lookback,
-                interval=interval,
-                max_workers=max_workers,
-                max_project_pages=max_project_pages,
-                second_series=second_series,
-            )
-        except Exception:
-            matrix[sev][facet] = empty_series_cell(categories, period_caption)
+        matrix[sev][facet] = query_severity_facet_series_cell(
+            client,
+            namespace=namespace,
+            window_start=window_start,
+            window_end=window_end,
+            category_base_filter=category_base_filter,
+            facet_clause=clause,
+            level=level,
+            parent_uuids=parent_uuids,
+            lookback=lookback,
+            interval=interval,
+            max_workers=max_workers,
+            max_project_pages=max_project_pages,
+            second_series=second_series,
+        )
     if expand == "reach":
         return expand_severity_reach_matrix(
             matrix, categories=categories, period_caption=period_caption

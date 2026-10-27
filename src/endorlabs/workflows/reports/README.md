@@ -71,10 +71,11 @@ Agent router: skill **endor-workflow-reports**.
 
 ## Findings burndown pull
 
-Tag series: one FindingLog severity×reach matrix per **tag×path** via
-`meta.parent_uuid is_in` at the tenant (`traverse=True`; parallel `--workers`,
-default 24). Path series: leaf-namespace aggregates (includes untagged
-projects); PR-active paths use the same is_in pattern over the allowlist.
+Tag and PR series: one FindingLog matrix per project at that project's
+namespace (`meta.parent_uuid` equality, `traverse=False`), then summed into
+each tag and path. Main path series stay leaf-namespace aggregates so
+untagged projects stay in the estate chart. `--workers` defaults to 2. A
+failed FindingLog call fails the slice instead of charting a zero.
 `--min-projects` only filters which tags appear in the packet (default 1).
 
 Packet `data/` includes `packet.cube.json` plus CSV raw exports (gap
