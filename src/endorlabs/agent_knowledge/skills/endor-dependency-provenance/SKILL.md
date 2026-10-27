@@ -67,6 +67,7 @@ Return a matrix with one row per introduction path:
 
 - Grouping by package family (`azure-core`) instead of full coordinate.
 - Merging paths from `requirements.txt`, `pyproject.toml`, and `uv.lock`.
+- Assuming a failed Python package used `requirements.txt`. The filename is the scan-log `manifest_files` key joined to the package directory — see [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md).
 - Treating same package across different refs as one lineage.
 - Reporting one "introduced by" answer when multiple manifest paths exist.
 
