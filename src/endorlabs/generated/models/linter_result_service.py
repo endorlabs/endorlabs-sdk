@@ -1524,6 +1524,13 @@ class V1AISASTContext(BaseModel):
     module preamble, or an entire non-code file. When it is a function, its
     location.function_name carries the fully qualified function name.
     """
+    validation_context_hash: str | None = None
+    """
+    SHA-256 hex over the guidance and validator identity the finding's verdict
+    was produced under: the effective project, finding and false-positive
+    guidance and the validation settings. A change selects the finding for
+    revalidation. Empty on findings written before the identity existed.
+    """
 
 
 class V1SarifLocation(BaseModel):
@@ -1831,6 +1838,10 @@ class V1AIResult(BaseModel):
     explanation: str
     """
     Human-readable description of the result.
+    """
+    extra_key: str | None = None
+    """
+    Stable finding identity assigned by the scanner, never by the model.
     """
     level: AIResultAILevel
     """

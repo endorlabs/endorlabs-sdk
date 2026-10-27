@@ -12,10 +12,15 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
 class AffectedSource(StrEnum):
+    """
+    - SOURCE_NVD: The National Vulnerability Database provided the affected package data.
+    """
+
     SOURCE_UNSPECIFIED = 'SOURCE_UNSPECIFIED'
     SOURCE_OSV = 'SOURCE_OSV'
     SOURCE_ENDOR = 'SOURCE_ENDOR'
     SOURCE_OVAL = 'SOURCE_OVAL'
+    SOURCE_NVD = 'SOURCE_NVD'
 
 
 class ContainerLayer(BaseModel):
@@ -6463,6 +6468,13 @@ class V1AISASTContext(BaseModel):
     function: a segment may also be a config-file region, a template block, a
     module preamble, or an entire non-code file. When it is a function, its
     location.function_name carries the fully qualified function name.
+    """
+    validation_context_hash: str | None = None
+    """
+    SHA-256 hex over the guidance and validator identity the finding's verdict
+    was produced under: the effective project, finding and false-positive
+    guidance and the validation settings. A change selects the finding for
+    revalidation. Empty on findings written before the identity existed.
     """
 
 

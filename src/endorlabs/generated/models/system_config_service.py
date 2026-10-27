@@ -91,6 +91,10 @@ class SystemConfigAnalyticsConfig(BaseModel):
     """
     Versions of CVSS scores to use.
     """
+    enable_approximate_scans: bool | None = None
+    """
+    Set to true to enable approximate dependency scans.
+    """
     enable_finding_prioritization: bool | None = None
     """
     Set to true to enable finding prioritization.

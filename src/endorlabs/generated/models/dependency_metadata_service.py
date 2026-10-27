@@ -931,7 +931,7 @@ class DependencyMetadataImporterData(BaseModel):
     """
     SHA of the source control version for the root package version.
     Because the SHA might not be possible to resolved, this field is
-    optional.
+    optional. Only set for OSS projects.
     """
     package_version_uuid: str
     """
