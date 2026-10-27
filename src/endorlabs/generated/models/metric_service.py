@@ -12,10 +12,15 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
 class AffectedSource(StrEnum):
+    """
+    - SOURCE_NVD: The National Vulnerability Database provided the affected package data.
+    """
+
     SOURCE_UNSPECIFIED = 'SOURCE_UNSPECIFIED'
     SOURCE_OSV = 'SOURCE_OSV'
     SOURCE_ENDOR = 'SOURCE_ENDOR'
     SOURCE_OVAL = 'SOURCE_OVAL'
+    SOURCE_NVD = 'SOURCE_NVD'
 
 
 class CVSSNodeCpeMatch(BaseModel):

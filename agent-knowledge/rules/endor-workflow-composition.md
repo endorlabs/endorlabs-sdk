@@ -102,9 +102,9 @@ permanent session script.
 
 ## SDK ↔ product ontology
 
-UI nav labels and CLI/SDK kinds diverge. See **INDEX.md → SDK ↔ product ontology
-(glossary)** for Package Firewall logs / Policy Violations / Finding vs
-FindingLog / Malware catalog vs MalwareExposure. Prefer product-aligned
-`endor-log-export --source` tokens (`package-firewall-logs`,
-`policy-violations`); wire paths may remain kebab kinds such as
-`agent-hook-events`.
+UI nav labels and CLI/SDK kinds diverge. See shipped
+`reference/product-ontology.md` (MANIFEST `references[]`) for Package Firewall
+logs / Policy Violations / Finding vs FindingLog / Malware catalog vs
+MalwareExposure. Prefer product-aligned `endor-log-export --source` tokens
+(`package-firewall-logs`, `policy-violations`); wire paths may remain kebab
+kinds such as `agent-hook-events`.

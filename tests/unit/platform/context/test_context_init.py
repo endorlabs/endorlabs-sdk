@@ -283,26 +283,26 @@ class TestInit:
         from endorlabs.context._sync import init
 
         output_dir = tmp_path / ".endor-context"
-        mirrored_path = tmp_path / ".cursor" / "skills"
+        mirrored_path = tmp_path / ".agents" / "skills"
         with (
             patch("endorlabs.api_client.APIClient") as mock_cls,
             patch(
                 "endorlabs.context._sync.sync_agent_skills",
-                return_value={"cursor": mirrored_path},
+                return_value={"agents": mirrored_path},
             ) as mock_sync,
         ):
             status = init(
                 output_dir=output_dir,
                 include_openapi=False,
                 include_agent_knowledge=False,
-                sync_skills="cursor",
+                sync_skills="agents",
             )
 
         mock_cls.assert_not_called()
         assert output_dir.exists()
         assert not (output_dir / "_cache" / "sdk" / "INDEX.md").exists()
         assert status.platform_openapi_path is None
-        assert status.synced_skill_paths == {"cursor": mirrored_path}
+        assert status.synced_skill_paths == {"agents": mirrored_path}
         mock_sync.assert_called_once()
         assert mock_sync.call_args.kwargs["source_dir"] == (
             agent_knowledge_dir() / "skills"

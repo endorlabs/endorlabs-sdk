@@ -22,8 +22,10 @@ from ..core.filter import F, FilterExpression
 from ..core.types import ListParameters
 from ..operations import BaseResourceOperations
 from ..operations.routes import resolve_source_uuid
+from ..utils.logging_config import get_resource_logger
 from ..utils.namespace import resolve_namespace_for_resource
 
+_logger = get_resource_logger(__name__)
 if TYPE_CHECKING:
     from ..api_client import APIClient
     from ..registry import ResourceEntry
@@ -37,6 +39,17 @@ _LOG_STYLE_LIST_KINDS = frozenset(
         "FindingLog",
     }
 )
+
+
+def _warn_and_log(
+    message: str,
+    *,
+    category: type[Warning],
+    stacklevel: int,
+) -> None:
+    """Emit a warnings.warn and the same text via the SDK resource logger."""
+    warnings.warn(message, category, stacklevel=stacklevel + 1)
+    _logger.warning(message)
 
 
 class ListableFacade[T: BaseModel]:
@@ -114,14 +127,14 @@ class ListableFacade[T: BaseModel]:
             return
         if namespace_arg is not None and namespace_arg != self._default_namespace:
             return
-        warnings.warn(
+        _warn_and_log(
             f"{self._entry.attr_name}.list() returned no rows at the client default "
             f"namespace ({self._default_namespace!r}) without traverse=True. "
             "Project-scoped resources usually live in child namespaces: resolve "
             "Project first, then pass namespace=project.namespace, or use "
             "Finding.list_by_project(project) / ScanResult.list_by_project(project) "
             "(see rule endor-namespace-scoping).",
-            UserWarning,
+            category=UserWarning,
             stacklevel=3,
         )
 
@@ -463,10 +476,10 @@ class ListableFacade[T: BaseModel]:
         )
 
         if count is True:
-            warnings.warn(
+            _warn_and_log(
                 f"{self._entry.attr_name}.list(count=True) is deprecated; "
                 "use .count() instead.",
-                DeprecationWarning,
+                category=DeprecationWarning,
                 stacklevel=2,
             )
             return cast(
@@ -853,10 +866,10 @@ class ListableFacade[T: BaseModel]:
     ) -> T | None:
         """Return the newest single row for ``sort_by`` (always ``max_pages=1``)."""
         if self._parent_kind and parent is None:
-            warnings.warn(
+            _warn_and_log(
                 f"{self._entry.attr_name}.latest() without parent= may scan the "
                 f"wrong scope; this resource has parent_kind={self._parent_kind!r}.",
-                UserWarning,
+                category=UserWarning,
                 stacklevel=2,
             )
         items = self.list(

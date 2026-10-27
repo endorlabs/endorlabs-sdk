@@ -10,6 +10,18 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- `init(sync_skills=…)` / `endor-context --sync-skills` mirrors Endor skills into
+  `.agents/skills/` and/or `.claude/skills/` (`none|agents|claude|both`; copy only).
+  Prefer `both` for max harness coverage. `cursor` remains a deprecated alias for
+  `agents` (no longer writes `.cursor/skills/`).
+- `client.<Kind>.describe()` includes top filterable `spec.*` paths and points at
+  shipped `reference/filter-enum-snippets.md`.
+- Tier-0 `INDEX.md` thinned; critical traps, product ontology, and app URL
+  templates live under `reference/` and are listed in `MANIFEST.json` →
+  `references[]`.
+- List-time facade/ops deprecation and empty-namespace `warnings.warn` calls
+  also emit via the SDK resource logger.
+
 ### Fixed
 
 ### Breaking

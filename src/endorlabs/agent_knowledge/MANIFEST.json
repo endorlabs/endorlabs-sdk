@@ -71,8 +71,35 @@
       ]
     }
   ],
-  "generated_at": "2026-10-14T13:24:37.993622+00:00",
+  "generated_at": "2026-10-16T15:55:47.608312+00:00",
   "index": "INDEX.md",
+  "references": [
+    {
+      "id": "critical-validation-traps",
+      "path": "reference/critical-validation-traps.md",
+      "summary": "RCA / namespace / malware validation traps beyond Day-0"
+    },
+    {
+      "id": "endor-app-url-templates",
+      "path": "reference/endor-app-url-templates.md",
+      "summary": "Structured Endor app URL templates for citations"
+    },
+    {
+      "id": "filter-enum-snippets",
+      "path": "reference/filter-enum-snippets.md",
+      "summary": "Illustrative wire enum strings for filter="
+    },
+    {
+      "id": "product-ontology",
+      "path": "reference/product-ontology.md",
+      "summary": "SDK \u2194 product UI glossary"
+    },
+    {
+      "id": "resource-routes",
+      "path": "reference/resource-routes.md",
+      "summary": "Relationship accessor inventory"
+    }
+  ],
   "rules": [
     {
       "id": "endor-list-query-performance",

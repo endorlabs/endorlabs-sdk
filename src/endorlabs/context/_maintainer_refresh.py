@@ -43,10 +43,19 @@ def _requires_context_refresh(paths: Sequence[str]) -> bool:
     return any(path.startswith(CONTEXT_PREFIX) for path in paths)
 
 
-def _configured_skill_sync_target() -> Literal["cursor"] | None:
-    """Return explicit sync target for runtime mirrors already configured here."""
+def _configured_skill_sync_target() -> Literal["agents", "claude", "both"] | None:
+    """Return sync target when a runtime host skills tree is already present."""
+    has_agents = (REPO_ROOT / ".agents").exists()
+    has_claude = (REPO_ROOT / ".claude").exists()
+    if has_agents and has_claude:
+        return "both"
+    if has_agents:
+        return "agents"
+    if has_claude:
+        return "claude"
+    # Legacy Cursor project-scope path; mirrors now land in .agents/skills/.
     if (REPO_ROOT / ".cursor").exists():
-        return "cursor"
+        return "agents"
     return None
 
 

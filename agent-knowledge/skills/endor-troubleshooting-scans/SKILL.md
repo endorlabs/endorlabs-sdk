@@ -58,8 +58,8 @@ Chain CLI steps on JSON artifacts; extend with library imports per [workflow-com
   files ...`; path lines: `Found package.json file at: …`, lockfile / maven / requirements
   shapes. See `pull_scan_results.dual_scan_pair`.
 - **Evidence order:** Endor app URLs first (scan-history / project), then local artifacts
-  when critical. Templates in shipped [INDEX.md](../../INDEX.md) (Structured Endor app
-  hyperlinks).
+  when critical. Templates in shipped
+  [endor-app-url-templates.md](../../reference/endor-app-url-templates.md).
 
 **Out of scope (use another skill):**
 
@@ -169,7 +169,24 @@ for pv in client.PackageVersion.list_by_project(project, namespace=project_ns, m
         ...  # STATUS_ERROR_BUILD / unresolved.description
 ```
 
-3. **Hand off:** single-project branch/sha → [endor-sca-findings](../endor-sca-findings/SKILL.md); tenant-wide → [endor-workflow-reports](../endor-workflow-reports/SKILL.md)
+3. **Python manifest path.** The saved package version does not name the manifest.
+   `spec.resolution_errors.*.target_files` is empty, and
+   `PACKAGE_MANAGER_TYPE_PIP` covers both setuptools and requirements files.
+   On the full scan log, the error
+   `Unable to resolve dependencies for package defined in '<relative-path>'`
+   carries `manifest_files`. The keys are the manifest basenames that were
+   present. Join each key to `<relative-path>` (a root package uses the
+   basename alone). Cite those paths. The values are file contents — do not
+   copy them into a report.
+   Example: directory `.` with key `pyproject.toml` is `pyproject.toml`, not
+   `requirements.txt`. Directory `services/billing` with keys `pyproject.toml`
+   and `requirements.txt` is both `services/billing/pyproject.toml` and
+   `services/billing/requirements.txt`.
+   For pip, the keys are whichever of `setup.py`, `setup.cfg`, `pyproject.toml`,
+   and `requirements.txt` exist in that directory. Poetry and uv name
+   `pyproject.toml` plus their lock file on a different error
+   (`unable to create poetry.lock` / `unable to create uv.lock`).
+4. **Hand off:** single-project branch/sha → [endor-sca-findings](../endor-sca-findings/SKILL.md); tenant-wide → [endor-workflow-reports](../endor-workflow-reports/SKILL.md)
 
 ## Optional stops (artifact chain)
 
@@ -190,7 +207,7 @@ for pv in client.PackageVersion.list_by_project(project, namespace=project_ns, m
 | Signal in artifact | Next step |
 | -------------------- | --------- |
 | `status: STATUS_PARTIAL_SUCCESS` | `search_scan_errors` before ScanLog API pull |
-| `scan_success` ↓ and `dependency_count_total` ↓ | PV `resolution_errors` library probe |
+| `scan_success` ↓ and `dependency_count_total` ↓ | PV `resolution_errors` library probe; Python manifest path from the scan-log `manifest_files` keys, not from `target_files` |
 | `scan_mode.scan_execution` / `run_by_system` on fetch summary | Use these; **do not** infer GitHub App or GitHub Actions from checkout paths (`/__w/`, `GITHUB_WORKSPACE`) |
 | `Project.scan_profile_uuid` set / `scan_mode.use_scan_profile` | Fetch that `ScanProfile` (env vars + toolchain) before blaming CI-only config |
 | `scan_mode.toolchains.docker_source` / `config_allowlist` | Record DockerSource (`auto-detect` vs profile) before blaming toolchain |

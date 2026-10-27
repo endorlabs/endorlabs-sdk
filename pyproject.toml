@@ -47,7 +47,7 @@ dependencies = [
 # DataFrame/Parquet export (estate cardinality tabular) + estate graph metrics (igraph/leidenalg)
 analytics = [
     "pandas>=2.2.3,<4",  # 2.2.3+: first cp313 wheels (lowest-direct on CI 3.13)
-    "pyarrow>=18.0.0,<26",
+    "pyarrow>=18.0.0,<27",
     "igraph>=0.11.6,<2",
     "leidenalg>=0.10.2,<1",
 ]
@@ -86,23 +86,33 @@ dev = [
     "jsonschema==4.26.0",
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
-    "ruff==0.16.9",
+    "ruff==0.17.2",
     "pyright==1.1.414",
-    "pre-commit==4.6.2",
+    "pre-commit==4.7.0",
     "rich==15.0.0",
     # Analytics deps for unit tests (mirrors [project.optional-dependencies.analytics])
     "pandas>=2.2.3,<4",  # 2.2.3+: first cp313 wheels (lowest-direct on CI 3.13)
-    "pyarrow>=18.0.0,<26",
+    "pyarrow>=18.0.0,<27",
     "igraph>=0.11.6,<2",
     "leidenalg>=0.10.2,<1",
-    "datamodel-code-generator==0.83.0",
+    "datamodel-code-generator==0.86.0",
     # Build Dependencies
     "twine==7.0.0",
 ]
 
 [tool.uv]
-# Pin mature filelock; avoid resolving to same-day minors during lock refresh.
-override-dependencies = ["filelock==4.0.3"]
+# Pin mature transitives; skip releases still inside the 7-day cooldown.
+override-dependencies = [
+    "filelock==4.2.4",
+    "certifi==2026.10.19",
+    "virtualenv==21.14.13",
+    "pandas==3.0.6",
+    "coverage==7.16.2",
+    "platformdirs==4.13.5",
+    "pycparser==3.11",
+    "python-dateutil==2.9.0.post0",
+    "inflect==7.5.0",
+]
 
 [build-system]
 requires = ["hatchling==1.32.4"]

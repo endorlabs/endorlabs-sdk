@@ -23,7 +23,7 @@ permissions:
 
 env:
   PYTHON_VERSION: "3.13"
-  UV_VERSION: "0.9.3"
+  UV_VERSION: "0.13.5"
 
 jobs:
   build:

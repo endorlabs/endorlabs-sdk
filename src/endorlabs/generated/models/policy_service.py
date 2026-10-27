@@ -586,6 +586,12 @@ class V1PolicyNotificationAction(BaseModel):
     The list of UUIDs of the notification targets that are configured for
     this policy.
     """
+    standalone_tickets: bool | None = None
+    """
+    Set to true to create every tracker ticket as a standalone ticket with
+    no parent. When false, aggregated tickets are created as child issues
+    under one parent ticket.
+    """
 
 
 class TemplateParameter(BaseModel):

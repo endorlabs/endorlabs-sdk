@@ -12,7 +12,7 @@ def test_main_refreshes_skill_mirrors_for_skills_changes(
     tmp_path: Path, monkeypatch: object
 ) -> None:
     """Skill-source changes should regenerate bundle and invoke runtime mirroring."""
-    sync_mock = Mock(return_value={"cursor": Path(".cursor/skills")})
+    sync_mock = Mock(return_value={"agents": Path(".agents/skills")})
     init_mock = Mock()
     bundle_sync_mock = Mock()
 
@@ -20,7 +20,7 @@ def test_main_refreshes_skill_mirrors_for_skills_changes(
         _maintainer_refresh, "CONTEXT_DIR", tmp_path / ".missing-context"
     )
     monkeypatch.setattr(
-        _maintainer_refresh, "_configured_skill_sync_target", lambda: "cursor"
+        _maintainer_refresh, "_configured_skill_sync_target", lambda: "agents"
     )
     monkeypatch.setattr(_maintainer_refresh, "_run_bundle_sync", bundle_sync_mock)
     monkeypatch.setattr(_maintainer_refresh.endorlabs, "sync_agent_skills", sync_mock)
@@ -32,7 +32,7 @@ def test_main_refreshes_skill_mirrors_for_skills_changes(
     bundle_sync_mock.assert_called_once()
     sync_mock.assert_called_once_with(
         repo_root=_maintainer_refresh.REPO_ROOT,
-        target="cursor",
+        target="agents",
         source_dir=_maintainer_refresh.AGENT_KNOWLEDGE_SKILLS,
     )
     init_mock.assert_not_called()

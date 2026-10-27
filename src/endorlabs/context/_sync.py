@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import warnings
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, cast
@@ -29,29 +30,39 @@ from .paths import (
 logger = get_resource_logger(__name__)
 
 OPENAPI_PATH = "/download/openapiv2.swagger.json"
-SKILLS_TARGETS: tuple[str, ...] = ("cursor",)
+# Concrete runtime dirs written by sync (not mode aliases).
+SKILLS_TARGETS: tuple[str, ...] = ("agents", "claude")
 MANAGED_SKILL_PREFIX = "endor-"
-SkillSyncMode = Literal["none", "cursor"]
+SkillSyncMode = Literal["none", "agents", "claude", "both", "cursor"]
 CONTEXT_JSON_SCHEMA_VERSION = 1
 
 
 def _normalize_skill_sync_mode(target: str) -> SkillSyncMode:
     """Validate and normalize a skill sync mode string."""
     normalized = target.strip().lower()
-    valid_targets = {"none", "cursor"}
+    valid_targets = {"none", "agents", "claude", "both", "cursor"}
     if normalized not in valid_targets:
         raise ValueError(
             f"Unsupported sync_skills value {target!r}. "
-            "Expected one of: none, cursor. "
-            "(Claude Code uses AGENTS.md — sync_skills=claude/both were removed.)"
+            "Expected one of: none, agents, claude, both "
+            "(cursor is a deprecated alias for agents)."
+        )
+    if normalized == "cursor":
+        warnings.warn(
+            'sync_skills="cursor" is deprecated; use "agents" '
+            '(.agents/skills/) or "both" (.agents/skills/ + .claude/skills/).',
+            DeprecationWarning,
+            stacklevel=3,
         )
     return cast("SkillSyncMode", normalized)
 
 
 def _skill_target_dir(repo_root: Path, target: str) -> Path | None:
     """Return the runtime skills directory for a target host, or None if unknown."""
-    if target == "cursor":
-        return repo_root / ".cursor" / "skills"
+    if target == "agents":
+        return repo_root / ".agents" / "skills"
+    if target == "claude":
+        return repo_root / ".claude" / "skills"
     return None
 
 
@@ -62,6 +73,10 @@ def _resolve_skill_sync_targets(
     """Resolve a sync mode to concrete runtime target names."""
     if target == "none":
         return ()
+    if target == "both":
+        return SKILLS_TARGETS
+    if target == "cursor":
+        return ("agents",)
     if target in SKILLS_TARGETS:
         return (target,)
     return ()
@@ -150,11 +165,12 @@ def sync_agent_skills(
     target: SkillSyncMode = "none",
     source_dir: str | Path | None = None,
 ) -> dict[str, Path]:
-    """Sync agent knowledge into runtime discovery paths.
+    """Sync agent knowledge into runtime discovery paths (copy, not symlink).
 
-    - cursor: mirrors endor-* skills to .cursor/skills/
-
-    Claude Code reads repo-root ``AGENTS.md``; there is no CLAUDE.md generator.
+    - agents: ``.agents/skills/`` (Cursor, Codex, Gemini, VS Code Copilot, Windsurf)
+    - claude: ``.claude/skills/`` (Claude Code; separate copy — do not symlink)
+    - both: write both trees
+    - cursor: deprecated alias for agents
     """
     repo_root_path = Path(repo_root)
     normalized_target = _normalize_skill_sync_mode(target)
@@ -177,17 +193,17 @@ def sync_agent_skills(
 
     synced_paths: dict[str, Path] = {}
     for resolved_target in resolved_targets:
-        if resolved_target == "cursor":
-            target_dir = _skill_target_dir(repo_root_path, resolved_target)
-            assert target_dir is not None
-            mirrored_files = _mirror_skill_tree(source_root, target_dir)
-            logger.info(
-                "Synced %d skill files to %s runtime path %s",
-                mirrored_files,
-                resolved_target,
-                target_dir,
-            )
-            synced_paths[resolved_target] = target_dir
+        target_dir = _skill_target_dir(repo_root_path, resolved_target)
+        if target_dir is None:
+            continue
+        mirrored_files = _mirror_skill_tree(source_root, target_dir)
+        logger.info(
+            "Synced %d skill files to %s runtime path %s",
+            mirrored_files,
+            resolved_target,
+            target_dir,
+        )
+        synced_paths[resolved_target] = target_dir
 
     return synced_paths
 
@@ -341,9 +357,9 @@ def init(
         include_openapi: Download OpenAPI spec (default: False).
         include_agent_knowledge: Copy agent knowledge to _cache/sdk/ (default: True).
         force: Force re-download / refresh even if files exist (default: False).
-        sync_skills: Mirror skills into runtime dirs
-            (``none`` or ``cursor``; default ``none``). Claude Code uses
-            repo-root ``AGENTS.md`` — there is no CLAUDE.md generator.
+        sync_skills: Mirror skills into runtime dirs (``none``, ``agents``,
+            ``claude``, or ``both``; default ``none``). ``cursor`` is a
+            deprecated alias for ``agents``. Copies only — never symlinks.
         client: Optional APIClient instance. If not provided, one is created
             when ``include_openapi=True`` (requires ENDOR_API_CREDENTIALS_KEY/
             SECRET or ENDOR_TOKEN env vars).

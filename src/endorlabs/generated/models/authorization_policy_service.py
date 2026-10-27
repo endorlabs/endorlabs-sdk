@@ -447,7 +447,9 @@ class V1AuthorizationPolicySpec(BaseModel):
 
     Clause strings must contain only allowed characters to prevent XSS attacks
     and ensure exact matching with incoming JWT claims. Allowed characters:
-    letters, numbers, and the following: =@._-/: +()& (space, plus, parentheses, ampersand).
+    letters, numbers, and the following: =@._-/: +()&' (space, plus, parentheses, ampersand,
+    ASCII apostrophe). The apostrophe is U+0027 only, so a mailbox such as o'brien@example.com
+    is accepted in every clause, while the curly apostrophe stays rejected.
     """
     expiration_time: AwareDatetime | None = None
     """
