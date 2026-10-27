@@ -2410,6 +2410,7 @@ class Client:
         accept_encoding: str | None = ...,
         max_retries: int | None = ...,
         base_url: str | None = ...,
+        op_comment: str | None = ...,
         **client_kwargs: Any,
     ) -> None:
         """Resource-oriented client; holds default namespace and exposes resource
