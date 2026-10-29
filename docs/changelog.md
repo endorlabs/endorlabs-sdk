@@ -8,6 +8,14 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- `endorlabs.workflows.pr_scans.collect_pr_scan_stats` — pull-request scan
+  statistics (PR scans, distinct PRs, blocked PRs, daily series) from
+  `ScanResult` only, split into half-open time windows that list in parallel.
+  A PR scan carries a PR number (`pr=<n>` tag, else `ScanConfig.SCMPRID`);
+  other CI runs such as `merge-to-main` are counted separately as
+  `ci_runs_without_pr`, never as PR scans. No `Finding` rows are listed, which
+  does not finish on tenants with millions of CI-run findings.
+
 ### Changed
 
 ### Fixed
