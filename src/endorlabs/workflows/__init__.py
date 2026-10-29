@@ -25,4 +25,5 @@ Subpackages:
     log_export: Scheduleable PackageFirewallLog / AgentHookEvent file dumps.
     license_export: MAIN-context DependencyMetadata + SPDX license join for CI.
     findings_export: MAIN-context Finding JSONL export for CI.
+    pr_scans: PR scan statistics from ScanResult (time-sharded, parallel).
 """
