@@ -241,3 +241,41 @@ class TestRedactingFilterReprIntegration:
         result = _apply(self.rf, repr_str)
         assert "my-redact-test-value" not in result
         assert "REDACTED" in result
+
+
+class TestRedactingFilterNoPartialLeak:
+    """The whole quoted value is redacted, not just the part before an inner quote.
+
+    The value must be closed by the same quote that opened it. A quote of the
+    other kind, or a backslash-escaped quote, used to end the match early and
+    leave the tail of the secret in the log line.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _setup(self) -> None:
+        self.rf = _make_filter()
+
+    @pytest.mark.parametrize(
+        ("value", "tail"),
+        [
+            ("O'Reilly-tail-marker", "Reilly-tail-marker"),
+            ('a"b-tail-marker', "b-tail-marker"),
+            ('it\'s "both" tail-marker', "tail-marker"),
+        ],
+    )
+    def test_repr_value_tail_is_redacted(self, value: str, tail: str) -> None:
+        """repr() of a dict whose secret contains quotes leaks nothing."""
+        result = _apply(self.rf, repr({"token": value, "other": 1}))
+        assert tail not in result
+        assert result == "{'token': '***REDACTED***', 'other': 1}"
+
+    def test_json_escaped_quote_tail_is_redacted(self) -> None:
+        """JSON value with an escaped double quote is redacted to the closing quote."""
+        result = _apply(self.rf, '{"secret": "ab\\"cd-tail-marker", "n": 1}')
+        assert "cd-tail-marker" not in result
+        assert result == '{"secret": "***REDACTED***", "n": 1}'
+
+    def test_neighbouring_fields_are_kept(self) -> None:
+        """Redaction stops at the closing quote and leaves the next field intact."""
+        result = _apply(self.rf, repr({"key": "", "name": "keep-me"}))
+        assert result == "{'key': '***REDACTED***', 'name': 'keep-me'}"
