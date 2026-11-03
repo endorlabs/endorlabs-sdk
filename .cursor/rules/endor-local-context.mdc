@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-local-context.md
-x-endor-source-sha256: ddef0989a57a6ba76bcd4fa21010005c5a38d6091a21d1731f72acc31aba0d12
+x-endor-source-sha256: c61e5bda7ee6538d1f2e39ff5c2fa8fb467b76803c6e26ecf96102242aa4cbb7
 ---
 
 # Local context discovery
