@@ -199,6 +199,12 @@ class SpecAggregationDetails(BaseModel):
     """
     The UUID of the package version.
     """
+    standalone_tickets: bool | None = None
+    """
+    Copied from the policy's NotificationAction.standalone_tickets when the
+    notification is created. When true, the plugin creates the ticket
+    as a standalone issue with no shared parent ticket.
+    """
 
 
 class SpecFindingDetails(BaseModel):

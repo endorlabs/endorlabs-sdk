@@ -12,10 +12,15 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
 class AffectedSource(StrEnum):
+    """
+    - SOURCE_NVD: The National Vulnerability Database provided the affected package data.
+    """
+
     SOURCE_UNSPECIFIED = 'SOURCE_UNSPECIFIED'
     SOURCE_OSV = 'SOURCE_OSV'
     SOURCE_ENDOR = 'SOURCE_ENDOR'
     SOURCE_OVAL = 'SOURCE_OVAL'
+    SOURCE_NVD = 'SOURCE_NVD'
 
 
 class ContainerLayer(BaseModel):
@@ -2438,6 +2443,91 @@ class V1Context(BaseModel):
     Time that all objects in this context will be deleted.
     This field is deprecated and will be removed in the future.
     Please use the meta.will_be_deleted_at field instead.
+    """
+
+
+class V1ContributorContact(BaseModel):
+    """
+    One person or organization, as declared.
+    """
+
+    email: str | None = None
+    """
+    The email address the manifest declares for this person or organization,
+    for example from PyPI author_email.
+    """
+    name: str | None = None
+    """
+    The name as the manifest declares it, for example "NumPy Developers".
+    """
+
+
+class Author(BaseModel):
+    """
+    One person or organization, as declared.
+    """
+
+    email: str | None = None
+    """
+    The email address the manifest declares for this person or organization,
+    for example from PyPI author_email.
+    """
+    name: str | None = None
+    """
+    The name as the manifest declares it, for example "NumPy Developers".
+    """
+
+
+class Maintainer(BaseModel):
+    """
+    One person or organization, as declared.
+    """
+
+    email: str | None = None
+    """
+    The email address the manifest declares for this person or organization,
+    for example from PyPI author_email.
+    """
+    name: str | None = None
+    """
+    The name as the manifest declares it, for example "NumPy Developers".
+    """
+
+
+class Supplier(BaseModel):
+    """
+    One person or organization, as declared.
+    """
+
+    email: str | None = None
+    """
+    The email address the manifest declares for this person or organization,
+    for example from PyPI author_email.
+    """
+    name: str | None = None
+    """
+    The name as the manifest declares it, for example "NumPy Developers".
+    """
+
+
+class V1ContributorDetails(BaseModel):
+    """
+    The people and organizations that a package version names, grouped by the
+    role the registry gives each one.
+    """
+
+    authors: list[Author] | None = None
+    """
+    People or teams named as authors.
+    """
+    maintainers: list[Maintainer] | None = None
+    """
+    People or teams named as maintainers.
+    """
+    suppliers: list[Supplier] | None = None
+    """
+    People or organizations the source declares as the supplier of this
+    version.
     """
 
 
@@ -4948,6 +5038,10 @@ class Endorv1VersionMetadata(BaseModel):
     """
     Set to true once the corresponding source metadata has been created.
     """
+    contributor_details: V1ContributorDetails | None = None
+    """
+    The people and organizations this version names, as its manifest declares.
+    """
     eol_timestamp: AwareDatetime | None = None
     """
     End of life timestamp the package version if known.
@@ -5777,6 +5871,10 @@ class Version(BaseModel):
     """
     Set to true once the corresponding source metadata has been created.
     """
+    contributor_details: V1ContributorDetails | None = None
+    """
+    The people and organizations this version names, as its manifest declares.
+    """
     eol_timestamp: AwareDatetime | None = None
     """
     End of life timestamp the package version if known.
@@ -6463,6 +6561,13 @@ class V1AISASTContext(BaseModel):
     function: a segment may also be a config-file region, a template block, a
     module preamble, or an entire non-code file. When it is a function, its
     location.function_name carries the fully qualified function name.
+    """
+    validation_context_hash: str | None = None
+    """
+    SHA-256 hex over the guidance and validator identity the finding's verdict
+    was produced under: the effective project, finding and false-positive
+    guidance and the validation settings. A change selects the finding for
+    revalidation. Empty on findings written before the identity existed.
     """
 
 

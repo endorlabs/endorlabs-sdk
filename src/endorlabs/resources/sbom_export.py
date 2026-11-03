@@ -6,7 +6,7 @@ from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field
 
-from endorlabs.generated.models.s_b_o_m_export_service import V1ExportedSBOM
+from endorlabs.generated.models.exported import V1ExportedSBOM
 
 from .consumer.mixin import ConsumerResourceMixin
 from .consumer.registry_fields import immutable_fields_for, mutable_fields_for

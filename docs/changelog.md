@@ -12,6 +12,10 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Fixed
 
+- Model sync: `SBOMExport` / `VEXExport` facades import their response models
+  from the generated `exported` module (the export operations are now
+  `x-internal` in the spec); models aligned to endorctl 1.7.1233.
+
 ### Breaking
 
 ## 0.7.4

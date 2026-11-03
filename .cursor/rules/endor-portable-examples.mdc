@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-portable-examples.md
-x-endor-source-sha256: 463b68e2df1a0043968b437001895014ae3273fb359cb86a10820401b503ac4e
+x-endor-source-sha256: 1b992fd6ae30d472f8853de4fd41082ea83b3aaa08b5f546ef19f81a4ea75fa5
 ---
 
 # Portable examples

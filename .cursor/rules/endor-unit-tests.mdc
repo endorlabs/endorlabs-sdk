@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-unit-tests.md
-x-endor-source-sha256: a5bff58887a0a38cc729eb832163287cbdc00bbc3139d9815ae8412adc1e2afd
+x-endor-source-sha256: aa055357eb18edb59ffa61f4b5388751b94dbd159b2aff417440d01cdf8453ed
 ---
 
 # Unit tests (maintainer)
