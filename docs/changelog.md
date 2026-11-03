@@ -24,6 +24,10 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Fixed
 
+- Log redaction no longer leaks the tail of a secret whose value contains a
+  quote of the other kind or an escaped quote (for example `'token': "O'Reilly..."`);
+  the quoted value now has to close with the quote that opened it.
+
 ### Breaking
 
 ## 0.7.4
