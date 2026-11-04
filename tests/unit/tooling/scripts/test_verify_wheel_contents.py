@@ -46,6 +46,7 @@ def test_verify_wheel_archive_paths_requires_analyze_and_manifest(
         )
     errors = wheel_verify.verify_wheel_archive_paths(wheel_path, manifest)
     assert any("estate/analyze" in msg for msg in errors)
+    assert any("report shell asset" in msg for msg in errors)
 
 
 @pytest.mark.skipif(
