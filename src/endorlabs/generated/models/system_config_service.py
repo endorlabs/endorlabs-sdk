@@ -154,6 +154,13 @@ class SystemConfigEndorIgnoreConfig(BaseModel):
     Use the endorctl ignore command to automatically generate and
     format the ignore file.
     """
+    pr_comments: bool | None = None
+    """
+    Set to true to allow ignoring findings from pull request comments.
+
+    Findings ignored this way are committed as entries to the ignore file
+    on the pull request branch. Can be set to true only when enable is true.
+    """
 
 
 class SystemConfigPolicyConfig(BaseModel):

@@ -15,6 +15,7 @@
                       {"uuid": "f-002"}
                     ],
                     "response": {
+                      "next_page_id": "finding-page-id-1",
                       "next_page_token": 100,
                       "total": 250
                     }

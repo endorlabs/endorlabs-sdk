@@ -269,6 +269,8 @@ class V1EndorctlRC(StrEnum):
      - ENDORCTL_RC_CLONE_ERROR: Error while cloning a git repository.
      - ENDORCTL_RC_FAILED_PRECONDITION: The server refused the request because of the current tenant state or the
     supplied configuration. The error details say what the caller must correct.
+     - ENDORCTL_RC_NO_REMEDIATION_AVAILABLE: No remediation is available for the finding. The error details name the
+    finding and say why.
      - ENDORCTL_RC_POLICY_VIOLATION: One or more, enforced, admission policy violations detected.
      - ENDORCTL_RC_POLICY_WARNING: One ore more, unenforced, admission policy violations detected.
      - ENDORCTL_RC_PR_SECURITY_REVIEW_ERROR: Deprecated: Use ENDORCTL_RC_SECURITY_REVIEW_ERROR instead.
@@ -329,6 +331,7 @@ class V1EndorctlRC(StrEnum):
     ENDORCTL_RC_SCAN_CANCELLED = 'ENDORCTL_RC_SCAN_CANCELLED'
     ENDORCTL_RC_CLONE_ERROR = 'ENDORCTL_RC_CLONE_ERROR'
     ENDORCTL_RC_FAILED_PRECONDITION = 'ENDORCTL_RC_FAILED_PRECONDITION'
+    ENDORCTL_RC_NO_REMEDIATION_AVAILABLE = 'ENDORCTL_RC_NO_REMEDIATION_AVAILABLE'
     ENDORCTL_RC_POLICY_VIOLATION = 'ENDORCTL_RC_POLICY_VIOLATION'
     ENDORCTL_RC_POLICY_WARNING = 'ENDORCTL_RC_POLICY_WARNING'
     ENDORCTL_RC_PR_SECURITY_REVIEW_ERROR = 'ENDORCTL_RC_PR_SECURITY_REVIEW_ERROR'

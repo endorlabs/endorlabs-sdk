@@ -270,7 +270,10 @@ class V1AutomatedScanParameters(BaseModel):
     """
     enable_remediation_action: bool | None = None
     """
-    enable_remediation_action for this repository.
+    enable_remediation_action is deprecated. endorctl enables remediation
+    actions by default now. To turn them off for a repository, set
+    ENDOR_SCAN_REMEDIATION_ACTION to false through
+    additional_environment_variables.
     """
     enable_sast_scan: bool | None = None
     """

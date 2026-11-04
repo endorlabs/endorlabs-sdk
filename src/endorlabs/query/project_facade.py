@@ -275,8 +275,9 @@ class ProjectQueryFacade:
     ) -> list[dict[str, Any]]:
         """Return flattened rows from nested list reference(s) across projects.
 
-        Nested reference lists paginate via reference ``next_page_token`` on
-        follow-up ``Query.create`` calls (not root ``page_token``).
+        Nested reference lists paginate via reference ``next_page_token``
+        on follow-up ``Query.create`` calls (Query Service ignores
+        ``page_id`` for nested refs).
         """
         keys = (ref_keys,) if isinstance(ref_keys, str) else ref_keys
         scopes = scopes_from_projects(projects)

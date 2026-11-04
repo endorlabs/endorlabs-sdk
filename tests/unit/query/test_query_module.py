@@ -16,6 +16,7 @@ from endorlabs.query import (
     estate_findings_list_spec,
     extract_query_objects,
     group_projects_by_namespace,
+    next_page_cursor,
     next_page_token,
     parse_group_bucket_counts,
     parse_project_multi_reference_counts,
@@ -251,6 +252,13 @@ def test_next_page_token_from_fixture() -> None:
     assert next_page_token(payload) == 100
 
 
+def test_next_page_cursor_prefers_token_from_fixture() -> None:
+    from endorlabs.operations.pagination import PageCursor
+
+    payload = _load_fixture("paginated_root_response.json")
+    assert next_page_cursor(payload) == PageCursor(page_token=100)
+
+
 def test_parse_query_root_count_from_fixture() -> None:
     payload = _load_fixture("finding_root_count_response.json")
     assert parse_query_root_count(payload) == 917
@@ -281,6 +289,43 @@ def test_query_create_pages_stops_at_last_token() -> None:
     )
     assert len(pages) == 2
     assert calls[1]["list_parameters"]["page_token"] == 100
+    assert "page_id" not in calls[1]["list_parameters"]
+
+
+def test_query_create_pages_falls_back_to_page_id() -> None:
+    calls: list[dict[str, Any]] = []
+
+    class _PagingClient:
+        def __init__(self) -> None:
+            super().__init__()
+            self.Query = self
+
+        def create(self, *, payload: Any, namespace: str) -> dict[str, Any]:
+            _ = namespace
+            spec = payload.spec["query_spec"]
+            calls.append(spec)
+            page_id = (spec.get("list_parameters") or {}).get("page_id")
+            if page_id is None:
+                return {
+                    "spec": {
+                        "query_response": {
+                            "list": {
+                                "objects": [{"uuid": "proj-a"}],
+                                "response": {"next_page_id": "root-page-id-1"},
+                            }
+                        }
+                    }
+                }
+            return _load_fixture("pv_count_response.json")
+
+    pages = query_create_pages(
+        _PagingClient(),
+        namespace="tenant.leaf",
+        name="test-pages-id",
+        query_spec={"kind": "Project", "list_parameters": {}},
+    )
+    assert len(pages) == 2
+    assert calls[1]["list_parameters"]["page_id"] == "root-page-id-1"
 
 
 def test_reference_next_page_token_from_fixture() -> None:
@@ -297,6 +342,7 @@ def test_wire_spec_with_reference_page_token() -> None:
 
 
 def test_reference_next_page_cursor_prefers_token_over_page_id() -> None:
+    """Query Service ignores page_id; token must win when both are present."""
     obj = {
         "meta": {
             "references": {
@@ -446,6 +492,6 @@ def test_collect_reference_rows_paginates_nested_list() -> None:
     rows = merged["proj-a"]
     assert [row["uuid"] for row in rows] == ["f-001", "f-002", "f-101", "f-102"]
     assert len(calls) == 2
-    assert (
-        calls[1]["references"][0]["query_spec"]["list_parameters"]["page_token"] == 100
-    )
+    follow_lp = calls[1]["references"][0]["query_spec"]["list_parameters"]
+    assert follow_lp["page_token"] == 100
+    assert "page_id" not in follow_lp

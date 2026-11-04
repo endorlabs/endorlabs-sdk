@@ -12,7 +12,7 @@ from endorlabs.resources.query import CreateQueryPayload
 
 from .parse import (
     extract_query_objects,
-    next_page_token,
+    next_page_cursor,
     reference_list_objects,
     reference_next_page_cursor,
     wire_spec_with_reference_page_cursor,
@@ -76,17 +76,24 @@ def query_create_pages(
     query_spec: dict[str, Any],
     max_pages: int | None = None,
 ) -> list[Any]:
-    """POST Query.create repeatedly while ``next_page_token`` is set."""
+    """POST Query.create repeatedly while a root list cursor is set.
+
+    Prefers ``page_token`` / ``next_page_token`` (Query Service advances only
+    on token). Falls back to ``page_id`` when token is absent.
+    """
     page_index = 0
 
     def fetch_page(cursor: PageCursor | None) -> Any:
         nonlocal page_index
         spec = dict(query_spec)
         lp = dict(spec.get("list_parameters") or {})
-        if cursor is None or cursor.page_token is None:
-            lp.pop("page_token", None)
-        else:
-            lp["page_token"] = cursor.page_token
+        lp.pop("page_token", None)
+        lp.pop("page_id", None)
+        if cursor is not None:
+            if cursor.page_token is not None:
+                lp["page_token"] = cursor.page_token
+            elif cursor.page_id is not None:
+                lp["page_id"] = cursor.page_id
         spec["list_parameters"] = lp
         suffix = f"-p{page_index}" if page_index else ""
         result = query_create(
@@ -99,10 +106,7 @@ def query_create_pages(
         return result
 
     def next_cursor(result: Any) -> PageCursor | None:
-        token = next_page_token(result)
-        if token is None:
-            return None
-        return PageCursor(page_token=token)
+        return next_page_cursor(result)
 
     return list(
         iter_paginated_pages(

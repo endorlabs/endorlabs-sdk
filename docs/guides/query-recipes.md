@@ -159,7 +159,7 @@ Integration tests: `tests/integration/client/test_query_recipes.py`.
 
 ### Collect pagination and root counts
 
-`collect_estate_findings` / `collect_prf_findings` paginate nested reference lists automatically. The first page comes from the root Project join; follow-up pages re-POST with `meta.references[ref].list.response.next_page_token` (or `next_page_id` when token is absent) on the matching reference `list_parameters`.
+`collect_estate_findings` / `collect_prf_findings` paginate nested reference lists automatically. The first page comes from the root Project join; follow-up pages re-POST with `meta.references[ref].list.response.next_page_token` on the matching reference `list_parameters`. Query Service does **not** advance nested lists with `page_id` (ordinary REST `list` endpoints prefer `page_id` — see [pagination](https://docs.endorlabs.com/developers-api/rest-api/using-the-rest-api/pagination)).
 
 ```python
 rows = client.Query.Project.collect_estate_findings(

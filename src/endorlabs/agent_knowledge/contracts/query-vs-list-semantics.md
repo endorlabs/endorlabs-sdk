@@ -63,7 +63,7 @@ Validated dashboard patterns; compare to facade on a sample before estate scale.
 | DM count per project | `client.Query.Project.count_dm` | `DependencyMetadata.count` per importer project | **Validated** — `recipe="dm"` |
 | Finding counts by category | `client.Query.Project.count_findings_by_category` | `Finding.count` × categories | **Validated** — MALWARE may diverge |
 | Vuln counts by severity | `client.Query.Project.count_findings_by_severity` | `Finding.count` × levels | **Validated** |
-| Masked finding rows per project | `client.Query.Project.collect_*` | `Finding.list_by_project` | **Validated** — nested ref `list.response.next_page_token` on re-POST; `max_reference_pages` optional |
+| Masked finding rows per project | `client.Query.Project.collect_*` | `Finding.list_by_project` | **Validated** — nested ref `list.response.next_page_token` on re-POST (`page_id` ignored by Query Service); `max_reference_pages` optional |
 | PRF ecosystem totals | `client.Query.Project.count_prf_by_ecosystem` | `Finding.count` or list + aggregate | Validate on sample |
 | Latest scan metadata per project | Project → `ScanResult` list ref; mask `spec.environment` | `ScanResult.list_by_project(limit=1)` × N | **Validated** |
 | Nested masked lists (RV, Metric, …) | Custom nested `query_spec` | Multiple `list` calls | Platform doc — not a count |
