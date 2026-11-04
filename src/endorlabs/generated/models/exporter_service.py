@@ -11,6 +11,20 @@ from typing import Any, Dict
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
+class ExporterCompressionFormat(StrEnum):
+    """
+    Container format of each exported object. Unset keeps the historical format.
+
+     - COMPRESSION_FORMAT_UNSPECIFIED: Behaves as COMPRESSION_FORMAT_ZIP.
+     - COMPRESSION_FORMAT_ZIP: Historical format: a gzip stream stored under a .zip suffix with content type application/zip.
+     - COMPRESSION_FORMAT_GZIP: A plain gzip stream stored under a .gz suffix with content type application/gzip, readable by Athena and Spark.
+    """
+
+    COMPRESSION_FORMAT_UNSPECIFIED = 'COMPRESSION_FORMAT_UNSPECIFIED'
+    COMPRESSION_FORMAT_ZIP = 'COMPRESSION_FORMAT_ZIP'
+    COMPRESSION_FORMAT_GZIP = 'COMPRESSION_FORMAT_GZIP'
+
+
 class ExporterS3Config(BaseModel):
     allowed_audience: str
     """
@@ -23,6 +37,12 @@ class ExporterS3Config(BaseModel):
     bucket_name: str
     """
     bucket_name is the name of the S3 bucket to export the data to.
+    """
+    compression_format: ExporterCompressionFormat | None = (
+        'COMPRESSION_FORMAT_UNSPECIFIED'
+    )
+    """
+    Selects the container format of exported objects. Unset keeps the historical format.
     """
     object_expiry_days: int | None = None
     """

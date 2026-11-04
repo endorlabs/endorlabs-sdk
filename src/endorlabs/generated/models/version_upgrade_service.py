@@ -2505,6 +2505,91 @@ class V1Context(BaseModel):
     """
 
 
+class V1ContributorContact(BaseModel):
+    """
+    One person or organization, as declared.
+    """
+
+    email: str | None = None
+    """
+    The email address the manifest declares for this person or organization,
+    for example from PyPI author_email.
+    """
+    name: str | None = None
+    """
+    The name as the manifest declares it, for example "NumPy Developers".
+    """
+
+
+class Author(BaseModel):
+    """
+    One person or organization, as declared.
+    """
+
+    email: str | None = None
+    """
+    The email address the manifest declares for this person or organization,
+    for example from PyPI author_email.
+    """
+    name: str | None = None
+    """
+    The name as the manifest declares it, for example "NumPy Developers".
+    """
+
+
+class Maintainer(BaseModel):
+    """
+    One person or organization, as declared.
+    """
+
+    email: str | None = None
+    """
+    The email address the manifest declares for this person or organization,
+    for example from PyPI author_email.
+    """
+    name: str | None = None
+    """
+    The name as the manifest declares it, for example "NumPy Developers".
+    """
+
+
+class Supplier(BaseModel):
+    """
+    One person or organization, as declared.
+    """
+
+    email: str | None = None
+    """
+    The email address the manifest declares for this person or organization,
+    for example from PyPI author_email.
+    """
+    name: str | None = None
+    """
+    The name as the manifest declares it, for example "NumPy Developers".
+    """
+
+
+class V1ContributorDetails(BaseModel):
+    """
+    The people and organizations that a package version names, grouped by the
+    role the registry gives each one.
+    """
+
+    authors: list[Author] | None = None
+    """
+    People or teams named as authors.
+    """
+    maintainers: list[Maintainer] | None = None
+    """
+    People or teams named as maintainers.
+    """
+    suppliers: list[Supplier] | None = None
+    """
+    People or organizations the source declares as the supplier of this
+    version.
+    """
+
+
 class V1Correctness(StrEnum):
     """
     Correctness represents a correctness assessment.
@@ -5210,6 +5295,10 @@ class Endorv1VersionMetadata(BaseModel):
     """
     Set to true once the corresponding source metadata has been created.
     """
+    contributor_details: V1ContributorDetails | None = None
+    """
+    The people and organizations this version names, as its manifest declares.
+    """
     eol_timestamp: AwareDatetime | None = None
     """
     End of life timestamp the package version if known.
@@ -6069,6 +6158,10 @@ class Version(BaseModel):
     consumed: bool | None = None
     """
     Set to true once the corresponding source metadata has been created.
+    """
+    contributor_details: V1ContributorDetails | None = None
+    """
+    The people and organizations this version names, as its manifest declares.
     """
     eol_timestamp: AwareDatetime | None = None
     """
@@ -7964,6 +8057,12 @@ class V1MalwareSpec(BaseModel):
     aliases: list[str] | None = None
     """
     Aliases of the malware record.
+    """
+    auto_promoted: bool | None = None
+    """
+    When true, this record was written by the assessment-promotion path rather than by an
+    upstream feed; the feed ingest never orphan-deletes it and preserves its promotion-owned
+    fields on upsert.
     """
     contested: bool | None = None
     """

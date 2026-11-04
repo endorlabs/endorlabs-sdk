@@ -45,6 +45,12 @@ Common list params are flat kwargs on `client.<ResourceKind>.list(...)`. Use
 - **sort_by**, **desc**
 - **traverse:** tenant-wide discovery (`list_parameters.traverse=true`)
 
+**Cursor preference:** ordinary REST facade `list` / `get_all` prefer
+`page_id` / `next_page_id` (platform docs). **Query.create** root and nested
+refs must use `page_token` / `next_page_token` — Query Service ignores
+`page_id` and re-returns the same page. See
+[query-vs-list-semantics.md](query-vs-list-semantics.md).
+
 **`page_id` and sort are mutually exclusive.** The platform rejects follow-up
 list requests that send `list_parameters.page_id` together with
 `list_parameters.sort.*` (HTTP 400: "page id cannot be provided with sort

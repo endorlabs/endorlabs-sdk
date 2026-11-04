@@ -10,6 +10,10 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Query pagination stays on `page_token` (Query Service does not advance
+  root or nested lists with `page_id`); facade `list` / `get_all` continue
+  to prefer `page_id`. Documented the split; added `next_page_cursor` and
+  kept `next_page_token == 0` as terminal.
 - `init(sync_skills=…)` / `endor-context --sync-skills` mirrors Endor skills into
   `.agents/skills/` and/or `.claude/skills/` (`none|agents|claude|both`; copy only).
   Prefer `both` for max harness coverage. `cursor` remains a deprecated alias for

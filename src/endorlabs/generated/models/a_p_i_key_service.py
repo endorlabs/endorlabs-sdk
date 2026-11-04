@@ -323,6 +323,7 @@ class V1SystemRole(StrEnum):
     ENDOR_PROXY has permissions to access proxy endpoints in endorfactory service.
      - SYSTEM_ROLE_PACKAGE_FIREWALL: PACKAGE_FIREWALL has permissions to access firewall endpoints for package firewall in endorfactory service.
      - SYSTEM_ROLE_AI_AUDIT: AI_AUDIT has least-privilege permissions to run ai-audit hooks (agent session events).
+     - SYSTEM_ROLE_PACKAGE_FIREWALL_MANAGER: PACKAGE_FIREWALL_MANAGER manages package firewall policies, upstreams and notification targets, and reads firewall logs.
     """
 
     SYSTEM_ROLE_UNSPECIFIED = 'SYSTEM_ROLE_UNSPECIFIED'
@@ -336,6 +337,7 @@ class V1SystemRole(StrEnum):
     SYSTEM_ROLE_ENDOR_PROXY = 'SYSTEM_ROLE_ENDOR_PROXY'
     SYSTEM_ROLE_PACKAGE_FIREWALL = 'SYSTEM_ROLE_PACKAGE_FIREWALL'
     SYSTEM_ROLE_AI_AUDIT = 'SYSTEM_ROLE_AI_AUDIT'
+    SYSTEM_ROLE_PACKAGE_FIREWALL_MANAGER = 'SYSTEM_ROLE_PACKAGE_FIREWALL_MANAGER'
 
 
 class V1TenantMeta(BaseModel):
