@@ -28,6 +28,11 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Fixed
 
+- Wheel packaging now force-includes `endor-reports` HTML shell assets
+  (`endor-logo.png`, `endor-wordmark.png`, `chart.umd.min.js`). Hatchling's
+  sdist→wheel path was dropping them, so PyPI installs through 0.7.4 failed
+  when copying brand/Chart.js files into report output folders.
+
 ### Breaking
 
 ## 0.7.4
