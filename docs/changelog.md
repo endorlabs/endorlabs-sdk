@@ -10,6 +10,16 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+### Fixed
+
+### Breaking
+
+## 0.7.5
+
+### Added
+
+### Changed
+
 - Query pagination stays on `page_token` (Query Service does not advance
   root or nested lists with `page_id`); facade `list` / `get_all` continue
   to prefer `page_id`. Documented the split; added `next_page_cursor` and
@@ -25,6 +35,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
   `references[]`.
 - List-time facade/ops deprecation and empty-namespace `warnings.warn` calls
   also emit via the SDK resource logger.
+- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1244).
 
 ### Fixed
 
