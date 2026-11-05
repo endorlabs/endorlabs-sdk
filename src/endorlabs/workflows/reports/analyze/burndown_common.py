@@ -16,8 +16,8 @@ if TYPE_CHECKING:
     from endorlabs import Client
 
 SEV_KEYS = ("all", "critical", "high", "medium", "low")
-PULL_MODE_TAG_IS_IN = "tag_parent_uuid_is_in"
-DEFAULT_BURNDOWN_WORKERS = 24
+PULL_MODE_PROJECT_EQUALITY = "project_parent_uuid"
+DEFAULT_BURNDOWN_WORKERS = 2
 
 # CI / PR ScanResult + FindingLog retention is typically ~30d.
 PR_LOOKBACK_DAYS = 30
@@ -114,51 +114,60 @@ def _uuids_for_path(
     return out
 
 
-def pull_is_in_matrices(
+def pull_project_matrices(
     client: Client,
     *,
     tenant: str,
-    jobs: list[tuple[str, list[str]]],
+    projects_by_uuid: dict[str, dict[str, Any]],
+    uuids: list[str],
     matrix_fn: MatrixFn,
     matrix_kwargs: dict[str, Any],
-    facet_keys: tuple[str, ...] | list[str],
     categories: list[str],
     period_caption: str,
     max_workers: int,
 ) -> dict[str, dict[str, dict[str, dict[str, Any]]]]:
-    """Pull FindingLog severity×facet matrices via ``parent_uuid is_in`` (parallel).
+    """One FindingLog matrix per project at that project's namespace.
 
-    *jobs* are ``(job_key, parent_uuids)``. Each call uses *tenant* +
-    ``traverse=True`` (via the resilient FindingLog helper) so child-namespace
-    projects are included.
+    Each call passes ``parent_uuids=[uuid]`` so the filter is
+    ``meta.parent_uuid`` equality with ``traverse=False``. Callers sum the
+    week maps into tag and path series. A query error propagates.
     """
 
+    unique: list[str] = []
+    seen: set[str] = set()
+    for uid in uuids:
+        if not uid or uid in seen or uid not in projects_by_uuid:
+            continue
+        seen.add(uid)
+        unique.append(uid)
+
     def _one(
-        item: tuple[str, list[str]],
+        uid: str,
     ) -> tuple[str, dict[str, dict[str, dict[str, Any]]]]:
-        key, uuids = item
-        try:
-            matrix = matrix_fn(
-                client,
-                namespace=tenant,
-                parent_uuids=uuids,
-                categories=categories,
-                period_caption=period_caption,
-                **matrix_kwargs,
-            )
-        except Exception:
-            matrix = empty_facet_matrix(categories, period_caption, facet_keys)
-        return key, matrix
+        row = projects_by_uuid[uid]
+        namespace = str(row.get("namespace") or "")
+        if not namespace:
+            msg = f"project {uid} under {tenant} has no namespace"
+            raise ValueError(msg)
+        matrix = matrix_fn(
+            client,
+            namespace=namespace,
+            parent_uuids=[uid],
+            categories=categories,
+            period_caption=period_caption,
+            **matrix_kwargs,
+        )
+        return uid, matrix
 
     out: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
-    if not jobs:
+    if not unique:
         return out
-    workers = max(1, min(max_workers, len(jobs)))
+    workers = max(1, min(max_workers, len(unique)))
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = [pool.submit(_one, job) for job in jobs]
+        futures = [pool.submit(_one, uid) for uid in unique]
         for fut in as_completed(futures):
-            key, matrix = fut.result()
-            out[key] = matrix
+            uid, matrix = fut.result()
+            out[uid] = matrix
     return out
 
 
@@ -186,14 +195,14 @@ def build_path_and_tag_series(
     dict[str, Any],
     dict[str, Any],
 ]:
-    """Leaf path series + tag-grain ``parent_uuid is_in`` for one facet matrix.
+    """Leaf path series plus per-project tag and PR series.
 
     MAIN path series use leaf-namespace aggregates (includes untagged projects).
-    When *project_uuid_allowlist* is set (PR-active), path series use one
-    ``is_in`` pull per path over that UUID set.
+    When *project_uuid_allowlist* is set (PR-active), path series sum one
+    equality matrix per allowlisted project.
 
-    Tag series: one ``is_in`` pull per (tag, path) at *tenant* with
-    ``traverse=True`` (via resilient FindingLog helpers).
+    Tag series sum those same per-project matrices. A project in two tags is
+    counted in both. Tag sums are not written into ``seriesFilters.perPath``.
 
     Returns ``(series_filters, tag_series, tag_series_meta)``.
     """
@@ -215,23 +224,20 @@ def build_path_and_tag_series(
     leaf_cells: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
 
     def _leaf_one(ns: str) -> tuple[str, dict[str, dict[str, dict[str, Any]]]]:
-        try:
-            matrix = matrix_fn(
-                client,
-                namespace=ns,
-                window_start=window_start,
-                window_end=window_end,
-                parent_uuids=None,
-                lookback=lookback,
-                categories=categories,
-                period_caption=period_caption,
-                **matrix_kwargs,
-            )
-        except Exception:
-            matrix = empty_facet_matrix(categories, period_caption, facet_keys)
+        matrix = matrix_fn(
+            client,
+            namespace=ns,
+            window_start=window_start,
+            window_end=window_end,
+            parent_uuids=None,
+            lookback=lookback,
+            categories=categories,
+            period_caption=period_caption,
+            **matrix_kwargs,
+        )
         return ns, matrix
 
-    series_filters: dict[str, Any]
+    series_filters: dict[str, Any] = {"perPath": {}}
     if allow is None:
         if leaf_namespaces:
             workers = max(1, min(max_workers, len(leaf_namespaces)))
@@ -256,32 +262,7 @@ def build_path_and_tag_series(
             )
 
         series_filters = {"perPath": {path: roll_path(path) for path in path_options}}
-    else:
-        path_jobs: list[tuple[str, list[str]]] = []
-        allow_uuids = [str(p["uuid"]) for p in scoped_projects if p.get("uuid")]
-        for path in path_options:
-            path_uuids = _uuids_for_path(by_uuid, allow_uuids, path)
-            if path_uuids:
-                path_jobs.append((f"path:{path}", path_uuids))
-        path_matrices = pull_is_in_matrices(
-            client,
-            tenant=tenant,
-            jobs=path_jobs,
-            matrix_fn=matrix_fn,
-            matrix_kwargs=pull_kwargs,
-            facet_keys=facet_keys,
-            categories=categories,
-            period_caption=period_caption,
-            max_workers=max_workers,
-        )
-        path_map: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
-        for path in path_options:
-            key = f"path:{path}"
-            if key in path_matrices:
-                path_map[path] = path_matrices[key]
-        series_filters = {"perPath": path_map}
 
-    tag_jobs: list[tuple[str, list[str]]] = []
     ready_candidates: list[tuple[str, list[str]]] = []
     pending: list[str] = []
     for entry in tag_catalog:
@@ -295,31 +276,53 @@ def build_path_and_tag_series(
             pending.append(tag)
             continue
         ready_candidates.append((tag, uuids))
-        for path in path_options:
-            path_uuids = _uuids_for_path(by_uuid, uuids, path)
-            if path_uuids:
-                tag_jobs.append((f"tag:{tag}|{path}", path_uuids))
 
-    tag_matrices = pull_is_in_matrices(
+    pull_uuids: list[str] = []
+    if allow is not None:
+        pull_uuids.extend(str(p["uuid"]) for p in scoped_projects if p.get("uuid"))
+    for _tag, uuids in ready_candidates:
+        pull_uuids.extend(uuids)
+
+    project_cells = pull_project_matrices(
         client,
         tenant=tenant,
-        jobs=tag_jobs,
+        projects_by_uuid=by_uuid,
+        uuids=pull_uuids,
         matrix_fn=matrix_fn,
         matrix_kwargs=pull_kwargs,
-        facet_keys=facet_keys,
         categories=categories,
         period_caption=period_caption,
         max_workers=max_workers,
     )
 
+    def sum_projects(uuids: list[str]) -> dict[str, dict[str, dict[str, Any]]] | None:
+        parts = [project_cells[uid] for uid in uuids if uid in project_cells]
+        if not parts:
+            return None
+        return sum_severity_facet_matrices(
+            parts,
+            categories=categories,
+            period_caption=period_caption,
+            facet_keys=facet_keys,
+        )
+
+    if allow is not None:
+        allow_uuids = [str(p["uuid"]) for p in scoped_projects if p.get("uuid")]
+        path_map: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
+        for path in path_options:
+            summed = sum_projects(_uuids_for_path(by_uuid, allow_uuids, path))
+            if summed is not None:
+                path_map[path] = summed
+        series_filters = {"perPath": path_map}
+
     per_tag: dict[str, dict[str, dict[str, dict[str, dict[str, Any]]]]] = {}
     ready: list[str] = []
-    for tag, _uuids in ready_candidates:
+    for tag, uuids in ready_candidates:
         tag_path_map: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
         for path in path_options:
-            key = f"tag:{tag}|{path}"
-            if key in tag_matrices:
-                tag_path_map[path] = tag_matrices[key]
+            summed = sum_projects(_uuids_for_path(by_uuid, uuids, path))
+            if summed is not None:
+                tag_path_map[path] = summed
         if tag_path_map:
             per_tag[tag] = tag_path_map
             ready.append(tag)
@@ -334,8 +337,8 @@ def build_path_and_tag_series(
         "seriesPendingCount": len(pending),
         "pullPolicy": {
             "minProjects": min_projects,
-            "mode": PULL_MODE_TAG_IS_IN,
-            "isInPulls": len(tag_jobs),
+            "mode": PULL_MODE_PROJECT_EQUALITY,
+            "projectPulls": len(project_cells),
             "workers": max(1, max_workers),
             "projectAllowlist": len(allow) if allow is not None else None,
         },

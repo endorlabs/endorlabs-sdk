@@ -11,6 +11,20 @@ from typing import Any, Dict
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
+class LastProbeOutcome(StrEnum):
+    """
+    What the check found.
+
+     - OUTCOME_UNSPECIFIED: Not set. A recorded check always sets one of the values below.
+     - OUTCOME_VERIFIED: The provider accepted the credentials.
+     - OUTCOME_UNVERIFIED: The key was saved, but the check did not pass. failure_class says why.
+    """
+
+    OUTCOME_UNSPECIFIED = 'OUTCOME_UNSPECIFIED'
+    OUTCOME_VERIFIED = 'OUTCOME_VERIFIED'
+    OUTCOME_UNVERIFIED = 'OUTCOME_UNVERIFIED'
+
+
 class SpecAvailableLLM(StrEnum):
     """
     LLMs available to AgentConfig.
@@ -313,6 +327,82 @@ class GoogleprotobufAny(BaseModel):
     """
 
 
+class V1AIFailureClass(StrEnum):
+    """
+    AIFailureClass assigns an LLM request failure to the side of the
+    responsibility boundary that owns the fix. It is selected from the credential
+    the request ran on first, and the provider response second, so the same
+    upstream response can land on either side.
+
+     - AI_FAILURE_CLASS_UNSPECIFIED: No class was assigned, either because the failure predates classification
+    or because it did not originate at the provider boundary.
+     - AI_FAILURE_CLASS_CUSTOMER_QUOTA_EXHAUSTED: The customer's own provider account is over its rate or spend limit.
+     - AI_FAILURE_CLASS_CUSTOMER_CREDENTIAL_REJECTED: The customer's provider refused the supplied key, so the key is invalid,
+    revoked, or lacks permission for the model.
+     - AI_FAILURE_CLASS_CUSTOMER_ENDPOINT_UNREACHABLE: The customer's provider endpoint could not be reached: DNS, TLS, a connect
+    timeout, or a server error from their own gateway.
+     - AI_FAILURE_CLASS_CUSTOMER_MODEL_UNAVAILABLE: The customer's provider account does not serve the requested model, for
+    example a missing Azure OpenAI deployment name.
+     - AI_FAILURE_CLASS_CUSTOMER_CONFIG_INVALID: The customer's key configuration cannot satisfy the request, for example
+    no enabled key serves the requested model.
+     - AI_FAILURE_CLASS_LICENSE_NOT_ENTITLED: The tenant has provider keys configured but no license entitlement to use
+    them, so the request is refused before any provider call.
+     - AI_FAILURE_CLASS_PLATFORM_QUOTA_EXHAUSTED: Endor's own provider account is over its rate or spend limit.
+     - AI_FAILURE_CLASS_PLATFORM_PROVIDER_ERROR: The provider failed a request made on Endor's own credential.
+     - AI_FAILURE_CLASS_PLATFORM_INTERNAL: Endor's own code failed: the model registry, response validation, or a bug.
+     - AI_FAILURE_CLASS_PLATFORM_INPUT_TOO_LARGE: The prompt exceeded the context window of the model. Endor builds the
+    prompt, so this stays on Endor's side whichever credential ran the
+    request. It is held apart from PLATFORM_INTERNAL because a later attempt on
+    the same code can still succeed once the prompt shortens, which makes it a
+    retry-worthy condition rather than a permanent one.
+     - AI_FAILURE_CLASS_LICENSE_CREDIT_EXHAUSTED: The tenant used all of the AI credit that its license grants for the
+    current period, so a request on Endor's own credentials is refused before
+    any provider call. Like LICENSE_NOT_ENTITLED it is contractual: the tenant
+    clears it through their account team, not through a code fix on either
+    side.
+     - AI_FAILURE_CLASS_PLATFORM_CONTENT_REFUSED: The model or the provider's content filter declined the prompt because of
+    the content it carried. Endor builds the prompt from the code being
+    scanned, so this stays on Endor's side whichever credential ran the
+    request. It is held apart from PLATFORM_INTERNAL because a retry on the same
+    content gets the same answer, and it says nothing about provider or
+    platform health.
+    """
+
+    AI_FAILURE_CLASS_UNSPECIFIED = 'AI_FAILURE_CLASS_UNSPECIFIED'
+    AI_FAILURE_CLASS_CUSTOMER_QUOTA_EXHAUSTED = (
+        'AI_FAILURE_CLASS_CUSTOMER_QUOTA_EXHAUSTED'
+    )
+    AI_FAILURE_CLASS_CUSTOMER_CREDENTIAL_REJECTED = (
+        'AI_FAILURE_CLASS_CUSTOMER_CREDENTIAL_REJECTED'
+    )
+    AI_FAILURE_CLASS_CUSTOMER_ENDPOINT_UNREACHABLE = (
+        'AI_FAILURE_CLASS_CUSTOMER_ENDPOINT_UNREACHABLE'
+    )
+    AI_FAILURE_CLASS_CUSTOMER_MODEL_UNAVAILABLE = (
+        'AI_FAILURE_CLASS_CUSTOMER_MODEL_UNAVAILABLE'
+    )
+    AI_FAILURE_CLASS_CUSTOMER_CONFIG_INVALID = (
+        'AI_FAILURE_CLASS_CUSTOMER_CONFIG_INVALID'
+    )
+    AI_FAILURE_CLASS_LICENSE_NOT_ENTITLED = 'AI_FAILURE_CLASS_LICENSE_NOT_ENTITLED'
+    AI_FAILURE_CLASS_PLATFORM_QUOTA_EXHAUSTED = (
+        'AI_FAILURE_CLASS_PLATFORM_QUOTA_EXHAUSTED'
+    )
+    AI_FAILURE_CLASS_PLATFORM_PROVIDER_ERROR = (
+        'AI_FAILURE_CLASS_PLATFORM_PROVIDER_ERROR'
+    )
+    AI_FAILURE_CLASS_PLATFORM_INTERNAL = 'AI_FAILURE_CLASS_PLATFORM_INTERNAL'
+    AI_FAILURE_CLASS_PLATFORM_INPUT_TOO_LARGE = (
+        'AI_FAILURE_CLASS_PLATFORM_INPUT_TOO_LARGE'
+    )
+    AI_FAILURE_CLASS_LICENSE_CREDIT_EXHAUSTED = (
+        'AI_FAILURE_CLASS_LICENSE_CREDIT_EXHAUSTED'
+    )
+    AI_FAILURE_CLASS_PLATFORM_CONTENT_REFUSED = (
+        'AI_FAILURE_CLASS_PLATFORM_CONTENT_REFUSED'
+    )
+
+
 class ModelAliase(BaseModel):
     """
     ModelAlias maps a platform model to the name the customer's provider
@@ -523,6 +613,31 @@ class V1UpdateRequest(BaseModel):
     """
 
 
+class AIProviderKeyLastProbe(BaseModel):
+    """
+    LastProbe records what the most recent credential check found. A check
+    that rejects the credentials blocks the save, so it is never recorded.
+    """
+
+    failure_class: V1AIFailureClass | None = 'AI_FAILURE_CLASS_UNSPECIFIED'
+    """
+    Why the check did not pass. Set only when outcome is OUTCOME_UNVERIFIED.
+    """
+    outcome: LastProbeOutcome | None = 'OUTCOME_UNSPECIFIED'
+    """
+    What the check found.
+    """
+    probe_time: AwareDatetime | None = None
+    """
+    Server time at which the check ran.
+    """
+    remediation: str | None = None
+    """
+    What to do about failure_class. Generated from failure_class on every
+    read and never stored. Empty when failure_class is unset.
+    """
+
+
 class GroupResponseGroupData(BaseModel):
     """
     Information about objects matching the given key.
@@ -676,6 +791,15 @@ class Object1(BaseModel):
     credentials.
     """
 
+    last_probe: AIProviderKeyLastProbe | None = None
+    """
+    Result of the most recent check of this key's credentials against the
+    provider, taken when the key was saved. It is one reading at one moment,
+    not a health status: a passing check does not mean the model is served,
+    the quota is intact, or that routing will pick this key. Unset when no
+    check has run: the key was created disabled, predates this field, or had
+    its credentials changed without a check.
+    """
     meta: V1Meta
     """
     Metadata required for all objects.
@@ -718,6 +842,15 @@ class AIProviderKeyServiceCreateAIProviderKeyBody(BaseModel):
     credentials.
     """
 
+    last_probe: AIProviderKeyLastProbe | None = None
+    """
+    Result of the most recent check of this key's credentials against the
+    provider, taken when the key was saved. It is one reading at one moment,
+    not a health status: a passing check does not mean the model is served,
+    the quota is intact, or that routing will pick this key. Unset when no
+    check has run: the key was created disabled, predates this field, or had
+    its credentials changed without a check.
+    """
     meta: V1Meta
     """
     Metadata required for all objects.
@@ -743,6 +876,15 @@ class Object(BaseModel):
     The AI provider key to update.
     """
 
+    last_probe: AIProviderKeyLastProbe | None = None
+    """
+    Result of the most recent check of this key's credentials against the
+    provider, taken when the key was saved. It is one reading at one moment,
+    not a health status: a passing check does not mean the model is served,
+    the quota is intact, or that routing will pick this key. Unset when no
+    check has run: the key was created disabled, predates this field, or had
+    its credentials changed without a check.
+    """
     meta: V1Meta | None = None
     """
     Metadata required for all objects.
@@ -787,6 +929,15 @@ class V1AIProviderKey(BaseModel):
     credentials.
     """
 
+    last_probe: AIProviderKeyLastProbe | None = None
+    """
+    Result of the most recent check of this key's credentials against the
+    provider, taken when the key was saved. It is one reading at one moment,
+    not a health status: a passing check does not mean the model is served,
+    the quota is intact, or that routing will pick this key. Unset when no
+    check has run: the key was created disabled, predates this field, or had
+    its credentials changed without a check.
+    """
     meta: V1Meta
     """
     Metadata required for all objects.

@@ -4,10 +4,9 @@ FindingLog severity×reach series primitives live in
 ``endorlabs.workflows.findings.finding_log_trends``; this module orchestrates
 path/tag rollups and ScanResult throughput for ``report_packet.v0``.
 
-Tag series use **parent_uuid is_in** pulls (one matrix per tag×path at the
-tenant with traverse). Path series still use leaf-namespace aggregates so
-untagged projects are included; PR-active path series use is_in over the
-allowlist.
+Tag and PR series sum one ``meta.parent_uuid`` equality matrix per project at
+that project's namespace (``traverse=False``). Path series for main still use
+leaf-namespace aggregates so untagged projects are included.
 """
 
 from __future__ import annotations
@@ -297,7 +296,8 @@ def build_sca_burndown_report(
 
     Uses the same category-spec + path/tag redistribute path as code findings,
     with ``expand="reach"`` so ``all`` remains RF+PRF. When *include_pr_scope*
-    is true, also pulls a PR/CI_RUN Detected/Blocked sibling under ``scopes.pr``.
+    is true, the PR/CI_RUN Detected/Blocked sibling under ``scopes.pr`` runs
+    after the main burndown so the two FindingLog passes do not overlap.
     """
     from concurrent.futures import ThreadPoolExecutor
 
@@ -334,16 +334,14 @@ def build_sca_burndown_report(
             project_uuid_allowlist=allow,
         )
 
-    workers = 4 if include_pr_scope else 3
-    with ThreadPoolExecutor(max_workers=workers) as pool:
+    with ThreadPoolExecutor(max_workers=2) as pool:
         burndown_fut = pool.submit(_main)
-        pr_fut = pool.submit(_pr) if include_pr_scope else None
         throughput_fut = pool.submit(
             collect_scan_throughput, client, projects, leaf_namespaces
         )
         bounds_fut = pool.submit(probe_scan_history_bounds, client, leaf_namespaces)
         block = burndown_fut.result()
-        pr_block = pr_fut.result() if pr_fut is not None else None
+        pr_block = _pr()
         scan_by_uuid = throughput_fut.result()
         scan_bounds = bounds_fut.result()
     tp_per_path = {

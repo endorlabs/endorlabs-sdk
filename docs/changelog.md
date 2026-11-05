@@ -24,6 +24,13 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
   root or nested lists with `page_id`); facade `list` / `get_all` continue
   to prefer `page_id`. Documented the split; added `next_page_cursor` and
   kept `next_page_token == 0` as terminal.
+- Executive report FindingLog burndown queries each tagged or PR-active project
+  at that project's namespace (`meta.parent_uuid` equality, `traverse=False`)
+  and sums the week buckets. Main path charts stay leaf-namespace aggregates.
+  `--workers` defaults to 2. SCA and code burndowns, and the main and PR
+  passes, no longer run at the same time. Packet requests send
+  `x-endor-op-comment: endor-reports/<version>`. A FindingLog timeout fails
+  the slice instead of charting a zero or fanning out per project.
 - `init(sync_skills=…)` / `endor-context --sync-skills` mirrors Endor skills into
   `.agents/skills/` and/or `.claude/skills/` (`none|agents|claude|both`; copy only).
   Prefer `both` for max harness coverage. `cursor` remains a deprecated alias for
@@ -35,7 +42,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
   `references[]`.
 - List-time facade/ops deprecation and empty-namespace `warnings.warn` calls
   also emit via the SDK resource logger.
-- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1244).
+- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1248).
 
 ### Fixed
 

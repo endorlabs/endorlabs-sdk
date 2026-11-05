@@ -1,4 +1,4 @@
-"""Unit tests for tag is_in burndown grain (no live API)."""
+"""Unit tests for per-project burndown grain (no live API)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 from endorlabs.workflows.findings.finding_log_trends import empty_series_cell
 from endorlabs.workflows.reports.analyze.burndown_common import (
-    PULL_MODE_TAG_IS_IN,
+    PULL_MODE_PROJECT_EQUALITY,
 )
 from endorlabs.workflows.reports.analyze.findings_trend import (
     build_findings_burndown_report,
@@ -57,7 +57,7 @@ def test_sum_severity_reach_matrices() -> None:
     assert merged["all"]["all"]["weeklyNew"] == [3, 3]
 
 
-def test_tag_is_in_sums_parent_uuid_sets() -> None:
+def test_tag_project_equality_sums_parent_uuid_sets() -> None:
     cats = ["2026-01-05", "2026-01-12"]
     caption = "2w"
     uid_a = "00000000-0000-4000-8000-00000000000a"
@@ -98,7 +98,7 @@ def test_tag_is_in_sums_parent_uuid_sets() -> None:
     }
 
     seed = empty_series_cell(cats, caption)
-    is_in_calls: list[tuple[str, tuple[str, ...]]] = []
+    project_calls: list[tuple[str, tuple[str, ...]]] = []
 
     def fake_matrix(
         _client: Any,
@@ -108,13 +108,10 @@ def test_tag_is_in_sums_parent_uuid_sets() -> None:
         **_kwargs: Any,
     ) -> dict[str, dict[str, dict[str, Any]]]:
         if parent_uuids:
-            is_in_calls.append((namespace, tuple(sorted(parent_uuids))))
-            assert namespace == tenant
-            weekly = [0, 0]
-            for uid in parent_uuids:
-                part = per_uuid[uid]
-                weekly = [weekly[i] + part[i] for i in range(len(weekly))]
-            return _matrix(cats, weekly_new=weekly)
+            project_calls.append((namespace, tuple(parent_uuids)))
+            assert namespace == leaf
+            assert len(parent_uuids) == 1
+            return _matrix(cats, weekly_new=per_uuid[parent_uuids[0]])
         # Leaf path aggregate (untagged-inclusive placeholder).
         assert namespace == leaf
         return _matrix(cats, weekly_new=[10, 0])
@@ -161,8 +158,8 @@ def test_tag_is_in_sums_parent_uuid_sets() -> None:
         )
 
     policy = report["tagSeriesMeta"]["pullPolicy"]
-    assert policy["mode"] == PULL_MODE_TAG_IS_IN
-    assert policy["isInPulls"] >= 2
+    assert policy["mode"] == PULL_MODE_PROJECT_EQUALITY
+    assert policy["projectPulls"] == 3
     assert policy["workers"] == 2
     assert set(report["tagSeries"]["tags"]) == {"team-alpha", "team-shared"}
 
@@ -178,8 +175,9 @@ def test_tag_is_in_sums_parent_uuid_sets() -> None:
     path_all = report["seriesFilters"]["perPath"]["all"]["critical"]["reachable"]
     assert path_all["weeklyNew"] == [10, 0]
 
-    # Tag pulls hit tenant with multi-UUID is_in (not per-project leaf).
-    assert any(ns == tenant and len(uids) > 1 for ns, uids in is_in_calls)
+    # One equality call per tagged project, at the project namespace.
+    assert sorted(uid for _ns, (uid,) in project_calls) == sorted(per_uuid)
+    assert all(ns == leaf and len(uids) == 1 for ns, uids in project_calls)
 
 
 def test_pr_active_project_uuids_and_attach_scopes() -> None:
@@ -302,10 +300,10 @@ def test_sca_burndown_includes_pr_scope_when_enabled() -> None:
     assert report["scopes"]["pr"]["contextScope"] == "pr"
     assert report["scopes"]["pr"]["seriesLabels"]["primary"] == "Detected"
     assert report["prActiveProjectUuids"] == [uid_a]
-    # PR allowlist uses is_in path series.
+    # PR allowlist sums per-project equality matrices.
     assert "all" in report["scopes"]["pr"]["seriesFilters"]["perPath"]
     assert report["scopes"]["pr"]["tagSeriesMeta"]["pullPolicy"]["mode"] == (
-        PULL_MODE_TAG_IS_IN
+        PULL_MODE_PROJECT_EQUALITY
     )
 
 

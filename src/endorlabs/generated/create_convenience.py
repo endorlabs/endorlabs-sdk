@@ -7,7 +7,7 @@ A_P_I_KEY_SPEC_REQUIRED = ("permissions", "expiration_time")
 A_P_I_KEY_META_FIELDS = ()
 A_P_I_KEY_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "propagate", "tenant_meta")
 
-ASYNC_JOB_SPEC_FIELDS = ("sbom", "vex")
+ASYNC_JOB_SPEC_FIELDS = ("sbom", "vex", "sbom_report")
 ASYNC_JOB_SPEC_REQUIRED = ()
 ASYNC_JOB_META_FIELDS = ()
 ASYNC_JOB_PAYLOAD_TOP_LEVEL_FIELDS = ("meta", "tenant_meta")
@@ -723,6 +723,7 @@ VULNERABILITY_SPEC_FIELDS = (
     "withdrawn",
     "aliases",
     "related",
+    "upstream",
     "cvss_v3_severity",
     "cvss_v4_severity",
     "credits",

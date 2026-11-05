@@ -165,11 +165,16 @@ class V1AsyncJobType(StrEnum):
      - TYPE_UNSPECIFIED: Unset.
      - TYPE_SBOM: Software Bill of Materials.
      - TYPE_VEX: Vulnerability Exploitability eXchange.
+     - TYPE_SBOM_REPORT: SBOM report: a PDF presentation document, or a CycloneDX or SPDX file.
+    The report registry SBOM handler makes both the human-readable and the
+    machine-readable output. It takes SBOMReportJob.Request, not the
+    SBOMExportJob.Request of TYPE_SBOM, so it needs its own type.
     """
 
     TYPE_UNSPECIFIED = 'TYPE_UNSPECIFIED'
     TYPE_SBOM = 'TYPE_SBOM'
     TYPE_VEX = 'TYPE_VEX'
+    TYPE_SBOM_REPORT = 'TYPE_SBOM_REPORT'
 
 
 class V1CycloneDxSpecVersion(StrEnum):
@@ -411,6 +416,34 @@ class V1SBOMKind(StrEnum):
     SBOM_KIND_SPDX = 'SBOM_KIND_SPDX'
 
 
+class V1SBOMReportJobRequestReportType(StrEnum):
+    """
+    ReportType is the output format of the report.
+
+     - REPORT_TYPE_PDF: PDF format (presentation document with the component inventory table).
+    """
+
+    REPORT_TYPE_UNSPECIFIED = 'REPORT_TYPE_UNSPECIFIED'
+    REPORT_TYPE_PDF = 'REPORT_TYPE_PDF'
+
+
+class V1SBOMReportJobResponse(BaseModel):
+    """
+    Response holds the output after the SBOM report is generated.
+    """
+
+    file_path: str | None = None
+    """
+    The file path of the SBOM report in the object storage. Written by the
+    handler, never supplied by the client.
+    """
+    report_url: str | None = None
+    """
+    Signed URL the client uses to download the generated report. Populated by
+    the API server when the job is read after completion.
+    """
+
+
 class V1SPDXSpecVersion(StrEnum):
     """
     SPDX specification versions Endor emits. Values are added as Endor adds
@@ -526,6 +559,10 @@ class V1AsyncJobSpecResponse(BaseModel):
     """
     Populated when Spec.type = TYPE_SBOM.
     """
+    sbom_report: V1SBOMReportJobResponse | None = None
+    """
+    Populated when Spec.type = TYPE_SBOM_REPORT.
+    """
     vex: V1VEXExportJobResponse | None = None
     """
     Populated when Spec.type = TYPE_VEX.
@@ -591,6 +628,58 @@ class V1SBOMExportJobRequest(BaseModel):
     """
 
 
+class V1SBOMReportJobRequest(BaseModel):
+    """
+    Request holds the input parameters for running an SBOM report job.
+    """
+
+    format: V1ExportedSBOMFormat | None = 'FORMAT_UNSPECIFIED'
+    """
+    Serialization of the machine-readable output. Set with kind, in place of
+    report_type.
+    """
+    hide_private_components: bool | None = None
+    """
+    Whether to leave private components out of the machine-readable output,
+    matching SBOMExportJob. Ignored by the presentation document.
+    """
+    include_test_dependencies: bool | None = None
+    """
+    Whether to include test and build scoped dependencies in the inventory.
+    Defaults to false, matching SBOMExportJob, so the report and the
+    machine-readable SBOM describe the same production component set.
+    """
+    kind: V1SBOMKind | None = 'SBOM_KIND_UNSPECIFIED'
+    """
+    Identifies the SBOM specification the machine-readable output conforms to.
+    Set with format, in place of report_type. The pairing is sparse, so the
+    supported combinations are published by GetSupportedReportFormats.
+    """
+    list_projects_filter: str | None = None
+    """
+    Filter expression to select projects (stringified filter). The inventory
+    covers every production component of the matched projects' MAIN context;
+    there is no per-component filter, matching SBOMExportJob. Set this or
+    package_version_uuids, never both.
+    """
+    package_version_uuids: list[str] | None = None
+    """
+    Package versions the report covers, in place of list_projects_filter. They
+    are read from the caller's namespace, or from the oss namespace when none
+    of them is in the caller's namespace, as for a package picked in Discover.
+    """
+    report_type: V1SBOMReportJobRequestReportType | None = 'REPORT_TYPE_UNSPECIFIED'
+    """
+    Output format of the presentation document. Set this or the kind and format
+    pair below, never both.
+    """
+    traverse: bool | None = None
+    """
+    Whether to traverse child namespaces when selecting projects. Ignored with
+    package_version_uuids.
+    """
+
+
 class V1AsyncJobSpecRequest(BaseModel):
     """
     Wrapper holding the type-specific request arm.
@@ -599,6 +688,10 @@ class V1AsyncJobSpecRequest(BaseModel):
     sbom: V1SBOMExportJobRequest | None = None
     """
     Required when type = TYPE_SBOM.
+    """
+    sbom_report: V1SBOMReportJobRequest | None = None
+    """
+    Required when type = TYPE_SBOM_REPORT.
     """
     vex: V1VEXExportJobRequest | None = None
     """
@@ -631,7 +724,7 @@ class V1AsyncJobSpec(BaseModel):
 
 class AsyncJobServiceCreateAsyncJobBody(BaseModel):
     """
-    AsyncJob is an asynchronous job — SBOM export or VEX export
+    AsyncJob is an asynchronous job — SBOM export, VEX export or SBOM report
     types today, with more types added as they ship.
     """
 
@@ -658,7 +751,7 @@ class AsyncJobServiceCreateAsyncJobBody(BaseModel):
 
 class V1AsyncJob(BaseModel):
     """
-    AsyncJob is an asynchronous job — SBOM export or VEX export
+    AsyncJob is an asynchronous job — SBOM export, VEX export or SBOM report
     types today, with more types added as they ship.
     """
 

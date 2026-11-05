@@ -505,3 +505,39 @@ class TestRequestDelegation:
 
         url = mock_retry.call_args[0][1]
         assert url == "https://api.staging.endorlabs.com/v1/namespaces"
+
+
+class TestOpComment:
+    """x-endor-op-comment is a session header and must not impersonate endorctl."""
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_TOKEN": "",
+        },
+        clear=True,
+    )
+    def test_op_comment_sets_header(self) -> None:
+        with _patch_httpx_client_for_auth():
+            client = APIClient(op_comment="endor-reports/1.2.3")
+        assert (
+            client._request_headers.get("x-endor-op-comment") == "endor-reports/1.2.3"
+        )
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_TOKEN": "",
+        },
+        clear=True,
+    )
+    def test_op_comment_rejects_endorctl_marker(self) -> None:
+        with (
+            _patch_httpx_client_for_auth(),
+            pytest.raises(ValueError, match="endorctl"),
+        ):
+            APIClient(op_comment="service/endorctl")

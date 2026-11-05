@@ -7269,6 +7269,12 @@ class V1VulnSpec(BaseModel):
     """
     Long summary of the vulnerability.
     """
+    upstream: list[str] | None = None
+    """
+    Optional. IDs of the upstream vulnerabilities that this advisory covers,
+    such as the CVEs that a Debian security advisory fixes. An advisory can
+    cover several distinct vulnerabilities, so these IDs are not aliases.
+    """
     withdrawn: AwareDatetime | None = None
     """
     Optional. The RFC3339 timestamp indicating when this entry is considered
