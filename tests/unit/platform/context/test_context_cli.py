@@ -29,14 +29,14 @@ def test_parse_args_supports_switches() -> None:
             "--no-materialize-agent-knowledge",
             "--force",
             "--sync-skills",
-            "cursor",
+            "both",
         ]
     )
     assert parsed.output_dir == "tmp-context"
     assert parsed.include_openapi is True
     assert parsed.include_agent_knowledge is False
     assert parsed.force is True
-    assert parsed.sync_skills == "cursor"
+    assert parsed.sync_skills == "both"
 
 
 def test_print_gitignore_line(capsys: object) -> None:
@@ -110,7 +110,7 @@ def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
             "--sync-openapi",
             "--force",
             "--sync-skills",
-            "cursor",
+            "agents",
         ]
     )
 
@@ -118,4 +118,4 @@ def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
     assert calls["include_openapi"] is True
     assert calls["include_agent_knowledge"] is True
     assert calls["force"] is True
-    assert calls["sync_skills"] == "cursor"
+    assert calls["sync_skills"] == "agents"

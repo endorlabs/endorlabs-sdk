@@ -319,6 +319,7 @@ class V1SystemRole(StrEnum):
     ENDOR_PROXY has permissions to access proxy endpoints in endorfactory service.
      - SYSTEM_ROLE_PACKAGE_FIREWALL: PACKAGE_FIREWALL has permissions to access firewall endpoints for package firewall in endorfactory service.
      - SYSTEM_ROLE_AI_AUDIT: AI_AUDIT has least-privilege permissions to run ai-audit hooks (agent session events).
+     - SYSTEM_ROLE_PACKAGE_FIREWALL_MANAGER: PACKAGE_FIREWALL_MANAGER manages package firewall policies, upstreams and notification targets, and reads firewall logs.
     """
 
     SYSTEM_ROLE_UNSPECIFIED = 'SYSTEM_ROLE_UNSPECIFIED'
@@ -332,6 +333,7 @@ class V1SystemRole(StrEnum):
     SYSTEM_ROLE_ENDOR_PROXY = 'SYSTEM_ROLE_ENDOR_PROXY'
     SYSTEM_ROLE_PACKAGE_FIREWALL = 'SYSTEM_ROLE_PACKAGE_FIREWALL'
     SYSTEM_ROLE_AI_AUDIT = 'SYSTEM_ROLE_AI_AUDIT'
+    SYSTEM_ROLE_PACKAGE_FIREWALL_MANAGER = 'SYSTEM_ROLE_PACKAGE_FIREWALL_MANAGER'
 
 
 class V1TenantMeta(BaseModel):
@@ -447,7 +449,9 @@ class V1AuthorizationPolicySpec(BaseModel):
 
     Clause strings must contain only allowed characters to prevent XSS attacks
     and ensure exact matching with incoming JWT claims. Allowed characters:
-    letters, numbers, and the following: =@._-/: +()& (space, plus, parentheses, ampersand).
+    letters, numbers, and the following: =@._-/: +()&' (space, plus, parentheses, ampersand,
+    ASCII apostrophe). The apostrophe is U+0027 only, so a mailbox such as o'brien@example.com
+    is accepted in every clause, while the curly apostrophe stays rejected.
     """
     expiration_time: AwareDatetime | None = None
     """

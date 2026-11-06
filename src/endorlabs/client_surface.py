@@ -37,19 +37,20 @@ _logger = get_resource_logger(__name__)
 class Client:
     """Resource-oriented client; holds default namespace and exposes resource facades.
 
-    Use endorlabs.Client(tenant="..."), endorlabs.Client() with
+    Use endorlabs.Client(tenant="<tenant>"), endorlabs.Client() with
     ``ENDOR_NAMESPACE`` or endorctl ``~/.endorctl/config.yaml`` set, or
-    endorlabs.Client(api_client=..., tenant="...").
+    endorlabs.Client(api_client=..., tenant="<tenant>").
     Then client.Namespace.list(traverse=True), client.Namespace.get(uuid), etc.
     All resources are driven by the registry in endorlabs.registry.
 
     When api_client is not passed, Client creates an APIClient and owns it.
-    Use ``with endorlabs.Client(tenant="...") as client:`` or call
+    Use ``with endorlabs.Client(tenant="<tenant>") as client:`` or call
     ``client.close()`` when done to release connections. When api_client is
     passed, the caller owns it and must close it themselves.
 
     Transport options (when creating APIClient): timeout, content_type,
-    accept_encoding, max_retries, base_url. Explicit args take precedence over
+    accept_encoding, max_retries, base_url, op_comment. Explicit args take
+    precedence over
     environment variables (``ENDOR_REQUEST_TIMEOUT``, ``ENDOR_API_TIMEOUT``).
     Other APIClient options (auth, logging_level, etc.) go via **client_kwargs.
     Use content_type="application/json" if compact responses cause validation issues.
@@ -82,10 +83,14 @@ class Client:
         accept_encoding: str | None = "gzip, br, zstd",
         max_retries: int | None = None,
         base_url: str | None = None,
+        op_comment: str | None = None,
         **client_kwargs: Any,
     ) -> None:
         super().__init__()
         self._own_client = api_client is None
+        if api_client is not None and op_comment:
+            msg = "op_comment applies when Client creates the APIClient"
+            raise ValueError(msg)
         if api_client is None:
             api_kwargs: dict[str, Any] = {**client_kwargs}
             api_kwargs["timeout"] = timeout
@@ -93,6 +98,7 @@ class Client:
             api_kwargs["accept_encoding"] = accept_encoding
             api_kwargs["max_retries"] = max_retries
             api_kwargs["base_url"] = base_url
+            api_kwargs["op_comment"] = op_comment
             api_client = APIClient(**api_kwargs)
         self._client: APIClient | None = api_client
         self._default_namespace, ns_source = resolve_client_default_namespace(tenant)

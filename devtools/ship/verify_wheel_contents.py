@@ -36,6 +36,14 @@ AGENT_KNOWLEDGE_FORCE_INCLUDE = (
     "workflows",
 )
 
+# Report HTML shell brand + Chart.js (force-included; hatchling sdist→wheel
+# otherwise drops .png / .js package data).
+REPORT_SHELL_ASSETS = (
+    "endorlabs/workflows/reports/export/html/shell/assets/endor-logo.png",
+    "endorlabs/workflows/reports/export/html/shell/assets/endor-wordmark.png",
+    "endorlabs/workflows/reports/export/html/shell/assets/chart.umd.min.js",
+)
+
 
 def _run(cmd: list[str], *, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
@@ -105,6 +113,9 @@ def verify_wheel_archive_paths(wheel_path: Path, manifest: dict[str, Any]) -> li
         prefix = f"endorlabs/agent_knowledge/{subdir}/"
         if not any(name.startswith(prefix) for name in names):
             errors.append(f"wheel missing agent_knowledge/{subdir}/ subtree")
+    for asset in REPORT_SHELL_ASSETS:
+        if asset not in names:
+            errors.append(f"wheel missing report shell asset: {asset}")
     return errors
 
 
@@ -191,6 +202,17 @@ def installed_wheel_smoke_script() -> str:
         if not (pkg / "client_surface.pyi").is_file():
             raise SystemExit("missing client_surface.pyi in wheel")
 
+        shell_assets = (
+            files("endorlabs.workflows.reports.export.html.shell") / "assets"
+        )
+        for name in (
+            "endor-logo.png",
+            "endor-wordmark.png",
+            "chart.umd.min.js",
+        ):
+            if not (shell_assets / name).is_file():
+                raise SystemExit(f"missing report shell asset in wheel: {name}")
+
         import endorlabs.workflows.estate  # noqa: F401
 
         manifest = agent_knowledge_manifest()
@@ -266,6 +288,21 @@ def verify_installed_wheel(
 def verify_source_packaging_invariants() -> list[str]:
     """Fast checks against committed source (no wheel build)."""
     errors: list[str] = []
+    assets_root = (
+        ROOT
+        / "src"
+        / "endorlabs"
+        / "workflows"
+        / "reports"
+        / "export"
+        / "html"
+        / "shell"
+        / "assets"
+    )
+    for asset in REPORT_SHELL_ASSETS:
+        name = asset.rsplit("/", 1)[-1]
+        if not (assets_root / name).is_file():
+            errors.append(f"source missing report shell asset: {name}")
     manifest = load_manifest()
     errors.extend(verify_manifest_paths_on_disk(manifest))
     errors.extend(verify_estate_init_files())

@@ -36,9 +36,10 @@ optional Endor Patches (`--patches` or `endor-reports patches`).
   (analytics off by default); tag/project leaderboards by cadence; PR-active
   projects toggle (CI ScanResult evidence in ~30d).
 - FindingLog window-net trends; **Main vs PR scope** on SCA/SAST pages (PR =
-  Detected/Blocked on `CI_RUN`, PR-active projects only); tag series via
-  `parent_uuid is_in` pulls per tag×path (`--workers`); `--min-projects`
-  only filters display.
+  Detected/Blocked on `CI_RUN`, PR-active projects only). Tag and PR series
+  sum one `parent_uuid` equality matrix per project (`traverse=False`,
+  `--workers`, default 2). Main path totals stay leaf aggregates.
+  `--min-projects` only filters display.
 
 **Out of scope**
 
@@ -75,7 +76,7 @@ Optional flags:
 
 - `--lookback 13` — FindingLog weeks
 - `--min-projects 1` — display filter: omit tags with fewer tagged projects
-- `--workers 24` — parallel FindingLog matrix pulls for tagged projects
+- `--workers 2` — parallel FindingLog leaf and project pulls
 - `--output-dir <path>` — override default output directory
 - `--date-suffix 2026-08-28` — override today's UTC date on default dirs
   (`.endorlabs/reports/<slug>-<YYYY-MM-DD>/` or patches-only

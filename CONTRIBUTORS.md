@@ -200,7 +200,7 @@ status = endorlabs.init(include_openapi=True)
 # Product docs: Docs MCP
 ```
 
-Options: `include_openapi=True/False`, `include_agent_knowledge=True/False`, `force=True`, `sync_skills="none|cursor"`. Claude Code uses repo-root `AGENTS.md` (no `CLAUDE.md` generator).
+Options: `include_openapi=True/False`, `include_agent_knowledge=True/False`, `force=True`, `sync_skills="none|agents|claude|both"` (`cursor` is a deprecated alias for `agents`). Copies into `.agents/skills/` and/or `.claude/skills/` — never symlinks.
 
 Consumer projects should add `.endorlabs/` to `.gitignore` (OpenAPI + local run artifacts).
 

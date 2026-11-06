@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from endorlabs.core.exceptions import NetworkError, ServerError
-from endorlabs.tools.list_sharding import ProjectShard
 from endorlabs.workflows.findings.finding_log_trends import (
     query_operation_group_counts_resilient,
 )
@@ -52,90 +50,59 @@ def test_resilient_single_project_does_not_discover_on_timeout() -> None:
     client.Query.Project.discover.assert_not_called()
 
 
-def test_resilient_leaf_scope_escalates_to_shards_on_timeout() -> None:
+def test_resilient_leaf_timeout_propagates() -> None:
     client = MagicMock()
-    calls = {"n": 0}
-    filters: list[str] = []
 
-    def list_groups(**kwargs: object) -> list[object]:
-        calls["n"] += 1
-        filt = ""
-        lp = kwargs.get("list_params")
-        if lp is not None:
-            filt = str(getattr(lp, "filter", "") or "")
-        if not filt:
-            filt = str(kwargs.get("filter") or "")
-        filters.append(filt)
-        if calls["n"] == 1:
-            raise ServerError("timeout", status_code=504)
-        return []
+    def list_groups(**_kwargs: object) -> list[object]:
+        raise ServerError("timeout", status_code=504)
 
     client.FindingLog.list_groups = list_groups
-    client.Query.Project.discover.return_value = SimpleNamespace(
-        project_shards=lambda: [
-            ProjectShard(
-                project_uuid="p-1",
-                namespace="example-tenant.child",
-                label="child",
-            ),
-        ]
-    )
 
-    counts = query_operation_group_counts_resilient(
-        client,
-        namespace="example-tenant.child",
-        base_filter="meta.create_time>=date(2026-01-01T00:00:00Z)",
-        operation="CREATE",
-        level="CRITICAL",
-        interval="week",
-        parent_uuids=None,
-        max_workers=2,
-    )
-    assert counts == {}
-    assert calls["n"] >= 2
-    client.Query.Project.discover.assert_called_once()
-    shard_filters = [f for f in filters[1:] if f]
-    assert shard_filters
-    assert all("meta.parent_uuid" in f for f in shard_filters)
-    assert all("spec.project_uuid" not in f for f in shard_filters)
+    try:
+        query_operation_group_counts_resilient(
+            client,
+            namespace="example-tenant.child",
+            base_filter="meta.create_time>=date(2026-01-01T00:00:00Z)",
+            operation="CREATE",
+            level="CRITICAL",
+            interval="week",
+            parent_uuids=None,
+            max_workers=2,
+        )
+    except ServerError:
+        pass
+    else:
+        raise AssertionError("expected ServerError to propagate for a leaf aggregate")
+    client.Query.Project.discover.assert_not_called()
 
 
 def test_resilient_shard_timeout_returns_empty_counts() -> None:
-    """Per-project shard timeouts should not abort the whole escalate merge."""
+    """A timed-out aggregate is not rewritten as a zero count."""
     client = MagicMock()
-    calls = {"n": 0}
 
     def list_groups(**_kwargs: object) -> list[object]:
-        calls["n"] += 1
-        if calls["n"] == 1:
-            raise ServerError("timeout", status_code=504)
         raise NetworkError(
             "Network error after 2 attempt(s): The read operation timed out"
         )
 
     client.FindingLog.list_groups = list_groups
-    client.Query.Project.discover.return_value = SimpleNamespace(
-        project_shards=lambda: [
-            ProjectShard(
-                project_uuid="p-1",
-                namespace="example-tenant.child",
-                label="child",
-            ),
-        ]
-    )
 
-    counts = query_operation_group_counts_resilient(
-        client,
-        namespace="example-tenant.child",
-        base_filter="meta.create_time>=date(2026-01-01T00:00:00Z)",
-        operation="CREATE",
-        level="CRITICAL",
-        interval="week",
-        parent_uuids=None,
-        max_workers=2,
-    )
-    assert counts == {}
-    assert calls["n"] >= 2
+    try:
+        query_operation_group_counts_resilient(
+            client,
+            namespace="example-tenant.child",
+            base_filter="meta.create_time>=date(2026-01-01T00:00:00Z)",
+            operation="CREATE",
+            level="CRITICAL",
+            interval="week",
+            parent_uuids=None,
+            max_workers=2,
+        )
+    except NetworkError:
+        pass
+    else:
+        raise AssertionError("expected NetworkError to propagate")
+    client.Query.Project.discover.assert_not_called()
 
 
 def test_resilient_multi_is_in_uses_traverse() -> None:
@@ -171,7 +138,7 @@ def test_resilient_multi_is_in_uses_traverse() -> None:
 
 
 def test_resilient_single_parent_uuid_uses_traverse() -> None:
-    """Single parent_uuid at a parent path still traverses children."""
+    """Single parent_uuid is equality at the given namespace, without traverse."""
     client = MagicMock()
     seen: dict[str, object] = {}
 
@@ -191,4 +158,4 @@ def test_resilient_single_parent_uuid_uses_traverse() -> None:
         parent_uuids=["proj-1"],
     )
     assert counts == {}
-    assert seen.get("traverse") is True
+    assert seen.get("traverse") is False

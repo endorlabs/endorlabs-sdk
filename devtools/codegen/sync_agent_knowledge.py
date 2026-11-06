@@ -342,12 +342,55 @@ GENERATED_REFERENCE_SYNC: tuple[str, ...] = (
     "filter-enum-snippets.md",
 )
 
+# Hand-authored Tier-0 extracts under agent-knowledge/reference/ (id → summary).
+AUTHORED_REFERENCE_ENTRIES: tuple[tuple[str, str, str], ...] = (
+    (
+        "critical-validation-traps",
+        "critical-validation-traps.md",
+        "RCA / namespace / malware validation traps beyond Day-0",
+    ),
+    (
+        "product-ontology",
+        "product-ontology.md",
+        "SDK ↔ product UI glossary",
+    ),
+    (
+        "endor-app-url-templates",
+        "endor-app-url-templates.md",
+        "Structured Endor app URL templates for citations",
+    ),
+)
+
+GENERATED_REFERENCE_ENTRIES: tuple[tuple[str, str, str], ...] = (
+    (
+        "filter-enum-snippets",
+        "filter-enum-snippets.md",
+        "Illustrative wire enum strings for filter=",
+    ),
+    (
+        "resource-routes",
+        "resource-routes.md",
+        "Relationship accessor inventory",
+    ),
+)
+
 
 def sync_reference_docs() -> int:
-    """Copy generated reference docs for wheel-only agent discovery."""
+    """Copy authored + generated reference docs for wheel-only agent discovery."""
     copied = 0
     dest_dir = BUNDLE_ROOT / "reference"
     dest_dir.mkdir(parents=True, exist_ok=True)
+
+    authored_dir = AGENT_ROOT / "reference"
+    if authored_dir.is_dir():
+        for src_path in sorted(authored_dir.glob("*.md")):
+            dest_path = dest_dir / src_path.name
+            dest_path.write_text(
+                rewrite_paths(src_path.read_text(encoding="utf-8")),
+                encoding="utf-8",
+            )
+            copied += 1
+
     source_dir = REPO_ROOT / "docs" / "generated-reference"
     for name in GENERATED_REFERENCE_SYNC:
         source = source_dir / name
@@ -356,6 +399,23 @@ def sync_reference_docs() -> int:
         shutil.copy2(source, dest_dir / name)
         copied += 1
     return copied
+
+
+def build_references_manifest_entries() -> list[dict[str, str]]:
+    """Build MANIFEST references[] for authored + generated reference docs."""
+    entries: list[dict[str, str]] = []
+    for ref_id, filename, summary in (
+        *AUTHORED_REFERENCE_ENTRIES,
+        *GENERATED_REFERENCE_ENTRIES,
+    ):
+        entries.append(
+            {
+                "id": ref_id,
+                "path": f"reference/{filename}",
+                "summary": summary,
+            }
+        )
+    return sorted(entries, key=lambda item: item["id"])
 
 
 def _rule_description(parsed: Any) -> str:
@@ -585,6 +645,7 @@ def build_manifest() -> dict[str, Any]:
         "bootstrap": build_bootstrap_manifest_block(rules),
         "rules": rules,
         "contracts": contracts,
+        "references": build_references_manifest_entries(),
         "skills": build_skills_manifest_entries(),
         "workflows": build_workflows_manifest_entries(),
     }

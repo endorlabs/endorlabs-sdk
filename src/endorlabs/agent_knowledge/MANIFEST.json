@@ -71,8 +71,35 @@
       ]
     }
   ],
-  "generated_at": "2026-10-14T13:24:37.993622+00:00",
+  "generated_at": "2026-11-04T22:24:10.534141+00:00",
   "index": "INDEX.md",
+  "references": [
+    {
+      "id": "critical-validation-traps",
+      "path": "reference/critical-validation-traps.md",
+      "summary": "RCA / namespace / malware validation traps beyond Day-0"
+    },
+    {
+      "id": "endor-app-url-templates",
+      "path": "reference/endor-app-url-templates.md",
+      "summary": "Structured Endor app URL templates for citations"
+    },
+    {
+      "id": "filter-enum-snippets",
+      "path": "reference/filter-enum-snippets.md",
+      "summary": "Illustrative wire enum strings for filter="
+    },
+    {
+      "id": "product-ontology",
+      "path": "reference/product-ontology.md",
+      "summary": "SDK \u2194 product UI glossary"
+    },
+    {
+      "id": "resource-routes",
+      "path": "reference/resource-routes.md",
+      "summary": "Relationship accessor inventory"
+    }
+  ],
   "rules": [
     {
       "id": "endor-list-query-performance",
@@ -149,7 +176,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.7.4",
+  "sdk_version": "0.7.5",
   "skills": [
     {
       "description": "Use when mapping AI-SAST function_summary vector seeds (entry points / rest_path metadata) onto customer PackageVersion CallGraphData symbols, with hard prechecks that MAIN RepositoryVersion AI-SAST SUCCESS and a function_summary index exist plus a MAIN-context call-graph PackageVersion is decodable. Optional safe BFS via --path-to and/or Finding-derived package tokens (--vuln / --finding-package). Not for Finding/oss SCA reachability proof (endor-reachability-provenance), offline CG-only search (endor-fetch-and-search-call-graph), or NL-only vector browse (endor-vector-query).\n",

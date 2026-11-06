@@ -499,18 +499,21 @@ def build_report_packet(
         return built
 
     jobs: list[tuple[str, dict[str, Any], Callable[[], dict[str, Any]]]] = []
+    finding_log_jobs: list[
+        tuple[str, dict[str, Any], Callable[[], dict[str, Any]]]
+    ] = []
     if include_version_sprawl and leaves:
         jobs.append(("versionSprawl", _empty_sprawl(), _sprawl))
     else:
         milestone(_WF, "sprawl.skipped")
         reports_meta["versionSprawl"] = {"status": "skipped"}
     if include_sca_burndown and leaves:
-        jobs.append(("scaBurndown", empty_sca, _sca))
+        finding_log_jobs.append(("scaBurndown", empty_sca, _sca))
     else:
         milestone(_WF, "sca_burndown.skipped")
         reports_meta["scaBurndown"] = {"status": "skipped"}
     if run_code and leaves:
-        jobs.append(("codeFindingsBurndown", empty_code, _code))
+        finding_log_jobs.append(("codeFindingsBurndown", empty_code, _code))
     elif "codeFindingsBurndown" not in reports_meta:
         milestone(_WF, "code_burndown.skipped")
         reports_meta["codeFindingsBurndown"] = {"status": "skipped"}
@@ -522,7 +525,13 @@ def build_report_packet(
 
     results: dict[str, Any] = {"cadence": cadence}
     workers = max(1, min(len(jobs), 4)) if jobs else 1
-    milestone(_WF, "slices.parallel.start", jobs=len(jobs), workers=workers)
+    milestone(
+        _WF,
+        "slices.parallel.start",
+        jobs=len(jobs),
+        workers=workers,
+        finding_log_jobs=len(finding_log_jobs),
+    )
     if jobs:
         with ThreadPoolExecutor(max_workers=workers) as pool:
             futs = {
@@ -533,6 +542,11 @@ def build_report_packet(
                 name, value, meta = fut.result()
                 reports_meta[name] = meta
                 results[name] = value
+    # SCA then code, so FindingLog stays at --workers instead of two slices at once.
+    for name, empty, fn in finding_log_jobs:
+        got_name, value, meta = _invoke_slice(name, empty, fn)
+        reports_meta[got_name] = meta
+        results[got_name] = value
 
     onboarding["cadence"] = results.get("cadence") or {}
     if reports_meta.get("cadence", {}).get("status") == "ok":

@@ -184,6 +184,7 @@ class _AsyncJobFacade(ResourceRuntimeFacade[AsyncJob]):
         namespace: str | None = None,
         sbom: Any | None = None,
         vex: Any | None = None,
+        sbom_report: Any | None = None,
         **kwargs: Any,
     ) -> AsyncJob: ...
 
@@ -2410,6 +2411,7 @@ class Client:
         accept_encoding: str | None = ...,
         max_retries: int | None = ...,
         base_url: str | None = ...,
+        op_comment: str | None = ...,
         **client_kwargs: Any,
     ) -> None:
         """Resource-oriented client; holds default namespace and exposes resource

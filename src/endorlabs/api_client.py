@@ -170,6 +170,9 @@ class APIClient:
         auth_tenant: SSO tenant. Required for ``auth_method="sso"``.
         retry_non_idempotent: When True, retry timeout/request errors for POST/PATCH
             too. Default False; override via ``ENDOR_RETRY_NON_IDEMPOTENT=1``.
+        op_comment: Value for the ``x-endor-op-comment`` session header. The
+            gateway copies it onto the Mongo operation comment. Must not
+            contain ``service/endorctl``.
 
     The client can be used as a context manager (with APIClient(...) as client:).
     When not using ``with``, call close() when done to release connections.
@@ -196,6 +199,7 @@ class APIClient:
         auth_tenant: str | None = None,
         allowed_api_hosts: list[str] | None = None,
         retry_non_idempotent: bool | None = None,
+        op_comment: str | None = None,
     ) -> None:
         super().__init__()
         # Set up logging
@@ -338,6 +342,11 @@ class APIClient:
         self._request_headers["Request-timeout"] = str(int(self.timeout))
         if self.accept_encoding:
             self._request_headers["Accept-Encoding"] = self.accept_encoding
+        if op_comment:
+            if "service/endorctl" in op_comment:
+                msg = "op_comment must not contain service/endorctl"
+                raise ValueError(msg)
+            self._request_headers["x-endor-op-comment"] = op_comment
 
         # Initialize httpx client (no built-in retry; we use _request_with_retry)
         self.client = httpx.Client(

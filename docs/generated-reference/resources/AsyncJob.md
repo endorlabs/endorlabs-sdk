@@ -49,6 +49,7 @@ Tenant **admin** (`SYSTEM_ROLE_ADMIN`) is the primary writer unless noted.
 Optional:
 
 - `sbom`
+- `sbom_report`
 - `vex`
 
 Unknown flat kwargs raise `TypeError`. Use `payload=` or nested `spec=` / `meta=` for full control.

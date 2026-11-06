@@ -53,12 +53,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     _ = parser.add_argument(
         "--sync-skills",
-        choices=("none", "cursor"),
+        choices=("none", "agents", "claude", "both", "cursor"),
         default="none",
         help=(
-            "Mirror endor-* skills into .cursor/skills/ "
-            "(default: none; uses materialized sdk/skills/ when present). "
-            "Claude Code uses AGENTS.md."
+            "Mirror endor-* skills into .agents/skills/ and/or .claude/skills/ "
+            "(default: none; use both for max harness coverage; "
+            "cursor is a deprecated alias for agents)."
         ),
     )
 

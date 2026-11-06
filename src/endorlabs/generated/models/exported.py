@@ -190,6 +190,30 @@ class V1ExportedSBOMFormat(StrEnum):
     FORMAT_TAG_VALUE = 'FORMAT_TAG_VALUE'
 
 
+class V1ExportedVEXComponentType(StrEnum):
+    """
+    The kind of component for which we are creating an SBOM.
+    This is a mandatory field.
+    """
+
+    COMPONENT_TYPE_UNSPECIFIED = 'COMPONENT_TYPE_UNSPECIFIED'
+    COMPONENT_TYPE_LIBRARY = 'COMPONENT_TYPE_LIBRARY'
+    COMPONENT_TYPE_APPLICATION = 'COMPONENT_TYPE_APPLICATION'
+
+
+class V1ExportedVEXFormat(StrEnum):
+    """
+    The output of VEX. (For example, JSON and XML).
+
+     - FORMAT_JSON: SBOM of the JSON format output.
+     - FORMAT_XML: SBOM of the XML format output.
+    """
+
+    FORMAT_UNSPECIFIED = 'FORMAT_UNSPECIFIED'
+    FORMAT_JSON = 'FORMAT_JSON'
+    FORMAT_XML = 'FORMAT_XML'
+
+
 class V1IndexData(BaseModel):
     """
     IndexData is used to index the resource for search. It's an internal
@@ -360,33 +384,29 @@ class V1ExportedSBOMSpec(BaseModel):
     """
 
 
-class SBOMExportServiceCreateSBOMExportBody(BaseModel):
+class V1ExportedVEXSpec(BaseModel):
     """
-    This is the request to the SBOM export API.
-    It consists of the request resource kind.
-    The UUID is the UUID of the resource.
-    The output is the format to export the SBOM.
-    The SBOM kind is the kind of the SBOM requested by the user. Currently we support only CycloneDx.
-    The meta parent_kind can take one of two values - PackageVersion or RepositoryVersion.
-    The Meta parent_uuid corresponds to the parent UUID of the parent kind.
+    The internal specification of the object.
     """
 
-    meta: V1Meta
+    component_type: V1ExportedVEXComponentType
+    data: str | None = None
     """
-    Metadata required for all objects.
+    This is the output of the VEX which is a string type only.
     """
-    spec: V1ExportedSBOMSpec | None = None
-    tenant_meta: dict[str, Any] | None = Field(
-        None,
-        title='SBOM are associated with a tenant and tenant information must be provided.',
-    )
+    export_parameters: V1ExportParameters | None = None
     """
-    SBOM are associated with a tenant and tenant information must be provided.
+    parameters to export the VEX.
     """
-    uuid: str | None = None
+    format: V1ExportedVEXFormat | None = 'FORMAT_UNSPECIFIED'
+    include_test_dependencies: bool | None = None
     """
-    The UUID of the SBOM.
+    Whether to include findings against test, dev, build, and optional
+    dependencies in the VEX export. When false (the default), findings whose
+    target dependency is non-production — or only reachable from the root
+    through non-production paths — are excluded.
     """
+    kind: V1SBOMKind | None = 'SBOM_KIND_UNSPECIFIED'
 
 
 class V1ExportedSBOM(BaseModel):
@@ -415,8 +435,30 @@ class V1ExportedSBOM(BaseModel):
     """
 
 
-class SBOMExportService(BaseModel):
-    SBOMExportServiceCreateSBOMExportBody_1: (
-        SBOMExportServiceCreateSBOMExportBody | None
-    ) = Field(None, alias='SBOMExportServiceCreateSBOMExportBody')
+class V1ExportedVEX(BaseModel):
+    """
+    The request to the VEX export API.
+    It consists of the request resource kind.
+    The UUID is the uuid of the resource.
+    The output is the format to export the VEX.
+    The VEX kind is the kind of the VEX requested by the user. Currently, we support only CycloneDx.
+    """
+
+    meta: V1Meta | None = None
+    """
+    Metadata required for the object.
+    """
+    spec: V1ExportedVEXSpec | None = None
+    tenant_meta: V1TenantMeta | None = None
+    """
+    SBOM are associated with a tenant and tenant information must be provided.
+    """
+    uuid: str | None = None
+    """
+    The UUID of the VEX.
+    """
+
+
+class Exported(BaseModel):
     v1ExportedSBOM: V1ExportedSBOM | None = None
+    v1ExportedVEX: V1ExportedVEX | None = None

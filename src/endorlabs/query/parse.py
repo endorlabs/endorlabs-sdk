@@ -73,15 +73,38 @@ def extract_query_objects(result: Any) -> list[dict[str, Any]]:
     return extract_query_response_objects(extract_query_response(result))
 
 
-def next_page_token(result: Any) -> int | None:
-    """Return root ``list.response.next_page_token`` from a Query response."""
+def _root_list_response_meta(result: Any) -> dict[str, Any]:
+    """Return root ``list.response`` from a Query.create result."""
     qr = extract_query_response(result)
     lst = wire_dict(qr.get("list"))
-    resp = wire_dict(lst.get("response"))
-    raw = resp.get("next_page_token")
+    return wire_dict(lst.get("response"))
+
+
+def next_page_token(result: Any) -> int | None:
+    """Return root ``list.response.next_page_token`` from a Query response."""
+    raw = _root_list_response_meta(result).get("next_page_token")
     if raw is None:
         return None
     return int(raw)
+
+
+def next_page_cursor(result: Any) -> PageCursor | None:
+    """Return the next root list cursor for Query.create.
+
+    Query Service pagination advances on ``page_token`` only. Sending
+    ``page_id`` (recommended for ordinary REST list endpoints) is ignored and
+    re-returns the same page. Prefer a non-zero ``next_page_token``; fall back
+    to ``next_page_id`` only when token is absent. ``next_page_token == 0``
+    means no more pages (proto3 zero).
+    """
+    meta = _root_list_response_meta(result)
+    token = meta.get("next_page_token")
+    if token is not None and int(token) != 0:
+        return PageCursor(page_token=int(token))
+    page_id = meta.get("next_page_id")
+    if page_id is not None and str(page_id):
+        return PageCursor(page_id=str(page_id))
+    return None
 
 
 def parse_query_root_count(result: Any) -> int:
@@ -190,19 +213,23 @@ def reference_next_page_token(project_obj: dict[str, Any], ref_key: str) -> int 
 def reference_next_page_cursor(
     project_obj: dict[str, Any], ref_key: str
 ) -> PageCursor | None:
-    """Return the next reference list cursor (``page_token`` over ``page_id``).
+    """Return the next reference list cursor for Query nested lists.
 
-    ``next_page_token`` is a proto3 int field; the server uses its zero value
-    (``0``) to mean "no more pages", not a literal page token. Treating it as
-    a real cursor causes ``iter_paginated_pages`` to re-request the same page
-    before its duplicate-cursor guard stops the loop.
+    Query Service nested refs advance on ``page_token`` only. ``page_id``
+    (recommended for ordinary REST list endpoints) is returned in
+    ``next_page_id`` but does not move the cursor — follow-ups with
+    ``page_id`` re-return the same page. Prefer a non-zero
+    ``next_page_token``; fall back to ``next_page_id`` only when token is
+    absent. ``next_page_token == 0`` means no more pages (proto3 zero);
+    treating ``0`` as a real cursor causes ``iter_paginated_pages`` to
+    re-request the same page before its duplicate-cursor guard stops.
     """
     meta = reference_list_response_meta(project_obj, ref_key)
     token = meta.get("next_page_token")
     if token is not None and int(token) != 0:
         return PageCursor(page_token=int(token))
     page_id = meta.get("next_page_id")
-    if page_id is not None:
+    if page_id is not None and str(page_id):
         return PageCursor(page_id=str(page_id))
     return None
 
@@ -240,10 +267,11 @@ def wire_spec_with_reference_page_cursor(
         lp.pop("page_token", None)
         lp.pop("page_id", None)
         if cursor is not None:
-            if cursor.page_id is not None:
-                lp["page_id"] = cursor.page_id
-            elif cursor.page_token is not None:
+            # Query Service advances on page_token; page_id is ignored.
+            if cursor.page_token is not None:
                 lp["page_token"] = cursor.page_token
+            elif cursor.page_id is not None:
+                lp["page_id"] = cursor.page_id
         child["list_parameters"] = lp
         ref["query_spec"] = child
         break
@@ -320,6 +348,7 @@ __all__ = [
     "extract_query_response",
     "extract_query_response_objects",
     "iter_group_buckets",
+    "next_page_cursor",
     "next_page_token",
     "parse_group_bucket_counts",
     "parse_normalized_query_objects",

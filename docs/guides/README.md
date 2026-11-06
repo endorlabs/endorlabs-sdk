@@ -14,7 +14,7 @@ SDK how-to and workflows for **consumers** of the package.
 - [examples/finding-age-exception/](examples/finding-age-exception/) — Portable Rego exception for vulnerability findings older than N days (discovery age).
 - List performance (scope, traverse, debugging): [contributing/list-query-performance.md](../contributing/list-query-performance.md).
 
-**Scan regression troubleshooting:** Agent skill [endor-troubleshooting-scans](../../agent-knowledge/skills/endor-troubleshooting-scans/SKILL.md) (optional Cursor mirror: `.cursor/skills/endor-troubleshooting-scans/`); workflows in `endorlabs.workflows.troubleshooting_scans`. Related: [list-query-performance.md](../contributing/list-query-performance.md), [troubleshooting.md](../contributing/troubleshooting.md).
+**Scan regression troubleshooting:** Agent skill [endor-troubleshooting-scans](../../agent-knowledge/skills/endor-troubleshooting-scans/SKILL.md) (optional IDE mirror: `.agents/skills/endor-troubleshooting-scans/`); workflows in `endorlabs.workflows.troubleshooting_scans`. Related: [list-query-performance.md](../contributing/list-query-performance.md), [troubleshooting.md](../contributing/troubleshooting.md).
 
 ## Custom SAST rules (SemgrepRule)
 
@@ -22,6 +22,6 @@ Author, validate, and import OpenGrep/Semgrep YAML as platform **`SemgrepRule`**
 resources. Canonical playbook:
 [endor-custom-sast-rules](../../agent-knowledge/skills/endor-custom-sast-rules/SKILL.md)
 (`authoring.md`, `syntax-reference.md`, `semgrep-rule-shape-guardrails.md`,
-`import-export.md`). Optional Cursor mirror: `.cursor/skills/endor-custom-sast-rules/`.
+`import-export.md`). Optional IDE mirror: `.agents/skills/endor-custom-sast-rules/`.
 
 Maintainer topics (release CI, estate migration): [contributing/README.md](../contributing/README.md).

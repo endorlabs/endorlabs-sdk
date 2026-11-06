@@ -12,10 +12,15 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
 class AffectedSource(StrEnum):
+    """
+    - SOURCE_NVD: The National Vulnerability Database provided the affected package data.
+    """
+
     SOURCE_UNSPECIFIED = 'SOURCE_UNSPECIFIED'
     SOURCE_OSV = 'SOURCE_OSV'
     SOURCE_ENDOR = 'SOURCE_ENDOR'
     SOURCE_OVAL = 'SOURCE_OVAL'
+    SOURCE_NVD = 'SOURCE_NVD'
 
 
 class CVSSNodeCpeMatch(BaseModel):
@@ -5247,6 +5252,12 @@ class V1VulnSpec(BaseModel):
     summary: str | None = None
     """
     Long summary of the vulnerability.
+    """
+    upstream: list[str] | None = None
+    """
+    Optional. IDs of the upstream vulnerabilities that this advisory covers,
+    such as the CVEs that a Debian security advisory fixes. An advisory can
+    cover several distinct vulnerabilities, so these IDs are not aliases.
     """
     withdrawn: AwareDatetime | None = None
     """

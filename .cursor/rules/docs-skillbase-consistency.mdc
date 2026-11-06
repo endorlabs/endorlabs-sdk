@@ -9,7 +9,7 @@ alwaysApply: false
 When editing repository docs or rules, keep documentation references aligned with the current repo layout and generated sources of truth.
 
 - Prefer `agent-knowledge/skills/...` links/paths in git-tracked docs.
-- If `.cursor/skills/...` is mentioned, label it as the mirrored runtime path used by Cursor.
+- If `.agents/skills/...` or `.claude/skills/...` is mentioned, label it as an optional IDE mirror after `sync_skills`.
 - Do not maintain hardcoded "complete" resource inventories in hand-edited docs; point to `docs/generated-reference/resources.md` for the canonical current list.
 - Apply the same rule to **tests**: do not assert exact skill/workflow counts in `test_agent_knowledge.py`; use `sync_agent_knowledge.py --verify` (see `test_agent_knowledge_drift.py`) plus structural manifest checks.
 - Keep workflow and CLI inventory statements synchronized with:
@@ -17,7 +17,7 @@ When editing repository docs or rules, keep documentation references aligned wit
   - `[project.scripts]` in `pyproject.toml`
 - For doc corrections, preserve OS-agnostic command examples where possible.
 - When editing skill playbooks, follow [agent-knowledge/schema/README.md — Skill composition and handoffs](../../agent-knowledge/schema/README.md#skill-composition-and-handoffs) for **Scope**, **Related skills**, and reciprocal peer links.
-- When renaming skills, scripts, or path examples, **maintain consistency with tests and docs**: grep `tests/` for the old id/path, update skill command examples and `MANIFEST.json` refs (via sync), and keep the three trees aligned (`agent-knowledge/skills/`, shipped `src/endorlabs/agent_knowledge/skills/`, mirrored `.cursor/skills/`).
+- When renaming skills, scripts, or path examples, **maintain consistency with tests and docs**: grep `tests/` for the old id/path, update skill command examples and `MANIFEST.json` refs (via sync), and keep authoring + shipped trees aligned (`agent-knowledge/skills/`, `src/endorlabs/agent_knowledge/skills/`; optional mirrors `.agents/skills/` / `.claude/skills/`).
 - **Doc placement:** tracked `docs/` is public-safe and durable — `docs/guides/` for SDK consumers, `docs/contributing/` for maintainers/release/CI. Do not commit session reports, readiness assessments, or implemented feature PR playbooks under `docs/`; use `.endorlabs/tasks/scratch/` instead. No `docs/findings/` or tracked `*-draft.md` / `*-assessment.md`.
 - **Changelog:** breaking changes and user-notable **Added** entries go in [`docs/changelog.md`](../../docs/changelog.md) under **Unreleased**; PR intake in [`.github/pull_request_template.md`](../../.github/pull_request_template.md). At release, promote to `## X.Y.Z`. Do not add parallel `*-migration.md` files or duplicate breaking tables elsewhere.
 

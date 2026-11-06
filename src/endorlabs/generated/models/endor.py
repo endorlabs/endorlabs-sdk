@@ -48,6 +48,9 @@ class SpecEndorLicenseBundleType(StrEnum):
      - ENDOR_LICENSE_BUNDLE_TYPE_BYOK: BYOK license bundle. Grants the ability to register
     customer-provided LLM provider credentials and route AI requests
     through them.
+     - ENDOR_LICENSE_BUNDLE_TYPE_OSS_FIX: OSS Fix license bundle. Grants the endorctl fix command, which
+    remediates reachable open source vulnerability findings and opens a
+    pull request with the verified change.
     """
 
     ENDOR_LICENSE_BUNDLE_TYPE_UNSPECIFIED = 'ENDOR_LICENSE_BUNDLE_TYPE_UNSPECIFIED'
@@ -69,6 +72,7 @@ class SpecEndorLicenseBundleType(StrEnum):
     ENDOR_LICENSE_BUNDLE_TYPE_OSS_FIREWALL = 'ENDOR_LICENSE_BUNDLE_TYPE_OSS_FIREWALL'
     ENDOR_LICENSE_BUNDLE_TYPE_AI_GOVERNANCE = 'ENDOR_LICENSE_BUNDLE_TYPE_AI_GOVERNANCE'
     ENDOR_LICENSE_BUNDLE_TYPE_BYOK = 'ENDOR_LICENSE_BUNDLE_TYPE_BYOK'
+    ENDOR_LICENSE_BUNDLE_TYPE_OSS_FIX = 'ENDOR_LICENSE_BUNDLE_TYPE_OSS_FIX'
 
 
 class SpecEndorLicenseFeatureType(StrEnum):
@@ -101,6 +105,10 @@ class SpecEndorLicenseFeatureType(StrEnum):
     events (e.g. Cursor, Claude Code) for governance and audit.
      - ENDOR_LICENSE_FEATURE_TYPE_BYOK: BYOK feature allows routing AI requests through
     customer-provided LLM provider credentials (bring your own key).
+     - ENDOR_LICENSE_FEATURE_TYPE_FIX: Fix feature corresponds to endorctl's fix command, which remediates
+    a reachable vulnerability finding in the customer's own code or
+    configuration, or through a dependency upgrade, and opens a pull
+    request with the verified change.
     """
 
     ENDOR_LICENSE_FEATURE_TYPE_UNSPECIFIED = 'ENDOR_LICENSE_FEATURE_TYPE_UNSPECIFIED'
@@ -150,6 +158,7 @@ class SpecEndorLicenseFeatureType(StrEnum):
         'ENDOR_LICENSE_FEATURE_TYPE_AI_GOVERNANCE'
     )
     ENDOR_LICENSE_FEATURE_TYPE_BYOK = 'ENDOR_LICENSE_FEATURE_TYPE_BYOK'
+    ENDOR_LICENSE_FEATURE_TYPE_FIX = 'ENDOR_LICENSE_FEATURE_TYPE_FIX'
 
 
 class SpecEndorLicenseInfo(BaseModel):
@@ -192,6 +201,18 @@ class SpecEndorLicenseType(StrEnum):
     ENDOR_LICENSE_TYPE_FREE_TIER = 'ENDOR_LICENSE_TYPE_FREE_TIER'
     ENDOR_LICENSE_TYPE_PREMIUM = 'ENDOR_LICENSE_TYPE_PREMIUM'
     ENDOR_LICENSE_TYPE_POV = 'ENDOR_LICENSE_TYPE_POV'
+
+
+class SpecPatchConfiguration(BaseModel):
+    """
+    PatchConfiguration is the configuration for Endor Patches download gating.
+    """
+
+    max_patches: int | None = None
+    """
+    Maximum number of distinct patches this tenant may download through
+    endorfactory. Unset or -1 means unlimited. 0 means no patches. At most 10.
+    """
 
 
 class SpecQuota(BaseModel):
@@ -591,6 +612,10 @@ class SpecLicenseConfiguration(BaseModel):
     LicenseConfiguration is the configuration for the Endor Labs license.
     """
 
+    patch_configuration: SpecPatchConfiguration | None = None
+    """
+    The configuration for Endor Patches download gating.
+    """
     security_review_configuration: SpecSecurityReviewConfiguration | None = None
     """
     The configuration for the security review.

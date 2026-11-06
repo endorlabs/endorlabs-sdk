@@ -67,6 +67,8 @@ Consumer entrypoint: **`AGENTS.md`** (points here). Copy **`templates/consumer-A
 
 Return types (normative): [contracts/resource-discovery.md](contracts/resource-discovery.md).
 
+**Beyond Day-0:** [reference/critical-validation-traps.md](reference/critical-validation-traps.md) (namespace RCA, masks, malware planes). Glossary: [reference/product-ontology.md](reference/product-ontology.md). App URL templates: [reference/endor-app-url-templates.md](reference/endor-app-url-templates.md). Catalog: `MANIFEST.json` → `references[]`.
+
 ## Quick start
 
 **Wheel-only** (no disk materialization):
@@ -120,51 +122,8 @@ projects = client.Project.list(traverse=True, max_pages=2)
 
 - Resource facades use **PascalCase**: `client.Project`, `client.Finding`, …
 - Match `endorctl api … --resource <Kind>` vocabulary.
-- Return types: [contracts/resource-discovery.md](contracts/resource-discovery.md) (trap rows above for quick lookup).
-
-## Critical validation traps
-
-Read **`rules/`** (Tier 1 bootstrap) before project-scoped RCA. When behavior
-looks wrong, **triangulate** SDK vs `endorctl` vs `contracts/` — skill
-**endor-troubleshoot-sdk** ([`validation-reference.md`](skills/endor-troubleshoot-sdk/validation-reference.md)).
-
-1. **Ambiguous project URL:** `Project.search_by_name(..., traverse=True, max_pages=…)` returns bounded candidates — pick the row for the intended namespace, narrow `namespace=`, or use project UUID with `get()`.
-2. **Project-scoped list namespace (MUST):** With `Client(tenant=<estate_root>)` and default
-   `traverse=False`, lists hit only that path segment—not child namespaces where projects live.
-   Resolve `Project` first, then pass **`namespace=project.namespace`** on `Finding`, `ScanResult`,
-   `PackageVersion`, `DependencyMetadata`, … Empty rows often mean wrong namespace, not missing data.
-3. **Finding branch refs:** `spec.source_code_version.ref` may be a short branch label, not
-   `refs/heads/main`. List findings without branch filter first; narrow after inspecting stored refs.
-4. **Tenant-wide scan cost:** `fetch_scan_results --all-projects` is O(projects × scans). Prefer
-   project-scoped RCA.
-5. **List masks:** Non-empty `mask=` on `.list()` / `search_by_*` returns `dict` rows, not Pydantic models.
-6. **DependencyMetadata wire path:** List/group uses the **customer tenant namespace**, not the
-   literal `oss` plane. Field `spec.dependency_data.namespace == "oss"` is data semantics only.
-7. **Workflow composition:** Extend workflow JSON/manifests before re-listing the API; escalate
-   CLI → library → `Client` → session script (see `rules/endor-workflow-composition.md`).
-8. **Portable examples:** Use placeholders in docs, skills, **unit fixtures**, and CLI/docstring
-   examples; never commit customer estate identifiers (`rules/endor-portable-examples.md`).
-9. **QueryMalware / QueryVulnerability:** Create-only catalog facades (`scope=oss`). There is no
-   `.list()` — use `.create(...)`. Do not import `endorlabs.query` for these kinds; that module is
-   the graph-join `client.Query` plane. Hits often appear under `response.list.objects`.
-10. **Tenant malware exposure:** Prefer `MalwareExposure` / `MalwareExposureQuery` (customer
-    namespace) over `Malware.list` on `oss` for blast-radius asks. Use `QueryMalware` only for
-    coordinate identity on the catalog plane.
-
-## SDK ↔ product ontology (glossary)
-
-| Product / UI phrase | SDK / CLI | Notes |
-|---------------------|-----------|-------|
-| Package Firewall logs | `--source package-firewall-logs` → `PackageFirewallLog` | Wire path `package-firewall-logs` |
-| Package Firewall (VS Code extensions) | `PackageFirewallLog` + `spec.ecosystem=="ECOSYSTEM_VSCODE"` | Same facade; filter example: `endor-log-export -n <tenant> --source package-firewall-logs --filter 'spec.ecosystem=="ECOSYSTEM_VSCODE"'` |
-| Policy Violations (Agent Governance) | `--source policy-violations` → `AgentHookEvent` | Wire path stays `agent-hook-events` (x-internal; no facade yet). **Not** Agents Hub Agent Kit call logs. |
-| Agents Hub / Agent Kit API call log | `client.AgentTelemetry.activity` / `.calls` / `.iter_calls` | Backend API usage metering (`agent-telemetry`); tenant-safe projection — no request filters in rows |
-| Threat Center (Discovery) | `MalwareExposure` / `MalwareExposureQuery` | UI synonym for tenant malware blast-radius; catalog identity still OSS `Malware` / `QueryMalware` |
-| Findings | `client.Finding` | Current findings |
-| Findings history / burndown | `FindingLog` | Time-series / create-delete trends — not `Finding` |
-| Login / SSO auth logs | `AuthenticationLog` | Not `AuditLog` (API audit trail) |
-| Malware catalog | `client.Malware` / `QueryMalware` (`scope=oss`) | Coordinate identity |
-| Malware exposure (tenant) | `MalwareExposure` / `MalwareExposureQuery` | Customer blast radius (Threat Center) |
+- Return types: [contracts/resource-discovery.md](contracts/resource-discovery.md) (Day-0 trap rows above).
+- Prefer `print(client.<Kind>.describe())` for identity kwargs, top `spec.*` filter paths, and the filter-enum snippets link.
 
 ## Bootstrap (load for Endor SDK work)
 
@@ -188,57 +147,34 @@ Label conclusions clearly when reporting to users:
 - **Evidence-backed:** API rows (`list`/`get`), workflow artifacts (`context_manifest.json`, troubleshooting JSON), `endorctl` output, or normative text in `contracts/` and skill steps you executed. Quote resource UUIDs, namespaces, and error text from those sources.
 - **Inferred:** Heuristic rankings, partial bundle coverage, model guesses about backend intent, or “likely cause” without a reproducing call. Prefix with **Inferred:** and state what evidence is missing.
 
-### Structured Endor app hyperlinks
-
-When relaying customer-facing or RCA evidence, **cite Endor app URLs first**, then
-local artifact paths only when critical (for example a triage JSON under
-`.endorlabs/tasks/…`). Analytics and full SCA share the same URL shapes — the
-scan UUID distinguishes them. Parsers:
-`endorlabs.workflows.troubleshooting_scans.parse_endor_app_url`.
-
-| Resource | Template |
-|----------|----------|
-| Project | `https://app.endorlabs.com/t/<namespace>/projects/<project-uuid>` |
-| Scan history | `https://app.endorlabs.com/t/<namespace>/scan-history/<scan-result-uuid>` |
-| Finding | `https://app.endorlabs.com/t/<namespace>/projects/<project-uuid>/findings/<finding-uuid>` |
-| Package inventory | `https://app.endorlabs.com/t/<namespace>/projects/<project-uuid>/versions/default/inventory/packages` |
-
-Use placeholders (`<namespace>`, `<project-uuid>`, `<scan-result-uuid>`,
-`<finding-uuid>`) in skills and docs — never commit estate identifiers.
-
-For SDK/API validation playbooks, load **`skills/endor-troubleshoot-sdk/SKILL.md`** and [`validation-reference.md`](skills/endor-troubleshoot-sdk/validation-reference.md). Repo clone only: `docs/contributing/troubleshooting.md` (not shipped in the wheel).
+App URL templates for citations: [reference/endor-app-url-templates.md](reference/endor-app-url-templates.md).
 
 ## Skills vs workflow CLIs
 
 - **Skills** (`skills/<id>/SKILL.md`) are agent **playbooks** — read the file, follow steps.
 - **Workflow CLIs** (`endor-*`, `python -m endorlabs.workflows…`) are what you **run**; discover names via `print(endorlabs.discover())` → `entry_points` or `MANIFEST.json` → `workflows[]`.
-- Materialize playbooks: `endorlabs.init()` → `.endorlabs/_cache/sdk/skills/`; optional `init(sync_skills="cursor")`.
+- Materialize playbooks: `endorlabs.init()` → `.endorlabs/_cache/sdk/skills/`; optional `init(sync_skills="both")` (`.agents/skills/` + `.claude/skills/`).
 
 ## Progressive disclosure
 
 1. **Metadata** — skill `description` in `MANIFEST.json` (WHAT + WHEN).
 2. **Playbook** — `skills/<id>/SKILL.md` when triggered.
-3. **References** — sibling skills, `contracts/`, optional `reference/*.md`.
+3. **References** — `MANIFEST.json` → `references[]`, `contracts/`, sibling skills.
 
 ## Workspace outputs
 
-| Bucket | Use |
-|--------|-----|
-| `tasks/<slug>-<YYYY-MM-DD>/projects/` | Project bundles (`<slug>_<timestamp>/`), per-uuid `reachability_context.json` |
-| `reports/<subcommand>/` or `tasks/<slug>-<YYYY-MM-DD>/<activity>/` | CSV, JSON, RCA, reports — see `rules/endor-workspace-layout.md` |
-| `tasks/inventory/` | Namespace inventories (e.g. SemgrepRule metadata) |
-
-Do not use repo-root `.tmp/`. Gitignore `.endorlabs/` in consumer projects.
+See `rules/endor-workspace-layout.md`. Prefer `tasks/<slug>-<YYYY-MM-DD>/…` and `reports/`; gitignore `.endorlabs/` in consumer projects.
 
 ## Read order
 
 1. This file (Tier 0)
-2. `MANIFEST.json` — rules, contracts, skills, workflow CLI index, `bootstrap` block
+2. `MANIFEST.json` — rules, contracts, skills, workflows, `references[]`, `bootstrap`
 3. **`rules/*.md`** — harness bootstrap (always load)
-4. **`contracts/*.md`** — normative SDK semantics on demand
-5. **`skills/*/SKILL.md`** — task playbooks
-6. `.endorlabs/_cache/openapi.json` — OpenAPI after `init(include_openapi=True)`; product docs via Docs MCP (`https://docs.endorlabs.com/mcp`)
-7. `.endorlabs/reports/` and `.endorlabs/tasks/` — your run outputs
+4. **`reference/*.md`** — critical traps, ontology, URL templates, filter enums (on demand)
+5. **`contracts/*.md`** — normative SDK semantics on demand
+6. **`skills/*/SKILL.md`** — task playbooks
+7. `.endorlabs/_cache/openapi.json` — OpenAPI after `init(include_openapi=True)`; product docs via Docs MCP (`https://docs.endorlabs.com/mcp`)
+8. `.endorlabs/reports/` and `.endorlabs/tasks/` — your run outputs
 
 ## Task routing (common intents)
 

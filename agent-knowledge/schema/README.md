@@ -35,7 +35,8 @@ Skill directory names (`endor-*`), script paths, and runtime examples in `SKILL.
 |------|------|
 | `agent-knowledge/skills/<id>/` | Authoring source |
 | `src/endorlabs/agent_knowledge/skills/<id>/` | Shipped wheel (sync output) |
-| `.cursor/skills/<id>/` | Cursor mirror (optional; `init(sync_skills=…)`) |
+| `.agents/skills/<id>/` | Cross-harness mirror (optional; `init(sync_skills="agents"|"both")`) |
+| `.claude/skills/<id>/` | Claude Code mirror (optional; `init(sync_skills="claude"|"both")`) |
 
 When you rename a skill or move a script:
 
