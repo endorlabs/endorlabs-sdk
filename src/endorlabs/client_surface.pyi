@@ -1545,6 +1545,7 @@ class _ProjectFacade(ProjectFacade):
         toolchain_profile_uuid: Any | None = None,
         scan_profile_uuid: Any | None = None,
         is_archived: Any | None = None,
+        scm_tags: Any | None = None,
         **kwargs: Any,
     ) -> Project: ...
 

@@ -649,6 +649,10 @@ class V1ProjectSpec(BaseModel):
     """
     sbom: V1SBOMSpec | None = None
     scan_profile_uuid: str | None = None
+    scm_tags: list[str] | None = Field(
+        None,
+        title='Project tags ingested from the SCM. For example: Github custom properties',
+    )
     toolchain_profile_uuid: str | None = None
     """
     The toolchain required to build and scan the project.
