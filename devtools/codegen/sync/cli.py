@@ -32,6 +32,7 @@ from .planner import build_plan
 from .policy import load_openapi_spec
 from .provenance import build_provenance
 from .upstream_verify import meta_version_url_from_openapi_url
+from .wire_tolerance import apply_wire_tolerances
 
 DEFAULT_SPEC_URL = "https://api.endorlabs.com/download/openapiv2.swagger.json"
 LEGACY_OUTPUT_ROOT_REL = Path("workspace") / "model-bakeoff"
@@ -293,7 +294,9 @@ def run_sync(
         return 1
 
     try:
-        generated_modules = generate_modules_in_memory(plan.schema_shards)
+        generated_modules = apply_wire_tolerances(
+            generate_modules_in_memory(plan.schema_shards)
+        )
     except Exception as exc:
         logger.error("model-sync codegen failed: %s", exc)
         return 1

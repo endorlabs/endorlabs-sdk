@@ -189,6 +189,24 @@ class NetworkError(EndorAPIError):
         super().__init__(message, status_code=status_code, **kwargs)
 
 
+class DeadlineExceededError(EndorAPIError):
+    """Host-supplied total deadline elapsed spanning auth, retries, or pages."""
+
+    def __init__(
+        self, message: str = "Request deadline exceeded", **kwargs: Any
+    ) -> None:
+        status_code = kwargs.pop("status_code", None)
+        super().__init__(message, status_code=status_code, **kwargs)
+
+
+class RequestCancelledError(EndorAPIError):
+    """Host cancelled further work (cancel event set)."""
+
+    def __init__(self, message: str = "Request cancelled", **kwargs: Any) -> None:
+        status_code = kwargs.pop("status_code", None)
+        super().__init__(message, status_code=status_code, **kwargs)
+
+
 class MethodNotSupportedError(EndorAPIError):
     """Method not implemented (501).
 

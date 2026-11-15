@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from endorlabs.workflows.reachability import cli
+from endorlabs.workflows.reachability.context import ReachabilityContextResult
 
 
 def test_parse_args_defaults_and_flags() -> None:
@@ -34,10 +35,29 @@ def test_parse_args_defaults_and_flags() -> None:
 def test_main_defaults_namespace_to_tenant(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    with patch(
-        "endorlabs.workflows.reachability.cli.build_reachability_context",
-        return_value=Path("out/context.json"),
-    ) as mock_build:
+    acquired = ReachabilityContextResult(
+        status="success",
+        message="ok",
+        payload={"warnings": []},
+    )
+    mock_client = MagicMock()
+    mock_client.__enter__ = MagicMock(return_value=mock_client)
+    mock_client.__exit__ = MagicMock(return_value=False)
+
+    with (
+        patch(
+            "endorlabs.workflows.reachability.cli.endorlabs.Client",
+            return_value=mock_client,
+        ),
+        patch(
+            "endorlabs.workflows.reachability.cli.acquire_reachability_context",
+            return_value=acquired,
+        ) as mock_acquire,
+        patch(
+            "endorlabs.workflows.reachability.cli.write_reachability_context",
+            return_value=Path("out/context.json"),
+        ),
+    ):
         code = cli.main(
             [
                 "-n",
@@ -50,7 +70,7 @@ def test_main_defaults_namespace_to_tenant(
         )
 
     assert code == 0
-    req = mock_build.call_args.args[0]
+    req = mock_acquire.call_args.args[1]
     assert req.tenant == "tenant.ns"
     assert req.namespace == "tenant.ns"
 
@@ -81,10 +101,29 @@ def test_main_requires_exactly_one_identifier(argv: list[str]) -> None:
 def test_main_builds_request_and_prints_output(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    with patch(
-        "endorlabs.workflows.reachability.cli.build_reachability_context",
-        return_value=Path("out/context.json"),
-    ) as mock_build:
+    acquired = ReachabilityContextResult(
+        status="success",
+        message="ok",
+        payload={"warnings": []},
+    )
+    mock_client = MagicMock()
+    mock_client.__enter__ = MagicMock(return_value=mock_client)
+    mock_client.__exit__ = MagicMock(return_value=False)
+
+    with (
+        patch(
+            "endorlabs.workflows.reachability.cli.endorlabs.Client",
+            return_value=mock_client,
+        ),
+        patch(
+            "endorlabs.workflows.reachability.cli.acquire_reachability_context",
+            return_value=acquired,
+        ) as mock_acquire,
+        patch(
+            "endorlabs.workflows.reachability.cli.write_reachability_context",
+            return_value=Path("out/context.json"),
+        ),
+    ):
         code = cli.main(
             [
                 "--tenant",
@@ -99,7 +138,7 @@ def test_main_builds_request_and_prints_output(
         )
 
     assert code == 0
-    req = mock_build.call_args.args[0]
+    req = mock_acquire.call_args.args[1]
     assert req.finding_uuid == "finding-123"
     assert req.pv_uuid is None
     assert capsys.readouterr().out.strip().endswith("context.json")

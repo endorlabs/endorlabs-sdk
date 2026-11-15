@@ -34,10 +34,15 @@ from typing import TYPE_CHECKING, Any, Literal
 from .api_client import APIClient
 from .client_surface import Client
 from .context.paths import DEFAULT_CONTEXT_DIR
+from .core.credentials import (
+    ApiKeyCredentials,
+    BearerCredentials,
+)
 from .core.exceptions import (
     AGENT_RULE_EXCEPTION_TYPES,
     AmbiguousError,
     ConflictError,
+    DeadlineExceededError,
     EndorAPIError,
     EndorRuleError,
     ListQueryPerformanceError,
@@ -50,6 +55,7 @@ from .core.exceptions import (
     PermissionDeniedError,
     PortableExamplesError,
     RateLimitError,
+    RequestCancelledError,
     ServerError,
     UnauthorizedError,
     ValidationError,
@@ -60,6 +66,10 @@ from .core.exceptions import (
 from .core.filter import F, FilterExpression
 from .core.types import ListParameters
 from .core.whoami import WhoamiResult
+from .operations.pagination import (
+    PageCursor,
+    ResourcePage,
+)
 from .resources import (
     dependency_metadata,
     finding,
@@ -74,6 +84,10 @@ from .resources import (
     repository,
     repository_version,
     vulnerability,
+)
+from .resources.scan_dependency_receipt import (
+    ScanDependencyReceipt,
+    read_scan_dependency_receipt,
 )
 
 if TYPE_CHECKING:
@@ -138,7 +152,7 @@ def discover() -> SdkDiscovery:
 
 # Re-export for type checkers and ``from endorlabs import SdkDiscovery``.
 from .discovery import SdkDiscovery  # noqa: E402
-from .facade.description import FacadeDescription  # noqa: E402
+from .facade.description import FacadeDescription, describe_resource  # noqa: E402
 
 
 def init(
@@ -210,8 +224,11 @@ __all__ = [
     "AGENT_RULE_EXCEPTION_TYPES",
     "APIClient",
     "AmbiguousError",
+    "ApiKeyCredentials",
+    "BearerCredentials",
     "Client",
     "ConflictError",
+    "DeadlineExceededError",
     "EndorAPIError",
     "EndorRuleError",
     "F",
@@ -225,9 +242,13 @@ __all__ = [
     "NetworkError",
     "NotFoundError",
     "OutputShapeRoutingError",
+    "PageCursor",
     "PermissionDeniedError",
     "PortableExamplesError",
     "RateLimitError",
+    "RequestCancelledError",
+    "ResourcePage",
+    "ScanDependencyReceipt",
     "SdkDiscovery",
     "ServerError",
     "UnauthorizedError",
@@ -241,6 +262,7 @@ __all__ = [
     "agent_knowledge_manifest",
     "agent_knowledge_rule_ids",
     "dependency_metadata",
+    "describe_resource",
     "discover",
     "finding",
     "init",
@@ -253,6 +275,7 @@ __all__ = [
     "package_version",
     "policy",
     "project",
+    "read_scan_dependency_receipt",
     "repository",
     "repository_version",
     "sync_agent_skills",

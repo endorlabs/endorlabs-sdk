@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import endorlabs
 from endorlabs.core.exceptions import NotFoundError
+
+if TYPE_CHECKING:
+    from endorlabs.client_surface import Client
 from endorlabs.utils.path_safety import safe_write_text
+from endorlabs.workflows.common import WorkflowResult
 from endorlabs.workflows.reachability.resolve import (
     ReachabilitySubject,
     resolve_from_finding,
@@ -24,6 +28,14 @@ from endorlabs.workflows.reachability.stitch import (
     reconstruct_path,
 )
 from endorlabs.workflows.wire_access import as_dict, dict_str, nested_dict, nested_str
+
+
+def _empty_dict() -> dict[str, Any]:
+    return {}
+
+
+def _empty_str_list() -> list[str]:
+    return []
 
 
 @dataclass
@@ -42,6 +54,14 @@ class ReachabilityContextRequest:
     page_size: int = 200
 
 
+@dataclass
+class ReachabilityContextResult(WorkflowResult):
+    """In-memory reachability evidence (no filesystem writes)."""
+
+    payload: dict[str, Any] = field(default_factory=_empty_dict)
+    warnings: list[str] = field(default_factory=_empty_str_list)
+
+
 def _write_json(base: Path, path: Path, payload: Any) -> None:
     safe_write_text(
         base, path, json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True)
@@ -49,7 +69,7 @@ def _write_json(base: Path, path: Path, payload: Any) -> None:
 
 
 def _fetch_decoded_callgraph(
-    client: endorlabs.Client,
+    client: Client,
     *,
     package_version_uuid: str,
     namespace: str,
@@ -184,196 +204,238 @@ def _build_stitching(
     }
 
 
-def build_reachability_context(request: ReachabilityContextRequest) -> Path:
-    """Build and persist normalized reachability context artifact."""
+def acquire_reachability_context(
+    client: Client,
+    request: ReachabilityContextRequest,
+) -> ReachabilityContextResult:
+    """Acquire normalized reachability evidence without writing files.
+
+    Hosts inject ``client``. Missing call graphs become ``partial`` with
+    explicit ``warnings`` — never invented completeness.
+    """
     if not request.finding_uuid and not request.pv_uuid:
         raise ValueError("Provide either finding_uuid or pv_uuid.")
-    out_dir = Path(request.output_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    client = endorlabs.Client(tenant=request.tenant)
+
     warnings: list[str] = []
-    try:
-        subject: ReachabilitySubject
-        finding_obj: dict[str, Any] | None = None
-        dep_meta: dict[str, Any] | None = None
-        if request.finding_uuid:
-            subject, finding_obj, dep_meta = resolve_from_finding(
-                client,
-                namespace=request.namespace,
-                finding_uuid=request.finding_uuid,
+    subject: ReachabilitySubject
+    finding_obj: dict[str, Any] | None = None
+    dep_meta: dict[str, Any] | None = None
+    if request.finding_uuid:
+        subject, finding_obj, dep_meta = resolve_from_finding(
+            client,
+            namespace=request.namespace,
+            finding_uuid=request.finding_uuid,
+        )
+    else:
+        subject, _pv = resolve_from_package_version(
+            client,
+            namespace=request.namespace,
+            package_version_uuid=request.pv_uuid or "",
+        )
+
+    customer_cg_payload: dict[str, Any] | None = None
+    customer_callables: list[dict[str, Any]] = []
+    customer_edges: list[dict[str, Any]] = []
+    customer_exports: list[dict[str, Any]] = []
+    customer_cg_truncated = False
+    oss_cg_truncated = False
+    if request.include_customer_callgraph and subject.importer_pv_uuid:
+        decoded = _fetch_decoded_callgraph(
+            client,
+            package_version_uuid=subject.importer_pv_uuid,
+            namespace=request.namespace,
+        )
+        if decoded is None:
+            warnings.append(
+                "No customer call-graph-data objects found for importer PV."
             )
         else:
-            subject, _pv = resolve_from_package_version(
-                client,
-                namespace=request.namespace,
-                package_version_uuid=request.pv_uuid or "",
+            customer_callables = list(decoded.callables)
+            customer_edges = list(decoded.edges)
+            customer_exports.append(
+                {
+                    "call_graph_uuid": decoded.summary.get("uuid"),
+                    "summary": decoded.summary,
+                }
             )
+            customer_cg_payload = {
+                "exports": customer_exports,
+                "callables_total": len({r["method_id"] for r in customer_callables}),
+                "edges_total": len(customer_edges),
+            }
 
-        customer_cg_payload: dict[str, Any] | None = None
-        customer_callables: list[dict[str, Any]] = []
-        customer_edges: list[dict[str, Any]] = []
-        customer_exports: list[dict[str, Any]] = []
-        customer_cg_truncated = False
-        oss_cg_truncated = False
-        if request.include_customer_callgraph and subject.importer_pv_uuid:
-            decoded = _fetch_decoded_callgraph(
-                client,
-                package_version_uuid=subject.importer_pv_uuid,
-                namespace=request.namespace,
-            )
-            if decoded is None:
-                warnings.append(
-                    "No customer call-graph-data objects found for importer PV."
-                )
-            else:
-                customer_callables = list(decoded.callables)
-                customer_edges = list(decoded.edges)
-                customer_exports.append(
+    oss_vuln_payload: dict[str, Any] | None = None
+    if request.finding_uuid and finding_obj:
+        oss_vuln_payload = {
+            "extra_key": subject.extra_key,
+            "finding_metadata_vulnerability": nested_dict(
+                nested_dict(as_dict(finding_obj), "spec"), "finding_metadata"
+            ).get("vulnerability"),
+        }
+
+    oss_cg_payload: dict[str, Any] | None = None
+    oss_callables: list[dict[str, Any]] = []
+    oss_edges: list[dict[str, Any]] = []
+    if (
+        request.include_oss_callgraph
+        and subject.oss_namespace
+        and subject.oss_package_version_uuid
+    ):
+        decoded = _fetch_decoded_callgraph(
+            client,
+            package_version_uuid=subject.oss_package_version_uuid,
+            namespace=subject.oss_namespace,
+        )
+        if decoded is None:
+            warnings.append("No oss call-graph-data objects found for dependency PV.")
+        else:
+            oss_callables = list(decoded.callables)
+            oss_edges = list(decoded.edges)
+            oss_cg_payload = {
+                "exports": [
                     {
                         "call_graph_uuid": decoded.summary.get("uuid"),
                         "summary": decoded.summary,
                     }
-                )
-                customer_cg_payload = {
-                    "exports": customer_exports,
-                    "callables_total": len(
-                        {r["method_id"] for r in customer_callables}
-                    ),
-                    "edges_total": len(customer_edges),
-                }
-
-        oss_vuln_payload: dict[str, Any] | None = None
-        if request.finding_uuid and finding_obj:
-            oss_vuln_payload = {
-                "extra_key": subject.extra_key,
-                "finding_metadata_vulnerability": nested_dict(
-                    nested_dict(as_dict(finding_obj), "spec"), "finding_metadata"
-                ).get("vulnerability"),
+                ],
+                "callables_total": len({r["method_id"] for r in oss_callables}),
+                "edges_total": len(oss_edges),
             }
 
-        oss_cg_payload: dict[str, Any] | None = None
-        oss_callables: list[dict[str, Any]] = []
-        oss_edges: list[dict[str, Any]] = []
-        if (
-            request.include_oss_callgraph
-            and subject.oss_namespace
-            and subject.oss_package_version_uuid
-        ):
-            decoded = _fetch_decoded_callgraph(
-                client,
-                package_version_uuid=subject.oss_package_version_uuid,
-                namespace=subject.oss_namespace,
-            )
-            if decoded is None:
-                warnings.append(
-                    "No oss call-graph-data objects found for dependency PV."
-                )
-            else:
-                oss_callables = list(decoded.callables)
-                oss_edges = list(decoded.edges)
-                oss_cg_payload = {
-                    "exports": [
-                        {
-                            "call_graph_uuid": decoded.summary.get("uuid"),
-                            "summary": decoded.summary,
-                        }
-                    ],
-                    "callables_total": len({r["method_id"] for r in oss_callables}),
-                    "edges_total": len(oss_edges),
-                }
+    stitching_payload: dict[str, Any] | None = None
+    vulnerable_uris: list[str] = []
+    if finding_obj:
+        vulnerable_uris = _extract_vulnerable_uris(finding_obj)
+    if customer_callables and oss_callables:
+        stitching_payload = _build_stitching(
+            customer_callables,
+            customer_edges,
+            oss_callables,
+            oss_edges,
+            vulnerable_uris,
+        )
 
-        stitching_payload: dict[str, Any] | None = None
-        vulnerable_uris: list[str] = []
-        if finding_obj:
-            vulnerable_uris = _extract_vulnerable_uris(finding_obj)
-        if customer_callables and oss_callables:
-            stitching_payload = _build_stitching(
-                customer_callables,
-                customer_edges,
-                oss_callables,
-                oss_edges,
-                vulnerable_uris,
-            )
-
-        payload: dict[str, Any] = {
-            "generated_at": datetime.now(UTC).isoformat() + "Z",
-            "subject": {
-                "tenant": request.tenant,
-                "namespace": request.namespace,
-                "finding_uuid": subject.finding_uuid,
-                "project_uuid": subject.project_uuid,
-                "importer_pv_uuid": subject.importer_pv_uuid,
-                "importer_pv_name": subject.importer_pv_name,
-                "target_dependency_uuid": subject.target_dependency_uuid,
-                "target_dependency_package_name": (
-                    subject.target_dependency_package_name
+    payload: dict[str, Any] = {
+        "generated_at": datetime.now(UTC).isoformat() + "Z",
+        "subject": {
+            "tenant": request.tenant,
+            "namespace": request.namespace,
+            "finding_uuid": subject.finding_uuid,
+            "project_uuid": subject.project_uuid,
+            "importer_pv_uuid": subject.importer_pv_uuid,
+            "importer_pv_name": subject.importer_pv_name,
+            "target_dependency_uuid": subject.target_dependency_uuid,
+            "target_dependency_package_name": (subject.target_dependency_package_name),
+            "oss_namespace": subject.oss_namespace,
+            "oss_package_version_uuid": subject.oss_package_version_uuid,
+            "oss_package_name": subject.oss_package_name,
+        },
+        "sources": {
+            "finding": dict_str(as_dict(finding_obj), "uuid") or None,
+            "dependency_metadata": dict_str(as_dict(dep_meta), "uuid") or None,
+            "vulnerable_uri_count": len(vulnerable_uris),
+        },
+        "finding": (
+            {
+                "extra_key": nested_str(as_dict(finding_obj), "spec", "extra_key")
+                or None,
+                "call_graph_analysis_type": nested_dict(
+                    as_dict(finding_obj), "spec"
+                ).get("call_graph_analysis_type"),
+                "reachable_paths_count": len(
+                    _wire_list(
+                        nested_dict(as_dict(finding_obj), "spec"),
+                        "reachable_paths",
+                    )
                 ),
-                "oss_namespace": subject.oss_namespace,
-                "oss_package_version_uuid": subject.oss_package_version_uuid,
-                "oss_package_name": subject.oss_package_name,
-            },
-            "sources": {
-                "finding": dict_str(as_dict(finding_obj), "uuid") or None,
-                "dependency_metadata": dict_str(as_dict(dep_meta), "uuid") or None,
-                "vulnerable_uri_count": len(vulnerable_uris),
-            },
-            "finding": (
-                {
-                    "extra_key": nested_str(as_dict(finding_obj), "spec", "extra_key")
-                    or None,
-                    "call_graph_analysis_type": nested_dict(
-                        as_dict(finding_obj), "spec"
-                    ).get("call_graph_analysis_type"),
-                    "reachable_paths_count": len(
-                        _wire_list(
-                            nested_dict(as_dict(finding_obj), "spec"),
-                            "reachable_paths",
-                        )
+                "finding_tags": nested_dict(as_dict(finding_obj), "spec").get(
+                    "finding_tags"
+                ),
+            }
+            if finding_obj
+            else None
+        ),
+        "customer_callgraph": customer_cg_payload,
+        "oss_vulnerability": oss_vuln_payload,
+        "oss_callgraph": oss_cg_payload,
+        "stitching": stitching_payload,
+        "verdict_hints": {
+            "dependency_reachable_hint": (
+                "REACHABLE"
+                in nested_str(
+                    nested_dict(
+                        nested_dict(as_dict(dep_meta), "spec"),
+                        "dependency_data",
                     ),
-                    "finding_tags": nested_dict(as_dict(finding_obj), "spec").get(
-                        "finding_tags"
-                    ),
-                }
-                if finding_obj
+                    "reachable",
+                )
+                if dep_meta
                 else None
             ),
-            "customer_callgraph": customer_cg_payload,
-            "oss_vulnerability": oss_vuln_payload,
-            "oss_callgraph": oss_cg_payload,
-            "stitching": stitching_payload,
-            "verdict_hints": {
-                "dependency_reachable_hint": (
-                    "REACHABLE"
-                    in nested_str(
-                        nested_dict(
-                            nested_dict(as_dict(dep_meta), "spec"),
-                            "dependency_data",
-                        ),
-                        "reachable",
+            "strict_vulnerable_path_found": (
+                bool(
+                    stitching_payload
+                    and stitching_payload.get(
+                        "reachable_vulnerable_targets_from_bridges", 0
                     )
-                    if dep_meta
-                    else None
-                ),
-                "strict_vulnerable_path_found": (
-                    bool(
-                        stitching_payload
-                        and stitching_payload.get(
-                            "reachable_vulnerable_targets_from_bridges", 0
-                        )
-                        > 0
-                    )
-                ),
-            },
-            "list_bounds": {
-                "max_pages": request.max_pages,
-                "page_size": request.page_size,
-                "customer_callgraph_truncated": customer_cg_truncated,
-                "oss_callgraph_truncated": oss_cg_truncated,
-            },
-            "warnings": warnings,
-        }
-        out_path = out_dir / "reachability_context.json"
-        _write_json(out_dir, out_path, payload)
-        return out_path
+                    > 0
+                )
+            ),
+        },
+        "list_bounds": {
+            "max_pages": request.max_pages,
+            "page_size": request.page_size,
+            "customer_callgraph_truncated": customer_cg_truncated,
+            "oss_callgraph_truncated": oss_cg_truncated,
+        },
+        "warnings": warnings,
+    }
+    status = "partial" if warnings else "success"
+    message = (
+        "Reachability context incomplete; see warnings."
+        if warnings
+        else "Reachability context acquired."
+    )
+    return ReachabilityContextResult(
+        status=status,
+        message=message,
+        errors=[],
+        payload=payload,
+        warnings=list(warnings),
+    )
+
+
+def write_reachability_context(
+    result: ReachabilityContextResult,
+    output_dir: str | Path,
+) -> Path:
+    """Persist an acquired payload as ``reachability_context.json``."""
+    out_dir = Path(output_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "reachability_context.json"
+    _write_json(out_dir, out_path, result.payload)
+    return out_path
+
+
+def build_reachability_context(
+    request: ReachabilityContextRequest,
+    *,
+    client: Client | None = None,
+) -> Path:
+    """Acquire reachability context and write ``reachability_context.json``.
+
+    When ``client`` is omitted, constructs and closes a tenant Client. Prefer
+    :func:`acquire_reachability_context` for host injection without file I/O.
+    """
+    owns_client = client is None
+    active = client if client is not None else endorlabs.Client(tenant=request.tenant)
+    try:
+        result = acquire_reachability_context(active, request)
+        if not request.output_dir:
+            raise ValueError(
+                "output_dir is required when writing reachability context."
+            )
+        return write_reachability_context(result, request.output_dir)
     finally:
-        client.close()
+        if owns_client:
+            active.close()

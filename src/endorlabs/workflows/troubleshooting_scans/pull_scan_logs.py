@@ -28,6 +28,11 @@ from .common import (
     write_json,
 )
 from .log_payload_extract import enrich_log_artifact
+from .scan_logs_evidence import (
+    acquire_scan_logs,
+    dt_to_iso,
+    iso_to_dt,
+)
 
 
 def _parse_args() -> argparse.Namespace:
@@ -88,15 +93,6 @@ def _parse_args() -> argparse.Namespace:
         help="Append timestamp to artifact filename when using --output-dir",
     )
     return parser.parse_args()
-
-
-def _iso_to_dt(value: str) -> datetime:
-    normalized = value.replace("Z", "+00:00")
-    return datetime.fromisoformat(normalized).astimezone(UTC)
-
-
-def _dt_to_iso(value: datetime) -> str:
-    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _project_name(project: Any) -> str:
@@ -170,76 +166,7 @@ def _resolve_latest_scan_for_project(client: endorlabs.Client, project: Any) -> 
     return scans[0]
 
 
-def _dedupe_key(message: Any) -> tuple[str | None, str]:
-    payload = getattr(message, "json_payload", None)
-    payload_s = (
-        json.dumps(payload, sort_keys=True, ensure_ascii=True) if payload else ""
-    )
-    return getattr(message, "timestamp", None), payload_s
-
-
-def _iter_logs(
-    client: endorlabs.Client,
-    *,
-    namespace: str,
-    scan_result_uuid: str,
-    batch_size: int,
-    max_rounds: int,
-    start_time: str | None,
-    end_time: str | None,
-) -> tuple[list[Any], int]:
-    cursor = start_time
-    seen: set[tuple[str | None, str]] = set()
-    all_messages: list[Any] = []
-    rounds = 0
-
-    while rounds < max_rounds:
-        rounds += 1
-        batch = client.ScanResult.get_logs(
-            scan_result_uuid,
-            namespace=namespace,
-            max_entries=batch_size,
-            start_time=cursor,
-            end_time=end_time,
-            newest_first=False,
-        )
-        if not batch:
-            break
-
-        new_count = 0
-        last_ts: str | None = None
-        for message in batch:
-            last_ts = getattr(message, "timestamp", last_ts)
-            key = _dedupe_key(message)
-            if key in seen:
-                continue
-            seen.add(key)
-            all_messages.append(message)
-            new_count += 1
-
-        if new_count == 0:
-            break
-        if len(batch) < batch_size or not last_ts:
-            break
-
-        cursor = _dt_to_iso(_iso_to_dt(last_ts) + timedelta(milliseconds=1))
-
-    return all_messages, rounds
-
-
-def _message_to_dict(message: Any) -> dict[str, Any]:
-    return {
-        "timestamp": getattr(message, "timestamp", None),
-        "level": (
-            getattr(getattr(message, "level", None), "value", None)
-            or str(getattr(message, "level", "") or "")
-        ),
-        "json_payload": getattr(message, "json_payload", None),
-        "tags": getattr(message, "tags", None),
-    }
-
-
-def main() -> int:
+def main() -> int:  # noqa: C901
     """Run the module CLI and return exit code."""
     args = _parse_args()
     client = endorlabs.Client(tenant=args.tenant)
@@ -287,18 +214,20 @@ def main() -> int:
         if not start_time and scan and getattr(scan, "spec", None):
             scan_start = getattr(scan.spec, "start_time", None)
             if isinstance(scan_start, str) and scan_start:
-                start_time = _dt_to_iso(_iso_to_dt(scan_start) - timedelta(hours=1))
-        end_time = args.end_time or _dt_to_iso(datetime.now(UTC))
+                start_time = dt_to_iso(iso_to_dt(scan_start) - timedelta(hours=1))
+        end_time = args.end_time or dt_to_iso(datetime.now(UTC))
 
-        messages, rounds = _iter_logs(
+        evidence = acquire_scan_logs(
             client,
-            namespace=resolved_namespace,
             scan_result_uuid=scan_uuid,
+            namespace=resolved_namespace,
             batch_size=args.batch_size,
             max_rounds=args.max_rounds,
             start_time=start_time,
             end_time=end_time,
         )
+        if evidence.log_outcome == "error":
+            raise RuntimeError(evidence.detail or evidence.message)
 
         parent_uuid = None
         if scan and getattr(scan, "meta", None):
@@ -310,13 +239,14 @@ def main() -> int:
             "project_uuid": getattr(project, "uuid", None) if project else parent_uuid,
             "project_name": _project_name(project) if project else None,
             "scan_result_uuid": scan_uuid,
-            "start_time": start_time,
-            "end_time": end_time,
+            "start_time": evidence.start_time,
+            "end_time": evidence.end_time,
             "batch_size": args.batch_size,
-            "rounds": rounds,
-            "count": len(messages),
+            "rounds": evidence.rounds,
+            "count": evidence.count,
+            "log_outcome": evidence.log_outcome,
             "project_list_truncated": project_list_truncated,
-            "messages": [_message_to_dict(m) for m in messages],
+            "messages": evidence.messages,
         }
         enrich_log_artifact(payload)
 

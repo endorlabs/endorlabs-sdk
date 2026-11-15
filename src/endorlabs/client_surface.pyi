@@ -3,7 +3,7 @@
 # ruff: noqa: D205
 # Source of truth: endorlabs.registry.RESOURCE_REGISTRY and CUSTOM_FACADE_REGISTRY.
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from typing import Any
 
 from .api_client import APIClient
@@ -16,6 +16,7 @@ from .facade import (
     ListableFacade,
     QueryFacade,
     ResourceRuntimeFacade,
+    SupportedToolChainVersionFacade,
 )
 from .facade.specialized import (
     AuthorizationPolicyFacade,
@@ -509,6 +510,16 @@ class _FindingFacade(FindingFacade):
         **kwargs: Any,
     ) -> list[Any]:
         """List findings in the same scan plane as *source* (``scan.findings``)."""
+        ...
+
+    def list_pages_by_project(
+        self,
+        project: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Any]:
+        """Yield ``ResourcePage`` findings for a project."""
         ...
 
     def to_dependency_metadata(
@@ -1340,6 +1351,16 @@ class _PackageVersionFacade(PackageVersionFacade):
         """List package versions in the same scan plane as *source*."""
         ...
 
+    def list_pages_by_project(
+        self,
+        project: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Any]:
+        """Yield ``ResourcePage`` package versions for a project."""
+        ...
+
 class _PolicyFacade(ResourceRuntimeFacade[Policy]):
     """Rule controlling scan behavior, findings, and workflows.
 
@@ -1968,6 +1989,16 @@ class _ScanResultFacade(ScanResultFacade):
         """List scan results for a project (accessor ``project.scan_results``)."""
         ...
 
+    def list_pages_by_project(
+        self,
+        project: Any,
+        *,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Any]:
+        """Yield ``ResourcePage`` values for a project's scan results."""
+        ...
+
 class _ScanWorkflowFacade(ResourceRuntimeFacade[ScanWorkflow]):
     """Workflow orchestrating scan steps."""
 
@@ -2343,7 +2374,7 @@ class Client:
     ScanProfile, ScanResult, ScanWorkflow, ScanWorkflowResult, SemgrepRule,
     SystemConfig, VEXExport, VectorStore, VectorStoreQuery, VersionUpgrade,
     Vulnerability
-    Custom: CallGraphData, AgentTelemetry, Query
+    Custom: CallGraphData, AgentTelemetry, Query, SupportedToolChainVersion
     """
 
     APIKey: _APIKeyFacade
@@ -2398,6 +2429,7 @@ class Client:
     CallGraphData: CallGraphDataFacade
     AgentTelemetry: AgentTelemetryFacade
     Query: QueryFacade
+    SupportedToolChainVersion: SupportedToolChainVersionFacade
 
     _client: APIClient | None
 

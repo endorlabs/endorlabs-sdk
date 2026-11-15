@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import logging
 
+import endorlabs
 from endorlabs.context.paths import (
     DEFAULT_CONTEXT_DIR,
     project_workspace_dir,
@@ -12,7 +13,8 @@ from endorlabs.context.paths import (
 )
 from endorlabs.workflows.reachability.context import (
     ReachabilityContextRequest,
-    build_reachability_context,
+    acquire_reachability_context,
+    write_reachability_context,
 )
 
 
@@ -115,7 +117,9 @@ def main(argv: list[str] | None = None) -> int:
         max_pages=args.max_pages,
         page_size=args.page_size,
     )
-    out_path = build_reachability_context(req)
+    with endorlabs.Client(tenant=args.tenant) as client:
+        result = acquire_reachability_context(client, req)
+        out_path = write_reachability_context(result, output_dir)
     print(str(out_path))
     return 0
 
