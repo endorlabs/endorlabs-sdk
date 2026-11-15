@@ -1,7 +1,6 @@
 """Export SupportedToolChainVersion catalog to ScanProfile-shaped CSV.
 
-The resource is x-internal (no Client facade). Transport uses
-``Client._client.get_all`` like AgentHookEvent list helpers.
+Uses ``client.SupportedToolChainVersion.list`` (no ``Client._client``).
 
 Requires privileged read for the default ``system`` namespace (employee SSO
 via ``endor-admin``). Tenant API keys typically receive 403.
@@ -15,9 +14,10 @@ import sys
 from collections.abc import Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TextIO, cast
+from typing import TYPE_CHECKING, Any, TextIO
 
 from endorlabs.context.paths import flat_task_dir
+from endorlabs.resources.supported_toolchain import DEFAULT_NAMESPACE
 from endorlabs.workflows.common.cli_client import (
     add_client_auth_arguments,
     client_from_namespace_args,
@@ -26,9 +26,6 @@ from endorlabs.workflows.wire_access import as_dict, nested_dict
 
 if TYPE_CHECKING:
     from endorlabs.client_surface import Client
-
-_RESOURCE_PATH = "supported-toolchain-versions"
-DEFAULT_NAMESPACE = "system"
 
 CSV_COLUMNS: tuple[str, ...] = (
     "os",
@@ -39,14 +36,6 @@ CSV_COLUMNS: tuple[str, ...] = (
     "sha256_sum",
     "url",
 )
-
-
-def _api_transport(client: Client) -> Any:
-    # No SupportedToolChainVersion facade — raw list transport only.
-    api = client._client
-    if api is None:
-        raise RuntimeError("Client has no API transport (closed?)")
-    return api
 
 
 def _wire_str(value: Any) -> str:
@@ -114,25 +103,11 @@ def list_supported_toolchain_versions(
     namespace: str = DEFAULT_NAMESPACE,
     filter_expr: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Paginate SupportedToolChainVersion as plain dicts."""
-    api = _api_transport(client)
-    url = f"v1/namespaces/{namespace}/{_RESOURCE_PATH}"
-    params: dict[str, Any] = {}
-    if filter_expr:
-        params["list_parameters.filter"] = filter_expr
-    out: list[dict[str, Any]] = []
-    for row in api.get_all(url, params=params):
-        if isinstance(row, dict):
-            out.append(cast("dict[str, Any]", row))
-            continue
-        dump = getattr(row, "model_dump", None)
-        if callable(dump):
-            data = dump(mode="json", exclude_none=False)
-            if isinstance(data, dict):
-                out.append(cast("dict[str, Any]", data))
-                continue
-        raise TypeError(f"Unsupported catalog row type: {type(row)!r}")
-    return out
+    """Paginate SupportedToolChainVersion as plain dicts via the public facade."""
+    return client.SupportedToolChainVersion.list(
+        namespace=namespace,
+        filter=filter_expr,
+    )
 
 
 def write_csv(

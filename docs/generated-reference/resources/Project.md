@@ -58,6 +58,7 @@ Optional:
 - `model`
 - `sbom`
 - `scan_profile_uuid`
+- `scm_tags`
 - `toolchain_profile_uuid`
 - `unsupported`
 

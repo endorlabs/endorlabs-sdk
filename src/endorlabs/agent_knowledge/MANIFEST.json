@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "generated_at": "2026-11-04T22:24:10.534141+00:00",
+  "generated_at": "2026-11-15T07:11:32.961177+00:00",
   "index": "INDEX.md",
   "references": [
     {
@@ -687,8 +687,14 @@
     {
       "agent_visible": true,
       "cli": "endor-reachability-context",
+      "composition": "library_api",
       "default_output": ".endorlabs/tasks/<slug>-<YYYY-MM-DD>/projects/<uuid>/reachability_context.json",
       "id": "reachability-context",
+      "library_entrypoints": [
+        "endorlabs.workflows.reachability.acquire_reachability_context",
+        "endorlabs.workflows.reachability.write_reachability_context",
+        "endorlabs.workflows.reachability.build_reachability_context"
+      ],
       "module": "endorlabs.workflows.reachability.cli",
       "skill": "endor-reachability-provenance"
     },
@@ -735,7 +741,13 @@
         "endorlabs.Client.Project.search_by_name",
         "endorlabs.Client.Finding.list_for_context",
         "endorlabs.workflows.troubleshooting_scans.common.scanlog_entries_have_content",
-        "endorlabs.workflows.troubleshooting_scans.common.extract_scan_mode"
+        "endorlabs.workflows.troubleshooting_scans.common.extract_scan_mode",
+        "endorlabs.workflows.troubleshooting_scans.assemble_scan_pair_evidence",
+        "endorlabs.workflows.troubleshooting_scans.acquire_scan_pair_evidence",
+        "endorlabs.workflows.troubleshooting_scans.acquire_scan_results",
+        "endorlabs.workflows.troubleshooting_scans.acquire_scan_logs",
+        "endorlabs.workflows.troubleshooting_scans.search_embedded_scan_errors",
+        "endorlabs.workflows.troubleshooting_scans.compute_diff"
       ],
       "module": "endorlabs.workflows.troubleshooting_scans",
       "skill": "endor-troubleshooting-scans"

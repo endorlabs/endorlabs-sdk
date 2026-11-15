@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .change_plans import ConfigChangePlan, draft_update_plan
 from .config_presence import (
     LICENSE_BUCKET_DEFAULT,
     CheckResult,
@@ -27,6 +28,7 @@ __all__ = [
     "LICENSE_BUCKET_DEFAULT",
     "AuthorizationPolicyResult",
     "CheckResult",
+    "ConfigChangePlan",
     "ConfigPresenceResult",
     "InstallationResult",
     "NamespaceResult",
@@ -36,6 +38,7 @@ __all__ = [
     "create_child_namespace",
     "create_github_installation",
     "create_scan_profile_with_defaults",
+    "draft_update_plan",
     "license_bucket_for",
     "probe_project_presence",
     "probe_tenant_presence",

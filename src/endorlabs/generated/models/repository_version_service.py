@@ -94,6 +94,20 @@ class ScanObjectAISASTStatus(BaseModel):
     Format: 2017-01-15T01:30:15.01Z
     RFC 3339: https://www.ietf.org/rfc/rfc3339.txt.
     """
+    last_index_sha: str | None = None
+    """
+    The SHA of the last commit whose code was completely indexed into a vector store.
+    It can be ahead of last_full_index_sha when the scan stopped before every segment was scanned.
+    A later branch scan indexes only the files changed since this SHA.
+    Note: this is only used for aisast feature.
+    """
+    last_index_time: AwareDatetime | None = None
+    """
+    The time at which last_index_sha was recorded.
+
+    Format: 2017-01-15T01:30:15.01Z
+    RFC 3339: https://www.ietf.org/rfc/rfc3339.txt.
+    """
     last_partial_index_sha: str | None = None
     """
     Deprecated: use last_full_index_sha instead. The indexer now uses a single

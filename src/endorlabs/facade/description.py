@@ -8,7 +8,7 @@ from typing import Any, override
 
 # High-leverage MQL filter paths for common list/RCA flows (not full OpenAPI).
 # Merged with identity kwargs from the registry; keep short.
-_TOP_FILTERABLE_SPEC_PATHS: dict[str, tuple[str, ...]] = {
+TOP_FILTERABLE_SPEC_PATHS: dict[str, tuple[str, ...]] = {
     "Finding": (
         "spec.project_uuid",
         "spec.level",
@@ -190,7 +190,7 @@ def build_facade_description(
     )
     identity_kwargs = tuple(sorted(filter_kwarg_map.items()))
     identity_paths = set(filter_kwarg_map.values())
-    top_paths = _TOP_FILTERABLE_SPEC_PATHS.get(attr_name, ())
+    top_paths = TOP_FILTERABLE_SPEC_PATHS.get(attr_name, ())
     filterable = tuple(sorted(identity_paths | set(top_paths)))
     route_methods: list[str] = []
     if route_contract is not None:
@@ -199,6 +199,9 @@ def build_facade_description(
                 route_methods.append(edge.public_method.split(".", 1)[1])
             elif edge.public_method:
                 route_methods.append(edge.public_method)
+    # Page twins (list_pages_by_*) live on specialized facades, not the
+    # generated route-contract public_method field — surface them for hosts.
+    route_methods.extend(name for name in methods if name.startswith("list_pages"))
     return FacadeDescription(
         attr_name=attr_name,
         resource_name=resource_name,
@@ -212,10 +215,41 @@ def build_facade_description(
     )
 
 
+def describe_resource(attr_name: str) -> FacadeDescription:
+    r"""Describe a registry resource facade without constructing ``Client``.
+
+    Offline / no-network / no-auth. Raises ``ValueError`` for unknown
+    ``attr_name`` (PascalCase registry key, e.g. ``"Finding"``).
+    """
+    from ..generated.route_contract import ROUTE_CONTRACT
+    from ..registry import RESOURCE_REGISTRY
+    from .runtime import ResourceRuntimeFacade
+    from .specialized import FACADE_CLASS_BY_ATTR
+
+    entry = next(
+        (e for e in RESOURCE_REGISTRY if e.attr_name == attr_name),
+        None,
+    )
+    if entry is None:
+        raise ValueError(f"Unknown resource attr_name: {attr_name!r}")
+    facade_type = FACADE_CLASS_BY_ATTR.get(attr_name, ResourceRuntimeFacade)
+    scope = getattr(entry, "scope", None)
+    return build_facade_description(
+        attr_name=entry.attr_name,
+        resource_name=entry.resource_name,
+        facade_type=facade_type,
+        filter_kwarg_map=dict(entry.filter_kwarg_map),
+        scope=scope,
+        route_contract=ROUTE_CONTRACT,
+    )
+
+
 __all__ = [
     "FILTER_ENUM_SNIPPETS_RELPATH",
+    "TOP_FILTERABLE_SPEC_PATHS",
     "FacadeDescription",
     "ParamInfo",
     "build_facade_description",
+    "describe_resource",
     "list_params_from_signature",
 ]

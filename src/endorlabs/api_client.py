@@ -11,7 +11,7 @@ import re
 import sys
 import threading
 import time
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 from typing import Any, Literal, cast
@@ -19,16 +19,30 @@ from urllib.parse import urlparse
 
 import httpx
 
+from .core.credentials import (
+    BearerCredentials,
+    CredentialProvider,
+)
 from .core.exceptions import (
+    DeadlineExceededError,
     EndorAPIError,
     NetworkError,
+    RequestCancelledError,
     ValidationError,
     append_namespace_scope_hint,
     map_status_code_to_exception,
 )
+from .core.observations import (
+    RequestObservation,
+    RequestObserver,
+    safe_notify,
+)
 from .core.types import ErrorResponse
 from .operations.pagination import (
     PageCursor,
+    PaginationBound,
+    ResourcePage,
+    completeness_for_stop,
     iter_paginated_pages,
     raise_if_page_id_with_sort,
 )
@@ -173,6 +187,18 @@ class APIClient:
         op_comment: Value for the ``x-endor-op-comment`` session header. The
             gateway copies it onto the Mongo operation comment. Must not
             contain ``service/endorctl``.
+        http_client: Optional caller-owned ``httpx.Client`` (proxy/TLS/egress).
+            When set, ``close()`` does not close it.
+        credential_provider: Optional host credential resolver consulted before
+            env/constructor credentials when authenticating.
+        deadline_seconds: Optional total wall-clock budget from construction
+            spanning auth, retries, and pagination (``DeadlineExceededError``).
+        cancel_event: Optional event; when set, further work raises
+            ``RequestCancelledError``.
+        request_observer: Optional sanitized transport observer (attempts,
+            retries, terminals). Bodies and credentials are never passed.
+        observation_correlation: Optional host correlation keys copied onto
+            each observation.
 
     The client can be used as a context manager (with APIClient(...) as client:).
     When not using ``with``, call close() when done to release connections.
@@ -200,6 +226,12 @@ class APIClient:
         allowed_api_hosts: list[str] | None = None,
         retry_non_idempotent: bool | None = None,
         op_comment: str | None = None,
+        http_client: httpx.Client | None = None,
+        credential_provider: CredentialProvider | None = None,
+        deadline_seconds: float | None = None,
+        cancel_event: threading.Event | None = None,
+        request_observer: RequestObserver | None = None,
+        observation_correlation: dict[str, str] | None = None,
     ) -> None:
         super().__init__()
         # Set up logging
@@ -348,13 +380,31 @@ class APIClient:
                 raise ValueError(msg)
             self._request_headers["x-endor-op-comment"] = op_comment
 
-        # Initialize httpx client (no built-in retry; we use _request_with_retry)
-        self.client = httpx.Client(
-            base_url=self.base_url,
-            timeout=self.timeout,
-            headers=self._request_headers.copy(),
+        self._credential_provider = credential_provider
+        self._cancel_event = cancel_event
+        self._request_observer = request_observer
+        self._observation_correlation = (
+            dict(observation_correlation) if observation_correlation else None
         )
+        self._deadline_monotonic: float | None = (
+            time.monotonic() + float(deadline_seconds)
+            if deadline_seconds is not None
+            else None
+        )
+        self._own_http_client = http_client is None
+        # Initialize httpx client (no built-in retry; we use _request_with_retry)
+        if http_client is not None:
+            self.client = http_client
+        else:
+            self.client = httpx.Client(
+                base_url=self.base_url,
+                timeout=self.timeout,
+                headers=self._request_headers.copy(),
+            )
         self.logger_len = 25
+
+        if self._credential_provider is not None:
+            self._apply_credential_provider()
 
         # Authenticate when credentials are already configured; defer otherwise so
         # ``Client()`` can call ``client.<Kind>.describe()`` before auth.
@@ -387,11 +437,58 @@ class APIClient:
             self.logger.error(error_msg)
             raise ValidationError(error_msg)
 
+    def _host_stop_reason(self) -> Literal["deadline", "cancelled"] | None:
+        """Return a pagination/request stop reason when the host budget is spent."""
+        if self._cancel_event is not None and self._cancel_event.is_set():
+            return "cancelled"
+        if (
+            self._deadline_monotonic is not None
+            and time.monotonic() >= self._deadline_monotonic
+        ):
+            return "deadline"
+        return None
+
+    def _raise_if_host_budget_exceeded(self) -> None:
+        """Fail closed when deadline elapsed or cancel_event is set."""
+        reason = self._host_stop_reason()
+        if reason == "cancelled":
+            raise RequestCancelledError(
+                "Host cancel_event is set; no further API work admitted."
+            )
+        if reason == "deadline":
+            raise DeadlineExceededError(
+                "Host deadline_seconds budget elapsed "
+                "(auth/retries/pagination inclusive)."
+            )
+
+    def _apply_credential_provider(self) -> None:
+        """Pull credentials from the host provider into session fields."""
+        if self._credential_provider is None:
+            return
+        resolved = self._credential_provider.resolve()
+        if resolved is None:
+            return
+        if isinstance(resolved, BearerCredentials):
+            self._provided_token = resolved.token
+            self._auth_type = "browser"
+            self.key = None
+            self.secret = None
+            if not self._auth_method_pending_resolution:
+                self.auth_method = "browser-auth"
+                self._auth_method_pending_resolution = True
+            return
+        self.key = resolved.key
+        self.secret = resolved.secret
+        self._auth_type = "api-key"
+        self.auth_method = "api-key"
+        self._auth_method_pending_resolution = False
+
     def close(self) -> None:
         """Close the underlying HTTP client and release connections."""
         client = self.client
         if client is not None:
-            client.close()
+            if self._own_http_client:
+                client.close()
             self.client = None
 
     def __enter__(self) -> "APIClient":
@@ -886,6 +983,19 @@ class APIClient:
         last_exc: BaseException | None = None
         attempt = 0
         for attempt in range(self.max_retries + 1):
+            self._raise_if_host_budget_exceeded()
+            started = time.monotonic()
+            safe_notify(
+                self._request_observer,
+                RequestObservation(
+                    kind="attempt" if attempt == 0 else "retry",
+                    method=method,
+                    url=url,
+                    attempt=attempt,
+                    correlation=self._observation_correlation,
+                ),
+                logger=self.logger,
+            )
             try:
                 headers = self._build_request_headers(_extra_headers)
                 response = self.client.request(
@@ -900,7 +1010,7 @@ class APIClient:
                     response.status_code,
                     self._truncate_for_logging(response.text),
                 )
-                return self._handle_response(
+                handled = self._handle_response(
                     response,
                     method=method,
                     url=url,
@@ -908,6 +1018,21 @@ class APIClient:
                     _reauth_attempted=_reauth_attempted,
                     **kwargs,
                 )
+                safe_notify(
+                    self._request_observer,
+                    RequestObservation(
+                        kind="terminal",
+                        method=method,
+                        url=url,
+                        attempt=attempt,
+                        status_code=response.status_code,
+                        elapsed_ms=(time.monotonic() - started) * 1000.0,
+                        stop_reason="ok",
+                        correlation=self._observation_correlation,
+                    ),
+                    logger=self.logger,
+                )
+                return handled
             except httpx.HTTPStatusError as e:
                 last_exc = e
                 retryable = (
@@ -935,6 +1060,7 @@ class APIClient:
                             attempt + 1,
                             self.max_retries + 1,
                         )
+                    self._raise_if_host_budget_exceeded()
                     time.sleep(backoff)
                     continue
                 raise
@@ -953,6 +1079,7 @@ class APIClient:
                         self.max_retries + 1,
                         e,
                     )
+                    self._raise_if_host_budget_exceeded()
                     time.sleep(backoff)
                     continue
                 break
@@ -971,11 +1098,25 @@ class APIClient:
                         self.max_retries + 1,
                         e,
                     )
+                    self._raise_if_host_budget_exceeded()
                     time.sleep(backoff)
                     continue
                 break
         if last_exc:
             attempts = min(attempt + 1, self.max_retries + 1)
+            safe_notify(
+                self._request_observer,
+                RequestObservation(
+                    kind="terminal",
+                    method=method,
+                    url=url,
+                    attempt=attempt,
+                    stop_reason="error",
+                    error_type=type(last_exc).__name__,
+                    correlation=self._observation_correlation,
+                ),
+                logger=self.logger,
+            )
             if isinstance(
                 last_exc,
                 (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError),
@@ -1352,42 +1493,24 @@ class APIClient:
                 return str(raw) if raw is not None else None
         return None
 
-    def get_all(
+    def _list_page_fetchers(
         self,
         url: str,
+        *,
         params: dict[str, Any] | None = None,
         data: Any | None = None,
         json: Any | None = None,
-        max_pages: int | None = None,
         **kwargs: Any,
-    ) -> Iterator[dict[str, Any]]:
-        """Get all items from a paginated endpoint.
-
-        Automatically handles page_token and page_id pagination. Yields
-        individual items from paginated responses. Uses list.response.next_page_id
-        when present (API-supported cursor); otherwise uses next_page_token.
-        Handles Endor Labs pagination format with list.objects and list.response.
-
-        Raises ``ValidationError`` before a follow-up ``page_id`` request when
-        sort params are still present (platform rejects that combination).
-
-        Args:
-            url: Endpoint URL (relative or absolute)
-            params: Query parameters (will be updated with page_token/page_id)
-            data: Request body data
-            json: Request body JSON
-            max_pages: Optional maximum number of pages to fetch.
-                If None, fetches all pages.
-            **kwargs: Additional arguments passed to request
-
-        Yields:
-            Individual items from paginated responses
-
-        """
+    ) -> tuple[
+        Callable[[PageCursor | None], Any],
+        Callable[[Any], PageCursor | None],
+    ]:
+        """Build fetch_page / next_cursor callables for list pagination."""
         normalized_url = self._normalize_url(url)
         request_params = dict(params) if params else {}
 
         def fetch_page(cursor: PageCursor | None) -> Any:
+            self._raise_if_host_budget_exceeded()
             page_params = dict(request_params)
             if cursor is not None:
                 if cursor.page_id is not None:
@@ -1418,14 +1541,169 @@ class APIClient:
                 return PageCursor(page_token=next_page_token)
             return None
 
+        return fetch_page, next_cursor
+
+    def get_all(
+        self,
+        url: str,
+        params: dict[str, Any] | None = None,
+        data: Any | None = None,
+        json: Any | None = None,
+        max_pages: int | None = None,
+        max_items: int | None = None,
+        **kwargs: Any,
+    ) -> Iterator[dict[str, Any]]:
+        """Get all items from a paginated endpoint.
+
+        Automatically handles page_token and page_id pagination. Yields
+        individual items from paginated responses. Uses list.response.next_page_id
+        when present (API-supported cursor); otherwise uses next_page_token.
+        Handles Endor Labs pagination format with list.objects and list.response.
+
+        Raises ``ValidationError`` before a follow-up ``page_id`` request when
+        sort params are still present (platform rejects that combination).
+
+        Args:
+            url: Endpoint URL (relative or absolute)
+            params: Query parameters (will be updated with page_token/page_id)
+            data: Request body data
+            json: Request body JSON
+            max_pages: Optional maximum number of pages to fetch.
+                If None, fetches all pages.
+            max_items: Optional global item budget across pages.
+            **kwargs: Additional arguments passed to request
+
+        Yields:
+            Individual items from paginated responses
+
+        """
+        normalized_url = self._normalize_url(url)
+        fetch_page, next_cursor = self._list_page_fetchers(
+            normalized_url, params=params, data=data, json=json, **kwargs
+        )
+        bound = PaginationBound(
+            max_pages=max_pages,
+            max_items=max_items,
+            should_stop=self._host_stop_reason,
+        )
+        yielded = 0
         for page_data in iter_paginated_pages(
             fetch_page,
             next_cursor=next_cursor,
-            max_pages=max_pages,
             label=normalized_url,
             logger=self.logger,
+            bound=bound,
+            extract_items=self._extract_items_from_response,
         ):
-            yield from self._extract_items_from_response(page_data)
+            for item in self._extract_items_from_response(page_data):
+                if max_items is not None and yielded >= max_items:
+                    return
+                yielded += 1
+                yield item
+
+    def iter_pages(
+        self,
+        url: str,
+        *,
+        params: dict[str, Any] | None = None,
+        owner_namespace: str | None = None,
+        traverse: bool = False,
+        requested_page_size: int | None = None,
+        max_pages: int | None = None,
+        max_items: int | None = None,
+        data: Any | None = None,
+        json: Any | None = None,
+        **kwargs: Any,
+    ) -> Iterator[ResourcePage[dict[str, Any]]]:
+        """Yield typed ``ResourcePage`` values with cursor and completeness.
+
+        The final yielded page carries ``stop_reason`` and terminal
+        ``completeness``. Empty pages with ``completeness != "complete"`` do
+        not prove absence.
+        """
+        normalized_url = self._normalize_url(url)
+        fetch_page, next_cursor_fn = self._list_page_fetchers(
+            normalized_url, params=params, data=data, json=json, **kwargs
+        )
+        bound = PaginationBound(
+            max_pages=max_pages,
+            max_items=max_items,
+            should_stop=self._host_stop_reason,
+        )
+        pending: tuple[tuple[dict[str, Any], ...], PageCursor | None] | None = None
+        page_index = 0
+        items_fetched = 0
+        scheduled_items = 0
+        last_had_next = False
+
+        def emit(
+            items: tuple[dict[str, Any], ...],
+            following: PageCursor | None,
+            *,
+            terminal: bool,
+        ) -> ResourcePage[dict[str, Any]]:
+            nonlocal page_index, items_fetched, last_had_next
+            last_had_next = following is not None and following.cursor_key() is not None
+            items_fetched += len(items)
+            idx = page_index
+            page_index += 1
+            stop = bound.stop_reason if terminal else None
+            if terminal:
+                reason = stop or "complete"
+                complete = completeness_for_stop(reason, had_next_cursor=last_had_next)
+            else:
+                reason = None
+                complete = "unknown"
+            return ResourcePage(
+                items=items,
+                owner_namespace=owner_namespace,
+                traverse=traverse,
+                requested_page_size=requested_page_size,
+                page_index=idx,
+                next_cursor=following if last_had_next else None,
+                stop_reason=reason,
+                completeness=complete,
+                pages_fetched=page_index,
+                items_fetched=items_fetched,
+            )
+
+        for page_data in iter_paginated_pages(
+            fetch_page,
+            next_cursor=next_cursor_fn,
+            label=normalized_url,
+            logger=self.logger,
+            bound=bound,
+            extract_items=self._extract_items_from_response,
+        ):
+            raw_items = list(self._extract_items_from_response(page_data))
+            if max_items is not None:
+                remaining = max_items - scheduled_items
+                if remaining <= 0:
+                    break
+                raw_items = raw_items[:remaining]
+            following = next_cursor_fn(page_data)
+            built = (tuple(raw_items), following)
+            scheduled_items += len(raw_items)
+            if pending is not None:
+                yield emit(pending[0], pending[1], terminal=False)
+            pending = built
+
+        if pending is not None:
+            yield emit(pending[0], pending[1], terminal=True)
+        elif page_index == 0:
+            stop = bound.stop_reason or "complete"
+            yield ResourcePage(
+                items=(),
+                owner_namespace=owner_namespace,
+                traverse=traverse,
+                requested_page_size=requested_page_size,
+                page_index=0,
+                next_cursor=None,
+                stop_reason=stop,
+                completeness=completeness_for_stop(stop, had_next_cursor=False),
+                pages_fetched=0,
+                items_fetched=0,
+            )
 
     @property
     def token(self) -> str | None:
@@ -1445,6 +1723,9 @@ class APIClient:
 
     def _ensure_fresh_token(self) -> None:
         """Refresh API-key sessions; bearer sessions warn then fail closed."""
+        self._raise_if_host_budget_exceeded()
+        if self._credential_provider is not None and self._token is None:
+            self._apply_credential_provider()
         if self._token is None:
             if self._auth_type == "api-key" and not self._has_configured_credentials():
                 self._require_configured_credentials()

@@ -65,10 +65,15 @@ When **both** `ENDOR_TOKEN` and API key env vars are set:
 
 ## Missing credentials
 
-`ValidationError` from `APIClient` / `Client` construction lists these options:
+Auth is **deferred** when no credentials are configured: bare `Client()` /
+`APIClient()` (and `Client(tenant=…)`) construct successfully so
+`client.<Kind>.describe()` can run with no network. The first API call
+(`whoami()`, `list()`, …) raises `ValidationError` listing these options:
 
-1. `ENDOR_TOKEN` (bearer; validated at `Client()` startup)
-2. `ENDOR_API_CREDENTIALS_KEY` + `ENDOR_API_CREDENTIALS_SECRET`
+1. `ENDOR_TOKEN` (bearer; when present, validated at `Client()` startup via
+   `GET /v1/auth`)
+2. `ENDOR_API_CREDENTIALS_KEY` + `ENDOR_API_CREDENTIALS_SECRET` (when present,
+   exchanged at `Client()` startup)
 3. `Client(auth_method=…)` when browser login must be explicit (see below)
 
 ### Interactive browser methods (opt-in)
@@ -95,7 +100,7 @@ Use `endor-auth refresh --method sso -n <tenant>`, `--method google`, `--method 
 
 | Phase | Behavior |
 |-------|----------|
-| Startup | Read `ENDOR_TOKEN` or `token=`; validate via `GET /v1/auth`; learn refresh hint routing in-memory (`google`, `sso`, …) from response metadata |
+| Startup | When `ENDOR_TOKEN` or `token=` is set: validate via `GET /v1/auth`; learn refresh hint routing in-memory (`google`, `sso`, …) from response metadata. When unset: defer until first API call |
 | Proactive (&lt;30m) | One **stderr** warning with `endor-auth refresh` hint (no token values) |
 | Expired / 401 | Fail closed with `UnauthorizedError` and `endor-auth refresh` guidance |
 | Next shell / process | Run `endor-auth refresh` or pass a fresh `token=` — child processes do not inherit in-memory tokens |

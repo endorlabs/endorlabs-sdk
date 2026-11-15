@@ -712,7 +712,7 @@ def main() -> None:  # noqa: D103
         "# Source of truth: endorlabs.registry.RESOURCE_REGISTRY"
         " and CUSTOM_FACADE_REGISTRY.",
         "",
-        "from collections.abc import Callable",
+        "from collections.abc import Callable, Iterator",
         "from typing import Any",
         "",
     ]

@@ -46,6 +46,7 @@ def test_fetch_scan_results_writes_raw_and_summary_artifacts() -> None:
         limit=10,
         scan_window=5,
         status_filter="STATUS_SUCCESS",
+        max_workers=8,
         output_dir=".tmp",
         timestamped=False,
     )
@@ -65,10 +66,6 @@ def test_fetch_scan_results_writes_raw_and_summary_artifacts() -> None:
         patch(
             "endorlabs.workflows.troubleshooting_scans.fetch_scan_results.Client",
             return_value=mock_client,
-        ),
-        patch(
-            "endorlabs.workflows.troubleshooting_scans.fetch_scan_results.scan_result_metrics",
-            return_value={"uuid": "scan-1"},
         ),
         patch(
             "endorlabs.workflows.troubleshooting_scans.fetch_scan_results.root_tenant",

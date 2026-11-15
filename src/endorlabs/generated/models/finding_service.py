@@ -11,6 +11,23 @@ from typing import Any, Dict
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
+class EntryPoint(BaseModel):
+    """
+    An HTTP route that reaches the code a finding sits in.
+    """
+
+    http_method: str | None = None
+    """
+    HTTP method the route is registered for. Empty when the registration
+    accepts every method, as an Express app.use mount does.
+    """
+    path: str | None = None
+    """
+    Request path of the route, carrying whatever path variable syntax the
+    framework uses, for example /api/owners/{id} or /rest/basket/:id.
+    """
+
+
 class AffectedSource(StrEnum):
     """
     - SOURCE_NVD: The National Vulnerability Database provided the affected package data.
@@ -1077,6 +1094,23 @@ class RootCveWeakness(BaseModel):
     description: list[DescriptionItem]
     source: str
     type: str
+
+
+class SASTEntryPoint(BaseModel):
+    """
+    An HTTP route that reaches the code a finding sits in.
+    """
+
+    http_method: str | None = None
+    """
+    HTTP method the route is registered for. Empty when the registration
+    accepts every method, as an Express app.use mount does.
+    """
+    path: str | None = None
+    """
+    Request path of the route, carrying whatever path variable syntax the
+    framework uses, for example /api/owners/{id} or /rest/basket/:id.
+    """
 
 
 class SecurityAspectMetricSecurityImpactType(StrEnum):
@@ -6736,7 +6770,7 @@ class V1Bom(BaseModel):
     files used to compute the BOM. For instance for Golang, it will contain
     the go.mod and go.sum.
     """
-    dependency_graph: dict[str, list[dict[str, Any]]] | None = Field(
+    dependency_graph: dict[str, list[dict[str, Any] | str]] | None = Field(
         None,
         title='A dependency graph is a K/V pair of package names.\nThe format of the key must be:\n- mvn://MVN_CENTRAL/foo:bar@2.1\n- mvn://CLIENT_REPO/foo:bar@2.1-SNAPSHOT\n- go://github.com/myorg/myrepo/mypkg@sha',
     )
@@ -6789,6 +6823,12 @@ class AIResultSAST(BaseModel):
     One or more source locations representing the data flow path from a source to a sink.
     The locations are ordered and include the source, any intermediate nodes, and the sink.
     If only a single location is provided, it represents the sink location only.
+    """
+    entry_points: list[EntryPoint] | None = None
+    """
+    HTTP routes that reach this finding, resolved from the source at scan
+    time. Empty when no route resolved, because a wrong route would send
+    whatever reads this at the wrong endpoint.
     """
     exploit_reproduction: str | None = None
     """

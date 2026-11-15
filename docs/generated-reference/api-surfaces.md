@@ -14,8 +14,11 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `AGENT_RULE_EXCEPTION_TYPES`
 - `APIClient`
 - `AmbiguousError`
+- `ApiKeyCredentials`
+- `BearerCredentials`
 - `Client`
 - `ConflictError`
+- `DeadlineExceededError`
 - `EndorAPIError`
 - `EndorRuleError`
 - `F`
@@ -29,9 +32,13 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `NetworkError`
 - `NotFoundError`
 - `OutputShapeRoutingError`
+- `PageCursor`
 - `PermissionDeniedError`
 - `PortableExamplesError`
 - `RateLimitError`
+- `RequestCancelledError`
+- `ResourcePage`
+- `ScanDependencyReceipt`
 - `SdkDiscovery`
 - `ServerError`
 - `UnauthorizedError`
@@ -45,6 +52,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `agent_knowledge_manifest`
 - `agent_knowledge_rule_ids`
 - `dependency_metadata`
+- `describe_resource`
 - `discover`
 - `finding`
 - `init`
@@ -57,6 +65,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `package_version`
 - `policy`
 - `project`
+- `read_scan_dependency_receipt`
 - `repository`
 - `repository_version`
 - `sync_agent_skills`

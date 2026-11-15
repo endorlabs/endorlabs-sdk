@@ -460,6 +460,7 @@ PROJECT_SPEC_FIELDS = (
     "toolchain_profile_uuid",
     "scan_profile_uuid",
     "is_archived",
+    "scm_tags",
 )
 PROJECT_SPEC_REQUIRED = ("platform_source",)
 PROJECT_META_FIELDS = ()

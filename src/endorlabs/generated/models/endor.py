@@ -211,7 +211,7 @@ class SpecPatchConfiguration(BaseModel):
     max_patches: int | None = None
     """
     Maximum number of distinct patches this tenant may download through
-    endorfactory. Unset or -1 means unlimited. 0 means no patches. At most 10.
+    endorfactory. Unset or -1 means unlimited. 0 means no patches. At most 100000.
     """
 
 

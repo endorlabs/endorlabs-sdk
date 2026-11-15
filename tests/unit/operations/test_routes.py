@@ -122,6 +122,54 @@ def test_list_by_parent_via_list_fn() -> None:
     assert result.values and len(result.values) == 1
 
 
+def test_execute_pages_uuid_field_calls_list_pages() -> None:
+    contract = load_golden_contract()
+    edge = contract.edge_by_id("project.findings")
+    assert edge is not None
+    page = SimpleNamespace(
+        items=(SimpleNamespace(uuid="f-1"),),
+        completeness="complete",
+    )
+    mock_ops = Mock()
+    mock_ops.list_pages.return_value = iter([page])
+    executor = _executor(Finding=mock_ops)
+    pages = list(
+        executor.execute_pages(
+            edge, source=_project(), max_pages=2, page_size=2, sort_by="meta.name"
+        )
+    )
+    assert len(pages) == 1
+    mock_ops.list_pages.assert_called_once()
+    args, kwargs = mock_ops.list_pages.call_args
+    assert args[0] == "tenant.child"
+    lp = args[1]
+    assert 'spec.project_uuid=="proj-uuid-1"' in lp.filter
+    assert lp.page_size == 2
+    assert lp.sort_by == "meta.name"
+    assert kwargs.get("max_pages") == 2
+
+
+def test_list_route_folds_page_size_into_list_parameters() -> None:
+    contract = load_golden_contract()
+    edge = contract.edge_by_id("project.findings")
+    assert edge is not None
+    mock_ops = Mock()
+    mock_ops.list.return_value = []
+    executor = _executor(Finding=mock_ops)
+    executor.execute(edge, source=_project(), page_size=2)
+    args, _ = mock_ops.list.call_args
+    assert args[1].page_size == 2
+
+
+def test_execute_pages_rejects_get_edge() -> None:
+    contract = load_golden_contract()
+    edge = contract.edge_by_id("finding.dependency_metadata.get")
+    assert edge is not None
+    executor = _executor(DependencyMetadata=Mock())
+    with pytest.raises(RouteNotApplicableError, match="execute_pages"):
+        list(executor.execute_pages(edge, source=_finding()))
+
+
 def _semgrep_chain_edge() -> RouteEdge:
     """Executor-only chain edge (not shipped on the public accessor surface)."""
     return RouteEdge.from_dict(

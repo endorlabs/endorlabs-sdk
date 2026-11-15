@@ -8,6 +8,50 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- Data-first reachability library: `acquire_reachability_context(client, …)`
+  returns typed evidence without file I/O; CLI writes via
+  `write_reachability_context`. Pure
+  `assemble_scan_pair_evidence` for host-injected scan-pair roles, log
+  outcomes, and `compute_diff` (concurrency stays unknown unless supplied).
+- Host-facing list pages and transport controls (SDK-002/003): public
+  `ResourcePage` / `PageCursor`, facade `list_pages` / `APIClient.iter_pages`
+  with stop reason and completeness (`complete`|`capped`|`unknown`);
+  `max_items` global budget; injectable `http_client`, `credential_provider`,
+  `deadline_seconds`, and `cancel_event` (`DeadlineExceededError` /
+  `RequestCancelledError`). Empty non-complete pages do not prove absence.
+  Relationship twins: `list_pages_by_project` /
+  `list_pages_for_context` and `RouteExecutor.execute_pages`.
+  Relationship routes fold `page_size` / `sort_by` / related options into
+  `ListParameters` (fixes ignored raw kwargs on UUID-field edges).
+- `acquire_scan_results(client, …)` data-first scan window (SDK-006);
+  troubleshooting CLI writes remain optional adapters.
+- `acquire_scan_logs(client, …)` paginated ScanResult log acquisition with
+  typed `log_outcome` (SDK-006/007); `pull_scan_logs` CLI writes optionally.
+- `search_embedded_scan_errors(client, …)` data-first embedded `spec.logs`
+  pattern search (SDK-006).
+- `endorlabs.describe_resource(attr_name)` offline facade description with no
+  `Client` / auth (SDK-003). `describe_filter_fields(attr_name)` curated field
+  paths + enum snippet pointer (SDK-009).
+- Facade `describe` / `describe_resource` route methods include
+  `list_pages_by_project` / `list_pages_for_context` when present.
+- Host-integration contract suite:
+  `tests/unit/hosting/test_host_integration_contract.py` (portable hosting
+  surfaces — pages, transport, acquires, describe/filter discovery, typed
+  receipts; hosts may re-run against a pinned SDK revision).
+- `client.SupportedToolChainVersion.list` custom facade for the platform
+  toolchain catalog (default `system` namespace); toolchain CSV export no
+  longer uses `Client._client`.
+- `V1Bom.dependency_graph` adjacency entries accept package-coordinate
+  strings or objects (SDK-005 wire fidelity).
+- `read_scan_dependency_receipt` typed surface (SDK-001): returns
+  `status="unavailable"` until a platform digest read path exists — never
+  invents digests.
+- `endorlabs.filters.describe_filter_operators` data-only operator catalog
+  (SDK-009). Optional `request_observer` / `observation_correlation` on
+  `APIClient` for sanitized attempt/retry/terminal hooks (SDK-010).
+- `acquire_scan_pair_evidence(client, …)` (SDK-007) and
+  `draft_update_plan` reviewable config drafts with no writes (SDK-008).
+
 ### Changed
 
 ### Fixed

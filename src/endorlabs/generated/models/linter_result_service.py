@@ -28,6 +28,23 @@ class AIResultAILevel(StrEnum):
     AI_LEVEL_LOW = 'AI_LEVEL_LOW'
 
 
+class EntryPoint(BaseModel):
+    """
+    An HTTP route that reaches the code a finding sits in.
+    """
+
+    http_method: str | None = None
+    """
+    HTTP method the route is registered for. Empty when the registration
+    accepts every method, as an Express app.use mount does.
+    """
+    path: str | None = None
+    """
+    Request path of the route, carrying whatever path variable syntax the
+    framework uses, for example /api/owners/{id} or /rest/basket/:id.
+    """
+
+
 class ContextContextType(StrEnum):
     """
      - CONTEXT_TYPE_MAIN: Objects from a scan of the default branch.
@@ -93,6 +110,23 @@ class LinterCorrectnessAnalysisDataFlowNode(BaseModel):
     type: str | None = None
     """
     Type of node in the data flow (source, step, or sink).
+    """
+
+
+class SASTEntryPoint(BaseModel):
+    """
+    An HTTP route that reaches the code a finding sits in.
+    """
+
+    http_method: str | None = None
+    """
+    HTTP method the route is registered for. Empty when the registration
+    accepts every method, as an Express app.use mount does.
+    """
+    path: str | None = None
+    """
+    Request path of the route, carrying whatever path variable syntax the
+    framework uses, for example /api/owners/{id} or /rest/basket/:id.
     """
 
 
@@ -1769,6 +1803,12 @@ class AIResultSAST(BaseModel):
     One or more source locations representing the data flow path from a source to a sink.
     The locations are ordered and include the source, any intermediate nodes, and the sink.
     If only a single location is provided, it represents the sink location only.
+    """
+    entry_points: list[EntryPoint] | None = None
+    """
+    HTTP routes that reach this finding, resolved from the source at scan
+    time. Empty when no route resolved, because a wrong route would send
+    whatever reads this at the wrong endpoint.
     """
     exploit_reproduction: str | None = None
     """

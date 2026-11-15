@@ -77,6 +77,56 @@ def unwrap_route_list(result: RouteResult[T]) -> list[T]:
     return []
 
 
+_LIST_OPTION_KEYS = frozenset(
+    {
+        "mask",
+        "page_size",
+        "page_token",
+        "page_id",
+        "sort_by",
+        "desc",
+        "sort_field",
+        "sort_order",
+        "count",
+        "traverse",
+        "from_date",
+        "to_date",
+        "archive",
+        "list_all",
+        "pr_uuid",
+        "ci_run_uuid",
+    }
+)
+
+
+def merge_route_list_parameters(
+    filter_text: str | None,
+    list_kwargs: dict[str, Any],
+) -> tuple[ListParameters, dict[str, Any]]:
+    """Fold known list options into ``ListParameters``; return leftover kwargs.
+
+    Relationship routes used to forward ``page_size`` / ``sort_by`` as raw
+    query kwargs (ignored by the API). Folding puts them on
+    ``list_parameters.*`` so UUID-field and context-partition routes honor the
+    same typed options as facade ``list`` / ``list_pages``.
+    """
+    options: dict[str, Any] = {}
+    leftover: dict[str, Any] = {}
+    limit_alias = list_kwargs.get("limit")
+    for key, value in list_kwargs.items():
+        if key == "limit":
+            continue
+        if key in _LIST_OPTION_KEYS and value is not None:
+            options[key] = value
+        elif key not in _LIST_OPTION_KEYS:
+            leftover[key] = value
+    if "page_size" not in options and limit_alias is not None:
+        options["page_size"] = limit_alias
+    if filter_text is not None:
+        options["filter"] = filter_text
+    return ListParameters(**options), leftover
+
+
 def resolve_attr_path(
     obj: Any, path: str, *, context: dict[str, Any] | None = None
 ) -> Any:
@@ -174,11 +224,13 @@ class RouteExecutor:
         default_namespace: str | None,
         ops_for_kind: dict[str, BaseResourceOperations[Any]],
         list_fn_for_parent: Any | None = None,
+        list_pages_fn_for_parent: Any | None = None,
     ) -> None:
         super().__init__()
         self._default_namespace = default_namespace
         self._ops_for_kind = ops_for_kind
         self._list_fn_for_parent = list_fn_for_parent
+        self._list_pages_fn_for_parent = list_pages_fn_for_parent
 
     def execute(
         self,
@@ -256,6 +308,72 @@ class RouteExecutor:
             )
         raise RouteNotApplicableError(
             f"Unsupported edge kind: {edge.edge}",
+            edge_id=edge.id,
+        )
+
+    def execute_pages(
+        self,
+        edge: RouteEdge,
+        *,
+        source: Any,
+        filter: str | None = None,
+        max_pages: int | None = None,
+        max_items: int | None = None,
+        **list_kwargs: Any,
+    ) -> Iterator[Any]:
+        """Yield ``ResourcePage`` values for list-shaped route edges.
+
+        Same filter/namespace resolution as :meth:`execute`. Non-list edges
+        raise ``RouteNotApplicableError``.
+        """
+        self._check_when(edge.when, source, edge.id)
+        warnings: list[str] = []
+        if edge.list_only:
+            warnings.append(
+                f"Field {edge.filter_field!r} is list-only (absent on GET schema)."
+            )
+        ns_override = list_kwargs.pop("namespace", None)
+        ns = (
+            str(ns_override)
+            if ns_override is not None
+            else self._resolve_namespace(source, edge.namespace_from)
+        )
+        if edge.edge == "list_by_parent":
+            yield from self._list_by_parent_pages(
+                edge,
+                source=source,
+                namespace=ns,
+                filter=filter,
+                max_pages=max_pages,
+                max_items=max_items,
+                **list_kwargs,
+            )
+            return
+        if edge.edge in ("list_by_uuid_field", "list_by_index_field"):
+            yield from self._list_by_uuid_field_pages(
+                edge,
+                source=source,
+                namespace=ns,
+                filter=filter,
+                max_pages=max_pages,
+                max_items=max_items,
+                **list_kwargs,
+            )
+            return
+        if edge.edge == "list_by_context_partition":
+            yield from self._list_by_context_partition_pages(
+                edge,
+                source=source,
+                namespace=ns,
+                filter=filter,
+                max_pages=max_pages,
+                max_items=max_items,
+                **list_kwargs,
+            )
+            return
+        _ = warnings
+        raise RouteNotApplicableError(
+            f"Edge kind {edge.edge!r} does not support execute_pages",
             edge_id=edge.id,
         )
 
@@ -348,9 +466,47 @@ class RouteExecutor:
             )
         clause = str(F("meta.parent_uuid") == parent_uuid)
         merged = f"{filter} AND {clause}" if filter else clause
-        lp = ListParameters(filter=merged) if merged else None  # pyright: ignore[reportCallIssue]
-        rows = self._ops(edge.to_kind).list(namespace, lp, max_pages)
+        lp, rest = merge_route_list_parameters(merged, list_kwargs)
+        rows = self._ops(edge.to_kind).list(namespace, lp, max_pages, **rest)
         return RouteResult(edge_used=edge.id, values=list(rows))
+
+    def _list_by_parent_pages(
+        self,
+        edge: RouteEdge,
+        *,
+        source: Any,
+        namespace: str,
+        filter: str | None,
+        max_pages: int | None,
+        max_items: int | None,
+        **list_kwargs: Any,
+    ) -> Iterator[Any]:
+        if self._list_pages_fn_for_parent is not None:
+            yield from self._list_pages_fn_for_parent(
+                parent=source,
+                namespace=namespace,
+                filter=filter,
+                max_pages=max_pages,
+                max_items=max_items,
+                **list_kwargs,
+            )
+            return
+        parent_uuid = resolve_source_uuid(source)
+        if not parent_uuid:
+            raise RouteNotApplicableError(
+                "Missing parent UUID on source resource.",
+                edge_id=edge.id,
+            )
+        clause = str(F("meta.parent_uuid") == parent_uuid)
+        merged = f"{filter} AND {clause}" if filter else clause
+        lp, rest = merge_route_list_parameters(merged, list_kwargs)
+        yield from self._ops(edge.to_kind).list_pages(
+            namespace,
+            lp,
+            max_pages=max_pages,
+            max_items=max_items,
+            **rest,
+        )
 
     def _list_by_uuid_field(
         self,
@@ -363,17 +519,42 @@ class RouteExecutor:
         warnings: list[str],
         **list_kwargs: Any,
     ) -> RouteResult[Any]:
-        _ = list_kwargs
         uuid_path = edge.uuid_from or "source.uuid"
         uuid_val = _resolve_uuid_from_source(source, uuid_path, edge_id=edge.id)
         field = edge.filter_field or "spec.project_uuid"
         clause = f'{field}=="{uuid_val}"'
         filter_text = str(filter) if filter is not None else None
         merged = f"{filter_text} AND {clause}" if filter_text else clause
-        lp = ListParameters(filter=merged)  # pyright: ignore[reportCallIssue]
-        rows = self._ops(edge.to_kind).list(namespace, lp, max_pages, **list_kwargs)
+        lp, rest = merge_route_list_parameters(merged, list_kwargs)
+        rows = self._ops(edge.to_kind).list(namespace, lp, max_pages, **rest)
         return RouteResult(
             edge_used=edge.id, values=list(rows), warnings=list(warnings)
+        )
+
+    def _list_by_uuid_field_pages(
+        self,
+        edge: RouteEdge,
+        *,
+        source: Any,
+        namespace: str,
+        filter: str | None,
+        max_pages: int | None,
+        max_items: int | None,
+        **list_kwargs: Any,
+    ) -> Iterator[Any]:
+        uuid_path = edge.uuid_from or "source.uuid"
+        uuid_val = _resolve_uuid_from_source(source, uuid_path, edge_id=edge.id)
+        field = edge.filter_field or "spec.project_uuid"
+        clause = f'{field}=="{uuid_val}"'
+        filter_text = str(filter) if filter is not None else None
+        merged = f"{filter_text} AND {clause}" if filter_text else clause
+        lp, rest = merge_route_list_parameters(merged, list_kwargs)
+        yield from self._ops(edge.to_kind).list_pages(
+            namespace,
+            lp,
+            max_pages=max_pages,
+            max_items=max_items,
+            **rest,
         )
 
     def _list_by_index_field(
@@ -420,9 +601,42 @@ class RouteExecutor:
             clause = f"{extra} AND {clause}"
         filter_text = str(filter) if filter is not None else None
         merged = f"{filter_text} AND {clause}" if filter_text else clause
-        lp = ListParameters(filter=merged)  # pyright: ignore[reportCallIssue]
-        rows = self._ops(edge.to_kind).list(namespace, lp, max_pages, **list_kwargs)
+        lp, rest = merge_route_list_parameters(merged, list_kwargs)
+        rows = self._ops(edge.to_kind).list(namespace, lp, max_pages, **rest)
         return RouteResult(edge_used=edge.id, values=list(rows))
+
+    def _list_by_context_partition_pages(
+        self,
+        edge: RouteEdge,
+        *,
+        source: Any,
+        namespace: str,
+        filter: str | None,
+        max_pages: int | None,
+        max_items: int | None,
+        **list_kwargs: Any,
+    ) -> Iterator[Any]:
+        context_path = edge.context_from or "context"
+        context = resolve_attr_path(source, context_path)
+        if context is None or not getattr(context, "type", None):
+            raise RouteNotApplicableError(
+                f"Missing context partition at {context_path!r} on source.",
+                edge_id=edge.id,
+            )
+        clause = context_partition_filter(context)
+        if edge.also_filter:
+            extra = format_filter_template(edge.also_filter, source)
+            clause = f"{extra} AND {clause}"
+        filter_text = str(filter) if filter is not None else None
+        merged = f"{filter_text} AND {clause}" if filter_text else clause
+        lp, rest = merge_route_list_parameters(merged, list_kwargs)
+        yield from self._ops(edge.to_kind).list_pages(
+            namespace,
+            lp,
+            max_pages=max_pages,
+            max_items=max_items,
+            **rest,
+        )
 
     def _list_by_attribute(
         self,
@@ -459,8 +673,8 @@ class RouteExecutor:
             clause = f"{extra} AND {clause}"
         filter_text = str(filter) if filter is not None else None
         merged = f"{filter_text} AND {clause}" if filter_text else clause
-        lp = ListParameters(filter=merged)  # pyright: ignore[reportCallIssue]
-        rows = self._ops(edge.to_kind).list(namespace, lp, max_pages, **list_kwargs)
+        lp, rest = merge_route_list_parameters(merged, list_kwargs)
+        rows = self._ops(edge.to_kind).list(namespace, lp, max_pages, **rest)
         truncated = len(rows) > 1
         warnings: list[str] = []
         if truncated:
