@@ -125,9 +125,20 @@ Skill: `skills/endor-auth-setup/SKILL.md`. Library:
 ## Exceptions
 
 Use top-level `endorlabs` exception types (`NotFoundError`, `UnauthorizedError`,
-`ValidationError`, `AmbiguousError`, …). Resources may return `None` on 404 where documented.
+`ValidationError`, `AmbiguousError`, `RouteNotApplicableError`,
+`DeadlineExceededError`, `RequestCancelledError`, …). Resources may return
+`None` on 404 where documented.
+
+| Type | When |
+| ---- | ---- |
+| `RouteNotApplicableError` | Relationship accessor / edge preconditions failed (wrong kind for `list_for_context`, missing partition fields, `when` gate) — check `describe_resource(...).route_methods` |
+| `DeadlineExceededError` | Host `deadline_seconds` budget elapsed on `APIClient` / `Client` |
+| `RequestCancelledError` | Host `cancel_event` set |
 
 **Note:** `AmbiguousError` is no longer raised by facade discovery — use `search_by_*` and explicit disambiguation instead of exact-match `lookup()`.
+
+**Host transport inject** (optional on `APIClient` / `Client`): `http_client`,
+`credential_provider`, `deadline_seconds`, `cancel_event`, `request_observer`.
 
 ## Local OpenAPI spec
 

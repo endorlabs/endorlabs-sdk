@@ -34,6 +34,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from .api_client import APIClient
 from .client_surface import Client
 from .context.paths import DEFAULT_CONTEXT_DIR
+from .core.client_identity import ClientIdentity
 from .core.credentials import (
     ApiKeyCredentials,
     BearerCredentials,
@@ -56,6 +57,7 @@ from .core.exceptions import (
     PortableExamplesError,
     RateLimitError,
     RequestCancelledError,
+    RouteNotApplicableError,
     ServerError,
     UnauthorizedError,
     ValidationError,
@@ -227,6 +229,7 @@ __all__ = [
     "ApiKeyCredentials",
     "BearerCredentials",
     "Client",
+    "ClientIdentity",
     "ConflictError",
     "DeadlineExceededError",
     "EndorAPIError",
@@ -248,6 +251,7 @@ __all__ = [
     "RateLimitError",
     "RequestCancelledError",
     "ResourcePage",
+    "RouteNotApplicableError",
     "ScanDependencyReceipt",
     "SdkDiscovery",
     "ServerError",

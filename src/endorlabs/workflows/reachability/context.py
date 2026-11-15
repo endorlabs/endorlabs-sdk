@@ -237,8 +237,10 @@ def acquire_reachability_context(
     customer_callables: list[dict[str, Any]] = []
     customer_edges: list[dict[str, Any]] = []
     customer_exports: list[dict[str, Any]] = []
-    customer_cg_truncated = False
-    oss_cg_truncated = False
+    # Unknown until a bound list path reports truncation; CallGraphData.decode
+    # is a full-object read — do not claim non-truncation when max_pages was set.
+    customer_cg_truncated: bool | None = None
+    oss_cg_truncated: bool | None = None
     if request.include_customer_callgraph and subject.importer_pv_uuid:
         decoded = _fetch_decoded_callgraph(
             client,
@@ -249,6 +251,7 @@ def acquire_reachability_context(
             warnings.append(
                 "No customer call-graph-data objects found for importer PV."
             )
+            customer_cg_truncated = None
         else:
             customer_callables = list(decoded.callables)
             customer_edges = list(decoded.edges)
@@ -263,6 +266,14 @@ def acquire_reachability_context(
                 "callables_total": len({r["method_id"] for r in customer_callables}),
                 "edges_total": len(customer_edges),
             }
+            if request.max_pages and request.max_pages > 0:
+                warnings.append(
+                    "max_pages/page_size are not applied to CallGraphData.decode; "
+                    "customer_callgraph_truncated remains unknown"
+                )
+                customer_cg_truncated = None
+            else:
+                customer_cg_truncated = False
 
     oss_vuln_payload: dict[str, Any] | None = None
     if request.finding_uuid and finding_obj:
@@ -288,6 +299,7 @@ def acquire_reachability_context(
         )
         if decoded is None:
             warnings.append("No oss call-graph-data objects found for dependency PV.")
+            oss_cg_truncated = None
         else:
             oss_callables = list(decoded.callables)
             oss_edges = list(decoded.edges)
@@ -301,6 +313,14 @@ def acquire_reachability_context(
                 "callables_total": len({r["method_id"] for r in oss_callables}),
                 "edges_total": len(oss_edges),
             }
+            if request.max_pages and request.max_pages > 0:
+                warnings.append(
+                    "max_pages/page_size are not applied to CallGraphData.decode; "
+                    "oss_callgraph_truncated remains unknown"
+                )
+                oss_cg_truncated = None
+            else:
+                oss_cg_truncated = False
 
     stitching_payload: dict[str, Any] | None = None
     vulnerable_uris: list[str] = []
@@ -316,7 +336,7 @@ def acquire_reachability_context(
         )
 
     payload: dict[str, Any] = {
-        "generated_at": datetime.now(UTC).isoformat() + "Z",
+        "generated_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         "subject": {
             "tenant": request.tenant,
             "namespace": request.namespace,

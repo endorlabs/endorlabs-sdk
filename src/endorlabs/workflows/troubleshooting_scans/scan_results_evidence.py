@@ -121,7 +121,22 @@ def acquire_scan_results(
             )
 
     summaries = [scan_result_metrics(item) for item in all_results]
+    skipped = sum(1 for p in project_dicts if not dict_str(p, "uuid"))
+    warnings: list[str] = []
+    if skipped:
+        warnings.append(f"skipped_projects_without_uuid={skipped}")
+    if limit > 0:
+        warnings.append(f"per_project_limit={limit}; completeness unknown beyond limit")
+    status = "partial" if warnings else "success"
+    message = (
+        "Scan results acquired with limits or skipped projects."
+        if warnings
+        else "Scan results acquired."
+    )
     return ScanResultsEvidence(
+        status=status,
+        message=message,
+        errors=[],
         query_namespace=query_namespace,
         project_count=len(project_dicts),
         scan_results=all_results,

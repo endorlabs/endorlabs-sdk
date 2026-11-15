@@ -14,6 +14,7 @@ from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.reports.export.csv.packet_exports import (
     write_packet_raw_exports,
 )
+from endorlabs.workflows.reports.export.html.safe_embed import html_safe_json
 
 from . import chrome as chrome_mod
 from . import copy as copy_mod
@@ -49,7 +50,13 @@ def _copy_shell_assets(out: Path, *, include_chart_js: bool = True) -> list[Path
 
 def _chart_helpers_js() -> str:
     return """function fillSelect(el, options) {
-  el.innerHTML = options.map(o => `<option value="${o.v}">${o.l}</option>`).join("");
+  el.replaceChildren();
+  for (const o of options) {
+    const opt = document.createElement('option');
+    opt.value = String(o.v);
+    opt.textContent = String(o.l);
+    el.appendChild(opt);
+  }
 }
 function brandVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -365,7 +372,7 @@ def _render_onboarding(
             if t.get("tag")
         ],
     }
-    payload = json.dumps(slim, separators=(",", ":"))
+    payload = html_safe_json(slim)
     return _page(
         f"""{chrome_mod.header(title=copy_mod.H1_ONBOARDING, purpose=copy_mod.PURPOSE_ONBOARDING, tenant=tenant, pulled_at=pulled, nav_html=chrome_mod.nav("on", include_sast=include_sast, include_patches=include_patches))}
 {copy_mod.GLOSSARY_HTML}
@@ -715,7 +722,7 @@ def _render_version_sprawl(
         "perPath": report.get("perPath") or {},
         "perTag": report.get("perTag") or {},
     }
-    payload = json.dumps(slim, separators=(",", ":"))
+    payload = html_safe_json(slim)
     return _page(
         f"""{chrome_mod.header(title=copy_mod.H1_VERSION_SPRAWL, purpose=copy_mod.PURPOSE_VERSION_SPRAWL, tenant=tenant, pulled_at=pulled, nav_html=chrome_mod.nav("vs", include_sast=include_sast, include_patches=include_patches))}
 {copy_mod.GLOSSARY_HTML}
@@ -944,7 +951,7 @@ def _render_sca_burndown(
         "prActiveProjectUuids": report.get("prActiveProjectUuids") or [],
         "throughput": _slim_throughput(tp),
     }
-    payload = json.dumps(slim, separators=(",", ":"))
+    payload = html_safe_json(slim)
     pending_caption = copy_mod.PENDING_TAG_CAPTION
     window_net = copy_mod.STAT_WINDOW_NET
     main_label = copy_mod.MAIN_THROUGHPUT_LABEL
@@ -976,13 +983,13 @@ def _render_sca_burndown(
 {_chart_helpers_js()}
 {_burndown_helpers_js()}
 const CUBE = {payload};
-const PENDING_CAPTION = {json.dumps(pending_caption)};
-const WINDOW_NET = {json.dumps(window_net)};
-const MAIN_LABEL = {json.dumps(main_label)};
-const AVG_SCANS_LABEL = {json.dumps(avg_scans_label)};
-const GAP_DIFF_HELP = {json.dumps(gap_diff_help)};
-const LEADERS_NARROW = {json.dumps(leaders_narrow)};
-const LEADERS_WIDEN = {json.dumps(leaders_widen)};
+const PENDING_CAPTION = {html_safe_json(pending_caption)};
+const WINDOW_NET = {html_safe_json(window_net)};
+const MAIN_LABEL = {html_safe_json(main_label)};
+const AVG_SCANS_LABEL = {html_safe_json(avg_scans_label)};
+const GAP_DIFF_HELP = {html_safe_json(gap_diff_help)};
+const LEADERS_NARROW = {html_safe_json(leaders_narrow)};
+const LEADERS_WIDEN = {html_safe_json(leaders_widen)};
 function scopeBlock() {{
   const scope = document.getElementById("scope").value || "main";
   if (CUBE.scopes && CUBE.scopes[scope]) return CUBE.scopes[scope];
@@ -1186,7 +1193,7 @@ def _render_sast_burndown(
         "prActiveProjectUuids": report.get("prActiveProjectUuids") or [],
         "throughput": _slim_throughput(sca_tp),
     }
-    payload = json.dumps(slim, separators=(",", ":"))
+    payload = html_safe_json(slim)
     pending_caption = copy_mod.PENDING_TAG_CAPTION
     window_net = copy_mod.STAT_WINDOW_NET
     tag_help = copy_mod.TAG_HELP
@@ -1217,11 +1224,11 @@ def _render_sast_burndown(
 {_chart_helpers_js()}
 {_burndown_helpers_js()}
 const CUBE = {payload};
-const PENDING_CAPTION = {json.dumps(pending_caption)};
-const WINDOW_NET = {json.dumps(window_net)};
-const GAP_DIFF_HELP = {json.dumps(gap_diff_help)};
-const LEADERS_NARROW = {json.dumps(leaders_narrow)};
-const LEADERS_WIDEN = {json.dumps(leaders_widen)};
+const PENDING_CAPTION = {html_safe_json(pending_caption)};
+const WINDOW_NET = {html_safe_json(window_net)};
+const GAP_DIFF_HELP = {html_safe_json(gap_diff_help)};
+const LEADERS_NARROW = {html_safe_json(leaders_narrow)};
+const LEADERS_WIDEN = {html_safe_json(leaders_widen)};
 const FACET_OPTIONS = {{
   sast: [
     {{v:"all", l:"All OpenGrep"}},

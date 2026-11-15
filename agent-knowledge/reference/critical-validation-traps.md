@@ -64,3 +64,28 @@ plane. Hits often appear under `response.list.objects`.
 Prefer `MalwareExposure` / `MalwareExposureQuery` (customer namespace) over
 `Malware.list` on `oss` for blast-radius asks. Use `QueryMalware` only for
 coordinate identity on the catalog plane.
+
+## pagination-completeness-capped
+
+`ResourcePage.completeness` is `complete` only when the server returned no next
+cursor. Client `max_pages` / `max_items` caps yield `capped`; deadline/cancel
+yield `unknown`. An empty `items` list with `completeness != "complete"` is
+**not** proof of absence — use `list_pages` / `list_pages_by_project` /
+`list_pages_for_context` when hosts must distinguish stop reasons. Flat
+`list()` materializes rows without completeness metadata.
+
+## route-context-edge-required
+
+`list_for_context` / `list_pages_for_context` apply only to kinds with a
+route-contract `list_by_context_partition` edge (Finding, PackageVersion,
+DependencyMetadata, …). Calling them on `ScanResult` / `Project` raises
+`RouteNotApplicableError`. Prefer
+`endorlabs.describe_resource(attr).route_methods` (offline) or
+`client.<Kind>.describe()` before assuming mixin methods exist.
+
+## scan-dependency-receipt-unavailable
+
+`read_scan_dependency_receipt(...)` returns a typed receipt with
+`status="unavailable"` until a platform scan-bound digest read exists. Do
+**not** invent digests or substitute Artifact / PackageVersionSourceMetadata
+checksums as scan evidence.

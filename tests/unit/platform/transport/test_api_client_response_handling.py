@@ -153,6 +153,9 @@ class TestAPIClientResponseHandling:
 
         assert authed_client.client is not None
         auth_calls: list[int] = []
+        # Both workers must observe 401 with the *same* rejected bearer before
+        # either reauthenticates (true concurrent wave).
+        request_barrier = threading.Barrier(2)
 
         def _slow_api_key_auth(self: APIClient) -> str | None:
             auth_calls.append(1)
@@ -160,16 +163,33 @@ class TestAPIClientResponseHandling:
             self._apply_session_token("NEW_TOKEN")
             return "NEW_TOKEN"
 
-        first = _response(401, text="Unauthorized")
-        second = _response(200, text='{"ok":true}')
-        authed_client.client.request.side_effect = [first, first, second, second]
+        responses = [
+            _response(401, text="Unauthorized"),
+            _response(401, text="Unauthorized"),
+            _response(200, text='{"ok":true}'),
+            _response(200, text='{"ok":true}'),
+        ]
+        response_idx = {"i": 0}
+        lock = threading.Lock()
+
+        def _gated_request(*args: object, **kwargs: object) -> httpx.Response:
+            # First two calls (initial concurrent GETs) rendezvous before
+            # returning 401 so both reject the same bearer.
+            with lock:
+                idx = response_idx["i"]
+                response_idx["i"] = idx + 1
+            if idx < 2:
+                request_barrier.wait(timeout=5.0)
+            return responses[idx]
+
+        authed_client.client.request.side_effect = _gated_request
 
         with patch.object(APIClient, "_authenticate_api_key", _slow_api_key_auth):
             results: list[int] = []
-            barrier = threading.Barrier(2)
+            start = threading.Barrier(2)
 
             def _worker() -> None:
-                barrier.wait()
+                start.wait()
                 response = authed_client.get("/v1/projects")
                 results.append(response.status_code)
 
@@ -179,5 +199,33 @@ class TestAPIClientResponseHandling:
             for thread in threads:
                 thread.join(timeout=5.0)
 
-        assert results == [200, 200]
+        assert sorted(results) == [200, 200]
         assert len(auth_calls) == 1
+
+    def test_sequential_401_waves_each_refresh(
+        self,
+        authed_client: APIClient,
+    ) -> None:
+        """A01: two independent 401 episodes each call authenticate once."""
+        assert authed_client.client is not None
+        auth_calls: list[str] = []
+
+        def _api_key_auth(self: APIClient) -> str | None:
+            token = f"TOK-{len(auth_calls) + 1}"
+            auth_calls.append(token)
+            self._apply_session_token(token)
+            return token
+
+        sequence = [
+            _response(401, text="Unauthorized"),
+            _response(200, text='{"ok":true}'),
+            _response(401, text="Unauthorized"),
+            _response(200, text='{"ok":true}'),
+        ]
+        authed_client.client.request.side_effect = sequence
+
+        with patch.object(APIClient, "_authenticate_api_key", _api_key_auth):
+            assert authed_client.get("/v1/projects").status_code == 200
+            assert authed_client.get("/v1/projects").status_code == 200
+
+        assert auth_calls == ["TOK-1", "TOK-2"]

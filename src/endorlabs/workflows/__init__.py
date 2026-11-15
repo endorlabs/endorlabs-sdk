@@ -1,7 +1,11 @@
 """Composable workflow functions for the Endor Labs platform.
 
-Experimental: API may change; not covered by the same stability guarantees
-as the rest of the SDK.
+**Departing at v1.0.0:** This package (CLIs, reports, estate, exports) will leave
+the core ``endorlabs`` wheel as a breaking change. A successor distribution
+(``endorlabs-workflows``) will be released before removal. Through 0.x these
+modules remain importable but are **not** semver-protected — only ``Client`` /
+``APIClient`` and resource facades are. See the changelog and README API
+stability notes.
 
 Workflows sit between the Client facade (CRUD) and consumer surfaces
 (CLI, agents, notebooks). Each function takes a ``Client`` instance,

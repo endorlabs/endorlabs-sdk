@@ -8,6 +8,14 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- **Client identity contract:** default branded `User-Agent`
+  (`endorlabs-sdk/<ver>`), `x-endor-caller` / `x-endor-caller-version`, and
+  optional `x-endor-op-comment` via `ClientIdentity` (`sdk`, `workflow`,
+  `custom`). Normative text in [contracts.md](contracts.md#client-identity) and
+  shipped `contracts/client-identity.md`. Injected `http_client` headers are
+  preserved when already set; hosts must not forge `endorctl` caller identity.
+  `endor-reports` uses `ClientIdentity.workflow("endor-reports")`.
+
 - Data-first reachability library: `acquire_reachability_context(client, …)`
   returns typed evidence without file I/O; CLI writes via
   `write_reachability_context`. Pure
@@ -33,7 +41,9 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
   `Client` / auth (SDK-003). `describe_filter_fields(attr_name)` curated field
   paths + enum snippet pointer (SDK-009).
 - Facade `describe` / `describe_resource` route methods include
-  `list_pages_by_project` / `list_pages_for_context` when present.
+  `list_pages_by_project` / `list_pages_for_context` when the matching
+  route-contract list edge exists (not advertised for kinds without a
+  scan-plane partition).
 - Host-integration contract suite:
   `tests/unit/hosting/test_host_integration_contract.py` (portable hosting
   surfaces — pages, transport, acquires, describe/filter discovery, typed
@@ -54,7 +64,52 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- **v1 preview:** `endorlabs.workflows` (CLIs, reports, estate, exports) will
+  leave the core `endorlabs` wheel at **v1.0.0** as a breaking change. A
+  successor package (`endorlabs-workflows`) will be released before removal.
+  Through 0.x, modules remain importable but are not semver-protected.
+  Protected surface: `Client` / `APIClient` and resource facades only.
+  README API stability and `workflows` package banner updated accordingly.
+- Host budgets are real work caps: `max_items` shrinks request `page_size`
+  before fetch; retry/auth backoff is interruptible via `cancel_event` /
+  `deadline_seconds`; 401 API-key reauth coalesces per rejected token
+  generation. `ResourcePage.owner_namespace` is request scope only.
+- Scan-pair / scan-log acquisition re-raises host cancel/deadline errors
+  (fail closed). Optional scope/parent/window/order validation on
+  `assemble_scan_pair_evidence` / `acquire_scan_pair_evidence`.
+- Reachability `*_truncated` flags stay unknown when bounds are not applied;
+  scan-result acquires report partial when limits/skips apply.
+- `draft_update_plan` rejects from registry ops/read-only fields and
+  revision mismatch (not every non-empty patch is `ready`).
+- `inspect_predicate` data-only filter compiler inspection; filter field
+  discovery includes `field_type`. Toolchain `list_catalog` returns
+  normalized choices + completeness. BOM adjacency string length capped
+  at 4096 via `validate_bom_adjacency_entry`.
+- Report HTML embeds use HTML-safe JSON; select fill uses DOM APIs (A02).
+- Findings-export checkpoints carry filter/mask identity; missing artifacts
+  invalidate completion; pagination caps are not marked complete (A04/A06).
+- Estate finding collect rewrites atomically and schedules independently of
+  DM (A05). Call-graph decompress enforces a streaming total-byte cap (A03).
+- Pagination observers emit `page` events; terminal observations include
+  `deadline` / `cancelled` stop reasons (SDK-010).
+
 ### Fixed
+
+- `list_for_context` / `list_pages_for_context` without a route-contract edge
+  raise `RouteNotApplicableError` (was opaque `RuntimeError`);
+  `describe_resource` no longer advertises those methods on kinds such as
+  `ScanResult` / `Project`. Client stubs emit context + page twins for all
+  contract kinds (e.g. `DependencyMetadata`), not only specialized Finding /
+  PackageVersion overrides.
+- `list(parent=uuid, namespace=child)` keeps caller `namespace=` when the parent
+  has no `tenant_meta` (was silently falling back to the client tenant root —
+  broke `acquire_scan_results` UUID + shard namespace).
+- Relationship `list_params=ListParameters(...)` merges into wire params;
+  `RouteResult.truncated` for parent-list routes no longer treats every
+  non-empty `max_pages` result as truncated.
+- Flat `APIClient.get_all` raises `DeadlineExceededError` /
+  `RequestCancelledError` when a host budget stops pagination (no silent
+  partial list). `RouteNotApplicableError` is exported from `endorlabs`.
 
 ### Breaking
 

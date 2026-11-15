@@ -80,6 +80,24 @@ def test_api_client_deadline_blocks_request(clear_auth_env: None) -> None:
     client.close()
 
 
+def test_get_all_raises_when_deadline_stops_pagination(
+    monkeypatch: pytest.MonkeyPatch, clear_auth_env: None
+) -> None:
+    """Flat get_all must not silently return a partial materialization."""
+    with patch.object(APIClient, "_ensure_fresh_token"):
+        client = APIClient(token="test-token", deadline_seconds=60.0)
+    monkeypatch.setattr(client, "_ensure_authenticated", lambda: None)
+    monkeypatch.setattr(
+        client,
+        "_host_stop_reason",
+        lambda: "deadline",
+    )
+
+    with pytest.raises(DeadlineExceededError, match="deadline_seconds"):
+        list(client.get_all("/v1/namespaces/t/findings"))
+    client.close()
+
+
 def test_api_client_does_not_close_injected_http_client(
     clear_auth_env: None,
 ) -> None:
@@ -161,3 +179,87 @@ def test_iter_pages_terminal_metadata(
     assert pages[1].completeness == "complete"
     assert [i["uuid"] for i in pages[1].items] == ["c"]
     client.close()
+
+
+def test_iter_pages_clamps_page_size_to_max_items_budget(
+    monkeypatch: pytest.MonkeyPatch, clear_auth_env: None
+) -> None:
+    """SDK-002: max_items must shrink wire page_size before fetch."""
+    with patch.object(APIClient, "_ensure_fresh_token"):
+        client = APIClient(token="test-token")
+    seen: list[dict[str, Any]] = []
+
+    def fake_get(url: str, **kwargs: Any) -> Any:
+        params = dict(kwargs.get("params") or {})
+        seen.append(params)
+        resp = MagicMock()
+        resp.json.return_value = {
+            "list": {
+                "objects": [{"uuid": f"r{i}"} for i in range(100)],
+                "response": {},
+            }
+        }
+        resp.status_code = 200
+        return resp
+
+    monkeypatch.setattr(client, "get", fake_get)
+    monkeypatch.setattr(client, "_ensure_authenticated", lambda: None)
+    monkeypatch.setattr(client, "_raise_if_host_budget_exceeded", lambda: None)
+
+    pages = list(
+        client.iter_pages(
+            "v1/namespaces/example-tenant/findings",
+            owner_namespace="example-tenant",
+            params={"list_parameters.page_size": 100},
+            requested_page_size=100,
+            max_items=5,
+        )
+    )
+    assert seen[0].get("list_parameters.page_size") == 5
+    assert len(pages) == 1
+    assert len(pages[0].items) == 5
+    assert pages[0].stop_reason in {"max_items", "complete"}
+    client.close()
+
+
+def test_interruptible_backoff_honors_cancel_event(
+    clear_auth_env: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    event = threading.Event()
+    with patch.object(APIClient, "_ensure_fresh_token"):
+        client = APIClient(token="test-token", cancel_event=event)
+
+    def _set_soon() -> None:
+        event.set()
+
+    threading.Timer(0.05, _set_soon).start()
+    started = __import__("time").monotonic()
+    with pytest.raises(RequestCancelledError):
+        client._interruptible_backoff(3.0)
+    elapsed = __import__("time").monotonic() - started
+    assert elapsed < 1.5
+    client.close()
+
+
+def test_repeated_cursor_stop_reason() -> None:
+    calls = {"n": 0}
+
+    def fetch_page(cursor: PageCursor | None) -> dict[str, Any]:
+        calls["n"] += 1
+        return {"items": [calls["n"]], "tok": "same"}
+
+    def next_cursor(page: dict[str, Any]) -> PageCursor:
+        return PageCursor(page_token="same")
+
+    bound = PaginationBound(max_pages=5)
+    pages = list(
+        iter_paginated_pages(
+            fetch_page,
+            next_cursor=next_cursor,
+            bound=bound,
+            extract_items=lambda p: p["items"],
+            label="loop",
+        )
+    )
+    assert bound.stop_reason == "repeated_cursor"
+    assert len(pages) >= 1

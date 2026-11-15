@@ -23,6 +23,8 @@
 
 **Default:** `endorlabs.Client(...)` without `init()` — sufficient for API calls and `endorlabs.workflows` CLIs.
 
+**Stability:** Only `Client` / `APIClient` and resource facades are semver-protected. `endorlabs.workflows` (reports, estate, exports, console scripts) is scheduled to leave the core wheel at **v1.0.0** — do not treat workflow modules as a stable SDK surface.
+
 **Bootstrap when:** the agent reads skills/rules/contracts from disk, greps offline OpenAPI, or writes under `.endorlabs/` (`reports/`, `tasks/`). See [Bootstrap](#bootstrap).
 
 Shipped bootstrap rules (`endor-namespace-scoping`, `endor-list-query-performance`, `endor-workspace-layout`, …) expand namespace, list, and workspace topics — load via `agent_knowledge_bootstrap_paths()` or `.endorlabs/_cache/sdk/rules/`.
@@ -34,7 +36,7 @@ Canonical trap text: shipped
 [critical-validation-traps.md](agent-knowledge/reference/critical-validation-traps.md)
 (also via Tier-0 [INDEX.md](agent-knowledge/INDEX.md) → `references[]`).
 
-<!-- trap-ids: ambiguous-project-url, project-scoped-list-namespace, finding-branch-refs, tenant-wide-scan-cost, list-masks-return-dict, portable-examples -->
+<!-- trap-ids: ambiguous-project-url, project-scoped-list-namespace, finding-branch-refs, tenant-wide-scan-cost, list-masks-return-dict, portable-examples, pagination-completeness-capped, route-context-edge-required, scan-dependency-receipt-unavailable -->
 
 - **ambiguous-project-url** — identical `meta.name` may exist under multiple child namespaces; use `Project.search_by_name(..., traverse=True, max_pages=…)` or UUID `get()`.
 - **project-scoped-list-namespace** — resolve `Project` first; pass `namespace=project.namespace` or `list_by_project`.
@@ -42,10 +44,13 @@ Canonical trap text: shipped
 - **tenant-wide-scan-cost** — prefer `--project-name` / `--project-uuid` over `--all-projects` for interactive RCA.
 - **list-masks-return-dict** — non-empty `mask=` → `dict` rows from `list()` / `search_by_*`.
 - **portable-examples** — placeholders only in tracked content; integration tenants via env.
+- **pagination-completeness-capped** — empty `ResourcePage` with `completeness != "complete"` ≠ absence; prefer `list_pages_*` for hosts.
+- **route-context-edge-required** — `list_for_context` only on route-contract kinds; else `RouteNotApplicableError` — check `describe_resource`.
+- **scan-dependency-receipt-unavailable** — typed `unavailable` receipt; never invent digests or reuse Artifact/PV hashes.
 
 ### Contributor extras (not trap-table rows)
 
-- **Generated accessor helpers:** `Finding.list_by_project`, `Finding.list_for_context`, `ScanResult.list_by_project`, `Finding.to_dependency_metadata` — [resource-routes.md](docs/generated-reference/resource-routes.md).
+- **Generated accessor helpers:** `Finding.list_by_project`, `Finding.list_for_context`, `list_pages_*` twins, `ScanResult.list_by_project`, `Finding.to_dependency_metadata` — [resource-routes.md](docs/generated-reference/resource-routes.md). Offline: `endorlabs.describe_resource`. Hosting contract: `tests/unit/hosting/test_host_integration_contract.py`.
 - **Relationship map:** `estate.analyze.project_map.map` uses a bounded `PackageVersion` list — distinguish wrong namespace / unscanned consumers from pagination truncation before raising caps.
 - **List deserialization vs API drift:** Pydantic validation failures on `list()` → model-sync / payload tolerance (**endor-troubleshoot-sdk**, `devtools/codegen/sync/`).
 - **Sharded parallel lists:** [list-query-performance.md](docs/contributing/list-query-performance.md#sharded-parallel-lists).

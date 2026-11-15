@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from endorlabs.context.paths import default_reports_subdir, sanitize_path_segment
+from endorlabs.workflows.reports.export.html.safe_embed import html_safe_json
 
 RUN_BUCKET = "package-resolution"
 PAGE_SIZE = 100
@@ -262,7 +263,7 @@ def render_html(
         "meta": meta,
         "rows": rows,
     }
-    data_json = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+    data_json = html_safe_json(payload)
 
     return f"""<!DOCTYPE html>
 <html lang="en">

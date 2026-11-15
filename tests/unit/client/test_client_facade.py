@@ -1093,6 +1093,25 @@ class TestBuildListKwargs:
         assert "parent-uuid-1" in lp.filter
         assert args[2] == TEST_MAX_PAGES
 
+    def test_parent_uuid_string_keeps_explicit_namespace(
+        self, client_with_mock_transport: Client
+    ) -> None:
+        """Bare UUID parent must not drop caller namespace= to the client tenant."""
+        client = client_with_mock_transport
+        mock_list = Mock(return_value=[])
+        client.ScanResult._ops.list = mock_list
+        client.ScanResult.list(
+            parent="parent-uuid-1",
+            namespace="tenant.team",
+            max_pages=TEST_MAX_PAGES,
+        )
+        args, _ = mock_list.call_args
+        assert args[0] == "tenant.team"
+        lp = args[1]
+        assert lp is not None
+        assert "meta.parent_uuid" in lp.filter
+        assert "parent-uuid-1" in lp.filter
+
     def test_identity_kwargs_translated_to_filter(
         self, client_with_mock_transport: Client
     ) -> None:

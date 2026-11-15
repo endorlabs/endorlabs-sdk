@@ -12,13 +12,21 @@ Normative guidance for finding resources before relationship accessors (`list_by
 | API | Returns | When |
 | --- | ------- | ---- |
 | `client.<Kind>.describe()` | `FacadeDescription` (`print` for text) | Live list kwargs, identity `**kwargs`, routes — **no network**; `Client()` without credentials is enough (auth on first API call) |
+| `endorlabs.describe_resource(attr)` | `FacadeDescription` | Offline / no Client; `route_methods` is **edge-gated** |
+| `describe_filter_fields` / `describe_filter_operators` | Discovery dataclasses | Offline filter catalog (SDK-009) |
 | `search_by_*(query, …)` | `list[T]` or `list[dict]` with `mask=` | Fuzzy human/LLM input; always bounded |
 | `list(**kwargs)` | Same as today | Custom MQL, grouping, masked rows |
+| `list_pages(**kwargs)` | `Iterator[ResourcePage]` | Host-bounded reads; same list kwargs + `max_items` — see [list-parameters.md#bounded-pages](list-parameters.md#bounded-pages) |
 | `get(uuid)` | Single model | Known UUID |
-| `list_by_*` / `list_for_context` | `list[T]` or `list[dict]` with `mask=` | Cross-kind list edges from route contract |
+| `list_by_*` / `list_for_context` | `list[T]` or `list[dict]` with `mask=` | Cross-kind list edges from route contract (default `max_pages=1` on route executor) |
+| `list_pages_by_project` / `list_pages_for_context` | `Iterator[ResourcePage]` | Page twins of the list edges above (only when the edge exists) |
 | `to_*` | `RouteResult` | Stitch / GET-with-fallback — `.value`, `.edge_used`, `.warnings`; iterable |
 
 Filter enum literals (examples): [reference/filter-enum-snippets.md](../reference/filter-enum-snippets.md). Relationship edge inventory: [reference/resource-routes.md](../reference/resource-routes.md).
+
+`list_for_context` / `list_pages_for_context` without a route-contract edge raise
+`RouteNotApplicableError` (e.g. `ScanResult` / `Project`). Check
+`describe_resource(attr).route_methods` before calling.
 
 **Removed (breaking):** `lookup()`, `Project.resolve()` — no shims. Use `search_by_*` + explicit disambiguation or `get(uuid)`.
 
@@ -36,7 +44,7 @@ Filter enum literals (examples): [reference/filter-enum-snippets.md](../referenc
 | `.warnings` | Non-fatal issues (ambiguous attribute match, list-only fields on GET paths) |
 | `.truncated` | Hint when stitch resolution picked one of many rows |
 
-Namespace on list/stitch accessors is taken from the **source resource** unless `namespace=` is passed. Forward `filter`, `mask`, `max_pages`, and other list kwargs like `list()`.
+Namespace on list/stitch accessors is taken from the **source resource** unless `namespace=` is passed. Bare UUID parents keep caller `namespace=` (do not silently fall back to the client tenant root). Forward `filter`, `mask`, `max_pages`, `list_params`, and other list kwargs like `list()` — route executor defaults `max_pages=1`.
 
 ## `search_by_*` parameters
 
