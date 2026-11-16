@@ -52,7 +52,7 @@ class ResourcePage[T]:
     """
 
     items: tuple[T, ...]
-    owner_namespace: str | None
+    owner_namespace: str | None  # request scope from the caller; not inferred
     traverse: bool
     requested_page_size: int | None
     page_index: int

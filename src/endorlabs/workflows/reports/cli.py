@@ -547,11 +547,13 @@ def _default_parity_dir(namespace: str) -> Path:
 
 
 def _packet_client(tenant: str, timeout: float) -> endorlabs.Client:
-    """Packet transport. ``x-endor-op-comment`` names this workflow in slow logs."""
+    """Packet transport. Identity headers name this workflow in slow logs."""
+    from endorlabs.core.client_identity import ClientIdentity
+
     return endorlabs.Client(
         tenant=tenant,
         timeout=timeout,
-        op_comment=f"endor-reports/{endorlabs.__version__}",
+        identity=ClientIdentity.workflow("endor-reports"),
     )
 
 

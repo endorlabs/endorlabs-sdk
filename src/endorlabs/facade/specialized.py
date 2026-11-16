@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, cast, override
+from typing import TYPE_CHECKING, Any, cast
 
 from ..core.exceptions import RouteNotApplicableError
 from ..utils.namespace import resolve_namespace_for_resource
@@ -309,24 +309,6 @@ class PackageVersionFacade(ResourceRuntimeFacade[Any]):
             "project.package_versions", source=project, **kwargs
         )
 
-    @override
-    def list_for_context(
-        self,
-        source: Any,
-        *,
-        filter: str | FilterExpression | None = None,
-        namespace: str | None = None,
-        **kwargs: Any,
-    ) -> list[Any]:
-        """List package versions in the same scan plane as *source*."""
-        if filter is not None:
-            kwargs = {**kwargs, "filter": filter}
-        if namespace is not None:
-            kwargs = {**kwargs, "namespace": namespace}
-        return self._execute_route_list(
-            "scan.package_versions", source=source, **kwargs
-        )
-
 
 class FindingFacade(ResourceRuntimeFacade[Any]):
     """Finding facade with generated relationship accessors."""
@@ -354,22 +336,6 @@ class FindingFacade(ResourceRuntimeFacade[Any]):
         if filter is not None:
             kwargs = {**kwargs, "filter": filter}
         return self._execute_route_pages("project.findings", source=project, **kwargs)
-
-    @override
-    def list_for_context(
-        self,
-        source: Any,
-        *,
-        filter: str | FilterExpression | None = None,
-        namespace: str | None = None,
-        **kwargs: Any,
-    ) -> list[Any]:
-        """List findings in the same scan plane as *source* (``scan.findings``)."""
-        if filter is not None:
-            kwargs = {**kwargs, "filter": filter}
-        if namespace is not None:
-            kwargs = {**kwargs, "namespace": namespace}
-        return self._execute_route_list("scan.findings", source=source, **kwargs)
 
     def to_dependency_metadata(
         self,
@@ -652,6 +618,28 @@ class SupportedToolChainVersionFacade:
         )
 
         return list_supported_toolchain_versions(
+            self._client,
+            namespace=namespace or DEFAULT_NAMESPACE,
+            filter_expr=filter,
+            max_pages=max_pages,
+            max_items=max_items,
+        )
+
+    def list_catalog(
+        self,
+        *,
+        namespace: str | None = None,
+        filter: str | None = None,
+        max_pages: int | None = None,
+        max_items: int | None = None,
+    ) -> Any:
+        """List toolchain rows with normalized choices and completeness."""
+        from ..resources.supported_toolchain import (
+            DEFAULT_NAMESPACE,
+            list_supported_toolchain_catalog,
+        )
+
+        return list_supported_toolchain_catalog(
             self._client,
             namespace=namespace or DEFAULT_NAMESPACE,
             filter_expr=filter,

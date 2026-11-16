@@ -17,6 +17,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `ApiKeyCredentials`
 - `BearerCredentials`
 - `Client`
+- `ClientIdentity`
 - `ConflictError`
 - `DeadlineExceededError`
 - `EndorAPIError`
@@ -38,6 +39,7 @@ Normative usage: [facade-helpers.md](../guides/facade-helpers.md).
 - `RateLimitError`
 - `RequestCancelledError`
 - `ResourcePage`
+- `RouteNotApplicableError`
 - `ScanDependencyReceipt`
 - `SdkDiscovery`
 - `ServerError`

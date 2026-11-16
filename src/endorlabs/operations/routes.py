@@ -109,12 +109,20 @@ def merge_route_list_parameters(
     query kwargs (ignored by the API). Folding puts them on
     ``list_parameters.*`` so UUID-field and context-partition routes honor the
     same typed options as facade ``list`` / ``list_pages``.
+
+    ``list_params=ListParameters(...)`` is merged first; flat kwargs override
+    those fields (same precedence as facade ``list``).
     """
     options: dict[str, Any] = {}
     leftover: dict[str, Any] = {}
+    base_lp = list_kwargs.get("list_params")
+    if isinstance(base_lp, ListParameters):
+        options.update(base_lp.model_dump(exclude_none=True))
+    elif base_lp is not None:
+        leftover["list_params"] = base_lp
     limit_alias = list_kwargs.get("limit")
     for key, value in list_kwargs.items():
-        if key == "limit":
+        if key in {"limit", "list_params"}:
             continue
         if key in _LIST_OPTION_KEYS and value is not None:
             options[key] = value
@@ -452,11 +460,20 @@ class RouteExecutor:
                 max_pages=max_pages,
                 **list_kwargs,
             )
+            row_list = list(rows)
+            page_size = list_kwargs.get("page_size")
+            # Without a known page_size, do not invent truncation (len>=0 was
+            # always true for non-empty results when max_pages was set).
+            truncated = (
+                max_pages is not None
+                and isinstance(page_size, int)
+                and page_size > 0
+                and len(row_list) >= page_size * max_pages
+            )
             return RouteResult(
                 edge_used=edge.id,
-                values=list(rows),
-                truncated=max_pages is not None
-                and len(rows) >= (list_kwargs.get("page_size") or 0),
+                values=row_list,
+                truncated=truncated,
             )
         parent_uuid = resolve_source_uuid(source)
         if not parent_uuid:

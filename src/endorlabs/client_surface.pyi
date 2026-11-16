@@ -7,6 +7,7 @@ from collections.abc import Callable, Iterator
 from typing import Any
 
 from .api_client import APIClient
+from .core.client_identity import ClientIdentity
 from .core.filter import FilterExpression
 from .core.types import ListParameters
 from .core.whoami import WhoamiResult
@@ -419,6 +420,22 @@ class _DependencyMetadataFacade(ResourceRuntimeFacade[DependencyMetadata]):
         importer_data: Any | None = None,
         **kwargs: Any,
     ) -> DependencyMetadata: ...
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Any]: ...
+    def list_pages_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Any]: ...
 
 class _EndorLicenseFacade(ListableFacade[EndorLicense]):
     """Platform license assigned to a tenant."""
@@ -501,17 +518,6 @@ class _FindingFacade(FindingFacade):
         """List findings for a project (generated accessor ``project.findings``)."""
         ...
 
-    def list_for_context(
-        self,
-        source: Any,
-        *,
-        filter: str | FilterExpression | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> list[Any]:
-        """List findings in the same scan plane as *source* (``scan.findings``)."""
-        ...
-
     def list_pages_by_project(
         self,
         project: Any,
@@ -529,6 +535,23 @@ class _FindingFacade(FindingFacade):
     ) -> RouteResult[Any]:
         """Resolve DependencyMetadata for a finding (accessors with fallback)."""
         ...
+
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Any]: ...
+    def list_pages_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Any]: ...
 
 class _FindingLogFacade(ListableFacade[FindingLog]):
     """Historical snapshot of a finding state."""
@@ -565,6 +588,22 @@ class _FindingLogFacade(ListableFacade[FindingLog]):
         id_or_resource: str | FindingLog,
         namespace: str | None = ...,
     ) -> FindingLog: ...
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Any]: ...
+    def list_pages_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Any]: ...
 
 class _HuggingFaceOrganizationFacade(ListableFacade[HuggingFaceOrganization]):
     """Inventory of a connected Hugging Face organization and its models.
@@ -840,6 +879,22 @@ class _LinterResultFacade(ListableFacade[LinterResult]):
         id_or_resource: str | LinterResult,
         namespace: str | None = ...,
     ) -> LinterResult: ...
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Any]: ...
+    def list_pages_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Any]: ...
 
 class _MalwareFacade(ListableFacade[Malware]):
     """Open-source malware records.
@@ -1003,6 +1058,22 @@ class _MetricFacade(ListableFacade[Metric]):
         id_or_resource: str | Metric,
         namespace: str | None = ...,
     ) -> Metric: ...
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Any]: ...
+    def list_pages_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Any]: ...
 
 class _NamespaceFacade(ResourceRuntimeFacade[Namespace]):
     """Isolate and organize resources in a parent-child hierarchy.
@@ -1235,6 +1306,22 @@ class _PackageLicenseFacade(ResourceRuntimeFacade[PackageLicense]):
         version: Any | None = None,
         **kwargs: Any,
     ) -> PackageLicense: ...
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Any]: ...
+    def list_pages_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Any]: ...
 
 class _PackageManagerFacade(ResourceRuntimeFacade[PackageManager]):
     """Package manager integration and resolution settings.
@@ -1340,17 +1427,6 @@ class _PackageVersionFacade(PackageVersionFacade):
         """List package versions for a project (``project.package_versions``)."""
         ...
 
-    def list_for_context(
-        self,
-        source: Any,
-        *,
-        filter: str | FilterExpression | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> list[Any]:
-        """List package versions in the same scan plane as *source*."""
-        ...
-
     def list_pages_by_project(
         self,
         project: Any,
@@ -1360,6 +1436,23 @@ class _PackageVersionFacade(PackageVersionFacade):
     ) -> Iterator[Any]:
         """Yield ``ResourcePage`` package versions for a project."""
         ...
+
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Any]: ...
+    def list_pages_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Any]: ...
 
 class _PolicyFacade(ResourceRuntimeFacade[Policy]):
     """Rule controlling scan behavior, findings, and workflows.
@@ -1755,6 +1848,23 @@ class _RepositoryVersionFacade(ResourceRuntimeFacade[RepositoryVersion]):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Any]: ...
+    def list_pages_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Any]: ...
+
 class _SBOMExportFacade(ResourceRuntimeFacade[SBOMExport]):
     """Create-only SBOM export for a package version or project.
 
@@ -2060,6 +2170,23 @@ class _ScanWorkflowResultFacade(ResourceRuntimeFacade[ScanWorkflowResult]):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Any]: ...
+    def list_pages_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Any]: ...
+
 class _SemgrepRuleFacade(ResourceRuntimeFacade[SemgrepRule]):
     """Custom SAST rule in Semgrep/OpenGrep format.
 
@@ -2314,6 +2441,23 @@ class _VersionUpgradeFacade(ResourceRuntimeFacade[VersionUpgrade]):
         """List resources with full pagination and optional concurrent mode."""
         ...
 
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Any]: ...
+    def list_pages_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Any]: ...
+
 class _VulnerabilityFacade(VulnerabilityFacade):
     """Open-source vulnerability records.
 
@@ -2445,6 +2589,7 @@ class Client:
         max_retries: int | None = ...,
         base_url: str | None = ...,
         op_comment: str | None = ...,
+        identity: ClientIdentity | None = ...,
         **client_kwargs: Any,
     ) -> None:
         """Resource-oriented client; holds default namespace and exposes resource

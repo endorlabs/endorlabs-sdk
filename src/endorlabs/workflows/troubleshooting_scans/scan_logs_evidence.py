@@ -143,6 +143,8 @@ def acquire_scan_logs(
     yield ``log_outcome="empty"``; capped rounds with remaining pages yield
     ``partial``.
     """
+    from endorlabs.core.exceptions import DeadlineExceededError, RequestCancelledError
+
     effective_end = end_time or dt_to_iso(datetime.now(UTC))
     try:
         messages, rounds = iter_scan_log_batches(
@@ -154,6 +156,9 @@ def acquire_scan_logs(
             start_time=start_time,
             end_time=effective_end,
         )
+    except (RequestCancelledError, DeadlineExceededError):
+        # Host lifetime errors fail closed — never fold into data status=error.
+        raise
     except Exception as exc:
         return ScanLogsEvidence(
             status="error",

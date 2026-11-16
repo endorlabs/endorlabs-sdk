@@ -127,6 +127,8 @@ class RouteHostMixin:
         return executor.execute_pages(edge, source=source, **list_kwargs)
 
     def _list_for_context_edge_id(self) -> str:
+        from ..core.exceptions import RouteNotApplicableError
+
         entry = getattr(self, "_entry", None)
         if entry is None:
             raise RuntimeError("Route host missing registry entry.")
@@ -139,6 +141,11 @@ class RouteHostMixin:
             for e in contract.edges
             if e.public_method == method_name and e.edge == "list_by_context_partition"
         ]
+        if len(matches) == 0:
+            raise RouteNotApplicableError(
+                f"{entry.attr_name}.list_for_context is not a route-contract "
+                "edge (no scan-plane partition for this kind)."
+            )
         if len(matches) != 1:
             raise RuntimeError(
                 f"Expected exactly one list_for_context edge for {entry.attr_name!r}, "
@@ -157,6 +164,8 @@ class RouteHostMixin:
         """List rows in the same scan plane as *source*.
 
         Filters on ``context.type`` and optional ``context.id``.
+        Raises ``RouteNotApplicableError`` when this kind has no
+        ``list_by_context_partition`` route-contract edge.
         """
         edge_id = self._list_for_context_edge_id()
         if filter is not None:
@@ -173,7 +182,11 @@ class RouteHostMixin:
         namespace: str | None = None,
         **kwargs: Any,
     ) -> Iterator[Any]:
-        """Yield ``ResourcePage`` values in the same scan plane as *source*."""
+        """Yield ``ResourcePage`` values in the same scan plane as *source*.
+
+        Raises ``RouteNotApplicableError`` when this kind has no
+        ``list_by_context_partition`` route-contract edge.
+        """
         edge_id = self._list_for_context_edge_id()
         if filter is not None:
             kwargs = {**kwargs, "filter": filter}

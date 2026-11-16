@@ -26,6 +26,16 @@
       ]
     },
     {
+      "id": "client-identity",
+      "path": "contracts/client-identity.md",
+      "tags": [
+        "auth",
+        "headers",
+        "hosting",
+        "transport"
+      ]
+    },
+    {
       "id": "dependency-metadata",
       "path": "contracts/dependency-metadata.md",
       "tags": [
@@ -71,7 +81,7 @@
       ]
     }
   ],
-  "generated_at": "2026-11-15T07:11:32.961177+00:00",
+  "generated_at": "2026-11-15T20:58:15.590750+00:00",
   "index": "INDEX.md",
   "references": [
     {

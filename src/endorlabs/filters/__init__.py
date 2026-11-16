@@ -5,8 +5,10 @@ from endorlabs.filters.discovery import (
     FilterFieldDiscovery,
     FilterFieldInfo,
     FilterOperatorInfo,
+    PredicateInspection,
     describe_filter_fields,
     describe_filter_operators,
+    inspect_predicate,
 )
 from endorlabs.filters.finding_categories import (
     AI_TAG_CLAUSE,
@@ -85,6 +87,7 @@ __all__ = [
     "FilterFieldDiscovery",
     "FilterFieldInfo",
     "FilterOperatorInfo",
+    "PredicateInspection",
     "ai_sast_log_base_filter",
     "category_filter",
     "context_partition_filter",
@@ -94,6 +97,7 @@ __all__ = [
     "estate_findings_filter",
     "finding_log_time_window_filter",
     "fix_available_vuln_filter",
+    "inspect_predicate",
     "main_context_filter",
     "main_context_vulnerability_filter",
     "prd_vuln_filter",

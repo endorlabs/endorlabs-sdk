@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from endorlabs.workflows.reports.export.html import chrome
 from endorlabs.workflows.reports.export.html import copy as copy_mod
+from endorlabs.workflows.reports.export.html.safe_embed import html_safe_json
 
 _PATCHES_PAGE_CSS = """
 .wrap { max-width:1400px; }
@@ -80,7 +80,7 @@ def render_patches_html(
     patches = (cube.get("reports") or {}).get("patches") or {}
     tenant = cube.get("tenant") or ""
     pulled = cube.get("pulledAt") or ""
-    payload = json.dumps(patches, separators=(",", ":"))
+    payload = html_safe_json(patches)
     weights = patches.get("risk_weights") or {}
     critical_weight = weights.get("critical", 2)
     high_weight = weights.get("high", 1)

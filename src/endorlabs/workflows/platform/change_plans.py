@@ -2,12 +2,13 @@
 
 Planning is never permission to apply. Drafts perform no writes. Unsupported
 preconditions are explicit rather than optimistic concurrency claims.
+Rejections are driven from registry metadata when available.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 PlanKind = Literal[
     "policy",
@@ -16,6 +17,13 @@ PlanKind = Literal[
     "snooze",
 ]
 PlanStatus = Literal["draft", "rejected", "ready"]
+
+_KIND_TO_ATTR: dict[PlanKind, str] = {
+    "policy": "Policy",
+    "policy_template": "PolicyTemplate",
+    "scan_profile": "ScanProfile",
+    "snooze": "ExceptionPolicy",
+}
 
 
 def _empty_dict() -> dict[str, Any]:
@@ -42,6 +50,45 @@ class ConfigChangePlan:
     notes: list[str] = field(default_factory=_empty_str_list)
 
 
+def _nested_get(obj: dict[str, Any], dotted: str) -> Any:
+    cur: Any = obj
+    for part in dotted.split("."):
+        if not isinstance(cur, dict):
+            return None
+        typed = cast("dict[str, Any]", cur)
+        cur = typed.get(part)
+    return cur
+
+
+def _registry_rejections(kind: PlanKind, mask: list[str]) -> list[str]:
+    """Reject when registry says update is unavailable or mask is invalid."""
+    rejections: list[str] = []
+    try:
+        from endorlabs.registry import RESOURCE_REGISTRY
+
+        attr = _KIND_TO_ATTR[kind]
+        entry = next((e for e in RESOURCE_REGISTRY if e.attr_name == attr), None)
+    except Exception:
+        entry = None
+    if entry is None:
+        rejections.append(
+            f"registry metadata unavailable for {kind}; "
+            "cannot validate update mask or operations"
+        )
+        return rejections
+    raw_ops = getattr(entry, "supported_ops", ()) or ()
+    ops: frozenset[str] = frozenset(str(op) for op in raw_ops)
+    if "update" not in ops:
+        rejections.append(f"update operation unavailable for {kind}")
+    raw_ro = getattr(entry, "create_convenience_read_only_spec_fields", ()) or ()
+    read_only: set[str] = {str(item) for item in raw_ro}
+    for field_path in mask:
+        leaf = field_path.split(".")[-1]
+        if leaf in read_only or field_path in read_only:
+            rejections.append(f"field not mutable: {field_path}")
+    return rejections
+
+
 def draft_update_plan(
     *,
     kind: PlanKind,
@@ -57,13 +104,16 @@ def draft_update_plan(
 
     When ``require_revision`` is True and ``expected_revision`` is missing,
     the plan is ``rejected`` (precondition unavailable) rather than claiming
-    unconditional apply safety.
+    unconditional apply safety. Registry-backed checks reject unavailable
+    updates and read-only fields. ``ready`` only when all checks pass.
     """
     mask = list(update_mask or sorted(patch.keys()))
     rejections: list[str] = []
     notes = [
         "Planning only — apply requires a separate grant and explicit call.",
     ]
+    if not namespace or not str(namespace).strip():
+        rejections.append("namespace is required")
     if require_revision and not expected_revision:
         rejections.append(
             "expected_revision required but unavailable; "
@@ -73,12 +123,31 @@ def draft_update_plan(
         rejections.append("update_mask is empty")
     if not patch:
         rejections.append("patch is empty")
+    rejections.extend(_registry_rejections(kind, mask))
+
+    if expected_revision and current is not None:
+        current_rev = (
+            _nested_get(current, "meta.update_time")
+            or _nested_get(current, "meta.revision")
+            or current.get("update_time")
+            or current.get("revision")
+        )
+        if current_rev is not None and str(current_rev) != str(expected_revision):
+            rejections.append(
+                "expected_revision does not match current resource revision"
+            )
 
     review_diff: dict[str, Any] = {}
     if current is not None:
         for key in mask:
+            if key in current:
+                before: Any = current.get(key)
+            elif "." in key:
+                before = _nested_get(current, key)
+            else:
+                before = None
             review_diff[key] = {
-                "before": current.get(key),
+                "before": before,
                 "after": patch.get(key),
             }
     else:
