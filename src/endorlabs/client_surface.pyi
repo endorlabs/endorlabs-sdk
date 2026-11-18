@@ -187,6 +187,7 @@ class _AsyncJobFacade(ResourceRuntimeFacade[AsyncJob]):
         sbom: Any | None = None,
         vex: Any | None = None,
         sbom_report: Any | None = None,
+        vex_report: Any | None = None,
         **kwargs: Any,
     ) -> AsyncJob: ...
 

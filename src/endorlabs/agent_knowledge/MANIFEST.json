@@ -81,7 +81,7 @@
       ]
     }
   ],
-  "generated_at": "2026-11-15T20:58:15.590750+00:00",
+  "generated_at": "2026-11-18T17:25:21.543351+00:00",
   "index": "INDEX.md",
   "references": [
     {
@@ -186,7 +186,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.7.5",
+  "sdk_version": "0.7.6",
   "skills": [
     {
       "description": "Use when mapping AI-SAST function_summary vector seeds (entry points / rest_path metadata) onto customer PackageVersion CallGraphData symbols, with hard prechecks that MAIN RepositoryVersion AI-SAST SUCCESS and a function_summary index exist plus a MAIN-context call-graph PackageVersion is decodable. Optional safe BFS via --path-to and/or Finding-derived package tokens (--vuln / --finding-package). Not for Finding/oss SCA reachability proof (endor-reachability-provenance), offline CG-only search (endor-fetch-and-search-call-graph), or NL-only vector browse (endor-vector-query).\n",
@@ -365,7 +365,7 @@
       ]
     },
     {
-      "description": "Use when the user asks for tenant or namespace-level Endor Labs audit reports,\nCSV exports, Cursor canvases, executive HTML report packets (QBR / customer)\nread-out / org onboarding growth / dependency sprawl / SCA\u00b7SAST\u00b7Secrets\nFindingLog burndown), PackageVersion resolution HTML, or workflow summaries\nbacked by bundled report scripts rather than day-0 SDK troubleshooting skills.\nRoutes to auth, project inventory, CI version, finding trend, executive HTML\npacket, package-resolution, and PRF report playbooks. Not for single-project\nscan RCA, finding retrieval, SDK debugging, or policy validation.",
+      "description": "Use when the user asks for tenant or namespace-level Endor Labs audit reports,\nCSV exports, Cursor canvases, executive HTML report packets (QBR / customer)\nread-out / org onboarding growth / dependency sprawl / SCA\u00b7SAST\u00b7Secrets\nFindingLog burndown), PackageVersion resolution HTML, dependency-resolution\n(DEPR) coverage or progress reports, or workflow summaries backed by bundled\nreport scripts rather than day-0 SDK troubleshooting skills.\nRoutes to auth, project inventory, CI version, finding trend, executive HTML\npacket, package-resolution, DEPR coverage, and PRF report playbooks. Not for\nsingle-project scan RCA, finding retrieval, SDK debugging, or policy validation.",
       "id": "endor-workflow-reports",
       "name": "endor-workflow-reports",
       "path": "skills/endor-workflow-reports/SKILL.md",
@@ -530,6 +530,21 @@
       "id": "context-bootstrap",
       "module": "endorlabs.context.cli",
       "skill": null
+    },
+    {
+      "agent_visible": false,
+      "cli": "endor-reports",
+      "composition": "library_api",
+      "default_output": ".endorlabs/reports/depr-coverage/",
+      "id": "dependency-resolution-analysis",
+      "library_entrypoints": [
+        "endorlabs.workflows.reports.analyze.depr_coverage.build_depr_coverage_report",
+        "endorlabs.workflows.reports.analyze.depr_progress.build_progress_artifacts",
+        "endorlabs.workflows.reports.export.html.depr_coverage.render_exec_html",
+        "endorlabs.workflows.reports.export.html.depr_coverage.render_progress_html"
+      ],
+      "module": "endorlabs.workflows.reports.cli",
+      "skill": "endor-workflow-reports"
     },
     {
       "agent_visible": false,

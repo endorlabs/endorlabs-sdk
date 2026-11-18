@@ -1,6 +1,6 @@
 [project]
 name = "endorlabs"
-version = "0.7.5"
+version = "0.7.6"
 description = "Type-safe Python SDK for the Endor Labs REST API — Client, resource facades, and optional agent-context bootstrap"
 authors = [
     { name = "Tim Gowan", email = "tgowan@endor.ai" }
@@ -175,7 +175,7 @@ exclude_lines = [
 
 [tool.codespell]
 skip = ".git,.venv,*.lock,*.json,*.min.js,.endorlabs-context,src/endorlabs/generated"
-ignore-words-list = "endor,endorlabs,practive"
+ignore-words-list = "endor,endorlabs,practive,bu"
 
 [tool.ruff]
 line-length = 88

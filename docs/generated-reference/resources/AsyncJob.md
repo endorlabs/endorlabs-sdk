@@ -51,6 +51,7 @@ Optional:
 - `sbom`
 - `sbom_report`
 - `vex`
+- `vex_report`
 
 Unknown flat kwargs raise `TypeError`. Use `payload=` or nested `spec=` / `meta=` for full control.
 

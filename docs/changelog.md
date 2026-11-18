@@ -8,6 +8,20 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Breaking
+
+## 0.7.6
+
+### Added
+
+- `endor-reports depr-coverage` and `depr-progress`: tenant-wide
+  dependency-resolution (DEPR) coverage EXEC and multi-checkpoint progress
+  reports (dated JSON + Markdown + HTML). Playbook:
+  `agent-knowledge/workflow-reports/endor-depr-coverage/`.
 - **Client identity contract:** default branded `User-Agent`
   (`endorlabs-sdk/<ver>`), `x-endor-caller` / `x-endor-caller-version`, and
   optional `x-endor-op-comment` via `ClientIdentity` (`sdk`, `workflow`,
@@ -64,6 +78,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1269).
 - **v1 preview:** `endorlabs.workflows` (CLIs, reports, estate, exports) will
   leave the core `endorlabs` wheel at **v1.0.0** as a breaking change. A
   successor package (`endorlabs-workflows`) will be released before removal.
@@ -95,6 +110,9 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Fixed
 
+- Log redaction no longer leaks the tail of a secret whose value contains a
+  quote of the other kind or an escaped quote (for example `'token': "O'Reilly..."`);
+  the quoted value now has to close with the quote that opened it.
 - `list_for_context` / `list_pages_for_context` without a route-contract edge
   raise `RouteNotApplicableError` (was opaque `RuntimeError`);
   `describe_resource` no longer advertises those methods on kinds such as

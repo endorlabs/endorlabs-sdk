@@ -169,12 +169,17 @@ class V1AsyncJobType(StrEnum):
     The report registry SBOM handler makes both the human-readable and the
     machine-readable output. It takes SBOMReportJob.Request, not the
     SBOMExportJob.Request of TYPE_SBOM, so it needs its own type.
+     - TYPE_VEX_REPORT: VEX report: a CycloneDX VEX document for the projects a filter selects
+    or for a set of package versions, made by the report registry VEX
+    handler. It takes VEXReportJob.Request, not the VEXExportJob.Request of
+    TYPE_VEX, so it needs its own type.
     """
 
     TYPE_UNSPECIFIED = 'TYPE_UNSPECIFIED'
     TYPE_SBOM = 'TYPE_SBOM'
     TYPE_VEX = 'TYPE_VEX'
     TYPE_SBOM_REPORT = 'TYPE_SBOM_REPORT'
+    TYPE_VEX_REPORT = 'TYPE_VEX_REPORT'
 
 
 class V1CycloneDxSpecVersion(StrEnum):
@@ -546,6 +551,81 @@ class V1VEXExportJobResponse(BaseModel):
     """
 
 
+class V1VEXReportJobRequest(BaseModel):
+    """
+    Request holds the input parameters for running a VEX report job.
+    """
+
+    component_type: V1ExportedVEXComponentType | None = 'COMPONENT_TYPE_UNSPECIFIED'
+    """
+    Library or application classification for the VEX root component.
+    Defaults to application when unset, matching VEXExportJob.
+    """
+    cyclonedx_spec_version: V1CycloneDxSpecVersion | None = (
+        'CYCLONE_DX_SPEC_VERSION_UNSPECIFIED'
+    )
+    """
+    CycloneDx specification version the document conforms to. Leave unset to
+    take the CycloneDx default of 1.5, matching VEXExportJob.
+    """
+    format: V1ExportedVEXFormat | None = 'FORMAT_UNSPECIFIED'
+    """
+    Serialization of the document, JSON or XML. Set with kind.
+    """
+    include_test_dependencies: bool | None = None
+    """
+    Whether to include findings against test and build scoped dependencies.
+    Defaults to false, matching VEXExportJob and SBOMReportJob, so the VEX and
+    the SBOM describe the same production component set.
+    """
+    kind: V1SBOMKind | None = 'SBOM_KIND_UNSPECIFIED'
+    """
+    Specification the document conforms to. VEX is emitted as CycloneDX only.
+    Set with format.
+    """
+    list_projects_filter: str | None = None
+    """
+    Filter expression to select projects (stringified filter). The document
+    covers the vulnerability findings of the matched projects' MAIN context.
+    Set this or package_version_uuids, never both.
+    """
+    package_version_uuids: list[str] | None = None
+    """
+    Package versions the document covers, in place of list_projects_filter.
+    They are read from the caller's namespace, or from the oss namespace when
+    none of them is in the caller's namespace, as for a package picked in
+    Discover.
+    """
+    traverse: bool | None = None
+    """
+    Whether to traverse child namespaces when selecting projects. Ignored with
+    package_version_uuids.
+    """
+
+
+class V1VEXReportJobResponse(BaseModel):
+    """
+    Response holds the output after the VEX report is generated.
+    """
+
+    file_path: str | None = None
+    """
+    The file path of the VEX report in the object storage. Written by the
+    handler, never supplied by the client.
+    """
+    report_url: str | None = None
+    """
+    Signed URL the client uses to download the generated report. Populated by
+    the API server when the job is read after completion.
+    """
+    resource_namespace: str | None = None
+    """
+    Namespace the handler read the package versions from: the caller's
+    namespace, or oss when the fallback fired. The job detail drawer reads it
+    to look up the package versions in scope.
+    """
+
+
 class V1AsyncJobSpecResponse(BaseModel):
     """
     Wrapper holding the type-specific response arm and any error message.
@@ -566,6 +646,10 @@ class V1AsyncJobSpecResponse(BaseModel):
     vex: V1VEXExportJobResponse | None = None
     """
     Populated when Spec.type = TYPE_VEX.
+    """
+    vex_report: V1VEXReportJobResponse | None = None
+    """
+    Populated when Spec.type = TYPE_VEX_REPORT.
     """
 
 
@@ -633,6 +717,12 @@ class V1SBOMReportJobRequest(BaseModel):
     Request holds the input parameters for running an SBOM report job.
     """
 
+    cyclonedx_spec_version: V1CycloneDxSpecVersion | None = (
+        'CYCLONE_DX_SPEC_VERSION_UNSPECIFIED'
+    )
+    """
+    Set only when kind is SBOM_KIND_CYCLONEDX.
+    """
     format: V1ExportedSBOMFormat | None = 'FORMAT_UNSPECIFIED'
     """
     Serialization of the machine-readable output. Set with kind, in place of
@@ -673,6 +763,10 @@ class V1SBOMReportJobRequest(BaseModel):
     Output format of the presentation document. Set this or the kind and format
     pair below, never both.
     """
+    spdx_spec_version: V1SPDXSpecVersion | None = 'SPDX_SPEC_VERSION_UNSPECIFIED'
+    """
+    Set only when kind is SBOM_KIND_SPDX.
+    """
     traverse: bool | None = None
     """
     Whether to traverse child namespaces when selecting projects. Ignored with
@@ -696,6 +790,10 @@ class V1AsyncJobSpecRequest(BaseModel):
     vex: V1VEXExportJobRequest | None = None
     """
     Required when type = TYPE_VEX.
+    """
+    vex_report: V1VEXReportJobRequest | None = None
+    """
+    Required when type = TYPE_VEX_REPORT.
     """
 
 
@@ -724,8 +822,8 @@ class V1AsyncJobSpec(BaseModel):
 
 class AsyncJobServiceCreateAsyncJobBody(BaseModel):
     """
-    AsyncJob is an asynchronous job — SBOM export, VEX export or SBOM report
-    types today, with more types added as they ship.
+    AsyncJob is an asynchronous job — SBOM export, VEX export, SBOM report or
+    VEX report types today, with more types added as they ship.
     """
 
     meta: V1Meta
@@ -751,8 +849,8 @@ class AsyncJobServiceCreateAsyncJobBody(BaseModel):
 
 class V1AsyncJob(BaseModel):
     """
-    AsyncJob is an asynchronous job — SBOM export, VEX export or SBOM report
-    types today, with more types added as they ship.
+    AsyncJob is an asynchronous job — SBOM export, VEX export, SBOM report or
+    VEX report types today, with more types added as they ship.
     """
 
     meta: V1Meta

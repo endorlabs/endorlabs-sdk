@@ -22,8 +22,9 @@ Serialization formats
 Python's ``repr()`` normally quotes both keys and values with single quotes,
 but switches the **value** to double quotes when the value itself contains a
 single quote (e.g. ``'token': "O'Reilly"``).  Patterns 1 and 2 therefore
-use a quote-agnostic character class ``['\"]`` on the value side so that
-all four key/value quoting combinations are covered.
+accept either quote on the value side, and require the value to close with
+the quote that opened it, so that all four key/value quoting combinations
+are covered without leaking the part of the value after an inner quote.
 
 The patterns below cover the repr formats that each credential can appear in.
 
@@ -56,13 +57,23 @@ alternate credential field names (``password``, ``api_key``, ``refresh_token``).
 # ---------------------------------------------------------------------------
 # Pattern 1 - Python dict repr  (single-quote keys, any-quote values)
 # ---------------------------------------------------------------------------
-redaction_pattern: str = r"'(" + "|".join(REDACTED_KEYS) + r")':\s*['\"].*?['\"]"
+_QUOTED_VALUE: str = r"""(?:'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")"""
+"""A single- or double-quoted value, closed by the same quote that opened it.
+
+Backslash escapes (``\\'``, ``\\"``, ``\\\\``) are consumed as part of the value, so
+a quote of the other kind (``"O'Reilly"``) or an escaped quote
+(``'it\\'s'``, ``"a\\"b"``) does not end the match early and leak the rest of
+the secret.
+"""
+
+redaction_pattern: str = r"'(" + "|".join(REDACTED_KEYS) + r")':\s*" + _QUOTED_VALUE
 """Matches single-quoted keys with any-quoted values (e.g. ``'key': 'val'``
 or ``'key': "val'ue"``).
 
-The value side uses ``['\"]`` because Python's ``repr()`` switches the
+The value side accepts either quote because Python's ``repr()`` switches the
 value delimiter to double quotes when the value contains a single quote
-(e.g. ``'token': "O'Reilly"``).
+(e.g. ``'token': "O'Reilly"``). The value must close with the quote that
+opened it (see :data:`_QUOTED_VALUE`).
 
 Risk: ``APIClient`` debug-logs request headers as Python dicts.  The
 ``Authorization`` header and any auth-response dicts serialised via ``str()``
@@ -74,12 +85,12 @@ secret would appear verbatim in DEBUG output.
 # Pattern 2 - JSON repr  (double-quote keys, any-quote values)
 # ---------------------------------------------------------------------------
 json_redaction_pattern: str = (
-    r'"(' + "|".join(REDACTED_KEYS) + r')"\s*:\s*[\'"].*?[\'"]'
+    r'"(' + "|".join(REDACTED_KEYS) + r')"\s*:\s*' + _QUOTED_VALUE
 )
 """Matches double-quoted keys with any-quoted values (e.g. ``"key": "val"``
 or ``"key": 'val'``).
 
-The value side uses ``['\"]`` for symmetry with :data:`redaction_pattern`,
+The value side accepts either quote for symmetry with :data:`redaction_pattern`,
 covering the (unlikely but possible) case where a double-quoted key is
 paired with a single-quoted value in a serialised representation.
 
