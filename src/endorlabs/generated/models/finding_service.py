@@ -2163,11 +2163,13 @@ class V1CallGraphAnalysisType(StrEnum):
      - CALL_GRAPH_ANALYSIS_TYPE_UNSPECIFIED: Unspecified call graph analysis type.
      - CALL_GRAPH_ANALYSIS_TYPE_FULL: Full call graph analysis was performed.
      - CALL_GRAPH_ANALYSIS_TYPE_PRECOMPUTED: Precomputed call graph analysis was used.
+     - CALL_GRAPH_ANALYSIS_TYPE_NONE: No call graph analysis ran for this finding.
     """
 
     CALL_GRAPH_ANALYSIS_TYPE_UNSPECIFIED = 'CALL_GRAPH_ANALYSIS_TYPE_UNSPECIFIED'
     CALL_GRAPH_ANALYSIS_TYPE_FULL = 'CALL_GRAPH_ANALYSIS_TYPE_FULL'
     CALL_GRAPH_ANALYSIS_TYPE_PRECOMPUTED = 'CALL_GRAPH_ANALYSIS_TYPE_PRECOMPUTED'
+    CALL_GRAPH_ANALYSIS_TYPE_NONE = 'CALL_GRAPH_ANALYSIS_TYPE_NONE'
 
 
 class V1Checksum(BaseModel):

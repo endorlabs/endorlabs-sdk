@@ -8,6 +8,16 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Breaking
+
+## 0.7.6
+
+### Added
+
 - `endor-reports depr-coverage` and `depr-progress`: tenant-wide
   dependency-resolution (DEPR) coverage EXEC and multi-checkpoint progress
   reports (dated JSON + Markdown + HTML). Playbook:
@@ -68,6 +78,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1269).
 - **v1 preview:** `endorlabs.workflows` (CLIs, reports, estate, exports) will
   leave the core `endorlabs` wheel at **v1.0.0** as a breaking change. A
   successor package (`endorlabs-workflows`) will be released before removal.
