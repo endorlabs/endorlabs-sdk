@@ -366,6 +366,7 @@ class BaseResourceOperations[T: BaseModel]:
         tenant_meta_namespace: str,
         list_params: ListParameters | None = None,
         max_pages: int | None = None,
+        max_items: int | None = None,
         **kwargs: Any,
     ) -> Iterator[T | dict[str, Any]]:
         """Yield resources from a paginated list without materializing the full list.
@@ -379,11 +380,58 @@ class BaseResourceOperations[T: BaseModel]:
         url = f"v1/namespaces/{ns}/{self.resource_name}"
         params = self._build_params(list_params, **kwargs)
         masked = list_parameters_has_nonempty_field_mask(list_params)
-        for item in self.client.get_all(url, params=params, max_pages=max_pages):
+        for item in self.client.get_all(
+            url, params=params, max_pages=max_pages, max_items=max_items
+        ):
             if masked:
                 yield dict(item)
             else:
                 yield self._parse_response(item)
+
+    def list_pages(
+        self,
+        tenant_meta_namespace: str,
+        list_params: ListParameters | None = None,
+        *,
+        max_pages: int | None = None,
+        max_items: int | None = None,
+        traverse: bool = False,
+        **kwargs: Any,
+    ) -> Iterator[Any]:
+        """Yield ``ResourcePage`` values with cursor and completeness metadata."""
+        from ..operations.pagination import ResourcePage
+
+        kwargs.pop("logging_level", None)
+        ns = validate_namespace(tenant_meta_namespace)
+        url = f"v1/namespaces/{ns}/{self.resource_name}"
+        params = self._build_params(list_params, **kwargs)
+        masked = list_parameters_has_nonempty_field_mask(list_params)
+        requested = getattr(list_params, "page_size", None) if list_params else None
+        for page in self.client.iter_pages(
+            url,
+            params=params,
+            owner_namespace=tenant_meta_namespace,
+            traverse=traverse,
+            requested_page_size=requested,
+            max_pages=max_pages,
+            max_items=max_items,
+        ):
+            if masked:
+                items: tuple[Any, ...] = tuple(dict(item) for item in page.items)
+            else:
+                items = tuple(self._parse_response(item) for item in page.items)
+            yield ResourcePage(
+                items=items,
+                owner_namespace=page.owner_namespace,
+                traverse=page.traverse,
+                requested_page_size=page.requested_page_size,
+                page_index=page.page_index,
+                next_cursor=page.next_cursor,
+                stop_reason=page.stop_reason,
+                completeness=page.completeness,
+                pages_fetched=page.pages_fetched,
+                items_fetched=page.items_fetched,
+            )
 
     def get(self, tenant_meta_namespace: str, resource_uuid: str) -> T:
         """Universal get operation with fallback to list+filter.

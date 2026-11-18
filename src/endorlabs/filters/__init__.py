@@ -1,5 +1,15 @@
 """Canonical domain MQL filter fragments for SDK, Query, and workflows."""
 
+from endorlabs.filters.discovery import (
+    FilterDiscovery,
+    FilterFieldDiscovery,
+    FilterFieldInfo,
+    FilterOperatorInfo,
+    PredicateInspection,
+    describe_filter_fields,
+    describe_filter_operators,
+    inspect_predicate,
+)
 from endorlabs.filters.finding_categories import (
     AI_TAG_CLAUSE,
     CATEGORY_QUERY_REFS,
@@ -73,13 +83,21 @@ __all__ = [
     "TRIAGED_TAG_CLAUSE",
     "TRUE_POSITIVE_TAG_CLAUSE",
     "VALID_SECRET_TAG_CLAUSE",
+    "FilterDiscovery",
+    "FilterFieldDiscovery",
+    "FilterFieldInfo",
+    "FilterOperatorInfo",
+    "PredicateInspection",
     "ai_sast_log_base_filter",
     "category_filter",
     "context_partition_filter",
+    "describe_filter_fields",
+    "describe_filter_operators",
     "dm_importer_project_filter",
     "estate_findings_filter",
     "finding_log_time_window_filter",
     "fix_available_vuln_filter",
+    "inspect_predicate",
     "main_context_filter",
     "main_context_vulnerability_filter",
     "prd_vuln_filter",

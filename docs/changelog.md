@@ -14,6 +14,123 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Breaking
 
+## 0.7.6
+
+### Added
+
+- `endor-reports depr-coverage` and `depr-progress`: tenant-wide
+  dependency-resolution (DEPR) coverage EXEC and multi-checkpoint progress
+  reports (dated JSON + Markdown + HTML). Playbook:
+  `agent-knowledge/workflow-reports/endor-depr-coverage/`.
+- **Client identity contract:** default branded `User-Agent`
+  (`endorlabs-sdk/<ver>`), `x-endor-caller` / `x-endor-caller-version`, and
+  optional `x-endor-op-comment` via `ClientIdentity` (`sdk`, `workflow`,
+  `custom`). Normative text in [contracts.md](contracts.md#client-identity) and
+  shipped `contracts/client-identity.md`. Injected `http_client` headers are
+  preserved when already set; hosts must not forge `endorctl` caller identity.
+  `endor-reports` uses `ClientIdentity.workflow("endor-reports")`.
+
+- Data-first reachability library: `acquire_reachability_context(client, …)`
+  returns typed evidence without file I/O; CLI writes via
+  `write_reachability_context`. Pure
+  `assemble_scan_pair_evidence` for host-injected scan-pair roles, log
+  outcomes, and `compute_diff` (concurrency stays unknown unless supplied).
+- Host-facing list pages and transport controls (SDK-002/003): public
+  `ResourcePage` / `PageCursor`, facade `list_pages` / `APIClient.iter_pages`
+  with stop reason and completeness (`complete`|`capped`|`unknown`);
+  `max_items` global budget; injectable `http_client`, `credential_provider`,
+  `deadline_seconds`, and `cancel_event` (`DeadlineExceededError` /
+  `RequestCancelledError`). Empty non-complete pages do not prove absence.
+  Relationship twins: `list_pages_by_project` /
+  `list_pages_for_context` and `RouteExecutor.execute_pages`.
+  Relationship routes fold `page_size` / `sort_by` / related options into
+  `ListParameters` (fixes ignored raw kwargs on UUID-field edges).
+- `acquire_scan_results(client, …)` data-first scan window (SDK-006);
+  troubleshooting CLI writes remain optional adapters.
+- `acquire_scan_logs(client, …)` paginated ScanResult log acquisition with
+  typed `log_outcome` (SDK-006/007); `pull_scan_logs` CLI writes optionally.
+- `search_embedded_scan_errors(client, …)` data-first embedded `spec.logs`
+  pattern search (SDK-006).
+- `endorlabs.describe_resource(attr_name)` offline facade description with no
+  `Client` / auth (SDK-003). `describe_filter_fields(attr_name)` curated field
+  paths + enum snippet pointer (SDK-009).
+- Facade `describe` / `describe_resource` route methods include
+  `list_pages_by_project` / `list_pages_for_context` when the matching
+  route-contract list edge exists (not advertised for kinds without a
+  scan-plane partition).
+- Host-integration contract suite:
+  `tests/unit/hosting/test_host_integration_contract.py` (portable hosting
+  surfaces — pages, transport, acquires, describe/filter discovery, typed
+  receipts; hosts may re-run against a pinned SDK revision).
+- `client.SupportedToolChainVersion.list` custom facade for the platform
+  toolchain catalog (default `system` namespace); toolchain CSV export no
+  longer uses `Client._client`.
+- `V1Bom.dependency_graph` adjacency entries accept package-coordinate
+  strings or objects (SDK-005 wire fidelity).
+- `read_scan_dependency_receipt` typed surface (SDK-001): returns
+  `status="unavailable"` until a platform digest read path exists — never
+  invents digests.
+- `endorlabs.filters.describe_filter_operators` data-only operator catalog
+  (SDK-009). Optional `request_observer` / `observation_correlation` on
+  `APIClient` for sanitized attempt/retry/terminal hooks (SDK-010).
+- `acquire_scan_pair_evidence(client, …)` (SDK-007) and
+  `draft_update_plan` reviewable config drafts with no writes (SDK-008).
+
+### Changed
+
+- Models aligned to platform OpenAPI snapshot (`endorctl` v1.7.1269).
+- **v1 preview:** `endorlabs.workflows` (CLIs, reports, estate, exports) will
+  leave the core `endorlabs` wheel at **v1.0.0** as a breaking change. A
+  successor package (`endorlabs-workflows`) will be released before removal.
+  Through 0.x, modules remain importable but are not semver-protected.
+  Protected surface: `Client` / `APIClient` and resource facades only.
+  README API stability and `workflows` package banner updated accordingly.
+- Host budgets are real work caps: `max_items` shrinks request `page_size`
+  before fetch; retry/auth backoff is interruptible via `cancel_event` /
+  `deadline_seconds`; 401 API-key reauth coalesces per rejected token
+  generation. `ResourcePage.owner_namespace` is request scope only.
+- Scan-pair / scan-log acquisition re-raises host cancel/deadline errors
+  (fail closed). Optional scope/parent/window/order validation on
+  `assemble_scan_pair_evidence` / `acquire_scan_pair_evidence`.
+- Reachability `*_truncated` flags stay unknown when bounds are not applied;
+  scan-result acquires report partial when limits/skips apply.
+- `draft_update_plan` rejects from registry ops/read-only fields and
+  revision mismatch (not every non-empty patch is `ready`).
+- `inspect_predicate` data-only filter compiler inspection; filter field
+  discovery includes `field_type`. Toolchain `list_catalog` returns
+  normalized choices + completeness. BOM adjacency string length capped
+  at 4096 via `validate_bom_adjacency_entry`.
+- Report HTML embeds use HTML-safe JSON; select fill uses DOM APIs (A02).
+- Findings-export checkpoints carry filter/mask identity; missing artifacts
+  invalidate completion; pagination caps are not marked complete (A04/A06).
+- Estate finding collect rewrites atomically and schedules independently of
+  DM (A05). Call-graph decompress enforces a streaming total-byte cap (A03).
+- Pagination observers emit `page` events; terminal observations include
+  `deadline` / `cancelled` stop reasons (SDK-010).
+
+### Fixed
+
+- Log redaction no longer leaks the tail of a secret whose value contains a
+  quote of the other kind or an escaped quote (for example `'token': "O'Reilly..."`);
+  the quoted value now has to close with the quote that opened it.
+- `list_for_context` / `list_pages_for_context` without a route-contract edge
+  raise `RouteNotApplicableError` (was opaque `RuntimeError`);
+  `describe_resource` no longer advertises those methods on kinds such as
+  `ScanResult` / `Project`. Client stubs emit context + page twins for all
+  contract kinds (e.g. `DependencyMetadata`), not only specialized Finding /
+  PackageVersion overrides.
+- `list(parent=uuid, namespace=child)` keeps caller `namespace=` when the parent
+  has no `tenant_meta` (was silently falling back to the client tenant root —
+  broke `acquire_scan_results` UUID + shard namespace).
+- Relationship `list_params=ListParameters(...)` merges into wire params;
+  `RouteResult.truncated` for parent-list routes no longer treats every
+  non-empty `max_pages` result as truncated.
+- Flat `APIClient.get_all` raises `DeadlineExceededError` /
+  `RequestCancelledError` when a host budget stops pagination (no silent
+  partial list). `RouteNotApplicableError` is exported from `endorlabs`.
+
+### Breaking
+
 ## 0.7.5
 
 ### Added

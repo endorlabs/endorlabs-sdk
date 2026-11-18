@@ -18,6 +18,7 @@ from .specialized import (
     ProjectFacade,
     QueryFacade,
     ScanResultFacade,
+    SupportedToolChainVersionFacade,
 )
 
 _ListableFacade = ListableFacade
@@ -36,6 +37,7 @@ __all__ = [
     "ResourceFacade",
     "ResourceRuntimeFacade",
     "ScanResultFacade",
+    "SupportedToolChainVersionFacade",
     "_ListableFacade",
     "context_partition_filter",
     "main_context_filter",

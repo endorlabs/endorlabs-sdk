@@ -11,7 +11,7 @@ import re
 import sys
 import threading
 import time
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 from typing import Any, Literal, cast
@@ -19,16 +19,31 @@ from urllib.parse import urlparse
 
 import httpx
 
+from .core.client_identity import ClientIdentity, merge_identity_headers
+from .core.credentials import (
+    BearerCredentials,
+    CredentialProvider,
+)
 from .core.exceptions import (
+    DeadlineExceededError,
     EndorAPIError,
     NetworkError,
+    RequestCancelledError,
     ValidationError,
     append_namespace_scope_hint,
     map_status_code_to_exception,
 )
+from .core.observations import (
+    RequestObservation,
+    RequestObserver,
+    safe_notify,
+)
 from .core.types import ErrorResponse
 from .operations.pagination import (
     PageCursor,
+    PaginationBound,
+    ResourcePage,
+    completeness_for_stop,
     iter_paginated_pages,
     raise_if_page_id_with_sort,
 )
@@ -172,7 +187,25 @@ class APIClient:
             too. Default False; override via ``ENDOR_RETRY_NON_IDEMPOTENT=1``.
         op_comment: Value for the ``x-endor-op-comment`` session header. The
             gateway copies it onto the Mongo operation comment. Must not
-            contain ``service/endorctl``.
+            contain ``service/endorctl``. Overrides ``identity.op_comment`` when
+            both are set. Prefer ``identity=ClientIdentity.workflow(...)`` for
+            new callers.
+        identity: Optional :class:`~endorlabs.core.client_identity.ClientIdentity`
+            for ``User-Agent`` / ``x-endor-caller*`` headers. Defaults to
+            ``ClientIdentity.sdk()``. Injected ``http_client`` headers win when
+            already set (SDK fills missing identity keys only).
+        http_client: Optional caller-owned ``httpx.Client`` (proxy/TLS/egress).
+            When set, ``close()`` does not close it.
+        credential_provider: Optional host credential resolver consulted before
+            env/constructor credentials when authenticating.
+        deadline_seconds: Optional total wall-clock budget from construction
+            spanning auth, retries, and pagination (``DeadlineExceededError``).
+        cancel_event: Optional event; when set, further work raises
+            ``RequestCancelledError``.
+        request_observer: Optional sanitized transport observer (attempts,
+            retries, terminals). Bodies and credentials are never passed.
+        observation_correlation: Optional host correlation keys copied onto
+            each observation.
 
     The client can be used as a context manager (with APIClient(...) as client:).
     When not using ``with``, call close() when done to release connections.
@@ -200,6 +233,13 @@ class APIClient:
         allowed_api_hosts: list[str] | None = None,
         retry_non_idempotent: bool | None = None,
         op_comment: str | None = None,
+        identity: ClientIdentity | None = None,
+        http_client: httpx.Client | None = None,
+        credential_provider: CredentialProvider | None = None,
+        deadline_seconds: float | None = None,
+        cancel_event: threading.Event | None = None,
+        request_observer: RequestObserver | None = None,
+        observation_correlation: dict[str, str] | None = None,
     ) -> None:
         super().__init__()
         # Set up logging
@@ -323,7 +363,9 @@ class APIClient:
         self.retry_non_idempotent = retry_non_idempotent
         self._session_lock = threading.RLock()
         self._reauth_lock = threading.Lock()
+        self._session_generation: int = 0
         self._coalesced_reauth_token: str | None = None
+        self._coalesced_rejected_token: str | None = None
 
         from .utils.request_timeout import resolve_request_timeout
 
@@ -342,19 +384,47 @@ class APIClient:
         self._request_headers["Request-timeout"] = str(int(self.timeout))
         if self.accept_encoding:
             self._request_headers["Accept-Encoding"] = self.accept_encoding
-        if op_comment:
-            if "service/endorctl" in op_comment:
-                msg = "op_comment must not contain service/endorctl"
-                raise ValueError(msg)
-            self._request_headers["x-endor-op-comment"] = op_comment
 
-        # Initialize httpx client (no built-in retry; we use _request_with_retry)
-        self.client = httpx.Client(
-            base_url=self.base_url,
-            timeout=self.timeout,
-            headers=self._request_headers.copy(),
+        resolved_identity = identity if identity is not None else ClientIdentity.sdk()
+        if op_comment is not None:
+            resolved_identity = resolved_identity.with_op_comment(op_comment)
+        self._identity = resolved_identity
+        existing_identity_headers: dict[str, str] | None = None
+        if http_client is not None:
+            existing_identity_headers = {
+                str(k): str(v) for k, v in http_client.headers.items()
+            }
+        merge_identity_headers(
+            self._request_headers,
+            resolved_identity,
+            existing=existing_identity_headers,
         )
+
+        self._credential_provider = credential_provider
+        self._cancel_event = cancel_event
+        self._request_observer = request_observer
+        self._observation_correlation = (
+            dict(observation_correlation) if observation_correlation else None
+        )
+        self._deadline_monotonic: float | None = (
+            time.monotonic() + float(deadline_seconds)
+            if deadline_seconds is not None
+            else None
+        )
+        self._own_http_client = http_client is None
+        # Initialize httpx client (no built-in retry; we use _request_with_retry)
+        if http_client is not None:
+            self.client = http_client
+        else:
+            self.client = httpx.Client(
+                base_url=self.base_url,
+                timeout=self.timeout,
+                headers=self._request_headers.copy(),
+            )
         self.logger_len = 25
+
+        if self._credential_provider is not None:
+            self._apply_credential_provider()
 
         # Authenticate when credentials are already configured; defer otherwise so
         # ``Client()`` can call ``client.<Kind>.describe()`` before auth.
@@ -387,11 +457,103 @@ class APIClient:
             self.logger.error(error_msg)
             raise ValidationError(error_msg)
 
+    def _host_stop_reason(self) -> Literal["deadline", "cancelled"] | None:
+        """Return a pagination/request stop reason when the host budget is spent."""
+        if self._cancel_event is not None and self._cancel_event.is_set():
+            return "cancelled"
+        if (
+            self._deadline_monotonic is not None
+            and time.monotonic() >= self._deadline_monotonic
+        ):
+            return "deadline"
+        return None
+
+    def _raise_if_host_budget_exceeded(self) -> None:
+        """Fail closed when deadline elapsed or cancel_event is set."""
+        reason = self._host_stop_reason()
+        if reason == "cancelled":
+            raise RequestCancelledError(
+                "Host cancel_event is set; no further API work admitted."
+            )
+        if reason == "deadline":
+            raise DeadlineExceededError(
+                "Host deadline_seconds budget elapsed "
+                "(auth/retries/pagination inclusive)."
+            )
+
+    def _seconds_remaining_on_deadline(self) -> float | None:
+        """Wall-clock seconds left on ``deadline_seconds``, if configured."""
+        if self._deadline_monotonic is None:
+            return None
+        return max(0.0, self._deadline_monotonic - time.monotonic())
+
+    def _interruptible_backoff(self, seconds: float) -> None:
+        """Wait up to ``seconds``, waking early on cancel or deadline.
+
+        Uses ``cancel_event.wait`` when a host cancel event is present so
+        cancellation during retry backoff is not blocked by ``time.sleep``.
+        Clamps wait length to any remaining ``deadline_seconds`` budget.
+        """
+        remaining = max(0.0, float(seconds))
+        deadline_left = self._seconds_remaining_on_deadline()
+        if deadline_left is not None:
+            remaining = min(remaining, deadline_left)
+        if remaining <= 0:
+            self._raise_if_host_budget_exceeded()
+            return
+        # Exact sleep when no host interrupt is configured (keeps Retry-After
+        # tests deterministic); otherwise wait in interruptible slices.
+        if self._cancel_event is None and self._deadline_monotonic is None:
+            self._raise_if_host_budget_exceeded()
+            time.sleep(remaining)
+            return
+        end_at = time.monotonic() + remaining
+        while True:
+            self._raise_if_host_budget_exceeded()
+            slice_left = end_at - time.monotonic()
+            if slice_left <= 0:
+                return
+            deadline_left = self._seconds_remaining_on_deadline()
+            if deadline_left is not None:
+                slice_left = min(slice_left, deadline_left)
+                if slice_left <= 0:
+                    self._raise_if_host_budget_exceeded()
+                    return
+            if self._cancel_event is not None:
+                if self._cancel_event.wait(timeout=slice_left):
+                    self._raise_if_host_budget_exceeded()
+                continue
+            time.sleep(slice_left)
+            return
+
+    def _apply_credential_provider(self) -> None:
+        """Pull credentials from the host provider into session fields."""
+        if self._credential_provider is None:
+            return
+        resolved = self._credential_provider.resolve()
+        if resolved is None:
+            return
+        if isinstance(resolved, BearerCredentials):
+            self._provided_token = resolved.token
+            self._auth_type = "browser"
+            self.key = None
+            self.secret = None
+            if not self._auth_method_pending_resolution:
+                self.auth_method = "browser-auth"
+                self._auth_method_pending_resolution = True
+            return
+        self.key = resolved.key
+        self.secret = resolved.secret
+        self._auth_type = "api-key"
+        self.auth_method = "api-key"
+        self._auth_method_pending_resolution = False
+
     def close(self) -> None:
         """Close the underlying HTTP client and release connections."""
         client = self.client
         if client is not None:
-            client.close()
+            if self._own_http_client:
+                client.close()
             self.client = None
 
     def __enter__(self) -> "APIClient":
@@ -886,8 +1048,29 @@ class APIClient:
         last_exc: BaseException | None = None
         attempt = 0
         for attempt in range(self.max_retries + 1):
+            self._raise_if_host_budget_exceeded()
+            started = time.monotonic()
+            safe_notify(
+                self._request_observer,
+                RequestObservation(
+                    kind="attempt" if attempt == 0 else "retry",
+                    method=method,
+                    url=url,
+                    attempt=attempt,
+                    correlation=self._observation_correlation,
+                ),
+                logger=self.logger,
+            )
             try:
                 headers = self._build_request_headers(_extra_headers)
+                auth_header = headers.get("Authorization") or headers.get(
+                    "authorization"
+                )
+                rejected_bearer: str | None = None
+                if isinstance(auth_header, str) and auth_header.lower().startswith(
+                    "bearer "
+                ):
+                    rejected_bearer = auth_header[7:].strip()
                 response = self.client.request(
                     method,
                     url,
@@ -900,14 +1083,30 @@ class APIClient:
                     response.status_code,
                     self._truncate_for_logging(response.text),
                 )
-                return self._handle_response(
+                handled = self._handle_response(
                     response,
                     method=method,
                     url=url,
                     _extra_headers=_extra_headers,
                     _reauth_attempted=_reauth_attempted,
+                    _rejected_bearer=rejected_bearer,
                     **kwargs,
                 )
+                safe_notify(
+                    self._request_observer,
+                    RequestObservation(
+                        kind="terminal",
+                        method=method,
+                        url=url,
+                        attempt=attempt,
+                        status_code=response.status_code,
+                        elapsed_ms=(time.monotonic() - started) * 1000.0,
+                        stop_reason=self._host_stop_reason() or "ok",
+                        correlation=self._observation_correlation,
+                    ),
+                    logger=self.logger,
+                )
+                return handled
             except httpx.HTTPStatusError as e:
                 last_exc = e
                 retryable = (
@@ -935,7 +1134,7 @@ class APIClient:
                             attempt + 1,
                             self.max_retries + 1,
                         )
-                    time.sleep(backoff)
+                    self._interruptible_backoff(backoff)
                     continue
                 raise
             except httpx.ConnectError as e:
@@ -953,7 +1152,7 @@ class APIClient:
                         self.max_retries + 1,
                         e,
                     )
-                    time.sleep(backoff)
+                    self._interruptible_backoff(backoff)
                     continue
                 break
             except (httpx.TimeoutException, httpx.RequestError) as e:
@@ -971,11 +1170,41 @@ class APIClient:
                         self.max_retries + 1,
                         e,
                     )
-                    time.sleep(backoff)
+                    self._interruptible_backoff(backoff)
                     continue
+                break
+            except (RequestCancelledError, DeadlineExceededError) as e:
+                last_exc = e
                 break
         if last_exc:
             attempts = min(attempt + 1, self.max_retries + 1)
+            host_stop = self._host_stop_reason()
+            terminal_reason = (
+                host_stop
+                if host_stop is not None
+                else (
+                    "cancelled"
+                    if isinstance(last_exc, RequestCancelledError)
+                    else (
+                        "deadline"
+                        if isinstance(last_exc, DeadlineExceededError)
+                        else "error"
+                    )
+                )
+            )
+            safe_notify(
+                self._request_observer,
+                RequestObservation(
+                    kind="terminal",
+                    method=method,
+                    url=url,
+                    attempt=attempt,
+                    stop_reason=terminal_reason,
+                    error_type=type(last_exc).__name__,
+                    correlation=self._observation_correlation,
+                ),
+                logger=self.logger,
+            )
             if isinstance(
                 last_exc,
                 (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError),
@@ -994,9 +1223,14 @@ class APIClient:
         url: str | None,
         _reauth_attempted: bool,
         _extra_headers: dict[str, str] | None = None,
+        _rejected_bearer: str | None = None,
         **kwargs: Any,
     ) -> httpx.Response | None:
-        """Handle HTTP 401 responses with single API-key retry."""
+        """Handle HTTP 401 responses with single API-key retry.
+
+        Coalesces concurrent 401s for the same rejected bearer. Clears on
+        success / session advance so a later episode refreshes again (A01).
+        """
         if _reauth_attempted:
             self.logger.error(
                 "Unable to reauthenticate. "
@@ -1015,14 +1249,34 @@ class APIClient:
         )
         self.logger.debug("Authentication detail: url=%s", response.url)
         self.logger.info("Attempting to reauthenticate...")
+        with self._session_lock:
+            rejected_bearer = _rejected_bearer or self._token
         new_token: str | None = None
         with self._reauth_lock:
-            if self._coalesced_reauth_token:
-                new_token = self._coalesced_reauth_token
-            else:
+            with self._session_lock:
+                # Session already moved past the rejected bearer (peer refresh
+                # or proactive refresh_session) — never roll back.
+                if self._token and rejected_bearer and self._token != rejected_bearer:
+                    new_token = self._token
+                elif self._coalesced_reauth_token and (
+                    self._coalesced_rejected_token == rejected_bearer
+                    or self._coalesced_reauth_token == rejected_bearer
+                ):
+                    # Same rejected bearer, or the coalesced bearer itself is
+                    # what failed: reuse only when still current; otherwise
+                    # fall through to authenticate for a new episode.
+                    if (
+                        self._coalesced_rejected_token == rejected_bearer
+                        or self._token != rejected_bearer
+                    ):
+                        new_token = self._coalesced_reauth_token
+                    elif self._coalesced_reauth_token == rejected_bearer:
+                        new_token = None
+            if new_token is None:
                 new_token = self.authenticate()
                 if new_token:
                     self._coalesced_reauth_token = new_token
+                    self._coalesced_rejected_token = rejected_bearer
             if new_token:
                 with self._session_lock:
                     self._request_headers["Authorization"] = f"Bearer {new_token}"
@@ -1101,6 +1355,7 @@ class APIClient:
         *,
         _reauth_attempted: bool = False,
         _extra_headers: dict[str, str] | None = None,
+        _rejected_bearer: str | None = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -1121,6 +1376,7 @@ class APIClient:
                     url=url,
                     _reauth_attempted=_reauth_attempted,
                     _extra_headers=_extra_headers,
+                    _rejected_bearer=_rejected_bearer,
                     **kwargs,
                 )
                 if retried is not None:
@@ -1352,6 +1608,87 @@ class APIClient:
                 return str(raw) if raw is not None else None
         return None
 
+    @staticmethod
+    def _clamp_page_size_param(
+        page_params: dict[str, Any],
+        *,
+        remaining_items: int | None,
+    ) -> None:
+        """Cap ``list_parameters.page_size`` to the remaining ``max_items`` budget.
+
+        Hosts require budgets to limit fetch work, not only returned display rows.
+        """
+        if remaining_items is None:
+            return
+        if remaining_items <= 0:
+            page_params["list_parameters.page_size"] = 1
+            return
+        raw = page_params.get("list_parameters.page_size")
+        try:
+            requested = int(raw) if raw is not None else None
+        except (TypeError, ValueError):
+            requested = None
+        if requested is None or requested <= 0:
+            page_params["list_parameters.page_size"] = remaining_items
+            return
+        page_params["list_parameters.page_size"] = min(requested, remaining_items)
+
+    def _list_page_fetchers(
+        self,
+        url: str,
+        *,
+        params: dict[str, Any] | None = None,
+        data: Any | None = None,
+        json: Any | None = None,
+        remaining_items: Callable[[], int | None] | None = None,
+        **kwargs: Any,
+    ) -> tuple[
+        Callable[[PageCursor | None], Any],
+        Callable[[Any], PageCursor | None],
+    ]:
+        """Build fetch_page / next_cursor callables for list pagination."""
+        normalized_url = self._normalize_url(url)
+        request_params = dict(params) if params else {}
+
+        def fetch_page(cursor: PageCursor | None) -> Any:
+            self._raise_if_host_budget_exceeded()
+            page_params = dict(request_params)
+            if remaining_items is not None:
+                self._clamp_page_size_param(
+                    page_params, remaining_items=remaining_items()
+                )
+            if cursor is not None:
+                if cursor.page_id is not None:
+                    raise_if_page_id_with_sort(page_params)
+                    page_params["list_parameters.page_id"] = cursor.page_id
+                    page_params.pop("list_parameters.page_token", None)
+                elif cursor.page_token is not None:
+                    page_params["list_parameters.page_token"] = str(cursor.page_token)
+                    page_params.pop("list_parameters.page_id", None)
+            else:
+                # Preserve caller-supplied initial cursors (A07); only clear
+                # competing forms when a follow-up cursor is present above.
+                pass
+            response = self.get(
+                normalized_url,
+                params=page_params,
+                data=data,
+                json=json,
+                **kwargs,
+            )
+            return response.json()
+
+        def next_cursor(response_data: Any) -> PageCursor | None:
+            next_page_id = self._extract_next_page_id(response_data)
+            next_page_token = self._extract_next_page_token(response_data)
+            if next_page_id is not None:
+                return PageCursor(page_id=next_page_id)
+            if next_page_token is not None:
+                return PageCursor(page_token=next_page_token)
+            return None
+
+        return fetch_page, next_cursor
+
     def get_all(
         self,
         url: str,
@@ -1359,6 +1696,7 @@ class APIClient:
         data: Any | None = None,
         json: Any | None = None,
         max_pages: int | None = None,
+        max_items: int | None = None,
         **kwargs: Any,
     ) -> Iterator[dict[str, Any]]:
         """Get all items from a paginated endpoint.
@@ -1378,6 +1716,7 @@ class APIClient:
             json: Request body JSON
             max_pages: Optional maximum number of pages to fetch.
                 If None, fetches all pages.
+            max_items: Optional global item budget across pages.
             **kwargs: Additional arguments passed to request
 
         Yields:
@@ -1385,47 +1724,188 @@ class APIClient:
 
         """
         normalized_url = self._normalize_url(url)
-        request_params = dict(params) if params else {}
+        bound = PaginationBound(
+            max_pages=max_pages,
+            max_items=max_items,
+            should_stop=self._host_stop_reason,
+        )
+        scheduled_items = 0
 
-        def fetch_page(cursor: PageCursor | None) -> Any:
-            page_params = dict(request_params)
-            if cursor is not None:
-                if cursor.page_id is not None:
-                    raise_if_page_id_with_sort(page_params)
-                    page_params["list_parameters.page_id"] = cursor.page_id
-                    page_params.pop("list_parameters.page_token", None)
-                elif cursor.page_token is not None:
-                    page_params["list_parameters.page_token"] = str(cursor.page_token)
-                    page_params.pop("list_parameters.page_id", None)
-            else:
-                page_params.pop("list_parameters.page_token", None)
-                page_params.pop("list_parameters.page_id", None)
-            response = self.get(
-                normalized_url,
-                params=page_params,
-                data=data,
-                json=json,
-                **kwargs,
-            )
-            return response.json()
+        def remaining_items() -> int | None:
+            if max_items is None:
+                return None
+            return max(0, max_items - scheduled_items)
 
-        def next_cursor(response_data: Any) -> PageCursor | None:
-            next_page_id = self._extract_next_page_id(response_data)
-            next_page_token = self._extract_next_page_token(response_data)
-            if next_page_id is not None:
-                return PageCursor(page_id=next_page_id)
-            if next_page_token is not None:
-                return PageCursor(page_token=next_page_token)
-            return None
-
+        fetch_page, next_cursor = self._list_page_fetchers(
+            normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            remaining_items=remaining_items,
+            **kwargs,
+        )
+        yielded = 0
         for page_data in iter_paginated_pages(
             fetch_page,
             next_cursor=next_cursor,
-            max_pages=max_pages,
             label=normalized_url,
             logger=self.logger,
+            bound=bound,
+            extract_items=self._extract_items_from_response,
         ):
-            yield from self._extract_items_from_response(page_data)
+            page_items = list(self._extract_items_from_response(page_data))
+            for item in page_items:
+                if max_items is not None and yielded >= max_items:
+                    bound.stop_reason = bound.stop_reason or "max_items"
+                    self._emit_page_observation(
+                        normalized_url, stop_reason=bound.stop_reason
+                    )
+                    return
+                yielded += 1
+                scheduled_items = yielded
+                yield item
+        self._emit_page_observation(normalized_url, stop_reason=bound.stop_reason)
+        # Flat get_all has no ResourcePage completeness — fail closed when the
+        # host budget stopped pagination so callers do not treat a partial
+        # materialization as a full list.
+        if bound.stop_reason in {"deadline", "cancelled"}:
+            self._raise_if_host_budget_exceeded()
+
+    def _emit_page_observation(self, url: str, *, stop_reason: str | None) -> None:
+        """Emit a sanitized page/pagination observation for host telemetry."""
+        if stop_reason is None:
+            return
+        safe_notify(
+            self._request_observer,
+            RequestObservation(
+                kind="page",
+                method="GET",
+                url=url,
+                stop_reason=stop_reason,
+                correlation=self._observation_correlation,
+            ),
+            logger=self.logger,
+        )
+
+    def iter_pages(
+        self,
+        url: str,
+        *,
+        params: dict[str, Any] | None = None,
+        owner_namespace: str | None = None,
+        traverse: bool = False,
+        requested_page_size: int | None = None,
+        max_pages: int | None = None,
+        max_items: int | None = None,
+        data: Any | None = None,
+        json: Any | None = None,
+        **kwargs: Any,
+    ) -> Iterator[ResourcePage[dict[str, Any]]]:
+        """Yield typed ``ResourcePage`` values with cursor and completeness.
+
+        The final yielded page carries ``stop_reason`` and terminal
+        ``completeness``. Empty pages with ``completeness != "complete"`` do
+        not prove absence. ``owner_namespace`` is the **request scope** passed
+        by the caller (not an effective owner inferred from row payloads).
+        """
+        normalized_url = self._normalize_url(url)
+        bound = PaginationBound(
+            max_pages=max_pages,
+            max_items=max_items,
+            should_stop=self._host_stop_reason,
+        )
+        pending: tuple[tuple[dict[str, Any], ...], PageCursor | None] | None = None
+        page_index = 0
+        items_fetched = 0
+        scheduled_items = 0
+        last_had_next = False
+
+        def remaining_items() -> int | None:
+            if max_items is None:
+                return None
+            return max(0, max_items - scheduled_items)
+
+        fetch_page, next_cursor_fn = self._list_page_fetchers(
+            normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            remaining_items=remaining_items,
+            **kwargs,
+        )
+
+        def emit(
+            items: tuple[dict[str, Any], ...],
+            following: PageCursor | None,
+            *,
+            terminal: bool,
+        ) -> ResourcePage[dict[str, Any]]:
+            nonlocal page_index, items_fetched, last_had_next
+            last_had_next = following is not None and following.cursor_key() is not None
+            items_fetched += len(items)
+            idx = page_index
+            page_index += 1
+            stop = bound.stop_reason if terminal else None
+            if terminal:
+                reason = stop or "complete"
+                complete = completeness_for_stop(reason, had_next_cursor=last_had_next)
+            else:
+                reason = None
+                complete = "unknown"
+            return ResourcePage(
+                items=items,
+                owner_namespace=owner_namespace,
+                traverse=traverse,
+                requested_page_size=requested_page_size,
+                page_index=idx,
+                next_cursor=following if last_had_next else None,
+                stop_reason=reason,
+                completeness=complete,
+                pages_fetched=page_index,
+                items_fetched=items_fetched,
+            )
+
+        for page_data in iter_paginated_pages(
+            fetch_page,
+            next_cursor=next_cursor_fn,
+            label=normalized_url,
+            logger=self.logger,
+            bound=bound,
+            extract_items=self._extract_items_from_response,
+        ):
+            raw_items = list(self._extract_items_from_response(page_data))
+            if max_items is not None:
+                remaining = max_items - scheduled_items
+                if remaining <= 0:
+                    bound.stop_reason = bound.stop_reason or "max_items"
+                    break
+                raw_items = raw_items[:remaining]
+            following = next_cursor_fn(page_data)
+            built = (tuple(raw_items), following)
+            scheduled_items += len(raw_items)
+            if pending is not None:
+                yield emit(pending[0], pending[1], terminal=False)
+            pending = built
+
+        if pending is not None:
+            page = emit(pending[0], pending[1], terminal=True)
+            self._emit_page_observation(normalized_url, stop_reason=page.stop_reason)
+            yield page
+        elif page_index == 0:
+            stop = bound.stop_reason or "complete"
+            self._emit_page_observation(normalized_url, stop_reason=stop)
+            yield ResourcePage(
+                items=(),
+                owner_namespace=owner_namespace,
+                traverse=traverse,
+                requested_page_size=requested_page_size,
+                page_index=0,
+                next_cursor=None,
+                stop_reason=stop,
+                completeness=completeness_for_stop(stop, had_next_cursor=False),
+                pages_fetched=0,
+                items_fetched=0,
+            )
 
     @property
     def token(self) -> str | None:
@@ -1445,6 +1925,9 @@ class APIClient:
 
     def _ensure_fresh_token(self) -> None:
         """Refresh API-key sessions; bearer sessions warn then fail closed."""
+        self._raise_if_host_budget_exceeded()
+        if self._credential_provider is not None and self._token is None:
+            self._apply_credential_provider()
         if self._token is None:
             if self._auth_type == "api-key" and not self._has_configured_credentials():
                 self._require_configured_credentials()
@@ -1536,6 +2019,12 @@ class APIClient:
         """Store token, expiry metadata, and Authorization header."""
         with self._session_lock:
             self._token = token
+            self._session_generation += 1
+            # Invalidate coalesced retry token when the session moves forward
+            # so a later 401 cannot roll back to an older bearer.
+            if self._coalesced_reauth_token != token:
+                self._coalesced_reauth_token = None
+                self._coalesced_rejected_token = None
             if expiration is not None:
                 self._token_expires = expiration
                 self._token_expiration_source = expiration_source
@@ -1674,7 +2163,7 @@ class APIClient:
                         attempt + 1,
                         AUTH_RETRY_MAX_ATTEMPTS + 1,
                     )
-                    time.sleep(backoff)
+                    self._interruptible_backoff(backoff)
                     continue
                 break
             except (
@@ -1695,9 +2184,11 @@ class APIClient:
                         AUTH_RETRY_MAX_ATTEMPTS + 1,
                         error,
                     )
-                    time.sleep(backoff)
+                    self._interruptible_backoff(backoff)
                     continue
                 break
+            except (RequestCancelledError, DeadlineExceededError):
+                raise
 
         if last_error is not None:
             self.logger.error("Unable to authenticate with API key: %s", last_error)

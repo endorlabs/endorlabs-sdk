@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any, cast
 
 from ..operations import BaseResourceOperations
@@ -53,6 +53,44 @@ class RouteHostMixin:
         executor = self._get_route_executor()
         return executor.resolve_namespace(source, edge.namespace_from)
 
+    def _route_edge(self, edge_id: str) -> RouteEdge:
+        contract = self._route_contract
+        if contract is None:
+            raise RuntimeError("Route contract not configured on this facade.")
+        edge = contract.edge_by_id(edge_id)
+        if edge is None:
+            raise ValueError(f"Unknown route edge id: {edge_id!r}")
+        return edge
+
+    def _executor_for_edge(self, edge: RouteEdge) -> RouteExecutor:
+        executor = self._get_route_executor()
+        list_fn = None
+        list_pages_fn = None
+        entry = getattr(self, "_entry", None)
+        if (
+            edge.edge == "list_by_parent"
+            and entry is not None
+            and entry.attr_name == edge.to_kind
+        ):
+            if hasattr(self, "list"):
+                list_fn = cast(
+                    "Callable[..., Any]",
+                    self.list,  # pyright: ignore[reportAttributeAccessIssue,reportUnknownMemberType]
+                )
+            if hasattr(self, "list_pages"):
+                list_pages_fn = cast(
+                    "Callable[..., Any]",
+                    self.list_pages,  # pyright: ignore[reportAttributeAccessIssue,reportUnknownMemberType]
+                )
+        if list_fn is not None or list_pages_fn is not None:
+            return RouteExecutor(
+                default_namespace=self._default_namespace,
+                ops_for_kind=executor.ops_for_kind,
+                list_fn_for_parent=list_fn,
+                list_pages_fn_for_parent=list_pages_fn,
+            )
+        return executor
+
     def _execute_route(
         self,
         edge_id: str,
@@ -60,31 +98,8 @@ class RouteHostMixin:
         source: Any,
         **list_kwargs: Any,
     ) -> RouteResult[Any]:
-        contract = self._route_contract
-        if contract is None:
-            raise RuntimeError("Route contract not configured on this facade.")
-        edge = contract.edge_by_id(edge_id)
-        if edge is None:
-            raise ValueError(f"Unknown route edge id: {edge_id!r}")
-        executor = self._get_route_executor()
-        list_fn = None
-        entry = getattr(self, "_entry", None)
-        if (
-            edge.edge == "list_by_parent"
-            and entry is not None
-            and entry.attr_name == edge.to_kind
-            and hasattr(self, "list")
-        ):
-            list_fn = cast(
-                "Callable[..., Any]",
-                self.list,  # pyright: ignore[reportAttributeAccessIssue,reportUnknownMemberType]
-            )
-        if list_fn is not None:
-            executor = RouteExecutor(
-                default_namespace=self._default_namespace,
-                ops_for_kind=executor.ops_for_kind,
-                list_fn_for_parent=list_fn,
-            )
+        edge = self._route_edge(edge_id)
+        executor = self._executor_for_edge(edge)
         return executor.execute(edge, source=source, **list_kwargs)
 
     def _execute_route_list(
@@ -99,18 +114,21 @@ class RouteHostMixin:
             self._execute_route(edge_id, source=source, **list_kwargs)
         )
 
-    def list_for_context(
+    def _execute_route_pages(
         self,
-        source: Any,
+        edge_id: str,
         *,
-        filter: str | FilterExpression | None = None,
-        namespace: str | None = None,
-        **kwargs: Any,
-    ) -> list[Any]:
-        """List rows in the same scan plane as *source*.
+        source: Any,
+        **list_kwargs: Any,
+    ) -> Iterator[Any]:
+        """Execute a list-edge route yielding typed ``ResourcePage`` values."""
+        edge = self._route_edge(edge_id)
+        executor = self._executor_for_edge(edge)
+        return executor.execute_pages(edge, source=source, **list_kwargs)
 
-        Filters on ``context.type`` and optional ``context.id``.
-        """
+    def _list_for_context_edge_id(self) -> str:
+        from ..core.exceptions import RouteNotApplicableError
+
         entry = getattr(self, "_entry", None)
         if entry is None:
             raise RuntimeError("Route host missing registry entry.")
@@ -123,16 +141,58 @@ class RouteHostMixin:
             for e in contract.edges
             if e.public_method == method_name and e.edge == "list_by_context_partition"
         ]
+        if len(matches) == 0:
+            raise RouteNotApplicableError(
+                f"{entry.attr_name}.list_for_context is not a route-contract "
+                "edge (no scan-plane partition for this kind)."
+            )
         if len(matches) != 1:
             raise RuntimeError(
                 f"Expected exactly one list_for_context edge for {entry.attr_name!r}, "
                 f"found {len(matches)}."
             )
+        return matches[0].id
+
+    def list_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = None,
+        namespace: str | None = None,
+        **kwargs: Any,
+    ) -> list[Any]:
+        """List rows in the same scan plane as *source*.
+
+        Filters on ``context.type`` and optional ``context.id``.
+        Raises ``RouteNotApplicableError`` when this kind has no
+        ``list_by_context_partition`` route-contract edge.
+        """
+        edge_id = self._list_for_context_edge_id()
         if filter is not None:
             kwargs = {**kwargs, "filter": filter}
         if namespace is not None:
             kwargs = {**kwargs, "namespace": namespace}
-        return self._execute_route_list(matches[0].id, source=source, **kwargs)
+        return self._execute_route_list(edge_id, source=source, **kwargs)
+
+    def list_pages_for_context(
+        self,
+        source: Any,
+        *,
+        filter: str | FilterExpression | None = None,
+        namespace: str | None = None,
+        **kwargs: Any,
+    ) -> Iterator[Any]:
+        """Yield ``ResourcePage`` values in the same scan plane as *source*.
+
+        Raises ``RouteNotApplicableError`` when this kind has no
+        ``list_by_context_partition`` route-contract edge.
+        """
+        edge_id = self._list_for_context_edge_id()
+        if filter is not None:
+            kwargs = {**kwargs, "filter": filter}
+        if namespace is not None:
+            kwargs = {**kwargs, "namespace": namespace}
+        return self._execute_route_pages(edge_id, source=source, **kwargs)
 
     def _get_route_executor(self) -> RouteExecutor:
         if self._route_executor is not None:

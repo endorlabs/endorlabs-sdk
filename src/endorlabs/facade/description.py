@@ -8,7 +8,7 @@ from typing import Any, override
 
 # High-leverage MQL filter paths for common list/RCA flows (not full OpenAPI).
 # Merged with identity kwargs from the registry; keep short.
-_TOP_FILTERABLE_SPEC_PATHS: dict[str, tuple[str, ...]] = {
+TOP_FILTERABLE_SPEC_PATHS: dict[str, tuple[str, ...]] = {
     "Finding": (
         "spec.project_uuid",
         "spec.level",
@@ -165,6 +165,32 @@ def _format_facade_description(d: FacadeDescription) -> str:
     return "\n".join(lines)
 
 
+def _route_list_method_names(attr_name: str, route_contract: Any) -> set[str]:
+    """Public list-shaped route method names for *attr_name* (no page twins)."""
+    names: set[str] = set()
+    if route_contract is None:
+        return names
+    for edge in route_contract.edges_for_attr(attr_name):
+        if not edge.public_method:
+            continue
+        method = (
+            edge.public_method.split(".", 1)[1]
+            if "." in edge.public_method
+            else edge.public_method
+        )
+        names.add(method)
+    return names
+
+
+def _page_twin_name(list_method: str) -> str | None:
+    """Map ``list_by_project`` / ``list_for_context`` to their ``list_pages_*`` twin."""
+    if list_method == "list_by_project":
+        return "list_pages_by_project"
+    if list_method == "list_for_context":
+        return "list_pages_for_context"
+    return None
+
+
 def build_facade_description(
     *,
     attr_name: str,
@@ -175,13 +201,26 @@ def build_facade_description(
     route_contract: Any,
 ) -> FacadeDescription:
     """Build a description from live signature + registry + route contract."""
+    list_route_methods = _route_list_method_names(attr_name, route_contract)
+    applicable_page_twins = {
+        twin
+        for name in list_route_methods
+        if (twin := _page_twin_name(name)) is not None
+    }
+    # Mixin exposes list_for_context / list_pages_for_context on every runtime
+    # facade; only advertise them when the route contract has a matching edge.
+    suppressed: set[str] = (
+        set()
+        if "list_for_context" in list_route_methods
+        else {"list_for_context", "list_pages_for_context"}
+    )
     methods = tuple(
         sorted(
             name
             for name, _obj in inspect.getmembers(
                 facade_type, predicate=inspect.isfunction
             )
-            if not name.startswith("_")
+            if not name.startswith("_") and name not in suppressed
         )
     )
     list_method = getattr(facade_type, "list", None)
@@ -190,15 +229,15 @@ def build_facade_description(
     )
     identity_kwargs = tuple(sorted(filter_kwarg_map.items()))
     identity_paths = set(filter_kwarg_map.values())
-    top_paths = _TOP_FILTERABLE_SPEC_PATHS.get(attr_name, ())
+    top_paths = TOP_FILTERABLE_SPEC_PATHS.get(attr_name, ())
     filterable = tuple(sorted(identity_paths | set(top_paths)))
-    route_methods: list[str] = []
-    if route_contract is not None:
-        for edge in route_contract.edges_for_attr(attr_name):
-            if edge.public_method and "." in edge.public_method:
-                route_methods.append(edge.public_method.split(".", 1)[1])
-            elif edge.public_method:
-                route_methods.append(edge.public_method)
+    route_methods: list[str] = list(list_route_methods)
+    # Base list_pages is universal; relationship page twins only when the
+    # corresponding list_* route exists (avoid advertising ScanResult /
+    # Project list_pages_for_context with no edge).
+    if "list_pages" in methods:
+        route_methods.append("list_pages")
+    route_methods.extend(sorted(applicable_page_twins))
     return FacadeDescription(
         attr_name=attr_name,
         resource_name=resource_name,
@@ -212,10 +251,41 @@ def build_facade_description(
     )
 
 
+def describe_resource(attr_name: str) -> FacadeDescription:
+    r"""Describe a registry resource facade without constructing ``Client``.
+
+    Offline / no-network / no-auth. Raises ``ValueError`` for unknown
+    ``attr_name`` (PascalCase registry key, e.g. ``"Finding"``).
+    """
+    from ..generated.route_contract import ROUTE_CONTRACT
+    from ..registry import RESOURCE_REGISTRY
+    from .runtime import ResourceRuntimeFacade
+    from .specialized import FACADE_CLASS_BY_ATTR
+
+    entry = next(
+        (e for e in RESOURCE_REGISTRY if e.attr_name == attr_name),
+        None,
+    )
+    if entry is None:
+        raise ValueError(f"Unknown resource attr_name: {attr_name!r}")
+    facade_type = FACADE_CLASS_BY_ATTR.get(attr_name, ResourceRuntimeFacade)
+    scope = getattr(entry, "scope", None)
+    return build_facade_description(
+        attr_name=entry.attr_name,
+        resource_name=entry.resource_name,
+        facade_type=facade_type,
+        filter_kwarg_map=dict(entry.filter_kwarg_map),
+        scope=scope,
+        route_contract=ROUTE_CONTRACT,
+    )
+
+
 __all__ = [
     "FILTER_ENUM_SNIPPETS_RELPATH",
+    "TOP_FILTERABLE_SPEC_PATHS",
     "FacadeDescription",
     "ParamInfo",
     "build_facade_description",
+    "describe_resource",
     "list_params_from_signature",
 ]

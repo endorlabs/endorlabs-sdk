@@ -269,6 +269,24 @@ class ListableFacade[T: BaseModel]:
             return None
         return ListParameters(**merged)
 
+    def _namespace_for_parent_list(
+        self,
+        parent: Any,
+        namespace: str | None,
+    ) -> str:
+        """Resolve list namespace when ``parent=`` is set.
+
+        Prefer the parent's ``tenant_meta.namespace``. When *parent* is a bare
+        UUID (or otherwise has no namespace), keep the caller's ``namespace=``
+        instead of silently falling back to the client tenant root.
+        """
+        parent_ns = resolve_namespace_for_resource(parent, None)
+        if parent_ns:
+            return self._ns(parent_ns)
+        if namespace is not None:
+            return self._ns(namespace)
+        return self._ns(self._default_namespace)
+
     def _build_list_kwargs(
         self,
         *,
@@ -504,9 +522,7 @@ class ListableFacade[T: BaseModel]:
                 raise ValidationError(
                     "This resource does not support list(parent=)."
                 ) from None
-            namespace = self._ns(
-                resolve_namespace_for_resource(parent, self._default_namespace)
-            )
+            namespace = self._namespace_for_parent_list(parent, namespace)
         ns = self._ns(namespace)
 
         self._raise_list_agent_rule_errors(
@@ -713,9 +729,7 @@ class ListableFacade[T: BaseModel]:
                 raise ValidationError(
                     "This resource does not support list_iter(parent=)."
                 ) from None
-            namespace = self._ns(
-                resolve_namespace_for_resource(parent, self._default_namespace)
-            )
+            namespace = self._namespace_for_parent_list(parent, namespace)
         ns = self._ns(namespace)
         self._raise_list_agent_rule_errors(
             ns=ns,
@@ -750,6 +764,90 @@ class ListableFacade[T: BaseModel]:
         )
         return self._ops.list_iter(ns, lp, max_pages)
 
+    def list_pages(
+        self,
+        traverse: bool = False,
+        namespace: str | None = None,
+        list_params: ListParameters | None = None,
+        max_pages: int | None = None,
+        max_items: int | None = None,
+        parent: Any = None,
+        filter: str | FilterExpression | None = None,
+        mask: str | None = None,
+        page_size: int | None = None,
+        page_token: str | None = None,
+        page_id: str | None = None,
+        sort_by: str | None = None,
+        desc: bool | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        archive: bool | None = None,
+        pr_uuid: str | None = None,
+        ci_run_uuid: str | None = None,
+        **kwargs: Any,
+    ) -> Iterator[Any]:
+        """Yield typed ``ResourcePage`` values (cursor, stop reason, completeness).
+
+        Prefer this over flat ``list()`` when a host must distinguish complete,
+        capped, and unknown acquisition. Empty pages with
+        ``completeness != "complete"`` are not proof of absence. ``max_items``
+        is a global fetch budget across pages.
+        """
+        if "list" not in self._supported_ops:
+            raise NotImplementedError(
+                "This resource does not support list_pages."
+            ) from None
+        page_size = self._normalize_list_limit_kwarg(
+            page_size=page_size,
+            kwargs=kwargs,
+            attr_name=self._entry.attr_name,
+        )
+        if parent is not None:
+            if self._parent_kind is None:
+                raise ValidationError(
+                    "This resource does not support list_pages(parent=)."
+                ) from None
+            namespace = self._namespace_for_parent_list(parent, namespace)
+        ns = self._ns(namespace)
+        self._raise_list_agent_rule_errors(
+            ns=ns,
+            traverse=traverse,
+            parent=parent,
+            filter=filter,
+            page_size=page_size,
+            max_pages=max_pages,
+            sort_by=sort_by,
+            count=None,
+            list_params=list_params,
+            kwargs=kwargs,
+        )
+        lp = self._effective_list_parameters(
+            traverse=traverse,
+            list_params=list_params,
+            parent=parent,
+            filter=filter,
+            mask=mask,
+            page_size=page_size,
+            page_token=page_token,
+            page_id=page_id,
+            sort_by=sort_by,
+            desc=desc,
+            count=None,
+            from_date=from_date,
+            to_date=to_date,
+            archive=archive,
+            pr_uuid=pr_uuid,
+            ci_run_uuid=ci_run_uuid,
+            **kwargs,
+        )
+        return self._ops.list_pages(
+            ns,
+            lp,
+            max_pages=max_pages,
+            max_items=max_items,
+            traverse=traverse,
+        )
+
     def count(
         self,
         traverse: bool = False,
@@ -772,9 +870,7 @@ class ListableFacade[T: BaseModel]:
                 raise ValidationError(
                     "This resource does not support count(parent=)."
                 ) from None
-            namespace = self._ns(
-                resolve_namespace_for_resource(parent, self._default_namespace)
-            )
+            namespace = self._namespace_for_parent_list(parent, namespace)
         ns = self._ns(namespace)
         lp = self._effective_list_parameters(
             traverse=traverse,
@@ -822,9 +918,7 @@ class ListableFacade[T: BaseModel]:
                 raise ValidationError(
                     "This resource does not support list_groups(parent=)."
                 ) from None
-            namespace = self._ns(
-                resolve_namespace_for_resource(parent, self._default_namespace)
-            )
+            namespace = self._namespace_for_parent_list(parent, namespace)
         ns = self._ns(namespace)
         lp = self._effective_list_parameters(
             traverse=traverse,

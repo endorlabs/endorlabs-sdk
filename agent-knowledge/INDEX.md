@@ -50,14 +50,21 @@ Consumer entrypoint: **`AGENTS.md`** (points here). Copy **`templates/consumer-A
 | `from endorlabs.filters import F` | `from endorlabs import F` — `endorlabs.filters` is MQL fragments only |
 | `ScanResult.list(filter=…spec.project_uuid…)` | `ScanResult.list_by_project(project)` — project link is `meta.parent_uuid` (same for FindingLog); Finding/PV use `spec.project_uuid` |
 | `list_by_*` / `list_for_context` expecting wrong return type | `list[T]` — same as `.list()`; project/scan-plane edges |
+| Cap/`max_pages` → “no data” | Prefer `list_pages` / `list_pages_*`; empty `ResourcePage.items` with `completeness != "complete"` is **not** absence ([list-parameters](contracts/list-parameters.md#bounded-pages)) |
+| `list_for_context` on ScanResult/Project | Only route-contract scan-plane kinds; else `RouteNotApplicableError` — check `describe_resource("Finding").route_methods` |
+| Hosts need stop reason / completeness | Use `list_pages_by_project` / `list_pages_for_context` (same edges as flat twins) |
+| Offline facade map | `endorlabs.describe_resource("Finding")` / `describe_filter_fields(...)` — no Client; `client.<Kind>.describe()` needs constructed Client |
+| Scan-bound dependency digest | `read_scan_dependency_receipt` → `status="unavailable"` until platform path exists — never invent digests or reuse Artifact/PV hashes |
 | `to_*` expecting wrong return type | `RouteResult` — stitch; `.value` / `.single`; check `.edge_used`, `.warnings` |
 | `limit` on `.list()` | Use `page_size=` or `limit=` (alias for `page_size`; same as `list_by_project(limit=)`) |
 | Sorted list + `max_pages>1` | Platform rejects `page_id` with sort — use `limit=`/`page_size` + `max_pages=1`, or drop `sort_by` ([list-parameters](contracts/list-parameters.md)) |
+| Toolchain catalog | `client.SupportedToolChainVersion.list(namespace="system")` — not `Client._client` |
 | Finding text field | `spec.summary`, not `spec.description` |
 | `Metric.list_by_project` | Does not exist — use `Metric.list(...)` with filters |
 | `QueryVulnerability.list` | Query resources are create/query only, not listable CRUD |
 | `endorlabs.query_vulnerability` | Submodule for payload builders — use `client.QueryVulnerability` |
 | MCP + SDK + endorctl auth | **One mode** in `.env`: `ENDOR_TOKEN` **or** key+secret, not both |
+| Hand-built / forged `User-Agent` | Use `ClientIdentity.sdk()` / `.workflow(...)` / `.custom(...)` — never forge `endorctl` caller ([client-identity](contracts/client-identity.md)) |
 | Call graph: `fetch()` only | Use `CallGraphData.decode()` for searchable callables/edges; `fetch()` is raw envelope |
 | `call_graph_available=true` | Flag ≠ stored data — use `resolve_package_version_with_callgraph()` |
 | Call graph helpers | Not on `client` — `endorlabs.workflows.callgraph` + skill **endor-fetch-and-search-call-graph** |

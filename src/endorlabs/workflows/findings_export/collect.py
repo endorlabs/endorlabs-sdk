@@ -21,8 +21,11 @@ from endorlabs.utils.jsonl_store import JsonlKeyedStore
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.common import WorkflowResult
 from endorlabs.workflows.findings_export.checkpoint import (
+    CHECKPOINT_SCHEMA,
     NamespaceCheckpoint,
+    identity_matches,
     init_shards,
+    invalidate_complete_without_artifact,
     load_checkpoint,
     mark_complete,
     mark_failed,
@@ -109,6 +112,20 @@ def discover_shards(client: Client, namespace: str) -> list[ProjectShard]:
     return shards
 
 
+def _require_identity_mask(mask: str | None) -> str | None:
+    """Reject masks that omit ``uuid`` (would silently drop all rows)."""
+    list_mask = (mask or "").strip() or None
+    if list_mask is None:
+        return None
+    parts = {p.strip() for p in list_mask.split(",") if p.strip()}
+    if "uuid" not in parts:
+        raise ValueError(
+            "findings export mask must include 'uuid' (identity field); "
+            "refusing a mask that would discard all rows"
+        )
+    return list_mask
+
+
 def _run_finding_shards(
     client: Client,
     *,
@@ -123,11 +140,11 @@ def _run_finding_shards(
     mask: str | None,
 ) -> list[str]:
     errors: list[str] = []
-    list_mask = (mask or "").strip() or None
+    list_mask = _require_identity_mask(mask)
 
     def _worker(
         shard: ProjectShard,
-    ) -> tuple[str, list[dict[str, Any]], str | None]:
+    ) -> tuple[str, list[dict[str, Any]], str | None, bool]:
         filt = compose_finding_filter(shard.project_uuid, extra_filter)
         try:
             at_tenant_root = "." not in shard.namespace
@@ -154,11 +171,19 @@ def _run_finding_shards(
                 if not spec.get("project_uuid"):
                     spec["project_uuid"] = shard.project_uuid
                 flat.append(item)
-            return shard.project_uuid, flat, None
+            # A06: when a page budget is set and the shard returned a full
+            # page_size*max_pages window, treat as capped (not complete).
+            incomplete = bool(
+                pages is not None
+                and pages > 0
+                and page_size > 0
+                and len(flat) >= pages * page_size
+            )
+            return shard.project_uuid, flat, None, incomplete
         except Exception as exc:
-            return shard.project_uuid, [], f"{shard.project_uuid}: {exc}"
+            return shard.project_uuid, [], f"{shard.project_uuid}: {exc}", False
 
-    for shard_key, batch, err in parallel_map_shards_iter(
+    for shard_key, batch, err, incomplete in parallel_map_shards_iter(
         pending_shards,
         _worker,
         max_workers=workers,
@@ -172,7 +197,17 @@ def _run_finding_shards(
             continue
         finding_store.upsert_many(batch)
         finding_store.flush()
-        mark_complete(checkpoint, shard_key, line_count=len(batch))
+        if incomplete:
+            mark_failed(
+                checkpoint,
+                shard_key,
+                f"{shard_key}: pagination incomplete (capped); not marked complete",
+            )
+            errors.append(
+                f"{shard_key}: pagination incomplete (capped); not marked complete"
+            )
+        else:
+            mark_complete(checkpoint, shard_key, line_count=len(batch))
         save_checkpoint(out, checkpoint)
     return errors
 
@@ -227,9 +262,51 @@ def collect_findings_export(
             row_count=0,
         )
 
+    try:
+        _require_identity_mask(mask)
+    except ValueError as exc:
+        return CollectResult(
+            status="error",
+            message=str(exc),
+            errors=[str(exc)],
+            namespace=namespace,
+            output_dir=str(out),
+            findings_path=str(findings_path),
+            projects_path=str(projects_path),
+            project_count=len(shards),
+            row_count=0,
+        )
+
     checkpoint = load_checkpoint(out, namespace=namespace)
     if overwrite:
         checkpoint.shards.clear()
+    elif resume and checkpoint.shards:
+        if not identity_matches(
+            checkpoint,
+            namespace=namespace,
+            extra_filter=extra_filter,
+            mask=mask,
+        ):
+            msg = (
+                "findings-export checkpoint identity mismatch "
+                "(namespace/filter/mask); pass overwrite=True to restart"
+            )
+            return CollectResult(
+                status="error",
+                message=msg,
+                errors=[msg],
+                namespace=namespace,
+                output_dir=str(out),
+                findings_path=str(findings_path),
+                projects_path=str(projects_path),
+                project_count=len(shards),
+                row_count=0,
+            )
+        invalidate_complete_without_artifact(checkpoint, artifact_path=findings_path)
+    checkpoint.schema = CHECKPOINT_SCHEMA
+    checkpoint.namespace = namespace
+    checkpoint.extra_filter = extra_filter
+    checkpoint.mask = mask
     init_shards(checkpoint, [s.project_uuid for s in shards])
     pending = pending_shard_keys(checkpoint, resume=resume)
     pending_shards = [s for s in shards if s.project_uuid in pending]

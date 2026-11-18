@@ -146,6 +146,14 @@ def _stub_extra_methods(entry: ResourceEntry) -> list[str]:
     return []
 
 
+def _page_twin_for_route_method(method_name: str) -> str | None:
+    if method_name == "list_by_project":
+        return "list_pages_by_project"
+    if method_name == "list_for_context":
+        return "list_pages_for_context"
+    return None
+
+
 def _load_route_public_methods(attr_name: str) -> list[str]:
     try:
         from endorlabs.generated.route_contract import ROUTE_CONTRACT
@@ -162,6 +170,10 @@ def _load_route_public_methods(attr_name: str) -> list[str]:
             continue
         seen.add(method_name)
         methods.append(method_name)
+        twin = _page_twin_for_route_method(method_name)
+        if twin is not None and twin not in seen:
+            seen.add(twin)
+            methods.append(twin)
     return methods
 
 
@@ -175,23 +187,34 @@ def _first_docstring_paragraph(obj: Any) -> str | None:
 
 
 def _emit_route_method_stubs(entry: ResourceEntry) -> list[str]:
-    """Emit typed route accessors when not already defined on the stub base chain."""
+    """Emit typed route accessors when not already on the specialized class body.
+
+    ``RouteHostMixin`` defines ``list_for_context`` / ``list_pages_for_context``
+    for every runtime facade, but only route-contract kinds are applicable.
+    Emit those (and ``list_pages_*`` twins) here so DependencyMetadata-style
+    facades get IDE-visible stubs; skip names already re-emitted from a
+    specialized class ``__dict__``.
+    """
     methods = _load_route_public_methods(entry.attr_name)
     if not methods:
         return []
-    impl_classes = _stub_impl_classes(entry)
+    specialized = FACADE_CLASS_BY_ATTR.get(entry.attr_name)
     model_name = entry.model_class.__name__
     lines: list[str] = []
     for name in methods:
-        impl_cls = _method_impl_class(name, impl_classes)
-        if impl_cls is not None:
+        if specialized is not None and name in specialized.__dict__:
             continue
+        source_cls = _method_impl_class(
+            name, [RouteHostMixin, ResourceRuntimeFacade, ListableFacade]
+        )
+        if source_cls is None:
+            source_cls = ResourceRuntimeFacade
         lines.append("")
         lines.extend(
             _format_method_override(
                 name,
                 model_name,
-                source_class=ResourceRuntimeFacade,
+                source_class=source_cls,
             )
         )
     return lines
@@ -712,7 +735,7 @@ def main() -> None:  # noqa: D103
         "# Source of truth: endorlabs.registry.RESOURCE_REGISTRY"
         " and CUSTOM_FACADE_REGISTRY.",
         "",
-        "from collections.abc import Callable",
+        "from collections.abc import Callable, Iterator",
         "from typing import Any",
         "",
     ]
@@ -721,6 +744,7 @@ def main() -> None:  # noqa: D103
     # isort requires one contiguous first-party block in alpha order.
     relative_imports: dict[str, list[str]] = {
         ".api_client": ["APIClient"],
+        ".core.client_identity": ["ClientIdentity"],
         ".core.filter": ["FilterExpression"],
         ".core.types": ["ListParameters"],
         ".core.whoami": ["WhoamiResult"],

@@ -384,18 +384,56 @@ def _decode_timestamp(ts_bytes: bytes) -> datetime | None:
     return datetime.fromtimestamp(seconds + nanos / 1e9, tz=UTC)
 
 
-def _decompress_callgraph_bytes(compressed: bytes) -> bytes:
-    """Decompress zstd call graph payload with a bounded output size."""
+def _decompress_callgraph_bytes(
+    compressed: bytes,
+    *,
+    max_bytes: int = _MAX_CALLGRAPH_DECOMPRESSED_BYTES,
+) -> bytes:
+    """Decompress zstd call graph payload with a hard total-byte cap.
+
+    ``ZstdDecompressor.decompress(max_output_size=...)`` alone is not sufficient
+    when the frame declares its own content size — enforce a streaming total.
+    """
     assert zstandard is not None
+    import io
+
     try:
-        return zstandard.ZstdDecompressor().decompress(
-            compressed,
-            max_output_size=_MAX_CALLGRAPH_DECOMPRESSED_BYTES,
-        )
+        # Reject oversized declared content size before allocating.
+        try:
+            frame = zstandard.get_frame_parameters(compressed)
+            content_size = int(getattr(frame, "content_size", 0) or 0)
+            if content_size > max_bytes:
+                raise ValueError(f"Call graph decompression exceeded {max_bytes} bytes")
+        except zstandard.ZstdError:
+            pass
+
+        dctx = zstandard.ZstdDecompressor()
+        chunks: list[bytes] = []
+        total = 0
+        with dctx.stream_reader(io.BytesIO(compressed)) as reader:
+            while True:
+                # Read one byte past the cap so overflow is detectable.
+                to_read = min(1024 * 1024, max_bytes - total + 1)
+                if to_read <= 0:
+                    raise ValueError(
+                        f"Call graph decompression exceeded {max_bytes} bytes"
+                    )
+                chunk_raw: Any = reader.read(to_read)
+                if not chunk_raw:
+                    break
+                if not isinstance(chunk_raw, (bytes, bytearray)):
+                    raise TypeError("zstd stream_reader returned non-bytes")
+                chunk = bytes(chunk_raw)
+                total += len(chunk)
+                if total > max_bytes:
+                    raise ValueError(
+                        f"Call graph decompression exceeded {max_bytes} bytes"
+                    )
+                chunks.append(chunk)
+        return b"".join(chunks)
     except zstandard.ZstdError as exc:
         raise ValueError(
-            f"Call graph decompression failed or exceeded "
-            f"{_MAX_CALLGRAPH_DECOMPRESSED_BYTES} bytes: {exc}"
+            f"Call graph decompression failed or exceeded {max_bytes} bytes: {exc}"
         ) from exc
 
 

@@ -87,6 +87,15 @@ def _query_facade(client: APIClient, default_namespace: str | None) -> Any:
     return QueryFacade(client, default_namespace)
 
 
+def _supported_toolchain_facade(
+    client: APIClient, default_namespace: str | None
+) -> Any:
+    """Build SupportedToolChainVersionFacade for catalog reads."""
+    from .facade import SupportedToolChainVersionFacade
+
+    return SupportedToolChainVersionFacade(client, default_namespace)
+
+
 def _normalize_contract_rows(items: list[Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for entry in items:
@@ -489,6 +498,16 @@ CUSTOM_FACADE_REGISTRY: list[CustomFacadeEntry] = [
             "Kind-agnostic Query graph joins via execute / at_namespace / create. "
             "Estate recipes: client.Query.Project.count_pv / "
             "count_findings_by_category / count_dm; see docs/guides/query-recipes.md."
+        ),
+    ),
+    CustomFacadeEntry(
+        attr_name="SupportedToolChainVersion",
+        factory=_supported_toolchain_facade,
+        pyi_facade_class="SupportedToolChainVersionFacade",
+        pyi_import_module="facade",
+        pyi_attr_doc=(
+            "Platform toolchain download catalog (system namespace). "
+            "Use list(namespace='system', filter=...). Privileged read often required."
         ),
     ),
 ]

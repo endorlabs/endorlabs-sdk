@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast, override
+from collections.abc import Iterator
+from typing import TYPE_CHECKING, Any, cast
 
 from ..core.exceptions import RouteNotApplicableError
 from ..utils.namespace import resolve_namespace_for_resource
@@ -108,6 +109,27 @@ class ScanResultFacade(ResourceRuntimeFacade[Any]):
         if limit > 0:
             return rows[:limit]
         return rows
+
+    def list_pages_by_project(
+        self,
+        project: Any,
+        *,
+        namespace: str | None = None,
+        **kwargs: Any,
+    ) -> Iterator[Any]:
+        """Yield ``ResourcePage`` values for a project's scan results.
+
+        Same route as :meth:`list_by_project` without client-side
+        ``status_filter`` / ``limit`` truncation — use ``max_pages`` /
+        ``max_items`` / ``page_size`` for host budgets.
+        """
+        if namespace is not None:
+            kwargs = {**kwargs, "namespace": namespace}
+        if "sort_by" not in kwargs:
+            kwargs = {**kwargs, "sort_by": "meta.create_time", "desc": True}
+        return self._execute_route_pages(
+            "project.scan_results", source=project, **kwargs
+        )
 
 
 class ProjectFacade(ResourceRuntimeFacade[Any]):
@@ -273,22 +295,18 @@ class PackageVersionFacade(ResourceRuntimeFacade[Any]):
             "project.package_versions", source=project, **kwargs
         )
 
-    @override
-    def list_for_context(
+    def list_pages_by_project(
         self,
-        source: Any,
+        project: Any,
         *,
         filter: str | FilterExpression | None = None,
-        namespace: str | None = None,
         **kwargs: Any,
-    ) -> list[Any]:
-        """List package versions in the same scan plane as *source*."""
+    ) -> Iterator[Any]:
+        """Yield ``ResourcePage`` package versions for a project."""
         if filter is not None:
             kwargs = {**kwargs, "filter": filter}
-        if namespace is not None:
-            kwargs = {**kwargs, "namespace": namespace}
-        return self._execute_route_list(
-            "scan.package_versions", source=source, **kwargs
+        return self._execute_route_pages(
+            "project.package_versions", source=project, **kwargs
         )
 
 
@@ -307,21 +325,17 @@ class FindingFacade(ResourceRuntimeFacade[Any]):
             kwargs = {**kwargs, "filter": filter}
         return self._execute_route_list("project.findings", source=project, **kwargs)
 
-    @override
-    def list_for_context(
+    def list_pages_by_project(
         self,
-        source: Any,
+        project: Any,
         *,
         filter: str | FilterExpression | None = None,
-        namespace: str | None = None,
         **kwargs: Any,
-    ) -> list[Any]:
-        """List findings in the same scan plane as *source* (``scan.findings``)."""
+    ) -> Iterator[Any]:
+        """Yield ``ResourcePage`` findings for a project."""
         if filter is not None:
             kwargs = {**kwargs, "filter": filter}
-        if namespace is not None:
-            kwargs = {**kwargs, "namespace": namespace}
-        return self._execute_route_list("scan.findings", source=source, **kwargs)
+        return self._execute_route_pages("project.findings", source=project, **kwargs)
 
     def to_dependency_metadata(
         self,
@@ -574,4 +588,61 @@ class QueryFacade:
             namespace=namespace,
             parse_page=parse,
             merge_pages=merge,
+        )
+
+
+class SupportedToolChainVersionFacade:
+    """Platform toolchain download catalog (``supported-toolchain-versions``).
+
+    Default owner namespace is ``system`` (privileged read). Tenant API keys
+    often receive 403 — surface denial distinctly from an empty inventory.
+    """
+
+    def __init__(self, client: APIClient, default_namespace: str | None) -> None:
+        super().__init__()
+        self._client = client
+        self._default_namespace = default_namespace
+
+    def list(
+        self,
+        *,
+        namespace: str | None = None,
+        filter: str | None = None,
+        max_pages: int | None = None,
+        max_items: int | None = None,
+    ) -> list[dict[str, Any]]:
+        """List SupportedToolChainVersion rows as JSON dicts."""
+        from ..resources.supported_toolchain import (
+            DEFAULT_NAMESPACE,
+            list_supported_toolchain_versions,
+        )
+
+        return list_supported_toolchain_versions(
+            self._client,
+            namespace=namespace or DEFAULT_NAMESPACE,
+            filter_expr=filter,
+            max_pages=max_pages,
+            max_items=max_items,
+        )
+
+    def list_catalog(
+        self,
+        *,
+        namespace: str | None = None,
+        filter: str | None = None,
+        max_pages: int | None = None,
+        max_items: int | None = None,
+    ) -> Any:
+        """List toolchain rows with normalized choices and completeness."""
+        from ..resources.supported_toolchain import (
+            DEFAULT_NAMESPACE,
+            list_supported_toolchain_catalog,
+        )
+
+        return list_supported_toolchain_catalog(
+            self._client,
+            namespace=namespace or DEFAULT_NAMESPACE,
+            filter_expr=filter,
+            max_pages=max_pages,
+            max_items=max_items,
         )

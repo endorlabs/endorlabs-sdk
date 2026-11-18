@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, cast
 
-CHECKPOINT_SCHEMA = "endor.findings_export.checkpoint.v1"
+CHECKPOINT_SCHEMA = "endor.findings_export.checkpoint.v2"
 CHECKPOINT_FILENAME = "checkpoint.json"
 
 ShardStatus = Literal["pending", "complete", "failed"]
@@ -28,6 +28,8 @@ class NamespaceCheckpoint:
 
     namespace: str
     schema: str = CHECKPOINT_SCHEMA
+    extra_filter: str | None = None
+    mask: str | None = None
     shards: dict[str, ShardState] = field(default_factory=dict[str, ShardState])
 
     def to_dict(self) -> dict[str, Any]:
@@ -35,6 +37,8 @@ class NamespaceCheckpoint:
         return {
             "schema": self.schema,
             "namespace": self.namespace,
+            "extra_filter": self.extra_filter,
+            "mask": self.mask,
             "shards": {
                 key: {
                     "status": state.status,
@@ -71,9 +75,13 @@ class NamespaceCheckpoint:
                 line_count=int(value_map.get("line_count") or 0),
                 error=str(err) if err is not None else None,
             )
+        filter_raw = data.get("extra_filter")
+        mask_raw = data.get("mask")
         return cls(
             namespace=str(data.get("namespace") or ""),
             schema=str(data.get("schema") or CHECKPOINT_SCHEMA),
+            extra_filter=str(filter_raw) if filter_raw is not None else None,
+            mask=str(mask_raw) if mask_raw is not None else None,
             shards=shards,
         )
 
@@ -84,7 +92,11 @@ def checkpoint_path(output_dir: Path) -> Path:
 
 
 def load_checkpoint(output_dir: Path, *, namespace: str) -> NamespaceCheckpoint:
-    """Load checkpoint from disk or return an empty one for *namespace*."""
+    """Load checkpoint from disk or return an empty one for *namespace*.
+
+    Corrupt JSON or namespace mismatch yields a fresh empty checkpoint
+    (callers must not treat that as reusable completion).
+    """
     path = checkpoint_path(output_dir)
     if not path.is_file():
         return NamespaceCheckpoint(namespace=namespace)
@@ -102,13 +114,45 @@ def load_checkpoint(output_dir: Path, *, namespace: str) -> NamespaceCheckpoint:
 
 
 def save_checkpoint(output_dir: Path, checkpoint: NamespaceCheckpoint) -> None:
-    """Persist *checkpoint* as checkpoint.json under *output_dir*."""
+    """Persist *checkpoint* atomically as checkpoint.json under *output_dir*."""
     output_dir.mkdir(parents=True, exist_ok=True)
     path = checkpoint_path(output_dir)
-    path.write_text(
-        json.dumps(checkpoint.to_dict(), indent=2, ensure_ascii=True) + "\n",
-        encoding="utf-8",
-    )
+    tmp = path.with_suffix(".json.tmp")
+    payload = json.dumps(checkpoint.to_dict(), indent=2, ensure_ascii=True) + "\n"
+    tmp.write_text(payload, encoding="utf-8")
+    tmp.replace(path)
+
+
+def identity_matches(
+    checkpoint: NamespaceCheckpoint,
+    *,
+    namespace: str,
+    extra_filter: str | None,
+    mask: str | None,
+) -> bool:
+    """True when checkpoint semantic inputs match the requested export."""
+    if checkpoint.namespace != namespace:
+        return False
+    if (checkpoint.extra_filter or None) != (extra_filter or None):
+        return False
+    return (checkpoint.mask or None) == (mask or None)
+
+
+def invalidate_complete_without_artifact(
+    checkpoint: NamespaceCheckpoint,
+    *,
+    artifact_path: Path,
+) -> None:
+    """Demote completed shards when the output artifact is missing/empty."""
+    if artifact_path.is_file() and artifact_path.stat().st_size > 0:
+        return
+    for key, state in list(checkpoint.shards.items()):
+        if state.status == "complete":
+            checkpoint.shards[key] = ShardState(
+                status="pending",
+                line_count=0,
+                error="artifact missing or empty; completion invalidated",
+            )
 
 
 def init_shards(checkpoint: NamespaceCheckpoint, shard_keys: list[str]) -> None:

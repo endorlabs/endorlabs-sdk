@@ -142,6 +142,47 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
   `endorlabs.core.exceptions`); resources may return `None` on 404 where documented.
 - Preserve full server error context in SDK error handling.
 
+<a id="client-identity"></a>
+## Client identity
+
+Session headers that identify which product plane is using the SDK Client.
+Shipped agent-knowledge mirror:
+[`contracts/client-identity.md`](../agent-knowledge/contracts/client-identity.md).
+
+**Header grammar:**
+
+```text
+User-Agent: <product>/<version> […]
+x-endor-caller: <product-plane>
+x-endor-caller-version: <product-version>
+x-endor-op-comment: <optional workflow or host comment>
+```
+
+Default SDK Client:
+
+```text
+User-Agent: endorlabs-sdk/<sdk_ver>
+x-endor-caller: endorlabs-sdk
+x-endor-caller-version: <sdk_ver>
+```
+
+**MUST / SHALL:**
+
+- Default `Client()` / `APIClient()` **SHALL** set branded `User-Agent`
+  `endorlabs-sdk/<version>` (not the raw httpx default).
+- Default **SHALL** set `x-endor-caller: endorlabs-sdk` and
+  `x-endor-caller-version: <sdk_ver>`.
+- `op_comment=` **SHALL** map to `x-endor-op-comment` when provided and
+  **MUST NOT** contain `service/endorctl`.
+- Callers **MUST NOT** forge `endorctl` as `x-endor-caller` or put
+  `service/endorctl` in `x-endor-op-comment`.
+- When an injected `http_client` already sets `User-Agent` or `x-endor-caller*`,
+  the SDK **SHALL** fill missing identity keys only and **MUST NOT** overwrite
+  host-provided values.
+- SDK-owned conveniences: `ClientIdentity.sdk()` and `.workflow(name)`.
+  Other product planes **SHALL** use `ClientIdentity.custom(...)` or construct
+  `ClientIdentity` directly — the SDK does not ship host-specific factories.
+
 <a id="concurrency-and-transport-retries"></a>
 ## Concurrency and transport retries
 
@@ -164,3 +205,31 @@ Exported from `endorlabs`: `EndorAPIError`, `UnauthorizedError`, `NotFoundError`
 `PermissionDeniedError`, `ValidationError`, `ConflictError`, `RateLimitError`,
 `ServerError`, `NetworkError`, `AmbiguousError`, `MethodNotSupportedError`, and
 `map_status_code_to_exception()`.
+
+<a id="host-integration-surfaces"></a>
+## Host integration surfaces
+
+Portable hosting contracts for injected clients and bounded evidence (Dev pin
+target). Hosts may re-run
+`tests/unit/hosting/test_host_integration_contract.py` against a locked revision.
+
+- **Budgets are real:** `max_items` / `max_pages` / `deadline_seconds` /
+  `cancel_event` cap fetch and retry *work*. `max_items` shrinks request
+  `page_size` before the next page is fetched. Retry and auth backoff wait on
+  `cancel_event` (interruptible) and clamp to remaining deadline.
+- **`ResourcePage`:** `owner_namespace` is the caller request scope (not an
+  inferred effective owner). `completeness` is `complete` only with no next
+  cursor; client caps yield `capped`; cancel/deadline/repeated cursor yield
+  `unknown`. Empty non-complete pages do not prove absence.
+- **Observations:** optional `request_observer` receives sanitized
+  `attempt` / `retry` / `page` / `terminal` events. Terminal `stop_reason`
+  includes `deadline` / `cancelled`. Observer failures must not flip API
+  outcomes.
+- **Data-first workflows:** `acquire_*` helpers take an injected `Client` and
+  return typed evidence without mandatory files. Host cancel/deadline errors
+  raise; they are not folded into data `status=error`. Missing evidence stays
+  unknown / partial.
+- **Receipts:** `read_scan_dependency_receipt` returns typed `unavailable`
+  until a platform scan-bound digest path exists — never invent digests.
+- **BOM adjacency:** string coordinates are accepted with a 4096-character
+  cap (`validate_bom_adjacency_entry`); integers are rejected.

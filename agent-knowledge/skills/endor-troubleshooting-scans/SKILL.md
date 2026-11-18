@@ -23,6 +23,12 @@ endorlabs:
       - endorlabs.Client.Finding.list_for_context
       - endorlabs.workflows.troubleshooting_scans.common.scanlog_entries_have_content
       - endorlabs.workflows.troubleshooting_scans.common.extract_scan_mode
+      - endorlabs.workflows.troubleshooting_scans.assemble_scan_pair_evidence
+      - endorlabs.workflows.troubleshooting_scans.acquire_scan_pair_evidence
+      - endorlabs.workflows.troubleshooting_scans.acquire_scan_results
+      - endorlabs.workflows.troubleshooting_scans.acquire_scan_logs
+      - endorlabs.workflows.troubleshooting_scans.search_embedded_scan_errors
+      - endorlabs.workflows.troubleshooting_scans.compute_diff
 ---
 
 # Troubleshooting Scans

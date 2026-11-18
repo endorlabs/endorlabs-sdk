@@ -181,6 +181,7 @@ def _collect_sharded_resource(
             for row in batch:
                 handle.write(json.dumps(row, ensure_ascii=False))
                 handle.write("\n")
+            handle.flush()
             total_rows += len(batch)
             mark_shard_complete(
                 manifest,
@@ -287,6 +288,8 @@ def _collect_dm_and_finding_parallel(
     resume: bool,
     preflight: bool,
     validate_counts: bool,
+    run_dm: bool = True,
+    run_finding: bool = True,
 ) -> tuple[int, int]:
     dm_count = 0
     finding_count = 0
@@ -318,6 +321,10 @@ def _collect_dm_and_finding_parallel(
         )
 
     def _run_finding() -> int:
+        # Skip entirely when already complete — independent of DM status (A05).
+        existing = manifest.resources[RESOURCE_FINDING]
+        if resume and existing.status == "complete":
+            return existing.line_count
         topology = client.Query.Project.discover(namespace, traverse=True)
         projects = topology.projects
         shard_keys = [p.uuid for p in projects]
@@ -331,12 +338,14 @@ def _collect_dm_and_finding_parallel(
             {**row, "project_uuid": row.get("project_uuid") or ""} for row in rows
         ]
         out_path = resource_path(workspace_root, RESOURCE_FINDING)
-        if not resume or not out_path.is_file():
-            safe_write_text(workspace_root, out_path, "")
-        with out_path.open("a", encoding="utf-8") as handle:
+        # Atomic rewrite — never append on resume (avoids duplicate rows).
+        tmp_path = out_path.with_suffix(out_path.suffix + ".tmp")
+        with tmp_path.open("w", encoding="utf-8") as handle:
             for record in records:
                 handle.write(json.dumps(record, ensure_ascii=False))
                 handle.write("\n")
+            handle.flush()
+        tmp_path.replace(out_path)
         finalize_resource(
             manifest,
             RESOURCE_FINDING,
@@ -347,8 +356,14 @@ def _collect_dm_and_finding_parallel(
         save_collect_manifest(workspace_root, manifest)
         return len(records)
 
-    dm_count = _run_dm()
-    finding_count = _run_finding()
+    if run_dm:
+        dm_count = _run_dm()
+    elif resume:
+        dm_count = manifest.resources[RESOURCE_DEPENDENCY_METADATA].line_count
+    if run_finding:
+        finding_count = _run_finding()
+    elif resume:
+        finding_count = manifest.resources[RESOURCE_FINDING].line_count
     return dm_count, finding_count
 
 
@@ -432,7 +447,9 @@ def collect_workspace(
 
     dm_status = manifest.resources[RESOURCE_DEPENDENCY_METADATA].status
     finding_status = manifest.resources[RESOURCE_FINDING].status
-    if overwrite or dm_status != "complete" or finding_status != "complete":
+    need_dm = overwrite or dm_status != "complete"
+    need_finding = overwrite or finding_status != "complete"
+    if need_dm or need_finding:
         dm_count, finding_count = _collect_dm_and_finding_parallel(
             client,
             namespace=namespace,
@@ -444,9 +461,24 @@ def collect_workspace(
             resume=resume and not overwrite,
             preflight=preflight,
             validate_counts=validate_counts,
+            run_dm=need_dm,
+            run_finding=need_finding,
         )
-        outcomes[RESOURCE_DEPENDENCY_METADATA] = f"{dm_count} dm rows"
-        outcomes[RESOURCE_FINDING] = f"{finding_count} findings"
+        outcomes[RESOURCE_DEPENDENCY_METADATA] = (
+            f"{dm_count} dm rows"
+            if need_dm
+            else (
+                f"{manifest.resources[RESOURCE_DEPENDENCY_METADATA].line_count}"
+                " dm rows (cached)"
+            )
+        )
+        outcomes[RESOURCE_FINDING] = (
+            f"{finding_count} findings"
+            if need_finding
+            else (
+                f"{manifest.resources[RESOURCE_FINDING].line_count} findings (cached)"
+            )
+        )
     else:
         outcomes[RESOURCE_DEPENDENCY_METADATA] = (
             f"{manifest.resources[RESOURCE_DEPENDENCY_METADATA].line_count} dm rows (cached)"

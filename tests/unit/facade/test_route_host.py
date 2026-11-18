@@ -57,3 +57,25 @@ def test_route_table_for_finding() -> None:
     facade._route_contract = contract
     table = facade._route_table_for_kind("Finding")
     assert any(edge.id == "scan.findings" for edge in table)
+
+
+def test_execute_route_pages_delegates() -> None:
+    contract = load_golden_contract()
+    facade = ResourceRuntimeFacade(
+        Mock(),
+        "tenant",
+        _entry(attr_name="Finding"),
+    )
+    facade._route_contract = contract
+    project = SimpleNamespace(
+        uuid="p-1",
+        tenant_meta=SimpleNamespace(namespace="tenant.child"),
+    )
+    with patch.object(facade, "_get_route_executor") as get_exec:
+        executor = Mock()
+        get_exec.return_value = executor
+        executor.ops_for_kind = {}
+        executor.execute_pages.return_value = iter([])
+        pages = list(facade._execute_route_pages("project.findings", source=project))
+        assert pages == []
+        executor.execute_pages.assert_called_once()

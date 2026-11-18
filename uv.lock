@@ -10,6 +10,10 @@ resolution-markers = [
     "python_full_version < '3.14' and sys_platform == 'emscripten'",
 ]
 
+[options]
+exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
+exclude-newer-span = "PT24H"
+
 [manifest]
 overrides = [
     { name = "platformdirs", specifier = "==4.13.5" },
@@ -506,7 +510,7 @@ wheels = [
 
 [[package]]
 name = "endorlabs"
-version = "0.7.5"
+version = "0.7.6"
 source = { editable = "." }
 dependencies = [
     { name = "defusedxml" },

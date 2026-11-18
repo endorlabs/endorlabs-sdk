@@ -8,23 +8,21 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 from typing import Any, cast
 
 from endorlabs.client_surface import Client
-from endorlabs.tools.list_sharding import ProjectShard
-from endorlabs.workflows.wire_access import as_dict, dict_str, nested_dict, nested_str
+from endorlabs.workflows.wire_access import as_dict, dict_str, nested_str
 
 from .common import (
     load_json,
     object_to_dict,
-    parallel_collect_for_projects,
     resolve_troubleshooting_output_dir,
     root_tenant,
     write_json,
 )
+from .scan_error_hits import search_embedded_scan_errors
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -149,7 +147,6 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     _ = args.context_lines
     ns = args.namespace or args.tenant
     root = root_tenant(ns)
-    pattern = re.compile(args.error_pattern, re.IGNORECASE)
     client = Client(tenant=ns)
     if not args.from_search_artifact:
         traverse = "." not in ns
@@ -161,59 +158,15 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         projects = []
 
     selected_projects, scope_label = _resolve_scope(args, projects)
-
-    hits: list[dict[str, Any]] = []
-
-    def _search_project(shard: ProjectShard) -> list[dict[str, Any]]:
-        project_hits: list[dict[str, Any]] = []
-        scan_results = [
-            object_to_dict(item)
-            for item in client.ScanResult.list_by_project(
-                shard.project_uuid,
-                namespace=shard.namespace,
-                limit=args.limit,
-            )
-        ]
-        for scan_result in scan_results:
-            scan_uuid = dict_str(scan_result, "uuid")
-            spec = nested_dict(scan_result, "spec")
-            scan_logs_raw = spec.get("logs")
-            scan_logs: list[Any] = (
-                cast("list[Any]", scan_logs_raw)
-                if isinstance(scan_logs_raw, list)
-                else []
-            )
-            project_hits.extend(
-                {
-                    "project_uuid": shard.project_uuid,
-                    "project_namespace": shard.namespace,
-                    "scan_result_uuid": scan_uuid,
-                    "status": spec.get("status"),
-                    "match_line": str(line),
-                }
-                for line in scan_logs
-                if pattern.search(str(line))
-            )
-        return project_hits
-
-    if len(selected_projects) > 1:
-        hits = parallel_collect_for_projects(
-            selected_projects,
-            _search_project,
-            max_workers=args.max_workers,
-            fallback_ns=ns,
-            progress_label="scan error search projects",
-        )
-    else:
-        for project in selected_projects:
-            project_uuid = dict_str(project, "uuid")
-            project_ns = nested_str(project, "tenant_meta", "namespace") or ns
-            if not project_uuid:
-                continue
-            shard = ProjectShard(
-                project_uuid=str(project_uuid), namespace=str(project_ns)
-            )
-            hits.extend(_search_project(shard))
+    evidence = search_embedded_scan_errors(
+        client,
+        projects=selected_projects,
+        error_pattern=args.error_pattern,
+        query_namespace=ns,
+        limit=args.limit,
+        max_workers=args.max_workers,
+    )
+    hits = evidence.hits
 
     scope_uuid = args.project_uuid or dict_str(selected_projects[0], "uuid") or "scoped"
     output_dir = resolve_troubleshooting_output_dir(

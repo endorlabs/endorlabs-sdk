@@ -51,8 +51,12 @@ Generic entrypoints (no estate literals):
 - `client.AgentTelemetry.activity()` / `.calls()` / `.iter_calls()` — Agents Hub / Agent Kit API call metering (not Policy Violations)
 - `endorlabs.workflows.logs.collect_calls_for_principal` — AgentTelemetry rows filtered by caller-supplied `on_behalf_of` substring
 - `client.ScanResult.get_logs()` — scan log lines (ScanLogRequest wire API)
-- `client.Finding.list_by_project()` / `list_for_context()` — generated relationship accessors
-- `client.ScanResult.list_by_project()` — scan results for a project
+- `client.Finding.list_by_project()` / `list_for_context()` / `list_pages_by_project()` / `list_pages_for_context()` — generated relationship accessors (+ page twins)
+- `client.ScanResult.list_by_project()` / `list_pages_by_project()` — scan results for a project (flat preset vs host pages)
+- `client.<Kind>.list_pages()` — typed `ResourcePage` + completeness for host budgets
+- `endorlabs.describe_resource` / `endorlabs.filters.describe_filter_fields` / `describe_filter_operators` — offline discovery
+- `client.SupportedToolChainVersion.list` — platform toolchain catalog (`namespace="system"`)
+- `endorlabs.read_scan_dependency_receipt` — typed unavailable scan-bound digest receipt
 - `client.<Resource>.count()` / `.list_groups()` / `.latest_created()` — list helpers (see [facade-helpers.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/facade-helpers.md))
 - `client.Query.execute()` / `.at_namespace()` — kind-agnostic graph joins (`QuerySpec` + `QueryScope`); see [query-recipes.md](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/guides/query-recipes.md)
 - `client.Query.Project.count_pv()` / `.count_findings_by_category()` / `.count_dm()` — validated **estate** count joins (same guide)
@@ -82,6 +86,9 @@ Generic entrypoints (no estate literals):
 - `endorlabs.workflows.callgraph.find_call_graph_path`
 - `endorlabs.workflows.aisast_callgraph.run_aisast_callgraph_bridge` — AI-SAST function_summary seeds → MAIN CG match / optional safe Finding→package path walk
 - `endorlabs.workflows.aisast_callgraph.resolve_vuln_walk_targets` — MAIN vuln Finding → CG path-to package token (not GHSA-as-URI)
+- `endorlabs.workflows.reachability.acquire_reachability_context` — injected Client → typed reachability evidence (CLI writes optional)
+- `endorlabs.workflows.troubleshooting_scans.acquire_scan_results` / `acquire_scan_logs` / `acquire_scan_pair_evidence` — injected Client data-first evidence
+- `endorlabs.workflows.troubleshooting_scans.assemble_scan_pair_evidence` — pure pair roles / log outcomes / `compute_diff`
 - `endorlabs.workflows.troubleshooting_scans` — workflow CLIs; prefer `ScanResult.list_by_project` and `workflows.projects.discovery.resolve_project_candidate`
 - `endorlabs.workflows.agent_context.hydration` — per-project BOM/CG hydration primitive; not a workflow orchestrator
 

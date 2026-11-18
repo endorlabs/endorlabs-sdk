@@ -102,3 +102,30 @@ as endorctl). **Filter bounds** for the window are separate — use
 `list_groups` are **facade list** features. `Query.create` supports root `group`
 for limited namespace-scoped joins only — see
 [query-vs-list-semantics.md](query-vs-list-semantics.md).
+
+## Bounded pages (hosts)
+
+<a id="bounded-pages"></a>
+
+Hosts that must distinguish complete vs capped acquisition should use
+`list_pages` / `list_pages_by_project` / `list_pages_for_context` (or
+`APIClient.iter_pages`) instead of materializing `list()`.
+
+| Field | Meaning |
+| ----- | ------- |
+| `ResourcePage.items` | Rows for this page |
+| `next_cursor` | Follow-up cursor (`None` when done) |
+| `stop_reason` | `complete` / `max_pages` / `max_items` / `deadline` / `cancelled` / … |
+| `completeness` | `complete` only when the server sent no next cursor; client caps → `capped`; deadline/cancel → `unknown` |
+
+Budgets: `max_pages`, `max_items`, plus `APIClient` / `Client` inject
+`deadline_seconds` / `cancel_event` (`DeadlineExceededError` /
+`RequestCancelledError`). **MUST NOT** conclude absence from `items==()` when
+`completeness != "complete"`.
+
+Relationship page twins exist only when the matching list route exists (see
+`describe_resource(...).route_methods`). `ScanResult.list_by_project` is a
+workflow preset (`max_pages=1`, optional `status_filter` / `limit`);
+`list_pages_by_project` is the wire page twin (no client-side status truncation).
+Route accessors default `max_pages=1` unless overridden — pass `max_pages=None`
+or a larger cap when you need deeper pagination.

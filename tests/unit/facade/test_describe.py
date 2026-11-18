@@ -25,6 +25,7 @@ def test_finding_describe_has_identity_kwargs_and_routes() -> None:
     assert "spec.project_uuid" in desc.filterable_fields
     assert "spec.level" in desc.filterable_fields
     assert "list_by_project" in desc.route_methods
+    assert "list_pages_by_project" in desc.route_methods
     text = str(desc)
     assert "Finding (findings)" in text
     assert "name -> meta.name" in text
@@ -88,6 +89,22 @@ def test_client_describe_without_credentials(clear_auth_env: None) -> None:
     desc = client.Finding.describe()
     assert desc.attr_name == "Finding"
     assert "list_by_project" in desc.route_methods
+
+
+def test_describe_resource_without_client() -> None:
+    from endorlabs.facade.description import describe_resource
+
+    desc = describe_resource("Finding")
+    assert desc.attr_name == "Finding"
+    assert "list_by_project" in desc.route_methods
+    assert "spec.project_uuid" in desc.filterable_fields
+
+
+def test_describe_resource_unknown_raises() -> None:
+    from endorlabs.facade.description import describe_resource
+
+    with pytest.raises(ValueError, match="Unknown resource"):
+        describe_resource("NotARealKind")
 
 
 def test_client_api_without_credentials_raises(clear_auth_env: None) -> None:

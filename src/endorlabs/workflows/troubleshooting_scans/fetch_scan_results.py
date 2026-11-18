@@ -3,39 +3,21 @@
 from __future__ import annotations
 
 import argparse
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from endorlabs.tools.list_sharding import ProjectShard
+from typing import Any
 
 from endorlabs.client_surface import Client
 from endorlabs.workflows.wire_access import dict_str, nested_str
 
 from .common import (
     object_to_dict,
-    parallel_collect_for_projects,
     resolve_troubleshooting_output_dir,
     root_tenant,
-    scan_result_metrics,
     write_json,
 )
+from .scan_results_evidence import acquire_scan_results, list_scan_result_dicts
 
-
-def _list_scan_dicts(
-    client: Client,
-    *,
-    namespace: str,
-    project_uuid: str,
-    limit: int,
-    status_filter: str | None = None,
-) -> list[dict[str, Any]]:
-    rows = client.ScanResult.list_by_project(
-        project_uuid,
-        namespace=namespace,
-        limit=limit,
-        status_filter=status_filter,
-    )
-    return [object_to_dict(item) for item in rows]
+# Compat: CLI/tests may import the old private helper name.
+_list_scan_dicts = list_scan_result_dicts
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -101,42 +83,16 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 "Provide --project-uuid or --project-name unless --all-projects"
             )
 
-    all_results: list[dict[str, Any]] = []
-    summaries: list[dict[str, Any]] = []
-
-    def _fetch_scan_results(shard: ProjectShard) -> list[dict[str, Any]]:
-        return _list_scan_dicts(
-            client,
-            namespace=shard.namespace,
-            project_uuid=shard.project_uuid,
-            limit=effective_limit,
-            status_filter=args.status_filter,
-        )
-
-    if len(selected_projects) > 1:
-        all_results = parallel_collect_for_projects(
-            selected_projects,
-            _fetch_scan_results,
-            max_workers=args.max_workers,
-            fallback_ns=ns,
-            progress_label="scan results projects",
-        )
-    else:
-        for project in selected_projects:
-            project_uuid = dict_str(project, "uuid")
-            project_ns = nested_str(project, "tenant_meta", "namespace") or ns
-            if not project_uuid:
-                continue
-            all_results.extend(
-                _list_scan_dicts(
-                    client,
-                    namespace=project_ns,
-                    project_uuid=project_uuid,
-                    limit=effective_limit,
-                    status_filter=args.status_filter,
-                )
-            )
-    summaries.extend(scan_result_metrics(item) for item in all_results)
+    evidence = acquire_scan_results(
+        client,
+        query_namespace=ns,
+        projects=selected_projects,
+        limit=effective_limit,
+        status_filter=args.status_filter,
+        max_workers=args.max_workers,
+    )
+    all_results = evidence.scan_results
+    summaries = evidence.summaries
 
     primary_uuid = (
         args.project_uuid

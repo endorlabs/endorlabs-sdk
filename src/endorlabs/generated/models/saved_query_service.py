@@ -28,6 +28,11 @@ class ListParametersGroup(BaseModel):
     Contains the group parameters.
     """
 
+    aggregation_operator: str | None = None
+    """
+    Operation applied to aggregation_value_field across the objects of
+    each group. Allowed values are: min, max, sum, avg. Defaults to avg.
+    """
     aggregation_paths: str | None = None
     """
     Group the objects based on this field.
@@ -35,6 +40,13 @@ class ListParametersGroup(BaseModel):
     based on the uniqueness of all fields.
     Supports composite paths.
     Supports arrays and maps.
+    """
+    aggregation_value_field: str | None = None
+    """
+    Numeric field to fold into one number per group with
+    aggregation_operator, for example spec.sessions. The result is
+    returned in aggregation_value. Values are converted to double, and
+    objects without the field do not count.
     """
     show_aggregation_uuids: bool | None = None
     """

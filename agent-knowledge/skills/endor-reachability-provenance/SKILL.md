@@ -13,6 +13,11 @@ endorlabs:
     module: endorlabs.workflows.reachability.cli
     default_output: .endorlabs/tasks/<slug>-<YYYY-MM-DD>/projects/<uuid>/reachability_context.json
     agent_visible: true
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.reachability.acquire_reachability_context
+      - endorlabs.workflows.reachability.write_reachability_context
+      - endorlabs.workflows.reachability.build_reachability_context
 ---
 
 # Reachability Provenance

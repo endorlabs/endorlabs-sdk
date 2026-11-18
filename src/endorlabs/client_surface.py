@@ -31,6 +31,8 @@ from .utils.polling import wait_until as _wait_until
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from .core.client_identity import ClientIdentity
+
 _logger = get_resource_logger(__name__)
 
 
@@ -49,11 +51,12 @@ class Client:
     passed, the caller owns it and must close it themselves.
 
     Transport options (when creating APIClient): timeout, content_type,
-    accept_encoding, max_retries, base_url, op_comment. Explicit args take
-    precedence over
+    accept_encoding, max_retries, base_url, op_comment, identity. Explicit args
+    take precedence over
     environment variables (``ENDOR_REQUEST_TIMEOUT``, ``ENDOR_API_TIMEOUT``).
     Other APIClient options (auth, logging_level, etc.) go via **client_kwargs.
     Use content_type="application/json" if compact responses cause validation issues.
+    Default identity is ``ClientIdentity.sdk()`` (branded User-Agent / x-endor-caller*).
 
     Route accessors (``list_by_project``, ``list_for_context``, …) expect **resource
     objects** from ``.get()`` or ``.list()`` — not UUID strings. They return ``list[T]``
@@ -84,12 +87,13 @@ class Client:
         max_retries: int | None = None,
         base_url: str | None = None,
         op_comment: str | None = None,
+        identity: ClientIdentity | None = None,
         **client_kwargs: Any,
     ) -> None:
         super().__init__()
         self._own_client = api_client is None
-        if api_client is not None and op_comment:
-            msg = "op_comment applies when Client creates the APIClient"
+        if api_client is not None and (op_comment or identity is not None):
+            msg = "op_comment/identity apply when Client creates the APIClient"
             raise ValueError(msg)
         if api_client is None:
             api_kwargs: dict[str, Any] = {**client_kwargs}
@@ -99,6 +103,7 @@ class Client:
             api_kwargs["max_retries"] = max_retries
             api_kwargs["base_url"] = base_url
             api_kwargs["op_comment"] = op_comment
+            api_kwargs["identity"] = identity
             api_client = APIClient(**api_kwargs)
         self._client: APIClient | None = api_client
         self._default_namespace, ns_source = resolve_client_default_namespace(tenant)
